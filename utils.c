@@ -87,7 +87,7 @@ int snac_init(const char *basedir)
     FILE *f;
 
     if (basedir == NULL) {
-        printf("Base directory: ");
+        printf("Base directory: "); fflush(stdout);
         srv_basedir = xs_strip_i(xs_readline(stdin));
     }
     else
@@ -109,14 +109,14 @@ int snac_init(const char *basedir)
     xs *layout = xs_number_new(disk_layout);
     srv_config = xs_dict_set(srv_config, "layout", layout);
 
-    printf("Network address [%s]: ", xs_dict_get(srv_config, "address"));
+    printf("Network address [%s]: ", xs_dict_get(srv_config, "address")); fflush(stdout);
     {
         xs *i = xs_strip_i(xs_readline(stdin));
         if (*i)
             srv_config = xs_dict_set(srv_config, "address", i);
     }
 
-    printf("Network port [%d]: ", (int)xs_number_get(xs_dict_get(srv_config, "port")));
+    printf("Network port [%d]: ", (int)xs_number_get(xs_dict_get(srv_config, "port"))); fflush(stdout);
     {
         xs *i = xs_strip_i(xs_readline(stdin));
         if (*i) {
@@ -125,7 +125,7 @@ int snac_init(const char *basedir)
         }
     }
 
-    printf("Host name: ");
+    printf("Host name: "); fflush(stdout);
     {
         xs *i = xs_strip_i(xs_readline(stdin));
         if (*i == '\0')
@@ -134,7 +134,7 @@ int snac_init(const char *basedir)
         srv_config = xs_dict_set(srv_config, "host", i);
     }
 
-    printf("URL prefix: ");
+    printf("URL prefix: "); fflush(stdout);
     {
         xs *i = xs_strip_i(xs_readline(stdin));
 
@@ -146,7 +146,7 @@ int snac_init(const char *basedir)
         }
     }
 
-    printf("Admin email address (optional): ");
+    printf("Admin email address (optional): "); fflush(stdout);
     {
         xs *i = xs_strip_i(xs_readline(stdin));
 
@@ -227,7 +227,7 @@ int adduser(const char *uid)
     FILE *f;
 
     if (uid == NULL) {
-        printf("Username: ");
+        printf("Username: "); fflush(stdout);
         uid = xs_strip_i(xs_readline(stdin));
     }
 
