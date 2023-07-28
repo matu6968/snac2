@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2023 grunfink / MIT license */
+/* copyright (c) 2022 - 2023 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_io.h"
@@ -12,7 +12,7 @@
 int usage(void)
 {
     printf("snac " VERSION " - A simple, minimalistic ActivityPub instance\n");
-    printf("Copyright (c) 2022 - 2023 grunfink / MIT license\n");
+    printf("Copyright (c) 2022 - 2023 grunfink et al. / MIT license\n");
     printf("\n");
     printf("Commands:\n");
     printf("\n");

@@ -83,6 +83,6 @@ See the LICENSE file for details.
 
 ## Author
 
-grunfink [@grunfink@comam.es](https://comam.es/snac/grunfink)
+grunfink [@grunfink@comam.es](https://comam.es/snac/grunfink) with the help of others.
 
 Buy grunfink a coffee: https://ko-fi.com/grunfink
