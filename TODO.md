@@ -10,9 +10,9 @@ Implement real tag links instead of just pretending that it's something that exi
 
 Mastodon API: fix whatever the fuck is making the official app and Megalodon to crash.
 
-Improve support for audio attachments.
-
 Important: deleting a follower should do more that just delete the object, see https://codeberg.org/grunfink/snac2/issues/43#issuecomment-956721
+
+The outbox should contain Create+Note, not Note objects.
 
 ## Wishlist
 
@@ -27,8 +27,6 @@ The 'history' pages are just monthly HTML snapshots of the local timeline. This 
 Implement bulleted lists. Mastodon is crap and won't show them, but other implementations (Friendica, Pleroma) will do.
 
 User request: "will it be possible to click on a link and instead of opening the original instance, we'll be able only to see a list of the posts of this person here in comam?. Something like Mastodon does."
-
-Test all the possible XSS vulnerabilities in https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/big-list-of-naughty-strings.txt
 
 The actual storage system wastes too much disk space (lots of small files that really consume 4k of storage). Consider alternatives.
 
@@ -269,3 +267,7 @@ Propagate the CW status and description from the replied message (2023-07-04T15:
 Add support for pinning posts (2023-07-06T10:11:35+0200).
 
 index_list() and index_list_desc() should not return deleted (i.e. dash prefixed) entries (2023-07-06T10:12:06+0200).
+
+Improve support for audio attachments (2023-07-28T20:22:32+0200).
+
+Test all the possible XSS vulnerabilities in https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/big-list-of-naughty-strings.txt (2023-07-28T20:23:21+0200).
