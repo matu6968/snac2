@@ -12,8 +12,6 @@ Mastodon API: fix whatever the fuck is making the official app and Megalodon to 
 
 Important: deleting a follower should do more that just delete the object, see https://codeberg.org/grunfink/snac2/issues/43#issuecomment-956721
 
-The outbox should contain Create+Note, not Note objects.
-
 ## Wishlist
 
 Add a list of hashtags to drop.
@@ -271,3 +269,5 @@ index_list() and index_list_desc() should not return deleted (i.e. dash prefixed
 Improve support for audio attachments (2023-07-28T20:22:32+0200).
 
 Test all the possible XSS vulnerabilities in https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/big-list-of-naughty-strings.txt (2023-07-28T20:23:21+0200).
+
+The outbox should contain Create+Note, not Note objects (2023-07-29T15:29:24+0200).
