@@ -764,6 +764,16 @@ xs_dict *msg_base(snac *snac, const char *type, const char *id,
             else
                 id = NULL;
         }
+        else
+        if (strcmp(id, "@wrapper") == 0) {
+            /* like @object, but always generate the same id */
+            if (object != NULL) {
+                did = xs_fmt("%s/%s", xs_dict_get(object, "id"), type);
+                id = did;
+            }
+            else
+                id = NULL;
+        }
     }
 
     xs_dict *msg = xs_dict_new();
@@ -935,7 +945,7 @@ xs_dict *msg_actor(snac *snac)
 xs_dict *msg_create(snac *snac, const xs_dict *object)
 /* creates a 'Create' message */
 {
-    xs_dict *msg = msg_base(snac, "Create", "@object", snac->actor, "@now", object);
+    xs_dict *msg = msg_base(snac, "Create", "@wrapper", snac->actor, "@now", object);
     xs_val *v;
 
     if ((v = xs_dict_get(object, "attributedTo")))
