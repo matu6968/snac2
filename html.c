@@ -2372,7 +2372,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         char *redir = xs_dict_get(p_vars, "redir");
 
         if (xs_is_null(redir))
-            redir = "snac-posts";
+            redir = "top";
 
         *body   = xs_fmt("%s/admin#%s", snac.actor, redir);
         *b_size = strlen(*body);
