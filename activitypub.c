@@ -180,7 +180,7 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
                 if (xs_is_null(type))
                     type = "(null)";
 
-                srv_debug(0, xs_fmt("timeline_request type %s '%s'", nid, type));
+                srv_debug(1, xs_fmt("timeline_request type %s '%s'", nid, type));
 
                 if (strcmp(type, "Create") == 0) {
                     /* some software like lemmy nest Announce + Create + Note */
