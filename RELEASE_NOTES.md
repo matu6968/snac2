@@ -1,5 +1,21 @@
 # Release Notes
 
+## 2.39
+
+Added support for Follow confirmation messages that only return the follow request id (this fixes following Guppe channels).
+
+Fixed some Gotosocial ActivityPub compatibility (details: support fields like `tag` and `attachment` being lone objects instead of arrays).
+
+Fixed ActivityPub outbox (it listed 'Note' objects instead of 'Create' activities).
+
+Show the 'audience' field (channel URL) if a post has one (like pages from lemmy channels and other forums).
+
+Some web UI tweaks: the new post field is hidden by default (wasting less screen space), added a 'back to top' link at the bottom of the page and other minor tuning to the HTML and default CSS (contributed by yonle).
+
+Fixed RSS (contributed by yonle).
+
+Fixed interactive text processes (like instance or user creating) by calling `fflush()` after printing text prompts (it was broken on systems that use musl like Alpine Linux).
+
 ## 2.38
 
 More vulnerability fixes (contributed by yonle).
