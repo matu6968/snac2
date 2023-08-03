@@ -312,8 +312,7 @@ int snac_upgrade(xs_str **error)
         FILE *f;
 
         if ((f = fopen(fn, "w")) != NULL) {
-            xs *j = xs_json_dumps_pp(srv_config, 4);
-            fwrite(j, strlen(j), 1, f);
+            xs_json_dump_pp(srv_config, 4, f);
             fclose(f);
 
             srv_log(xs_fmt("disk layout upgraded %s after %d changes", fn, changed));

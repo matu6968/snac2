@@ -194,8 +194,7 @@ int snac_init(const char *basedir)
         return 1;
     }
 
-    xs *j = xs_json_dumps_pp(srv_config, 4);
-    fwrite(j, strlen(j), 1, f);
+    xs_json_dump_pp(srv_config, 4, f);
     fclose(f);
 
     printf("Done.\n");
@@ -276,8 +275,7 @@ int adduser(const char *uid)
         return 1;
     }
     else {
-        xs *j = xs_json_dumps_pp(config, 4);
-        fwrite(j, strlen(j), 1, f);
+        xs_json_dump_pp(config, 4, f);
         fclose(f);
     }
 
@@ -292,8 +290,7 @@ int adduser(const char *uid)
         return 1;
     }
     else {
-        xs *j = xs_json_dumps_pp(key, 4);
-        fwrite(j, strlen(j), 1, f);
+        xs_json_dump_pp(key, 4, f);
         fclose(f);
     }
 
@@ -319,8 +316,7 @@ int resetpwd(snac *snac)
     snac->config = xs_dict_set(snac->config, "passwd", hashed_pwd);
 
     if ((f = fopen(fn, "w")) != NULL) {
-        xs *j = xs_json_dumps_pp(snac->config, 4);
-        fwrite(j, strlen(j), 1, f);
+        xs_json_dump_pp(snac->config, 4, f);
         fclose(f);
 
         printf("New password for user %s is %s\n", snac->uid, clear_pwd);
