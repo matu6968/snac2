@@ -8,6 +8,7 @@ xs_str *xs_json_dumps_pp(const xs_val *data, int indent);
 int xs_json_dump_pp(const xs_val *data, int indent, FILE *f);
 #define xs_json_dumps(data) xs_json_dumps_pp(data, 0)
 xs_val *xs_json_loads(const xs_str *json);
+xs_val *xs_json_load(FILE *f);
 
 
 #ifdef XS_IMPLEMENTATION
@@ -538,6 +539,15 @@ xs_val *xs_json_loads(const xs_str *json)
 
     return v;
 }
+
+
+xs_val *xs_json_load(FILE *f)
+/* loads a JSON file */
+{
+    xs *o = xs_readall(f);
+    return o ? xs_json_loads(o) : NULL;
+}
+
 
 #endif /* XS_IMPLEMENTATION */
 
