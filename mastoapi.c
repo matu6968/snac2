@@ -66,10 +66,9 @@ xs_dict *app_get(const char *id)
     FILE *f;
 
     if ((f = fopen(fn, "r")) != NULL) {
-        xs *j = xs_readall(f);
+        app = xs_json_load(f);
         fclose(f);
 
-        app = xs_json_loads(j);
     }
 
     return app;
@@ -124,10 +123,8 @@ xs_dict *token_get(const char *id)
     FILE *f;
 
     if ((f = fopen(fn, "r")) != NULL) {
-        xs *j = xs_readall(f);
+        token = xs_json_load(f);
         fclose(f);
-
-        token = xs_json_loads(j);
     }
 
     return token;

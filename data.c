@@ -595,12 +595,8 @@ int object_get_by_md5(const char *md5, xs_dict **obj)
     FILE *f;
 
     if ((f = fopen(fn, "r")) != NULL) {
-        flock(fileno(f), LOCK_SH);
-
-        xs *j = xs_readall(f);
+        *obj = xs_json_load(f);
         fclose(f);
-
-        *obj = xs_json_loads(j);
 
         if (*obj)
             status = 200;
@@ -1012,12 +1008,10 @@ int timeline_get_by_md5(snac *snac, const char *md5, xs_dict **msg)
     xs *fn = timeline_fn_by_md5(snac, md5);
 
     if (fn != NULL && (f = fopen(fn, "r")) != NULL) {
-        flock(fileno(f), LOCK_SH);
-
-        xs *j = xs_readall(f);
+        *msg = xs_json_load(f);
         fclose(f);
 
-        if ((*msg = xs_json_loads(j)) != NULL)
+        if (*msg != NULL)
             status = 200;
     }
 
@@ -1234,11 +1228,8 @@ int following_get(snac *snac, const char *actor, xs_dict **data)
     int status = 200;
 
     if ((f = fopen(fn, "r")) != NULL) {
-        xs *j = xs_readall(f);
-
+        *data = xs_json_load(f);
         fclose(f);
-
-        *data = xs_json_loads(j);
     }
     else
         status = 404;
@@ -1263,29 +1254,25 @@ xs_list *following_list(snac *snac)
 
         /* load the follower data */
         if ((f = fopen(v, "r")) != NULL) {
-            xs *j = xs_readall(f);
+            xs *o = xs_json_load(f);
             fclose(f);
 
-            if (j != NULL) {
-                xs *o = xs_json_loads(j);
+            if (o != NULL) {
+                const char *type = xs_dict_get(o, "type");
 
-                if (o != NULL) {
-                    const char *type = xs_dict_get(o, "type");
+                if (!xs_is_null(type) && strcmp(type, "Accept") == 0) {
+                    const char *actor = xs_dict_get(o, "actor");
 
-                    if (!xs_is_null(type) && strcmp(type, "Accept") == 0) {
-                        const char *actor = xs_dict_get(o, "actor");
+                    if (!xs_is_null(actor)) {
+                        list = xs_list_append(list, actor);
 
-                        if (!xs_is_null(actor)) {
-                            list = xs_list_append(list, actor);
+                        /* check if there is a link to the actor object */
+                        xs *v2 = xs_replace(v, ".json", "_a.json");
 
-                            /* check if there is a link to the actor object */
-                            xs *v2 = xs_replace(v, ".json", "_a.json");
-
-                            if (mtime(v2) == 0.0) {
-                                /* no; add a link to it */
-                                xs *actor_fn = _object_fn(actor);
-                                link(actor_fn, v2);
-                            }
+                        if (mtime(v2) == 0.0) {
+                            /* no; add a link to it */
+                            xs *actor_fn = _object_fn(actor);
+                            link(actor_fn, v2);
                         }
                     }
                 }
@@ -1896,10 +1883,8 @@ xs_dict *notify_get(snac *snac, const char *id)
     xs_dict *out = NULL;
 
     if ((f = fopen(fn, "r")) != NULL) {
-        xs *j = xs_readall(f);
+        out = xs_json_load(f);
         fclose(f);
-
-        out = xs_json_loads(j);
     }
 
     return out;
@@ -2231,9 +2216,7 @@ xs_dict *queue_get(const char *fn)
     xs_dict *obj = NULL;
 
     if ((f = fopen(fn, "r")) != NULL) {
-        xs *j = xs_readall(f);
-        obj = xs_json_loads(j);
-
+        obj = xs_json_load(f);
         fclose(f);
     }
 
