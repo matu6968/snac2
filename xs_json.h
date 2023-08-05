@@ -4,9 +4,10 @@
 
 #define _XS_JSON_H
 
-xs_str *xs_json_dumps_pp(const xs_val *data, int indent);
 int xs_json_dump_pp(const xs_val *data, int indent, FILE *f);
+xs_str *xs_json_dumps_pp(const xs_val *data, int indent);
 #define xs_json_dumps(data) xs_json_dumps_pp(data, 0)
+#define xs_json_dump(data, f) xs_json_dumps_pp(data, 0, f)
 xs_val *xs_json_loads(const xs_str *json);
 xs_val *xs_json_load(FILE *f);
 
@@ -17,63 +18,55 @@ xs_val *xs_json_load(FILE *f);
 
 /** JSON dumps **/
 
-static xs_str *_xs_json_dumps_str(xs_str *s, const char *data)
+static void _xs_json_dump_str(const char *data, FILE *f)
 /* dumps a string in JSON format */
 {
     unsigned char c;
-    s = xs_str_cat(s, "\"");
+    fputs("\"", f);
 
     while ((c = *data)) {
         if (c == '\n')
-            s = xs_str_cat(s, "\\n");
+            fputs("\\n", f);
         else
         if (c == '\r')
-            s = xs_str_cat(s, "\\r");
+            fputs("\\r", f);
         else
         if (c == '\t')
-            s = xs_str_cat(s, "\\t");
+            fputs("\\t", f);
         else
         if (c == '\\')
-            s = xs_str_cat(s, "\\\\");
+            fputs("\\\\", f);
         else
         if (c == '"')
-            s = xs_str_cat(s, "\\\"");
+            fputs("\\\"", f);
         else
-        if (c < 32) {
-            char tmp[10];
-
-            snprintf(tmp, sizeof(tmp), "\\u%04x", (unsigned int) c);
-            s = xs_str_cat(s, tmp);
-        }
+        if (c < 32)
+            fprintf(f, "\\u%04x", (unsigned int) c);
         else
-            s = xs_append_m(s, data, 1);
+            fputc(c, f);
 
         data++;
     }
 
-    s = xs_str_cat(s, "\"");
-
-    return s;
+    fputs("\"", f);
 }
 
 
-static xs_str *_xs_json_indent(xs_str *s, int level, int indent)
+static void _xs_json_indent(int level, int indent, FILE *f)
 /* adds indentation */
 {
     if (indent) {
         int n;
 
-        s = xs_str_cat(s, "\n");
+        fputc('\n', f);
 
         for (n = 0; n < level * indent; n++)
-            s = xs_str_cat(s, " ");
+            fputc(' ', f);
     }
-
-    return s;
 }
 
 
-static xs_str *_xs_json_dumps(xs_str *s, const xs_val *s_data, int level, int indent)
+static void _xs_json_dump(const xs_val *s_data, int level, int indent, FILE *f)
 /* dumps partial data as JSON */
 {
     int c = 0;
@@ -82,85 +75,87 @@ static xs_str *_xs_json_dumps(xs_str *s, const xs_val *s_data, int level, int in
 
     switch (xs_type(data)) {
     case XSTYPE_NULL:
-        s = xs_str_cat(s, "null");
+        fputs("null", f);
         break;
 
     case XSTYPE_TRUE:
-        s = xs_str_cat(s, "true");
+        fputs("true", f);
         break;
 
     case XSTYPE_FALSE:
-        s = xs_str_cat(s, "false");
+        fputs("false", f);
         break;
 
     case XSTYPE_NUMBER:
-        s = xs_str_cat(s, xs_number_str(data));
+        fputs(xs_number_str(data), f);
         break;
 
     case XSTYPE_LIST:
-        s = xs_str_cat(s, "[");
+        fputc('[', f);
 
         while (xs_list_iter(&data, &v)) {
             if (c != 0)
-                s = xs_str_cat(s, ",");
+                fputc(',', f);
 
-            s = _xs_json_indent(s, level + 1, indent);
-            s = _xs_json_dumps(s, v, level + 1, indent);
+            _xs_json_indent(level + 1, indent, f);
+            _xs_json_dump(v, level + 1, indent, f);
 
             c++;
         }
 
-        s = _xs_json_indent(s, level, indent);
-        s = xs_str_cat(s, "]");
+        _xs_json_indent(level, indent, f);
+        fputc(']', f);
 
         break;
 
     case XSTYPE_DICT:
-        s = xs_str_cat(s, "{");
+        fputc('{', f);
 
         xs_str *k;
         while (xs_dict_iter(&data, &k, &v)) {
             if (c != 0)
-                s = xs_str_cat(s, ",");
+                fputc(',', f);
 
-            s = _xs_json_indent(s, level + 1, indent);
+            _xs_json_indent(level + 1, indent, f);
 
-            s = _xs_json_dumps_str(s, k);
-            s = xs_str_cat(s, ":");
+            _xs_json_dump_str(k, f);
+            fputc(':', f);
 
             if (indent)
-                s = xs_str_cat(s, " ");
+                fputc(' ', f);
 
-            s = _xs_json_dumps(s, v, level + 1, indent);
+            _xs_json_dump(v, level + 1, indent, f);
 
             c++;
         }
 
-        s = _xs_json_indent(s, level, indent);
-        s = xs_str_cat(s, "}");
+        _xs_json_indent(level, indent, f);
+        fputc('}', f);
         break;
 
     case XSTYPE_STRING:
-        s = _xs_json_dumps_str(s, data);
+        _xs_json_dump_str(data, f);
         break;
 
     default:
         break;
     }
-
-    return s;
 }
 
 
 xs_str *xs_json_dumps_pp(const xs_val *data, int indent)
-/* dumps a piece of data as JSON */
+/* dumps data as a JSON string */
 {
-    xstype t = xs_type(data);
     xs_str *s = NULL;
+    size_t sz;
+    FILE *f;
 
-    if (t == XSTYPE_LIST || t == XSTYPE_DICT) {
-        s = xs_str_new(NULL);
-        s = _xs_json_dumps(s, data, 0, indent);
+    if ((f = open_memstream(&s, &sz)) != NULL) {
+        int r = xs_json_dump_pp(data, indent, f);
+        fclose(f);
+
+        if (!r)
+            s = xs_free(s);
     }
 
     return s;
@@ -170,13 +165,14 @@ xs_str *xs_json_dumps_pp(const xs_val *data, int indent)
 int xs_json_dump_pp(const xs_val *data, int indent, FILE *f)
 /* dumps data into a file as JSON */
 {
-    xs *j = xs_json_dumps_pp(data, indent);
+    xstype t = xs_type(data);
 
-    if (j == NULL)
-        return 0;
+    if (t == XSTYPE_LIST || t == XSTYPE_DICT) {
+        _xs_json_dump(data, 0, indent, f);
+        return 1;
+    }
 
-    fwrite(j, strlen(j), 1, f);
-    return 1;
+    return 0;
 }
 
 
