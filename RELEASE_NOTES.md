@@ -4,7 +4,7 @@
 
 Added support for Follow confirmation messages that only return the follow request id (this fixes following Guppe channels).
 
-Fixed some Gotosocial ActivityPub compatibility (details: support fields like `tag` and `attachment` being lone objects instead of arrays).
+Fixed some Gotosocial ActivityPub compatibility (details: support fields like `tag` and `attachment` being single objects instead of arrays).
 
 Fixed ActivityPub outbox (it listed 'Note' objects instead of 'Create' activities).
 
