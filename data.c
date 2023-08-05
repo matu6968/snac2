@@ -46,14 +46,11 @@ int srv_open(char *basedir, int auto_upgrade)
     if ((f = fopen(cfg_file, "r")) == NULL)
         error = xs_fmt("ERROR: cannot opening '%s'", cfg_file);
     else {
-        xs *cfg_data;
-
         /* read full config file */
-        cfg_data = xs_readall(f);
+        srv_config = xs_json_load(f);
         fclose(f);
 
         /* parse */
-        srv_config = xs_json_loads(cfg_data);
 
         if (srv_config == NULL)
             error = xs_fmt("ERROR: cannot parse '%s'", cfg_file);
@@ -167,22 +164,18 @@ int user_open(snac *snac, const char *uid)
         cfg_file = xs_fmt("%s/user.json", snac->basedir);
 
         if ((f = fopen(cfg_file, "r")) != NULL) {
-            xs *cfg_data;
-
             /* read full config file */
-            cfg_data = xs_readall(f);
+            snac->config = xs_json_load(f);
             fclose(f);
 
-            if ((snac->config = xs_json_loads(cfg_data)) != NULL) {
+            if (snac->config != NULL) {
                 xs *key_file = xs_fmt("%s/key.json", snac->basedir);
 
                 if ((f = fopen(key_file, "r")) != NULL) {
-                    xs *key_data;
-
-                    key_data = xs_readall(f);
+                    snac->key = xs_json_load(f);
                     fclose(f);
 
-                    if ((snac->key = xs_json_loads(key_data)) != NULL) {
+                    if (snac->key != NULL) {
                         snac->actor = xs_fmt("%s/%s", srv_baseurl, uid);
                         snac->md5   = xs_md5_hex(snac->actor, strlen(snac->actor));
 
@@ -192,10 +185,10 @@ int user_open(snac *snac, const char *uid)
                         /* does it have a configuration override? */
                         xs *cfg_file_o = xs_fmt("%s/user_o.json", snac->basedir);
                         if ((f = fopen(cfg_file_o, "r")) != NULL) {
-                            xs *j = xs_readall(f);
+                            snac->config_o = xs_json_load(f);
                             fclose(f);
 
-                            if ((snac->config_o = xs_json_loads(j)) == NULL)
+                            if (snac->config_o == NULL)
                                 srv_log(xs_fmt("error parsing '%s'", cfg_file_o));
                         }
 
