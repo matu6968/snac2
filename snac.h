@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2023 grunfink et al. / MIT license */
 
-#define VERSION "2.39"
+#define VERSION "2.40-dev"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -131,6 +131,11 @@ int pin(snac *user, const char *id);
 int unpin(snac *user, const char *id);
 int is_pinned(snac *user, const char *id);
 xs_list *pinned_list(snac *user);
+
+int limited(snac *user, const char *id, int cmd);
+#define is_limited(user, id) limited((user), (id), 0)
+#define limit(user, id) limited((user), (id), 1)
+#define unlimit(user, id) limited((user), (id), 2)
 
 void hide(snac *snac, const char *id);
 int is_hidden(snac *snac, const char *id);

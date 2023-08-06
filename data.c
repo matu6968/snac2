@@ -1500,6 +1500,50 @@ int actor_get(snac *snac1, const char *actor, xs_dict **data)
 }
 
 
+/** user limiting (announce blocks) **/
+
+int limited(snac *user, const char *id, int cmd)
+/* announce messages from a followed (0: check, 1: limit; 2: unlimit) */
+{
+    int ret = 0;
+    xs *fn = xs_fmt("%s/limited/", user->basedir);
+    mkdirx(fn);
+
+    xs *md5 = xs_md5_hex(id, strlen(id));
+    fn = xs_str_cat(fn, md5);
+
+    switch (cmd) {
+    case 0: /** check **/
+        ret = !!(mtime(fn) > 0.0);
+        break;
+
+    case 1: /** limit **/
+        if (mtime(fn) > 0.0)
+            ret = -1;
+        else {
+            FILE *f;
+
+            if ((f = fopen(fn, "w")) != NULL) {
+                fprintf(f, "%s\n", id);
+                fclose(f);
+            }
+            else
+                ret = -2;
+        }
+        break;
+
+    case 2: /** unlimit **/
+        if (mtime(fn) > 0.0)
+            ret = unlink(fn);
+        else
+            ret = -1;
+        break;
+    }
+
+    return ret;
+}
+
+
 /** static data **/
 
 xs_str *_static_fn(snac *snac, const char *id)
