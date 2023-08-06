@@ -1566,6 +1566,9 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
 
         timeline_request(snac, &object, &wrk, 0);
 
+        if (is_limited(snac, actor))
+            snac_log(snac, xs_fmt("dropped 'Announce' from limited actor %s", actor));
+        else
         if (valid_status(object_get(object, &a_msg))) {
             char *who = xs_dict_get(a_msg, "attributedTo");
 
