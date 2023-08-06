@@ -35,6 +35,8 @@ int usage(void)
     printf("unpin {basedir} {uid} {msg_url}     Unpins a message\n");
     printf("block {basedir} {instance_url}      Blocks a full instance\n");
     printf("unblock {basedir} {instance_url}    Unblocks a full instance\n");
+    printf("limit {basedir} {uid} {actor}       Limits an actor (drops their announces)\n");
+    printf("unlimit {basedir} {uid} {actor}     Unlimits an actor\n");
 
 /*    printf("question {basedir} {uid} 'opts'  Generates a poll (;-separated opts)\n");*/
 
@@ -268,6 +270,34 @@ int main(int argc, char *argv[])
         }
         else
             snac_log(&snac, xs_fmt("actor is not being followed %s", url));
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "limit") == 0) { /** **/
+        int ret;
+
+        if (!following_check(&snac, url))
+            snac_log(&snac, xs_fmt("actor %s is not being followed", url));
+        else
+        if ((ret = limit(&snac, url)) == 0)
+            snac_log(&snac, xs_fmt("actor %s is now limited", url));
+        else
+            snac_log(&snac, xs_fmt("error limiting actor %s (%d)", url, ret));
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "unlimit") == 0) { /** **/
+        int ret;
+
+        if (!following_check(&snac, url))
+            snac_log(&snac, xs_fmt("actor %s is not being followed", url));
+        else
+        if ((ret = unlimit(&snac, url)) == 0)
+            snac_log(&snac, xs_fmt("actor %s is no longer limited", url));
+        else
+            snac_log(&snac, xs_fmt("error unlimiting actor %s (%d)", url, ret));
 
         return 0;
     }
