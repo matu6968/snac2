@@ -1558,14 +1558,14 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     }
     else
     if (strcmp(type, "Announce") == 0) { /** **/
-        if (is_limited(snac, actor))
+        if (xs_type(object) == XSTYPE_DICT)
+            object = xs_dict_get(object, "id");
+
+        if (is_limited(snac, actor) && !xs_startswith(object, snac->actor))
             snac_log(snac, xs_fmt("dropped 'Announce' from limited actor %s", actor));
         else {
             xs *a_msg = NULL;
             xs *wrk   = NULL;
-
-            if (xs_type(object) == XSTYPE_DICT)
-                object = xs_dict_get(object, "id");
 
             timeline_request(snac, &object, &wrk, 0);
 
