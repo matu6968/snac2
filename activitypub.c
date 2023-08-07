@@ -1558,37 +1558,38 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     }
     else
     if (strcmp(type, "Announce") == 0) { /** **/
-        xs *a_msg = NULL;
-        xs *wrk   = NULL;
-
-        if (xs_type(object) == XSTYPE_DICT)
-            object = xs_dict_get(object, "id");
-
-        timeline_request(snac, &object, &wrk, 0);
-
         if (is_limited(snac, actor))
             snac_log(snac, xs_fmt("dropped 'Announce' from limited actor %s", actor));
-        else
-        if (valid_status(object_get(object, &a_msg))) {
-            const char *who = xs_dict_get(a_msg, "attributedTo");
+        else {
+            xs *a_msg = NULL;
+            xs *wrk   = NULL;
 
-            if (who && !is_muted(snac, who)) {
-                /* bring the actor */
-                xs *who_o = NULL;
+            if (xs_type(object) == XSTYPE_DICT)
+                object = xs_dict_get(object, "id");
 
-                if (valid_status(actor_request(snac, who, &who_o))) {
-                    timeline_admire(snac, object, actor, 0);
-                    snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
-                    do_notify = 1;
+            timeline_request(snac, &object, &wrk, 0);
+
+            if (valid_status(object_get(object, &a_msg))) {
+                const char *who = xs_dict_get(a_msg, "attributedTo");
+
+                if (who && !is_muted(snac, who)) {
+                    /* bring the actor */
+                    xs *who_o = NULL;
+
+                    if (valid_status(actor_request(snac, who, &who_o))) {
+                        timeline_admire(snac, object, actor, 0);
+                        snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
+                        do_notify = 1;
+                    }
+                    else
+                        snac_log(snac, xs_fmt("dropped 'Announce' on actor request error %s", who));
                 }
                 else
-                    snac_log(snac, xs_fmt("dropped 'Announce' on actor request error %s", who));
+                    snac_log(snac, xs_fmt("ignored 'Announce' about muted actor %s", who));
             }
             else
-                snac_log(snac, xs_fmt("ignored 'Announce' about muted actor %s", who));
+                snac_debug(snac, 1, xs_fmt("error requesting 'Announce' object %s", object));
         }
-        else
-            snac_debug(snac, 1, xs_fmt("error requesting 'Announce' object %s", object));
     }
     else
     if (strcmp(type, "Update") == 0) { /** **/
