@@ -1,5 +1,11 @@
 # Release Notes
 
+## 2.40
+
+Announces (boosts) can now be disabled/reenabled on a per-user basis (to limit those boost-trigger-happy friends from flooding your timeline).
+
+Added hints to web UI buttons.
+
 ## 2.39
 
 Added support for Follow confirmation messages that only return the follow request id (this fixes following Guppe channels).
