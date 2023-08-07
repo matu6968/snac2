@@ -218,7 +218,7 @@ xs_str *html_msg_icon(snac *snac, xs_str *os, const xs_dict *msg)
 }
 
 
-d_char *html_user_header(snac *snac, d_char *s, int local)
+xs_str *html_user_header(snac *snac, xs_str *s, int local)
 /* creates the HTML header */
 {
     char *p, *v;
@@ -397,7 +397,7 @@ d_char *html_user_header(snac *snac, d_char *s, int local)
 }
 
 
-d_char *html_top_controls(snac *snac, d_char *s)
+xs_str *html_top_controls(snac *snac, xs_str *s)
 /* generates the top controls */
 {
     char *_tmpl =
@@ -423,7 +423,7 @@ d_char *html_top_controls(snac *snac, d_char *s)
         "<details><summary>%s</summary>\n" /** poll **/
         "<p>%s:<br>\n"
         "<textarea class=\"snac-textarea\" name=\"poll_options\" "
-        "rows=\"6\" wrap=\"virtual\" placeholder=\"Option 1...\nOption 2...\nOption 3...\n....\"></textarea>\n"
+        "rows=\"6\" wrap=\"virtual\" placeholder=\"Option 1...\nOption 2...\nOption 3...\n...\"></textarea>\n"
         "<p><select name=\"poll_multiple\">\n"
         "<option value=\"off\">%s</option>\n"
         "<option value=\"on\">%s</option>\n"
@@ -449,7 +449,7 @@ d_char *html_top_controls(snac *snac, d_char *s)
         "</form><p>\n"
 
         "<form autocomplete=\"off\" method=\"post\" action=\"%s/admin/action\">\n" /** boost **/
-        "<input type=\"text\" name=\"id\" required=\"required\" placeholder=\"https://fedi.example.com/bob/....\">\n"
+        "<input type=\"text\" name=\"id\" required=\"required\" placeholder=\"https://fedi.example.com/bob/...\">\n"
         "<input type=\"submit\" name=\"action\" value=\"%s\"> %s\n"
         "</form><p>\n"
         "</details>\n"
@@ -465,7 +465,7 @@ d_char *html_top_controls(snac *snac, d_char *s)
         "<p>%s: <input type=\"file\" name=\"avatar_file\"></p>\n"
 
         "<p>%s:<br>\n"
-        "<textarea name=\"bio\" cols=\"40\" rows=\"4\" placeholder=\"Write about yourself here....\">%s</textarea></p>\n"
+        "<textarea name=\"bio\" cols=\"40\" rows=\"4\" placeholder=\"Write about yourself here...\">%s</textarea></p>\n"
 
         "<p><input type=\"checkbox\" name=\"cw\" id=\"cw\" %s>\n"
         "<label for=\"cw\">%s</label></p>\n"
@@ -601,12 +601,12 @@ d_char *html_top_controls(snac *snac, d_char *s)
 }
 
 
-d_char *html_button(d_char *s, char *clss, char *label)
+xs_str *html_button(xs_str *s, const char *clss, const char *label, const char *hint)
 {
     xs *s1 = xs_fmt(
                "<input type=\"submit\" name=\"action\" "
-               "class=\"snac-btn-%s\" value=\"%s\">\n",
-                clss, label);
+               "class=\"snac-btn-%s\" value=\"%s\" title=\"%s\">\n",
+                clss, label, hint);
 
     return xs_str_cat(s, s1);
 }
@@ -690,37 +690,38 @@ xs_str *html_entry_controls(snac *snac, xs_str *os, const xs_dict *msg, const ch
     if (!xs_startswith(id, snac->actor)) {
         if (xs_list_in(likes, snac->md5) == -1) {
             /* not already liked; add button */
-            s = html_button(s, "like", L("Like"));
+            s = html_button(s, "like", L("Like"), L("Say you like this post"));
         }
     }
     else {
         if (is_pinned(snac, id))
-            s = html_button(s, "unpin", L("Unpin"));
+            s = html_button(s, "unpin", L("Unpin"), L("Unpin this post from your timeline"));
         else
-            s = html_button(s, "pin", L("Pin"));
+            s = html_button(s, "pin", L("Pin"), L("Pin this post to the top of your timeline"));
     }
 
     if (is_msg_public(snac, msg)) {
         if (strcmp(actor, snac->actor) == 0 || xs_list_in(boosts, snac->md5) == -1) {
             /* not already boosted or us; add button */
-            s = html_button(s, "boost", L("Boost"));
+            s = html_button(s, "boost", L("Boost"), L("Announce this post to your followers"));
         }
     }
 
     if (strcmp(actor, snac->actor) != 0) {
         /* controls for other actors than this one */
         if (following_check(snac, actor)) {
-            s = html_button(s, "unfollow", L("Unfollow"));
+            s = html_button(s, "unfollow", L("Unfollow"), L("Stop following this user's activity"));
         }
         else {
-            s = html_button(s, "follow", L("Follow"));
+            s = html_button(s, "follow", L("Follow"), L("Start following this user's activity"));
         }
 
-        s = html_button(s, "mute", L("MUTE"));
+        s = html_button(s, "mute", L("MUTE"),
+            L("Block any activity from this user forever"));
     }
 
-    s = html_button(s, "delete", L("Delete"));
-    s = html_button(s, "hide",   L("Hide"));
+    s = html_button(s, "delete", L("Delete"), L("Delete this post"));
+    s = html_button(s, "hide",   L("Hide"), L("Hide this post and its children"));
 
     s = xs_str_cat(s, "</form>\n");
 
@@ -1433,7 +1434,7 @@ xs_str *html_timeline(snac *snac, const xs_list *list, int local, int skip, int 
 }
 
 
-d_char *html_people_list(snac *snac, d_char *os, d_char *list, const char *header, const char *t)
+xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *header, const char *t)
 {
     xs *s = xs_str_new(NULL);
     xs *es1 = encode_html(header);
@@ -1488,18 +1489,22 @@ d_char *html_people_list(snac *snac, d_char *os, d_char *list, const char *heade
             s = xs_str_cat(s, s1);
 
             if (following_check(snac, actor_id))
-                s = html_button(s, "unfollow", L("Unfollow"));
+                s = html_button(s, "unfollow", L("Unfollow"),
+                                L("Stop following this user's activity"));
             else {
-                s = html_button(s, "follow", L("Follow"));
+                s = html_button(s, "follow", L("Follow"),
+                                L("Start following this user's activity"));
 
                 if (follower_check(snac, actor_id))
-                    s = html_button(s, "delete", L("Delete"));
+                    s = html_button(s, "delete", L("Delete"), L("Delete this user"));
             }
 
             if (is_muted(snac, actor_id))
-                s = html_button(s, "unmute", L("Unmute"));
+                s = html_button(s, "unmute", L("Unmute"),
+                                L("Stop blocking activities from this user"));
             else
-                s = html_button(s, "mute", L("MUTE"));
+                s = html_button(s, "mute", L("MUTE"),
+                                L("Block any activity from this user"));
 
             s = xs_str_cat(s, "</form>\n");
 
@@ -1537,9 +1542,9 @@ d_char *html_people_list(snac *snac, d_char *os, d_char *list, const char *heade
 }
 
 
-d_char *html_people(snac *snac)
+xs_str *html_people(snac *snac)
 {
-    d_char *s = xs_str_new(NULL);
+    xs_str *s = xs_str_new(NULL);
     xs *wing = following_list(snac);
     xs *wers = follower_list(snac);
 
@@ -1870,7 +1875,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(p_path, ".rss") == 0) { /** public timeline in RSS format **/
-        d_char *rss;
+        xs_str *rss;
         xs *elems = timeline_simple_list(&snac, "public", 0, 20);
         xs *bio   = not_really_markdown(xs_dict_get(snac.config, "bio"), NULL);
         char *p, *v;
