@@ -1506,11 +1506,9 @@ int limited(snac *user, const char *id, int cmd)
 /* announce messages from a followed (0: check, 1: limit; 2: unlimit) */
 {
     int ret = 0;
-    xs *fn = xs_fmt("%s/limited/", user->basedir);
-    mkdirx(fn);
-
+    xs *dir = xs_fmt("%s/limited", user->basedir);
     xs *md5 = xs_md5_hex(id, strlen(id));
-    fn = xs_str_cat(fn, md5);
+    xs *fn  = xs_fmt("%s/%s", dir, md5);
 
     switch (cmd) {
     case 0: /** check **/
@@ -1518,6 +1516,8 @@ int limited(snac *user, const char *id, int cmd)
         break;
 
     case 1: /** limit **/
+        mkdirx(dir);
+
         if (mtime(fn) > 0.0)
             ret = -1;
         else {
