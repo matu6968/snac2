@@ -12,11 +12,11 @@ Mastodon API: fix whatever the fuck is making the official app and Megalodon to 
 
 Important: deleting a follower should do more that just delete the object, see https://codeberg.org/grunfink/snac2/issues/43#issuecomment-956721
 
+The votersCount field in multiple-choice polls is incorrectly calculated.
+
 ## Wishlist
 
 Add a list of hashtags to drop.
-
-Add a per-account toggle to [un]mute their Announces.
 
 Add domain/subdomain flexibility according to https://codeberg.org/grunfink/snac2/issues/3
 
@@ -271,3 +271,5 @@ Improve support for audio attachments (2023-07-28T20:22:32+0200).
 Test all the possible XSS vulnerabilities in https://raw.githubusercontent.com/danielmiessler/SecLists/master/Fuzzing/big-list-of-naughty-strings.txt (2023-07-28T20:23:21+0200).
 
 The outbox should contain Create+Note, not Note objects (2023-07-29T15:29:24+0200).
+
+Add a per-account toggle to [un]mute their Announces (2023-08-08T13:25:40+0200).
