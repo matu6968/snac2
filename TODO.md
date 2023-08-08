@@ -12,8 +12,6 @@ Mastodon API: fix whatever the fuck is making the official app and Megalodon to 
 
 Important: deleting a follower should do more that just delete the object, see https://codeberg.org/grunfink/snac2/issues/43#issuecomment-956721
 
-The votersCount field in multiple-choice polls is incorrectly calculated.
-
 ## Wishlist
 
 Add a list of hashtags to drop.
@@ -273,3 +271,5 @@ Test all the possible XSS vulnerabilities in https://raw.githubusercontent.com/d
 The outbox should contain Create+Note, not Note objects (2023-07-29T15:29:24+0200).
 
 Add a per-account toggle to [un]mute their Announces (2023-08-08T13:25:40+0200).
+
+The votersCount field in multiple-choice polls is incorrectly calculated (2023-08-08T13:56:28+0200).
