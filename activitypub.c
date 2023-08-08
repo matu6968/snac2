@@ -1257,7 +1257,6 @@ int update_question(snac *user, const char *id)
     xs *msg   = NULL;
     xs *rcnt  = xs_dict_new();
     xs *z     = xs_number_new(0);
-    xs *rcpts = xs_list_new();
     xs *lopts = xs_list_new();
     xs_list *opts;
     xs_list *p;
@@ -1286,6 +1285,9 @@ int update_question(snac *user, const char *id)
         }
     }
 
+    xs_set s;
+    xs_set_init(&s);
+
     /* iterate now the children (the votes) */
     xs *chld = object_children(id);
     p = chld;
@@ -1307,10 +1309,12 @@ int update_question(snac *user, const char *id)
                 xs *ucnt = xs_number_new(xs_number_get(cnt) + 1);
                 rcnt = xs_dict_set(rcnt, name, ucnt);
 
-                rcpts = xs_list_append(rcpts, atto);
+                xs_set_add(&s, atto);
             }
         }
     }
+
+    xs *rcpts = xs_set_result(&s);
 
     /* create a new list of options with their new counts */
     xs *nopts = xs_list_new();
@@ -1354,6 +1358,7 @@ int update_question(snac *user, const char *id)
     /* update the count of voters */
     xs *vcnt = xs_number_new(xs_list_len(rcpts));
     msg = xs_dict_set(msg, "votersCount", vcnt);
+    msg = xs_dict_set(msg, "cc", rcpts);
 
     /* store */
     object_add_ow(id, msg);
