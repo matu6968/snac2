@@ -6,8 +6,6 @@
 
 int xs_json_dump_pp(const xs_val *data, int indent, FILE *f);
 xs_str *xs_json_dumps_pp(const xs_val *data, int indent);
-#define xs_json_dumps(data) xs_json_dumps_pp(data, 0)
-#define xs_json_dump(data, f) xs_json_dumps_pp(data, 0, f)
 xs_val *xs_json_loads(const xs_str *json);
 xs_val *xs_json_load(FILE *f);
 
@@ -201,17 +199,15 @@ typedef enum {
 } js_type;
 
 
-static xs_val *_xs_json_loads_lexer(const char **json, js_type *t)
+static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
 {
-    char c;
-    const char *s = *json;
+    int c;
     xs_val *v = NULL;
 
-    /* skip blanks */
-    while (*s == L' ' || *s == L'\t' || *s == L'\n' || *s == L'\r')
-        s++;
+    *t = JS_ERROR;
 
-    c = *s++;
+    /* skip blanks */
+    while ((c = fgetc(f)) == L' ' || c == L'\t' || c == L'\n' || c == L'\r');
 
     if (c == '{')
         *t = JS_OCURLY;
@@ -236,141 +232,103 @@ static xs_val *_xs_json_loads_lexer(const char **json, js_type *t)
 
         v = xs_str_new(NULL);
 
-        while ((c = *s) != '"' && c != '\0') {
-            char tmp[5];
-            int cp, i;
-
+        while ((c = fgetc(f)) != '"' && c != EOF && *t != JS_ERROR) {
             if (c == '\\') {
-                s++;
-                c = *s;
-                switch (c) {
-                case 'n': c = '\n'; break;
-                case 'r': c = '\r'; break;
-                case 't': c = '\t'; break;
-                case 'u': /* Unicode codepoint as an hex char */
-                    s++;
-                    strncpy(tmp, s, 4);
-                    tmp[4] = '\0';
+                unsigned int cp = fgetc(f);
 
-                    if (strlen(tmp) != 4) {
+                switch (cp) {
+                case 'n': cp = '\n'; break;
+                case 'r': cp = '\r'; break;
+                case 't': cp = '\t'; break;
+                case 'u': /* Unicode codepoint as an hex char */
+                    if (fscanf(f, "%04x", &cp) != 1) {
                         *t = JS_ERROR;
                         break;
                     }
 
-                    s += 3; /* skip as it was one byte */
-
-                    sscanf(tmp, "%04x", &i);
-
-                    if (i >= 0xd800 && i <= 0xdfff) {
+                    if (cp >= 0xd800 && cp <= 0xdfff) {
                         /* it's a surrogate pair */
-                        cp = (i & 0x3ff) << 10;
+                        cp = (cp & 0x3ff) << 10;
 
-                        /* skip to the next value (last char + \ + u)  */
-                        s++;
-                        if (memcmp(s, "\\u", 2) != 0) {
-                            *t = JS_ERROR;
-                            break;
-                        }
-                        s += 2;
-
-                        strncpy(tmp, s, 4);
-                        tmp[4] = '\0';
-
-                        if (strlen(tmp) != 4) {
+                        /* \u must follow */
+                        if (fgetc(f) != '\\' || fgetc(f) != 'u') {
                             *t = JS_ERROR;
                             break;
                         }
 
-                        s += 3; /* skip as it was one byte */
+                        unsigned int i;
+                        if (fscanf(f, "%04x", &i) != 1) {
+                            *t = JS_ERROR;
+                            break;
+                        }
 
-                        sscanf(tmp, "%04x", &i);
                         cp |= (i & 0x3ff);
                         cp += 0x10000;
                     }
-                    else
-                        cp = i;
 
                     /* replace dangerous control codes with their visual representations */
-                    if (cp >= '\0' && cp < ' ' && !strchr("\r\n\t", cp))
+                    if (cp < ' ' && !strchr("\r\n\t", cp))
                         cp += 0x2400;
-
-                    v = xs_utf8_enc(v, cp);
-                    c = '\0';
 
                     break;
                 }
+
+                v = xs_utf8_enc(v, cp);
             }
-
-            if (c)
-                v = xs_append_m(v, &c, 1);
-
-            s++;
+            else {
+                char cc = c;
+                v = xs_append_m(v, &cc, 1);
+            }
         }
-
-        if (c != '\0')
-            s++;
     }
     else
     if (c == '-' || (c >= '0' && c <= '9') || c == '.') {
-        xs *vn = NULL;
+        double d;
 
-        *t = JS_INTEGER;
-
-        vn = xs_str_new(NULL);
-        vn = xs_append_m(vn, &c, 1);
-
-        while (((c = *s) >= '0' && c <= '9') || c == '.') {
-            if (c == '.')
-                *t = JS_REAL;
-
-            vn = xs_append_m(vn, &c, 1);
-            s++;
+        ungetc(c, f);
+        if (fscanf(f, "%lf", &d) == 1) {
+            *t = JS_REAL;
+            v = xs_number_new(d);
         }
-
-        /* convert to XSTYPE_NUMBER */
-        v = xs_number_new(atof(vn));
     }
     else
-    if (c == 't' && strncmp(s, "rue", 3) == 0) {
-        s += 3;
-        *t = JS_TRUE;
-
-        v = xs_val_new(XSTYPE_TRUE);
+    if (c == 't') {
+        if (fgetc(f) == 'r' && fgetc(f) == 'u' && fgetc(f) == 'e') {
+            *t = JS_TRUE;
+            v = xs_val_new(XSTYPE_TRUE);
+        }
     }
     else
-    if (c == 'f' && strncmp(s, "alse", 4) == 0) {
-        s += 4;
-        *t = JS_FALSE;
-
-        v = xs_val_new(XSTYPE_FALSE);
+    if (c == 'f') {
+        if (fgetc(f) == 'a' && fgetc(f) == 'l' &&
+            fgetc(f) == 's' && fgetc(f) == 'e') {
+            *t = JS_FALSE;
+            v = xs_val_new(XSTYPE_FALSE);
+        }
     }
     else
-    if (c == 'n' && strncmp(s, "ull", 3) == 0) {
-        s += 3;
-        *t = JS_NULL;
-
-        v = xs_val_new(XSTYPE_NULL);
+    if (c == 'n') {
+        if (fgetc(f) == 'u' && fgetc(f) == 'l' && fgetc(f) == 'l') {
+            *t = JS_NULL;
+            v = xs_val_new(XSTYPE_NULL);
+        }
     }
-    else
-        *t = JS_ERROR;
-
-    *json = s;
 
     return v;
 }
 
 
-static xs_list *_xs_json_loads_array(const char **json, js_type *t);
-static xs_dict *_xs_json_loads_object(const char **json, js_type *t);
+static xs_list *_xs_json_load_array(FILE *f, js_type *t);
+static xs_dict *_xs_json_load_object(FILE *f, js_type *t);
 
-static xs_val *_xs_json_loads_value(const char **json, js_type *t, xs_val *v)
+static xs_val *_xs_json_load_value(FILE *f, js_type *t, xs_val *v)
 /* parses a JSON value */
 {
     if (*t == JS_OBRACK)
-        v = _xs_json_loads_array(json, t);
+        v = _xs_json_load_array(f, t);
     else
     if (*t == JS_OCURLY)
-        v = _xs_json_loads_object(json, t);
+        v = _xs_json_load_object(f, t);
 
     if (*t >= JS_VALUE)
         *t = JS_VALUE;
@@ -381,10 +339,9 @@ static xs_val *_xs_json_loads_value(const char **json, js_type *t, xs_val *v)
 }
 
 
-static xs_list *_xs_json_loads_array(const char **json, js_type *t)
+static xs_list *_xs_json_load_array(FILE *f, js_type *t)
 /* parses a JSON array */
 {
-    const char *s = *json;
     xs *v;
     xs_list *l;
     js_type tt;
@@ -393,18 +350,18 @@ static xs_list *_xs_json_loads_array(const char **json, js_type *t)
 
     *t = JS_INCOMPLETE;
 
-    v = _xs_json_loads_lexer(&s, &tt);
+    v = _xs_json_load_lexer(f, &tt);
 
     if (tt == JS_CBRACK)
         *t = JS_ARRAY;
     else {
-        v = _xs_json_loads_value(&s, &tt, v);
+        v = _xs_json_load_value(f, &tt, v);
 
         if (tt == JS_VALUE) {
             l = xs_list_append(l, v);
 
             while (*t == JS_INCOMPLETE) {
-                xs_free(_xs_json_loads_lexer(&s, &tt));
+                xs_free(_xs_json_load_lexer(f, &tt));
 
                 if (tt == JS_CBRACK)
                     *t = JS_ARRAY;
@@ -412,8 +369,8 @@ static xs_list *_xs_json_loads_array(const char **json, js_type *t)
                 if (tt == JS_COMMA) {
                     xs *v2;
 
-                    v2 = _xs_json_loads_lexer(&s, &tt);
-                    v2 = _xs_json_loads_value(&s, &tt, v2);
+                    v2 = _xs_json_load_lexer(f, &tt);
+                    v2 = _xs_json_load_value(f, &tt, v2);
 
                     if (tt == JS_VALUE)
                         l = xs_list_append(l, v2);
@@ -431,16 +388,13 @@ static xs_list *_xs_json_loads_array(const char **json, js_type *t)
     if (*t == JS_ERROR)
         l = xs_free(l);
 
-    *json = s;
-
     return l;
 }
 
 
-static xs_dict *_xs_json_loads_object(const char **json, js_type *t)
+static xs_dict *_xs_json_load_object(FILE *f, js_type *t)
 /* parses a JSON object */
 {
-    const char *s = *json;
     xs *k1;
     xs_dict *d;
     js_type tt;
@@ -449,40 +403,40 @@ static xs_dict *_xs_json_loads_object(const char **json, js_type *t)
 
     *t = JS_INCOMPLETE;
 
-    k1 = _xs_json_loads_lexer(&s, &tt);
+    k1 = _xs_json_load_lexer(f, &tt);
 
     if (tt == JS_CCURLY)
         *t = JS_OBJECT;
     else
     if (tt == JS_STRING) {
-        xs_free(_xs_json_loads_lexer(&s, &tt));
+        xs_free(_xs_json_load_lexer(f, &tt));
 
         if (tt == JS_COLON) {
             xs *v1;
 
-            v1 = _xs_json_loads_lexer(&s, &tt);
-            v1 = _xs_json_loads_value(&s, &tt, v1);
+            v1 = _xs_json_load_lexer(f, &tt);
+            v1 = _xs_json_load_value(f, &tt, v1);
 
             if (tt == JS_VALUE) {
                 d = xs_dict_append(d, k1, v1);
 
                 while (*t == JS_INCOMPLETE) {
-                    xs_free(_xs_json_loads_lexer(&s, &tt));
+                    xs_free(_xs_json_load_lexer(f, &tt));
 
                     if (tt == JS_CCURLY)
                         *t = JS_OBJECT;
                     else
                     if (tt == JS_COMMA) {
-                        xs *k = _xs_json_loads_lexer(&s, &tt);
+                        xs *k = _xs_json_load_lexer(f, &tt);
 
                         if (tt == JS_STRING) {
-                            xs_free(_xs_json_loads_lexer(&s, &tt));
+                            xs_free(_xs_json_load_lexer(f, &tt));
 
                             if (tt == JS_COLON) {
                                 xs *v;
 
-                                v = _xs_json_loads_lexer(&s, &tt);
-                                v = _xs_json_loads_value(&s, &tt, v);
+                                v = _xs_json_load_lexer(f, &tt);
+                                v = _xs_json_load_value(f, &tt, v);
 
                                 if (tt == JS_VALUE)
                                     d = xs_dict_append(d, k, v);
@@ -511,8 +465,6 @@ static xs_dict *_xs_json_loads_object(const char **json, js_type *t)
     if (*t == JS_ERROR)
         d = xs_free(d);
 
-    *json = s;
-
     return d;
 }
 
@@ -520,18 +472,13 @@ static xs_dict *_xs_json_loads_object(const char **json, js_type *t)
 xs_val *xs_json_loads(const xs_str *json)
 /* loads a string in JSON format and converts to a multiple data */
 {
+    FILE *f;
     xs_val *v = NULL;
-    js_type t;
 
-    xs_free(_xs_json_loads_lexer(&json, &t));
-
-    if (t == JS_OBRACK)
-        v = _xs_json_loads_array(&json, &t);
-    else
-    if (t == JS_OCURLY)
-        v = _xs_json_loads_object(&json, &t);
-    else
-        t = JS_ERROR;
+    if ((f = fmemopen((char *)json, strlen(json), "r")) != NULL) {
+        v = xs_json_load(f);
+        fclose(f);
+    }
 
     return v;
 }
@@ -540,8 +487,20 @@ xs_val *xs_json_loads(const xs_str *json)
 xs_val *xs_json_load(FILE *f)
 /* loads a JSON file */
 {
-    xs *o = xs_readall(f);
-    return o ? xs_json_loads(o) : NULL;
+    xs_val *v = NULL;
+    js_type t;
+
+    xs_free(_xs_json_load_lexer(f, &t));
+
+    if (t == JS_OBRACK)
+        v = _xs_json_load_array(f, &t);
+    else
+    if (t == JS_OCURLY)
+        v = _xs_json_load_object(f, &t);
+    else
+        t = JS_ERROR;
+
+    return v;
 }
 
 
