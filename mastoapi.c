@@ -39,7 +39,7 @@ int app_add(const char *id, const xs_dict *app)
     fn = xs_str_cat(fn, ".json");
 
     if ((f = fopen(fn, "w")) != NULL) {
-        xs_json_dump_pp(app, 4, f);
+        xs_json_dump(app, 4, f);
         fclose(f);
     }
     else
@@ -102,7 +102,7 @@ int token_add(const char *id, const xs_dict *token)
     fn = xs_str_cat(fn, ".json");
 
     if ((f = fopen(fn, "w")) != NULL) {
-        xs_json_dump_pp(token, 4, f);
+        xs_json_dump(token, 4, f);
         fclose(f);
     }
     else
@@ -358,7 +358,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
                 if (!xs_is_null(scope))
                     rsp = xs_dict_append(rsp, "scope", scope);
 
-                *body  = xs_json_dumps_pp(rsp, 4);
+                *body  = xs_json_dumps(rsp, 4);
                 *ctype = "application/json";
                 status = 200;
 
@@ -962,7 +962,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             acct = xs_dict_append(acct, "avatar", avatar);
 
-            *body  = xs_json_dumps_pp(acct, 4);
+            *body  = xs_json_dumps(acct, 4);
             *ctype = "application/json";
             status = 200;
         }
@@ -989,7 +989,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     res = xs_list_append(res, rel);
             }
 
-            *body  = xs_json_dumps_pp(res, 4);
+            *body  = xs_json_dumps(res, 4);
             *ctype = "application/json";
             status = 200;
         }
@@ -1132,7 +1132,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             }
 
             if (out != NULL) {
-                *body  = xs_json_dumps_pp(out, 4);
+                *body  = xs_json_dumps(out, 4);
                 *ctype = "application/json";
                 status = 200;
             }
@@ -1222,7 +1222,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 cnt++;
             }
 
-            *body  = xs_json_dumps_pp(out, 4);
+            *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
             status = 200;
 
@@ -1277,7 +1277,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             }
         }
 
-        *body  = xs_json_dumps_pp(out, 4);
+        *body  = xs_json_dumps(out, 4);
         *ctype = "application/json";
         status = 200;
     }
@@ -1360,7 +1360,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 out = xs_list_append(out, mn);
             }
 
-            *body  = xs_json_dumps_pp(out, 4);
+            *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
             status = 200;
         }
@@ -1498,7 +1498,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             }
         }
 
-        *body  = xs_json_dumps_pp(ins, 4);
+        *body  = xs_json_dumps(ins, 4);
         *ctype = "application/json";
         status = 200;
     }
@@ -1597,7 +1597,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     srv_debug(1, xs_fmt("mastoapi status: bad id %s", id));
 
                 if (out != NULL) {
-                    *body  = xs_json_dumps_pp(out, 4);
+                    *body  = xs_json_dumps(out, 4);
                     *ctype = "application/json";
                     status = 200;
                 }
@@ -1661,7 +1661,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             res = xs_dict_append(res, "statuses", stl);
             res = xs_dict_append(res, "hashtags", htl);
 
-            *body  = xs_json_dumps_pp(res, 4);
+            *body  = xs_json_dumps(res, 4);
             *ctype = "application/json";
             status = 200;
         }
@@ -1739,7 +1739,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             app = xs_dict_append(app, "vapid_key",     vkey);
             app = xs_dict_append(app, "id",            id);
 
-            *body  = xs_json_dumps_pp(app, 4);
+            *body  = xs_json_dumps(app, 4);
             *ctype = "application/json";
             status = 200;
 
@@ -1828,7 +1828,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             /* convert to a mastodon status as a response code */
             xs *st = mastoapi_status(&snac, msg);
 
-            *body  = xs_json_dumps_pp(st, 4);
+            *body  = xs_json_dumps(st, 4);
             *ctype = "application/json";
             status = 200;
         }
@@ -1924,7 +1924,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 }
 
                 if (out != NULL) {
-                    *body  = xs_json_dumps_pp(out, 4);
+                    *body  = xs_json_dumps(out, 4);
                     *ctype = "application/json";
                     status = 200;
                 }
@@ -1967,7 +1967,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             xs *server_key = random_str();
             wpush = xs_dict_append(wpush, "server_key", server_key);
 
-            *body  = xs_json_dumps_pp(wpush, 4);
+            *body  = xs_json_dumps(wpush, 4);
             *ctype = "application/json";
             status = 200;
         }
@@ -2010,7 +2010,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                     rsp = xs_dict_append(rsp, "remote_url",  url);
                     rsp = xs_dict_append(rsp, "description", desc);
 
-                    *body  = xs_json_dumps_pp(rsp, 4);
+                    *body  = xs_json_dumps(rsp, 4);
                     *ctype = "application/json";
                     status = 200;
                 }
@@ -2095,7 +2095,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             }
 
             if (rsp != NULL) {
-                *body  = xs_json_dumps_pp(rsp, 4);
+                *body  = xs_json_dumps(rsp, 4);
                 *ctype = "application/json";
                 status = 200;
             }
@@ -2157,7 +2157,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 }
 
                 if (out != NULL) {
-                    *body  = xs_json_dumps_pp(out, 4);
+                    *body  = xs_json_dumps(out, 4);
                     *ctype = "application/json";
                     status = 200;
                 }
@@ -2226,7 +2226,7 @@ int mastoapi_put_handler(const xs_dict *req, const char *q_path,
                 rsp = xs_dict_append(rsp, "remote_url",  url);
                 rsp = xs_dict_append(rsp, "description", desc);
 
-                *body  = xs_json_dumps_pp(rsp, 4);
+                *body  = xs_json_dumps(rsp, 4);
                 *ctype = "application/json";
                 status = 200;
             }

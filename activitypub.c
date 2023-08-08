@@ -294,7 +294,7 @@ int send_to_inbox_raw(const char *keyid, const char *seckey,
 {
     int status;
     xs_dict *response;
-    xs *j_msg = xs_json_dumps_pp((xs_dict *)msg, 4);
+    xs *j_msg = xs_json_dumps((xs_dict *)msg, 4);
 
     response = http_signed_request_raw(keyid, seckey, "POST", inbox,
         NULL, j_msg, strlen(j_msg), &status, payload, p_size, timeout);
@@ -2028,7 +2028,7 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         status = 404;
 
     if (status == 200 && msg != NULL) {
-        *body   = xs_json_dumps_pp(msg, 4);
+        *body   = xs_json_dumps(msg, 4);
         *b_size = strlen(*body);
     }
 

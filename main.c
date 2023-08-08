@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
         xs *list = index_list_desc(idx, 0, 256);
         xs *tl   = timeline_top_level(&snac, list);
 
-        xs_json_dump_pp(tl, 4, stdout);
+        xs_json_dump(tl, 4, stdout);
 
         return 0;
     }
@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
             enqueue_message(&snac, msg);
 
             if (dbglevel) {
-                xs_json_dump_pp(msg, 4, stdout);
+                xs_json_dump(msg, 4, stdout);
             }
         }
 
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
             enqueue_output_by_actor(&snac, msg, actor, 0);
 
             if (dbglevel) {
-                xs_json_dump_pp(msg, 4, stdout);
+                xs_json_dump(msg, 4, stdout);
             }
         }
 
@@ -311,7 +311,7 @@ int main(int argc, char *argv[])
             enqueue_output_by_actor(&snac, msg, url, 0);
 
             if (dbglevel) {
-                xs_json_dump_pp(msg, 4, stdout);
+                xs_json_dump(msg, 4, stdout);
             }
         }
         else {
@@ -350,7 +350,7 @@ int main(int argc, char *argv[])
         xs *c_msg = msg_create(&snac, msg);
 
         if (dbglevel) {
-            xs_json_dump_pp(c_msg, 4, stdout);
+            xs_json_dump(c_msg, 4, stdout);
         }
 
         enqueue_message(&snac, c_msg);
@@ -370,7 +370,7 @@ int main(int argc, char *argv[])
         printf("status: %d\n", status);
 
         if (data != NULL) {
-            xs_json_dump_pp(data, 4, stdout);
+            xs_json_dump(data, 4, stdout);
         }
 
         return 0;
@@ -385,7 +385,7 @@ int main(int argc, char *argv[])
         printf("status: %d\n", status);
 
         if (valid_status(status)) {
-            xs_json_dump_pp(data, 4, stdout);
+            xs_json_dump(data, 4, stdout);
         }
 
         return 0;
@@ -428,7 +428,7 @@ int main(int argc, char *argv[])
         c_msg = msg_create(&snac, msg);
 
         if (dbglevel) {
-            xs_json_dump_pp(c_msg, 4, stdout);
+            xs_json_dump(c_msg, 4, stdout);
         }
 
         enqueue_message(&snac, c_msg);

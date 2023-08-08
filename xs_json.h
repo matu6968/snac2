@@ -4,8 +4,8 @@
 
 #define _XS_JSON_H
 
-int xs_json_dump_pp(const xs_val *data, int indent, FILE *f);
-xs_str *xs_json_dumps_pp(const xs_val *data, int indent);
+int xs_json_dump(const xs_val *data, int indent, FILE *f);
+xs_str *xs_json_dumps(const xs_val *data, int indent);
 xs_val *xs_json_loads(const xs_str *json);
 xs_val *xs_json_load(FILE *f);
 
@@ -141,7 +141,7 @@ static void _xs_json_dump(const xs_val *s_data, int level, int indent, FILE *f)
 }
 
 
-xs_str *xs_json_dumps_pp(const xs_val *data, int indent)
+xs_str *xs_json_dumps(const xs_val *data, int indent)
 /* dumps data as a JSON string */
 {
     xs_str *s = NULL;
@@ -149,7 +149,7 @@ xs_str *xs_json_dumps_pp(const xs_val *data, int indent)
     FILE *f;
 
     if ((f = open_memstream(&s, &sz)) != NULL) {
-        int r = xs_json_dump_pp(data, indent, f);
+        int r = xs_json_dump(data, indent, f);
         fclose(f);
 
         if (!r)
@@ -160,7 +160,7 @@ xs_str *xs_json_dumps_pp(const xs_val *data, int indent)
 }
 
 
-int xs_json_dump_pp(const xs_val *data, int indent, FILE *f)
+int xs_json_dump(const xs_val *data, int indent, FILE *f)
 /* dumps data into a file as JSON */
 {
     xstype t = xs_type(data);

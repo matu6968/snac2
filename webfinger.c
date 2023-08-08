@@ -184,7 +184,7 @@ int webfinger_get_handler(d_char *req, char *q_path,
         obj = xs_dict_append(obj, "subject", acct);
         obj = xs_dict_append(obj, "links",   links);
 
-        j = xs_json_dumps_pp(obj, 4);
+        j = xs_json_dumps(obj, 4);
 
         user_free(&snac);
 

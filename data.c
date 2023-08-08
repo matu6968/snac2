@@ -632,7 +632,7 @@ int _object_add(const char *id, const xs_dict *obj, int ow)
     if ((f = fopen(fn, "w")) != NULL) {
         flock(fileno(f), LOCK_EX);
 
-        xs_json_dump_pp(obj, 4, f);
+        xs_json_dump(obj, 4, f);
         fclose(f);
 
         /* does this object has a parent? */
@@ -1175,7 +1175,7 @@ int following_add(snac *snac, const char *actor, const xs_dict *msg)
     FILE *f;
 
     if ((f = fopen(fn, "w")) != NULL) {
-        xs_json_dump_pp(msg, 4, f);
+        xs_json_dump(msg, 4, f);
         fclose(f);
 
         /* get the filename of the actor object */
@@ -1913,7 +1913,7 @@ void notify_add(snac *snac, const char *type, const char *utype,
         noti = xs_dict_append(noti, "objid", objid);
 
     if ((f = fopen(fn, "w")) != NULL) {
-        xs_json_dump_pp(noti, 4, f);
+        xs_json_dump(noti, 4, f);
         fclose(f);
     }
 }
@@ -1986,7 +1986,7 @@ static xs_dict *_enqueue_put(const char *fn, xs_dict *msg)
     FILE *f;
 
     if ((f = fopen(tfn, "w")) != NULL) {
-        xs_json_dump_pp(msg, 4, f);
+        xs_json_dump(msg, 4, f);
         fclose(f);
 
         rename(tfn, fn);
@@ -2484,8 +2484,8 @@ void srv_archive(const char *direction, const char *url, xs_dict *req,
         xs *meta_fn = xs_fmt("%s/_META", dir);
 
         if ((f = fopen(meta_fn, "w")) != NULL) {
-            xs *j1 = xs_json_dumps_pp(req, 4);
-            xs *j2 = xs_json_dumps_pp(headers, 4);
+            xs *j1 = xs_json_dumps(req, 4);
+            xs *j2 = xs_json_dumps(headers, 4);
 
             fprintf(f, "dir: %s\n", direction);
 
@@ -2513,7 +2513,7 @@ void srv_archive(const char *direction, const char *url, xs_dict *req,
                     xs *j1 = NULL;
 
                     if (v1 != NULL)
-                        j1 = xs_json_dumps_pp(v1, 4);
+                        j1 = xs_json_dumps(v1, 4);
 
                     if (j1 != NULL)
                         fwrite(j1, strlen(j1), 1, f);
@@ -2544,7 +2544,7 @@ void srv_archive(const char *direction, const char *url, xs_dict *req,
                     xs *j1 = NULL;
 
                     if (v1 != NULL)
-                        j1 = xs_json_dumps_pp(v1, 4);
+                        j1 = xs_json_dumps(v1, 4);
 
                     if (j1 != NULL)
                         fwrite(j1, strlen(j1), 1, f);
@@ -2581,7 +2581,7 @@ void srv_archive_error(const char *prefix, const xs_str *err,
         if (req) {
             fprintf(f, "Request headers:\n");
 
-            xs_json_dump_pp(req, 4, f);
+            xs_json_dump(req, 4, f);
 
             fprintf(f, "\n");
         }
@@ -2590,7 +2590,7 @@ void srv_archive_error(const char *prefix, const xs_str *err,
             fprintf(f, "Data:\n");
 
             if (xs_type(data) == XSTYPE_LIST || xs_type(data) == XSTYPE_DICT) {
-                xs_json_dump_pp(data, 4, f);
+                xs_json_dump(data, 4, f);
             }
             else
                 fprintf(f, "%s", data);

@@ -1990,7 +1990,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     p_vars = xs_dict_get(req, "p_vars");
 
 #if 0
-    xs_json_dump_pp(p_vars, 4, stdout);
+    xs_json_dump(p_vars, 4, stdout);
 #endif
 
     if (p_path && strcmp(p_path, "admin/note") == 0) { /** **/
@@ -2312,7 +2312,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         rename(fn, bfn);
 
         if ((f = fopen(fn, "w")) != NULL) {
-            xs_json_dump_pp(snac.config, 4, f);
+            xs_json_dump(snac.config, 4, f);
             fclose(f);
         }
         else
