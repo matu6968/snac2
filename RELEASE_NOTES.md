@@ -6,6 +6,8 @@ Announces (boosts) can now be disabled/reenabled on a per-user basis (to limit t
 
 Added hints to web UI buttons.
 
+Fixed miscalculation of the `votersCount` field in multiple-choice polls.
+
 ## 2.39
 
 Added support for Follow confirmation messages that only return the follow request id (this fixes following Guppe channels).
