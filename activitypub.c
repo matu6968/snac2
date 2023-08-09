@@ -1430,8 +1430,8 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     /* bring the actor */
     a_status = actor_request(snac, actor, &actor_o);
 
-    /* if the actor does not explicitly exist, discard */
-    if (a_status == 404 || a_status == 410) {
+    /* do not retry permanent failures */
+    if (a_status == 404 || a_status == 410 || a_status < 0) {
         snac_debug(snac, 1,
             xs_fmt("dropping message due to actor error %s %d", actor, a_status));
 

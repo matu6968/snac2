@@ -169,8 +169,13 @@ xs_dict *xs_http_request(const char *method, const char *url,
     curl_slist_free_all(list);
 
     if (status != NULL) {
-        if (lstatus == 0)
-            lstatus = -cc;
+        if (lstatus == 0) {
+            /* set the timeout error to a fake HTTP status, or propagate as is */
+            if (cc == CURLE_OPERATION_TIMEDOUT)
+                lstatus = 599;
+            else
+                lstatus = -cc;
+        }
 
         *status = (int) lstatus;
     }
