@@ -189,8 +189,7 @@ typedef enum {
     JS_COLON,
     JS_VALUE,
     JS_STRING,
-    JS_INTEGER,
-    JS_REAL,
+    JS_NUMBER,
     JS_TRUE,
     JS_FALSE,
     JS_NULL,
@@ -287,7 +286,7 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
 
         ungetc(c, f);
         if (fscanf(f, "%lf", &d) == 1) {
-            *t = JS_REAL;
+            *t = JS_NUMBER;
             v = xs_number_new(d);
         }
     }

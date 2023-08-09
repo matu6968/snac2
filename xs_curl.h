@@ -96,7 +96,7 @@ xs_dict *xs_http_request(const char *method, const char *url,
     xs_dict *p;
     xs_str *k;
     xs_val *v;
-    long lstatus;
+    long lstatus = 0;
     struct _payload_data pd;
 
     response = xs_dict_new();
@@ -160,7 +160,7 @@ xs_dict *xs_http_request(const char *method, const char *url,
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
     /* do it */
-    curl_easy_perform(curl);
+    CURLcode cc = curl_easy_perform(curl);
 
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &lstatus);
 
@@ -168,8 +168,12 @@ xs_dict *xs_http_request(const char *method, const char *url,
 
     curl_slist_free_all(list);
 
-    if (status != NULL)
+    if (status != NULL) {
+        if (lstatus == 0)
+            lstatus = -cc;
+
         *status = (int) lstatus;
+    }
 
     if (p_size != NULL)
         *p_size = ipd.size;
