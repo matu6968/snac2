@@ -486,6 +486,9 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         "<p><input type=\"checkbox\" name=\"bot\" id=\"bot\" %s>\n"
         "<label for=\"bot\">%s</label></p>\n"
 
+        "<p><input type=\"checkbox\" name=\"hide_followers_only\" id=\"hide_followers_only\" %s>\n"
+        "<label for=\"hide_followers_only\">%s</label></p>\n"
+
         "<p>%s:<br>\n"
         "<input type=\"password\" name=\"passwd1\" value=\"\"></p>\n"
 
@@ -541,6 +544,8 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
     xs *es5 = encode_html(telegram_chat_id);
     xs *es6 = encode_html(purge_days);
 
+    const char *hfo = xs_dict_get(snac->config, "hide_followers_only");
+
     xs *s1 = xs_fmt(_tmpl,
         L("New Post..."),
         snac->actor,
@@ -590,6 +595,8 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         L("Drop direct messages from people you don't follow"),
         xs_type(bot) == XSTYPE_TRUE ? "checked" : "",
         L("This account is a bot"),
+        xs_type(hfo) == XSTYPE_TRUE ? "checked" : "",
+        L("Hide posts for followers only (and not for you)"),
         L("New password"),
         L("Repeat new password"),
         L("Update user info")
@@ -2292,6 +2299,10 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "bot", xs_stock_true);
         else
             snac.config = xs_dict_set(snac.config, "bot", xs_stock_false);
+        if ((v = xs_dict_get(p_vars, "hide_followers_only")) != NULL && strcmp(v, "on") == 0)
+            snac.config = xs_dict_set(snac.config, "hide_followers_only", xs_stock_true);
+        else
+            snac.config = xs_dict_set(snac.config, "hide_followers_only", xs_stock_false);
 
         /* avatar upload */
         xs_list *avatar_file = xs_dict_get(p_vars, "avatar_file");
