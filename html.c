@@ -843,9 +843,10 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
     int sensitive = 0;
     char *v;
     xs *boosts = NULL;
+    int is_public = is_msg_public(snac, msg);
 
     /* do not show non-public messages in the public timeline */
-    if (local && !is_msg_public(snac, msg))
+    if (local && !is_public)
         return os;
 
     /* hidden? do nothing more for this conversation */
@@ -855,6 +856,20 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
     /* avoid too deep nesting, as it may be a loop */
     if (level >= 256)
         return os;
+
+    if (xs_type(xs_dict_get(snac->config, "hide_followers_only")) == XSTYPE_TRUE) {
+        /* test if this is a non-public message not explicitly for this user */
+        if (!is_public) {
+            const char *to = xs_dict_get(msg, "to");
+            const char *cc = xs_dict_get(msg, "cc");
+
+            if ((xs_is_null(to) || xs_list_in(to, snac->actor) == -1) &&
+                (xs_is_null(cc) || xs_list_in(cc, snac->actor) == -1)) {
+                snac_debug(snac, 0, xs_fmt("hidden message %s for followers only (%s)", id, md5));
+                return os;
+            }
+        }
+    }
 
     xs *s = xs_str_new("<div>\n");
 
