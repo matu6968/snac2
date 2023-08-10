@@ -1108,7 +1108,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                                 xs_startswith(xs_dict_get(msg, "id"), snac2.actor)) {
                                 xs *st = mastoapi_status(&snac2, msg);
 
-                                out = xs_list_append(out, st);
+                                if (st)
+                                    out = xs_list_append(out, st);
                             }
                         }
                     }
@@ -1354,7 +1355,9 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                 if (strcmp(type, "follow") != 0 && !xs_is_null(objid)) {
                     xs *st = mastoapi_status(&snac1, entry);
-                    mn = xs_dict_append(mn, "status", st);
+
+                    if (st)
+                        mn = xs_dict_append(mn, "status", st);
                 }
 
                 out = xs_list_append(out, mn);
@@ -1541,7 +1544,9 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                             if (valid_status(timeline_get_by_md5(&snac1, pid, &m2))) {
                                 xs *st = mastoapi_status(&snac1, m2);
-                                anc = xs_list_insert(anc, 0, st);
+
+                                if (st)
+                                    anc = xs_list_insert(anc, 0, st);
                             }
                             else
                                 break;
@@ -1557,7 +1562,9 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                             if (valid_status(timeline_get_by_md5(&snac1, v, &m2))) {
                                 if (xs_is_null(xs_dict_get(m2, "name"))) {
                                     xs *st = mastoapi_status(&snac1, m2);
-                                    des = xs_list_append(des, st);
+
+                                    if (st)
+                                        des = xs_list_append(des, st);
                                 }
                             }
                         }
