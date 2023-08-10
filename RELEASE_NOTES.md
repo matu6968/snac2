@@ -2,7 +2,7 @@
 
 ## 2.40
 
-Announces (boosts) can now be disabled/reenabled on a per-user basis (to limit those boost-trigger-happy friends from flooding your timeline).
+Announces (boosts) can now be disabled/reenabled on a per-people basis (to limit those boost-trigger-happy friends from flooding your timeline). This is operated from the people page.
 
 Added hints to web UI buttons.
 
