@@ -1488,9 +1488,17 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
             );
             s = xs_str_cat(s, s1);
 
-            if (following_check(snac, actor_id))
+            if (following_check(snac, actor_id)) {
                 s = html_button(s, "unfollow", L("Unfollow"),
                                 L("Stop following this user's activity"));
+
+                if (is_limited(snac, actor_id))
+                    s = html_button(s, "unlimit", L("Unlimit"),
+                                L("Allow announces (boosts) from this user"));
+                else
+                    s = html_button(s, "limit", L("Limit"),
+                                L("Block announces (boosts) from this user"));
+            }
             else {
                 s = html_button(s, "follow", L("Follow"),
                                 L("Start following this user's activity"));
@@ -2167,6 +2175,14 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         else
         if (strcmp(action, L("Hide")) == 0) { /** **/
             hide(&snac, id);
+        }
+        else
+        if (strcmp(action, L("Limit")) == 0) { /** **/
+            limit(&snac, actor);
+        }
+        else
+        if (strcmp(action, L("Unlimit")) == 0) { /** **/
+            unlimit(&snac, actor);
         }
         else
         if (strcmp(action, L("Follow")) == 0) { /** **/
