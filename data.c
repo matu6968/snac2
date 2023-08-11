@@ -2572,7 +2572,7 @@ void srv_archive_error(const char *prefix, const xs_str *err,
 /* archives an error */
 {
     xs *ntid = tid(0);
-    xs *fn   = xs_fmt("%s/error/%s_%s", srv_basedir, prefix, ntid);
+    xs *fn   = xs_fmt("%s/error/%s_%s", srv_basedir, ntid, prefix);
     FILE *f;
 
     if ((f = fopen(fn, "w")) != NULL) {
