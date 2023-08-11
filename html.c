@@ -430,7 +430,7 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         "</select>\n"
         "<select name=\"poll_end_secs\" id=\"poll_end_secs\">\n"
         "<option value=\"300\">%s</option>\n"
-        "<option value=\"3600\">%s</option>\n"
+        "<option value=\"3600\" selected>%s</option>\n"
         "<option value=\"86400\">%s</option>\n"
         "</select>\n"
         "</details>\n"
