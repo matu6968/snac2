@@ -2069,6 +2069,8 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
     if (msg == NULL || xs_is_null(id = xs_dict_get(msg, "id"))) {
         srv_log(xs_fmt("activitypub_post_handler JSON error %s", q_path));
 
+        srv_archive_error("activitypub_post_handler", "JSON error", req, payload);
+
         *body  = xs_str_new("JSON error");
         *ctype = "text/plain";
         return 400;
