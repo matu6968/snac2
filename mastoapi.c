@@ -1463,10 +1463,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         ins = xs_dict_append(ins, "urls", d1);
 
         xs *z = xs_number_new(0);
-        d1 = xs_dict_append(d1, "user_count", z);
-        d1 = xs_dict_append(d1, "status_count", z);
-        d1 = xs_dict_append(d1, "domain_count", z);
-        ins = xs_dict_append(ins, "stats", d1);
+        xs *d2 = xs_dict_append(xs_dict_new(), "user_count", z);
+        d2 = xs_dict_append(d2, "status_count", z);
+        d2 = xs_dict_append(d2, "domain_count", z);
+        ins = xs_dict_append(ins, "stats", d2);
 
         ins = xs_dict_append(ins, "registrations",     xs_stock_false);
         ins = xs_dict_append(ins, "approval_required", xs_stock_false);
