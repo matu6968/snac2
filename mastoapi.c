@@ -622,7 +622,8 @@ xs_dict *mastoapi_poll(snac *snac, const xs_dict *msg)
     poll = xs_dict_append(poll, "votes_count", vc);
 
     poll = xs_dict_append(poll, "voted",
-            was_question_voted(snac, xs_dict_get(msg, "id")) ? xs_stock_true : xs_stock_false);
+            (snac && was_question_voted(snac, xs_dict_get(msg, "id"))) ?
+                xs_stock_true : xs_stock_false);
 
     return poll;
 }
@@ -725,7 +726,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
                 const char *href = xs_dict_get(v, "href");
 
                 if (!xs_is_null(name) && !xs_is_null(href) &&
-                    strcmp(href, snac->actor) != 0) {
+                    (snac == NULL || strcmp(href, snac->actor) != 0)) {
                     xs *nm = xs_strip_chars_i(xs_dup(name), "@");
 
                     xs *id = xs_fmt("%d", n++);
@@ -786,7 +787,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
     st = xs_dict_append(st, "favourites_count", ixc);
     st = xs_dict_append(st, "favourited",
-        xs_list_in(idx, snac->md5) != -1 ? xs_stock_true : xs_stock_false);
+        (snac && xs_list_in(idx, snac->md5) != -1) ? xs_stock_true : xs_stock_false);
 
     xs_free(idx);
     xs_free(ixc);
@@ -795,7 +796,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
     st = xs_dict_append(st, "reblogs_count", ixc);
     st = xs_dict_append(st, "reblogged",
-        xs_list_in(idx, snac->md5) != -1 ? xs_stock_true : xs_stock_false);
+        (snac && xs_list_in(idx, snac->md5) != -1) ? xs_stock_true : xs_stock_false);
 
     xs_free(idx);
     xs_free(ixc);
@@ -849,7 +850,8 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
     st = xs_dict_append(st, "bookmarked", xs_stock_false);
 
-    st = xs_dict_append(st, "pinned", is_pinned(snac, id) ? xs_stock_true : xs_stock_false);
+    st = xs_dict_append(st, "pinned",
+        (snac && is_pinned(snac, id)) ? xs_stock_true : xs_stock_false);
 
     return st;
 }
@@ -1237,11 +1239,6 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     if (strcmp(cmd, "/v1/timelines/public") == 0) { /** **/
         /* the instance public timeline (public timelines for all users) */
 
-        /* NOTE: this api call needs no authorization; but,
-           I need a logged-in user in mastoapi_status() for
-           is_msg_public() and the liked/boosted flags,
-           so it will silently fail for pure public access */
-
         const char *limit_s = xs_dict_get(args, "limit");
         int limit = 0;
         int cnt   = 0;
@@ -1257,7 +1254,11 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         xs_list *p   = timeline;
         xs_str *md5;
 
-        while (logged_in && xs_list_iter(&p, &md5) && cnt < limit) {
+        snac *user = NULL;
+        if (logged_in)
+            user = &snac1;
+
+        while (xs_list_iter(&p, &md5) && cnt < limit) {
             xs *msg = NULL;
 
             /* get the entry */
@@ -1270,7 +1271,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 continue;
 
             /* convert the Note into a Mastodon status */
-            xs *st = mastoapi_status(&snac1, msg);
+            xs *st = mastoapi_status(user, msg);
 
             if (st != NULL) {
                 out = xs_list_append(out, st);
