@@ -238,6 +238,7 @@ void httpd_connection(FILE *f)
 
     /* unattended? it's an error */
     if (status == 0) {
+        srv_archive_error("unattended_method", "unattended method", req, payload);
         srv_debug(1, xs_fmt("httpd_connection unattended %s %s", method, q_path));
         status = 404;
     }
