@@ -408,12 +408,29 @@ xs_list *recipient_list(snac *snac, const xs_dict *msg, int expand_public)
 }
 
 
-int is_msg_public(snac *snac, const xs_dict *msg)
+int is_msg_public(const xs_dict *msg)
 /* checks if a message is public */
 {
-    xs *rcpts = recipient_list(snac, msg, 0);
+    const char *to = xs_dict_get(msg, "to");
+    const char *cc = xs_dict_get(msg, "cc");
+    int n;
 
-    return xs_list_in(rcpts, public_address) != -1;
+    const char *lists[] = { to, cc, NULL };
+    for (n = 0; lists[n]; n++) {
+        const xs_val *l = lists[n];
+
+        if (xs_type(l) == XSTYPE_STRING) {
+            if (strcmp(l, public_address) == 0)
+                return 1;
+        }
+        else
+        if (xs_type(l) == XSTYPE_LIST) {
+            if (xs_list_in(l, public_address) != -1)
+                return 1;
+        }
+    }
+
+    return 0;
 }
 
 
@@ -867,7 +884,7 @@ xs_dict *msg_admiration(snac *snac, char *object, char *type)
 
         msg = msg_base(snac, type, "@dummy", snac->actor, "@now", object);
 
-        if (is_msg_public(snac, a_msg))
+        if (is_msg_public(a_msg))
             rcpts = xs_list_append(rcpts, public_address);
 
         rcpts = xs_list_append(rcpts, xs_dict_get(a_msg, "attributedTo"));
@@ -1097,7 +1114,7 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
                 ctxt = xs_dup(v);
 
             /* if this message is public, ours will also be */
-            if (!priv && is_msg_public(snac, p_msg) && xs_list_in(to, public_address) == -1)
+            if (!priv && is_msg_public(p_msg) && xs_list_in(to, public_address) == -1)
                 to = xs_list_append(to, public_address);
         }
 
@@ -1419,7 +1436,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
 
     /* if it's a DM from someone we don't follow, reject the message */
     if (xs_type(xs_dict_get(snac->config, "drop_dm_from_unknown")) == XSTYPE_TRUE) {
-        if (strcmp(utype, "Note") == 0 && !is_msg_public(snac, msg) &&
+        if (strcmp(utype, "Note") == 0 && !is_msg_public(msg) &&
             !following_check(snac, actor)) {
             snac_log(snac, xs_fmt("DM rejected from unknown actor %s", actor));
 
@@ -1726,7 +1743,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         }
 
         /* if it's public, send to the collected inboxes */
-        if (is_msg_public(snac, msg)) {
+        if (is_msg_public(msg)) {
             xs *shibx = inbox_list();
             xs_str *inbox;
 

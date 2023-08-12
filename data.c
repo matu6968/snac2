@@ -1041,7 +1041,7 @@ void timeline_update_indexes(snac *snac, const char *id)
 
         if (valid_status(object_get(id, &msg))) {
             /* if its ours and is public, also store in public */
-            if (is_msg_public(snac, msg)) {
+            if (is_msg_public(msg)) {
                 object_user_cache_add(snac, id, "public");
 
                 /* also add it to the instance public timeline */

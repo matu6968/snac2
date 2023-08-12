@@ -206,7 +206,7 @@ xs_str *html_msg_icon(snac *snac, xs_str *os, const xs_dict *msg)
         if (strcmp(type, "Note") == 0 || strcmp(type, "Question") == 0 || strcmp(type, "Page") == 0)
             url = xs_dict_get(msg, "id");
 
-        priv = !is_msg_public(snac, msg);
+        priv = !is_msg_public(msg);
 
         date  = xs_dict_get(msg, "published");
         udate = xs_dict_get(msg, "updated");
@@ -700,7 +700,7 @@ xs_str *html_entry_controls(snac *snac, xs_str *os, const xs_dict *msg, const ch
             s = html_button(s, "pin", L("Pin"), L("Pin this post to the top of your timeline"));
     }
 
-    if (is_msg_public(snac, msg)) {
+    if (is_msg_public(msg)) {
         if (strcmp(actor, snac->actor) == 0 || xs_list_in(boosts, snac->md5) == -1) {
             /* not already boosted or us; add button */
             s = html_button(s, "boost", L("Boost"), L("Announce this post to your followers"));
@@ -845,7 +845,7 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
     xs *boosts = NULL;
 
     /* do not show non-public messages in the public timeline */
-    if (local && !is_msg_public(snac, msg))
+    if (local && !is_msg_public(msg))
         return os;
 
     /* hidden? do nothing more for this conversation */

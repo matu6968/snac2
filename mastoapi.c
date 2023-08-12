@@ -658,7 +658,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     st = xs_dict_append(st, "content",      xs_dict_get(msg, "content"));
 
     st = xs_dict_append(st, "visibility",
-        is_msg_public(snac, msg) ? "public" : "private");
+        is_msg_public(msg) ? "public" : "private");
 
     tmp = xs_dict_get(msg, "sensitive");
     if (xs_is_null(tmp))
