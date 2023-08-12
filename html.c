@@ -834,7 +834,7 @@ xs_str *html_entry_controls(snac *snac, xs_str *os, const xs_dict *msg, const ch
 }
 
 
-xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
+xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                    int level, const char *md5, int hide_children)
 {
     char *id    = xs_dict_get(msg, "id");
@@ -849,7 +849,7 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
         return os;
 
     /* hidden? do nothing more for this conversation */
-    if (is_hidden(snac, id))
+    if (user && is_hidden(user, id))
         return os;
 
     /* avoid too deep nesting, as it may be a loop */
@@ -891,10 +891,11 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
         return os;
 
     /* ignore muted morons immediately */
-    if (is_muted(snac, actor))
+    if (user && is_muted(user, actor))
         return os;
 
-    if (strcmp(actor, snac->actor) != 0 && !valid_status(actor_get(actor, NULL)))
+    if ((user == NULL || strcmp(actor, user->actor) != 0)
+        && !valid_status(actor_get(actor, NULL)))
         return os;
 
     if (level == 0)
@@ -904,7 +905,7 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
 
     s = xs_str_cat(s, "<div class=\"snac-post-header\">\n<div class=\"snac-score\">"); /** **/
 
-    if (is_pinned(snac, id)) {
+    if (user && is_pinned(user, id)) {
         /* add a pin emoji */
         xs *f = xs_fmt("<span title=\"%s\"> &#128204; </span>", L("Pinned"));
         s = xs_str_cat(s, f);
@@ -915,15 +916,15 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
         xs *f = xs_fmt("<span title=\"%s\"> &#128499; </span>", L("Poll"));
         s = xs_str_cat(s, f);
 
-        if (was_question_voted(snac, id)) {
+        if (user && was_question_voted(user, id)) {
             /* add a check to show this poll was voted */
             xs *f2 = xs_fmt("<span title=\"%s\"> &#10003; </span>", L("Voted"));
             s = xs_str_cat(s, f2);
         }
     }
 
-    /* if this is our post, add the score */
-    if (xs_startswith(id, snac->actor)) {
+    /* if it's a user from this same instance, add the score */
+    if (xs_startswith(id, srv_baseurl)) {
         int n_likes  = object_likes_len(id);
         int n_boosts = object_announces_len(id);
 
@@ -944,13 +945,13 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
         char *p = xs_list_get(boosts, -1);
         xs *actor_r = NULL;
 
-        if (xs_list_in(boosts, snac->md5) != -1) {
+        if (user && xs_list_in(boosts, user->md5) != -1) {
             /* we boosted this */
-            xs *es1 = encode_html(xs_dict_get(snac->config, "name"));
+            xs *es1 = encode_html(xs_dict_get(user->config, "name"));
             xs *s1 = xs_fmt(
                 "<div class=\"snac-origin\">"
                 "<a href=\"%s\">%s</a> %s</a></div>",
-                snac->actor, es1, L("boosted")
+                user->actor, es1, L("boosted")
             );
 
             s = xs_str_cat(s, s1);
@@ -978,7 +979,7 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
             /* is the parent not here? */
             char *parent = xs_dict_get(msg, "inReplyTo");
 
-            if (!xs_is_null(parent) && *parent && !timeline_here(snac, parent)) {
+            if (user && !xs_is_null(parent) && *parent && !timeline_here(user, parent)) {
                 xs *s1 = xs_fmt(
                     "<div class=\"snac-origin\">%s "
                     "<a href=\"%s\">»</a></div>\n",
@@ -1002,11 +1003,11 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
     }
 
     /* is it sensitive? */
-    if (!xs_is_null(v = xs_dict_get(msg, "sensitive")) && xs_type(v) == XSTYPE_TRUE) {
+    if (user && xs_type(xs_dict_get(msg, "sensitive")) == XSTYPE_TRUE) {
         if (xs_is_null(v = xs_dict_get(msg, "summary")) || *v == '\0')
             v = "...";
         /* only show it when not in the public timeline and the config setting is "open" */
-        char *cw = xs_dict_get(snac->config, "cw");
+        char *cw = xs_dict_get(user->config, "cw");
         if (xs_is_null(cw) || local)
             cw = "";
         xs *es1 = encode_html(v);
@@ -1085,16 +1086,16 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
             if (xs_dict_get(msg, "closed"))
                 closed = 2;
             else
-            if (xs_startswith(id, snac->actor))
+            if (user && xs_startswith(id, user->actor))
                 closed = 1; /* we questioned; closed for us */
             else
-            if (was_question_voted(snac, id))
+            if (user && was_question_voted(user, id))
                 closed = 1; /* we already voted; closed for us */
 
             /* get the appropriate list of options */
             p = oo != NULL ? oo : ao;
 
-            if (closed) {
+            if (closed || user == NULL) {
                 /* closed poll */
                 c = xs_str_cat(c, "<table class=\"snac-poll-result\">\n");
 
@@ -1120,7 +1121,7 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
                                 "method=\"post\" action=\"%s/admin/vote\">\n"
                                 "<input type=\"hidden\" name=\"actor\" value= \"%s\">\n"
                                 "<input type=\"hidden\" name=\"irt\" value=\"%s\">\n",
-                    snac->actor, actor, id);
+                    user->actor, actor, id);
 
                 while (xs_list_iter(&p, &v)) {
                     const char *name = xs_dict_get(v, "name");
@@ -1276,8 +1277,8 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
 
     /** controls **/
 
-    if (!local)
-        s = html_entry_controls(snac, s, msg, md5);
+    if (!local && user)
+        s = html_entry_controls(user, s, msg, md5);
 
     /** children **/
     if (!hide_children) {
@@ -1306,7 +1307,11 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
             p = children;
             while (xs_list_iter(&p, &cmd5)) {
                 xs *chd = NULL;
-                timeline_get_by_md5(snac, cmd5, &chd);
+
+                if (user)
+                    timeline_get_by_md5(user, cmd5, &chd);
+                else
+                    object_get_by_md5(cmd5, &chd);
 
                 if (older_open && left <= 3) {
                     ss = xs_str_cat(ss, "</details>\n");
@@ -1314,11 +1319,11 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
                 }
 
                 if (chd != NULL && xs_is_null(xs_dict_get(chd, "name"))) {
-                    ss = html_entry(snac, ss, chd, local, level + 1, cmd5, hide_children);
+                    ss = html_entry(user, ss, chd, local, level + 1, cmd5, hide_children);
                     n_children++;
                 }
                 else
-                    snac_debug(snac, 2, xs_fmt("cannot read from timeline child %s", cmd5));
+                    srv_debug(2, xs_fmt("cannot read child %s", cmd5));
 
                 left--;
             }
