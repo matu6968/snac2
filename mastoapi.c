@@ -1458,6 +1458,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         ins = xs_dict_append(ins, "languages", l1);
 
         xs *d1 = xs_dict_new();
+        xs *wss = xs_replace(srv_baseurl, "https:", "wss:");
+        d1 = xs_dict_append(d1, "streaming_api", wss);
         ins = xs_dict_append(ins, "urls", d1);
 
         xs *z = xs_number_new(0);
@@ -1473,16 +1475,26 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         xs *cfg = xs_dict_new();
 
         {
-            xs *d11 = xs_dict_new();
-            xs *mc  = xs_number_new(100000);
-            xs *mm  = xs_number_new(8);
-            xs *cr  = xs_number_new(32);
-
-            d11 = xs_dict_append(d11, "max_characters", mc);
-            d11 = xs_dict_append(d11, "max_media_attachments", mm);
-            d11 = xs_dict_append(d11, "characters_reserved_per_url", cr);
-
+            xs *d11 = xs_json_loads("{\"characters_reserved_per_url\":32,"
+                "\"max_characters\":100000,\"max_media_attachments\":8}");
             cfg = xs_dict_append(cfg, "statuses", d11);
+
+            xs *d12 = xs_json_loads("{\"max_featured_tags\":10}");
+            cfg = xs_dict_append(cfg, "accounts", d12);
+
+            xs *d13 = xs_json_loads("{\"image_matrix_limit\":33177600,"
+                        "\"image_size_limit\":16777216,"
+                        "\"supported_mime_types\":[\"image/jpeg\"],"
+                        "\"video_frame_rate_limit\":120,"
+                        "\"video_matrix_limit\":8294400,"
+                        "\"video_size_limit\":103809024}"
+            );
+            cfg = xs_dict_append(cfg, "media_attachments", d13);
+
+            xs *d14 = xs_json_loads("{\"max_characters_per_option\":50,"
+                "\"max_expiration\":2629746,"
+                "\"max_options\":8,\"min_expiration\":300}");
+            cfg = xs_dict_append(cfg, "polls", d14);
         }
 
         ins = xs_dict_append(ins, "configuration", cfg);
