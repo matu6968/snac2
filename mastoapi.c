@@ -11,6 +11,7 @@
 #include "xs_glob.h"
 #include "xs_set.h"
 #include "xs_random.h"
+#include "xs_httpd.h"
 
 #include "snac.h"
 
@@ -233,6 +234,11 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
 
     if (i_ctype && xs_startswith(i_ctype, "application/json"))
         args = xs_json_loads(payload);
+    else
+    if (i_ctype && xs_startswith(i_ctype, "application/x-www-form-urlencoded") && payload) {
+        xs *upl = xs_url_dec(payload);
+        args    = xs_url_vars(upl);
+    }
     else
         args = xs_dup(xs_dict_get(req, "p_vars"));
 
@@ -954,6 +960,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             acct = xs_dict_append(acct, "url",          snac1.actor);
             acct = xs_dict_append(acct, "header",       "");
 
+            xs *src = xs_json_loads("{\"privacy\":\"public\","
+                    "\"sensitive\":false,\"fields\":[],\"note\":\"\"}");
+            acct = xs_dict_append(acct, "source", src);
+
             xs *avatar = NULL;
             char *av   = xs_dict_get(snac1.config, "avatar");
 
@@ -1458,8 +1468,6 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         ins = xs_dict_append(ins, "languages", l1);
 
         xs *d1 = xs_dict_new();
-        xs *wss = xs_replace(srv_baseurl, "https:", "wss:");
-        d1 = xs_dict_append(d1, "streaming_api", wss);
         ins = xs_dict_append(ins, "urls", d1);
 
         xs *z = xs_number_new(0);

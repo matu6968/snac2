@@ -153,7 +153,7 @@ void httpd_connection(FILE *f)
     d_char *body = NULL;
     int b_size   = 0;
     char *ctype  = NULL;
-    xs *headers  = NULL;
+    xs *headers  = xs_dict_new();
     xs *q_path   = NULL;
     xs *payload  = NULL;
     xs *etag     = NULL;
@@ -232,9 +232,10 @@ void httpd_connection(FILE *f)
 #endif
 
     }
-
-    /* let's go */
-    headers = xs_dict_new();
+    else
+    if (strcmp(method, "OPTIONS") == 0) {
+        status = 200;
+    }
 
     /* unattended? it's an error */
     if (status == 0) {
@@ -274,6 +275,9 @@ void httpd_connection(FILE *f)
     /* if it was a HEAD, no body will be sent */
     if (strcmp(method, "HEAD") == 0)
         body = xs_free(body);
+
+    headers = xs_dict_append(headers, "access-control-allow-origin", "*");
+    headers = xs_dict_append(headers, "access-control-allow-headers", "*");
 
     xs_httpd_response(f, status, headers, body, b_size);
 
