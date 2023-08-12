@@ -632,7 +632,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 /* converts an ActivityPub note to a Mastodon status */
 {
     xs *actor = NULL;
-    actor_get(snac, xs_dict_get(msg, "attributedTo"), &actor);
+    actor_get(xs_dict_get(msg, "attributedTo"), &actor);
 
     /* if the author is not here, discard */
     if (actor == NULL)
@@ -1310,7 +1310,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 xs *actor = NULL;
                 xs *entry = NULL;
 
-                if (!valid_status(actor_get(&snac1, xs_dict_get(noti, "actor"), &actor)))
+                if (!valid_status(actor_get(xs_dict_get(noti, "actor"), &actor)))
                     continue;
 
                 if (objid != NULL && !valid_status(object_get(objid, &entry)))

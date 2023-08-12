@@ -188,7 +188,7 @@ xs_str *html_actor_icon(xs_str *os, char *actor,
 }
 
 
-xs_str *html_msg_icon(snac *snac, xs_str *os, const xs_dict *msg)
+xs_str *html_msg_icon(xs_str *os, const xs_dict *msg)
 {
     char *actor_id;
     xs *actor = NULL;
@@ -196,7 +196,7 @@ xs_str *html_msg_icon(snac *snac, xs_str *os, const xs_dict *msg)
     if ((actor_id = xs_dict_get(msg, "attributedTo")) == NULL)
         actor_id = xs_dict_get(msg, "actor");
 
-    if (actor_id && valid_status(actor_get(snac, actor_id, &actor))) {
+    if (actor_id && valid_status(actor_get(actor_id, &actor))) {
         char *date  = NULL;
         char *udate = NULL;
         char *url   = NULL;
@@ -870,7 +870,7 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
         xs *s1 = xs_fmt("<div class=\"snac-origin\">%s</div>\n", L("follows you"));
         s = xs_str_cat(s, s1);
 
-        s = html_msg_icon(snac, s, msg);
+        s = html_msg_icon(s, msg);
 
         s = xs_str_cat(s, "</div>\n</div>\n");
 
@@ -894,7 +894,7 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
     if (is_muted(snac, actor))
         return os;
 
-    if (strcmp(actor, snac->actor) != 0 && !valid_status(actor_get(snac, actor, NULL)))
+    if (strcmp(actor, snac->actor) != 0 && !valid_status(actor_get(actor, NULL)))
         return os;
 
     if (level == 0)
@@ -990,7 +990,7 @@ xs_str *html_entry(snac *snac, xs_str *os, const xs_dict *msg, int local,
         }
     }
 
-    s = html_msg_icon(snac, s, msg);
+    s = html_msg_icon(s, msg);
 
     /* add the content */
     s = xs_str_cat(s, "</div>\n<div class=\"e-content snac-content\">\n"); /** **/
@@ -1450,7 +1450,7 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
         xs *md5 = xs_md5_hex(actor_id, strlen(actor_id));
         xs *actor = NULL;
 
-        if (valid_status(actor_get(snac, actor_id, &actor))) {
+        if (valid_status(actor_get(actor_id, &actor))) {
             s = xs_str_cat(s, "<div class=\"snac-post\">\n<div class=\"snac-post-header\">\n");
 
             s = html_actor_icon(s, actor, xs_dict_get(actor, "published"), NULL, NULL, 0);
@@ -1608,7 +1608,7 @@ xs_str *html_notifications(snac *snac)
         const char *actor_id = xs_dict_get(noti, "actor");
         xs *actor = NULL;
 
-        if (!valid_status(actor_get(snac, actor_id, &actor)))
+        if (!valid_status(actor_get(actor_id, &actor)))
             continue;
 
         xs *a_name = actor_name(actor);

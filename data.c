@@ -1439,19 +1439,11 @@ int actor_add(const char *actor, xs_dict *msg)
 }
 
 
-int actor_get(snac *snac1, const char *actor, xs_dict **data)
+int actor_get(const char *actor, xs_dict **data)
 /* returns an already downloaded actor */
 {
     int status = 200;
     xs_dict *d = NULL;
-
-    if (strcmp(actor, snac1->actor) == 0) {
-        /* this actor */
-        if (data)
-            *data = msg_actor(snac1);
-
-        return status;
-    }
 
     if (xs_startswith(actor, srv_baseurl)) {
         /* it's a (possible) local user */

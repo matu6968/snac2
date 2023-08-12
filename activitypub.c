@@ -117,7 +117,7 @@ int actor_request(snac *snac, const char *actor, xs_dict **data)
         *data = NULL;
 
     /* get from disk first */
-    status = actor_get(snac, actor, data);
+    status = actor_get(actor, data);
 
     if (status != 200) {
         /* actor data non-existent or stale: get from the net */

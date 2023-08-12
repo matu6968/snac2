@@ -141,7 +141,7 @@ void hide(snac *snac, const char *id);
 int is_hidden(snac *snac, const char *id);
 
 int actor_add(const char *actor, xs_dict *msg);
-int actor_get(snac *snac, const char *actor, xs_dict **data);
+int actor_get(const char *actor, xs_dict **data);
 
 int static_get(snac *snac, const char *id, xs_val **data, int *size, const char *inm, xs_str **etag);
 void static_put(snac *snac, const char *id, const char *data, int size);
