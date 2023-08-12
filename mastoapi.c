@@ -973,6 +973,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 avatar = xs_dup(av);
 
             acct = xs_dict_append(acct, "avatar", avatar);
+            acct = xs_dict_append(acct, "avatar_static", avatar);
 
             *body  = xs_json_dumps(acct, 4);
             *ctype = "application/json";
