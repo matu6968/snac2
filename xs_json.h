@@ -279,6 +279,9 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
                 v = xs_append_m(v, &cc, 1);
             }
         }
+
+        if (c == EOF)
+            *t = JS_ERROR;
     }
     else
     if (c == '-' || (c >= '0' && c <= '9') || c == '.') {
@@ -313,6 +316,9 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
         }
     }
 
+    if (*t == JS_ERROR)
+        v = xs_free(v);
+
     return v;
 }
 
@@ -320,71 +326,47 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
 static xs_list *_xs_json_load_array(FILE *f, js_type *t);
 static xs_dict *_xs_json_load_object(FILE *f, js_type *t);
 
-static xs_val *_xs_json_load_value(FILE *f, js_type *t, xs_val *v)
-/* parses a JSON value */
-{
-    if (*t == JS_OBRACK)
-        v = _xs_json_load_array(f, t);
-    else
-    if (*t == JS_OCURLY)
-        v = _xs_json_load_object(f, t);
-
-    if (*t >= JS_VALUE)
-        *t = JS_VALUE;
-    else
-        *t = JS_ERROR;
-
-    return v;
-}
-
-
 static xs_list *_xs_json_load_array(FILE *f, js_type *t)
 /* parses a JSON array */
 {
-    xs *v;
-    xs_list *l;
-    js_type tt;
-
-    l = xs_list_new();
+    xs_list *l = xs_list_new();
+    int c = 0;
 
     *t = JS_INCOMPLETE;
 
-    v = _xs_json_load_lexer(f, &tt);
+    while (*t == JS_INCOMPLETE) {
+        js_type tt;
+        xs *v = _xs_json_load_lexer(f, &tt);
 
-    if (tt == JS_CBRACK)
-        *t = JS_ARRAY;
-    else {
-        v = _xs_json_load_value(f, &tt, v);
+        if (tt == JS_ERROR)
+            break;
 
-        if (tt == JS_VALUE) {
-            l = xs_list_append(l, v);
-
-            while (*t == JS_INCOMPLETE) {
-                xs_free(_xs_json_load_lexer(f, &tt));
-
-                if (tt == JS_CBRACK)
-                    *t = JS_ARRAY;
-                else
-                if (tt == JS_COMMA) {
-                    xs *v2;
-
-                    v2 = _xs_json_load_lexer(f, &tt);
-                    v2 = _xs_json_load_value(f, &tt, v2);
-
-                    if (tt == JS_VALUE)
-                        l = xs_list_append(l, v2);
-                    else
-                        *t = JS_ERROR;
-                }
-                else
-                    *t = JS_ERROR;
-            }
+        if (tt == JS_CBRACK) {
+            *t = JS_ARRAY;
+            break;
         }
+
+        if (c > 0) {
+            if (tt == JS_COMMA)
+                v = _xs_json_load_lexer(f, &tt);
+            else
+                break;
+        }
+
+        if (tt == JS_OBRACK)
+            v = _xs_json_load_array(f, &tt);
         else
-            *t = JS_ERROR;
+        if (tt == JS_OCURLY)
+            v = _xs_json_load_object(f, &tt);
+
+        if (tt < JS_VALUE)
+            break;
+
+        l = xs_list_append(l, v);
+        c++;
     }
 
-    if (*t == JS_ERROR)
+    if (*t == JS_INCOMPLETE || *t == JS_ERROR)
         l = xs_free(l);
 
     return l;
@@ -394,74 +376,57 @@ static xs_list *_xs_json_load_array(FILE *f, js_type *t)
 static xs_dict *_xs_json_load_object(FILE *f, js_type *t)
 /* parses a JSON object */
 {
-    xs *k1;
-    xs_dict *d;
-    js_type tt;
+    xs_dict *d = xs_dict_new();
+    int c = 0;
 
     d = xs_dict_new();
 
     *t = JS_INCOMPLETE;
 
-    k1 = _xs_json_load_lexer(f, &tt);
+    while (*t == JS_INCOMPLETE) {
+        js_type tt;
+        xs *k = _xs_json_load_lexer(f, &tt);
+        xs *v = NULL;
 
-    if (tt == JS_CCURLY)
-        *t = JS_OBJECT;
-    else
-    if (tt == JS_STRING) {
+        if (tt == JS_ERROR)
+            break;
+
+        if (tt == JS_CCURLY) {
+            *t = JS_OBJECT;
+            break;
+        }
+
+        if (c > 0) {
+            if (tt == JS_COMMA)
+                k = _xs_json_load_lexer(f, &tt);
+            else
+                break;
+        }
+
+        if (tt != JS_STRING)
+            break;
+
         xs_free(_xs_json_load_lexer(f, &tt));
 
-        if (tt == JS_COLON) {
-            xs *v1;
+        if (tt != JS_COLON)
+            break;
 
-            v1 = _xs_json_load_lexer(f, &tt);
-            v1 = _xs_json_load_value(f, &tt, v1);
+        v = _xs_json_load_lexer(f, &tt);
 
-            if (tt == JS_VALUE) {
-                d = xs_dict_append(d, k1, v1);
-
-                while (*t == JS_INCOMPLETE) {
-                    xs_free(_xs_json_load_lexer(f, &tt));
-
-                    if (tt == JS_CCURLY)
-                        *t = JS_OBJECT;
-                    else
-                    if (tt == JS_COMMA) {
-                        xs *k = _xs_json_load_lexer(f, &tt);
-
-                        if (tt == JS_STRING) {
-                            xs_free(_xs_json_load_lexer(f, &tt));
-
-                            if (tt == JS_COLON) {
-                                xs *v;
-
-                                v = _xs_json_load_lexer(f, &tt);
-                                v = _xs_json_load_value(f, &tt, v);
-
-                                if (tt == JS_VALUE)
-                                    d = xs_dict_append(d, k, v);
-                                else
-                                    *t = JS_ERROR;
-                            }
-                            else
-                                *t = JS_ERROR;
-                        }
-                        else
-                            *t = JS_ERROR;
-                    }
-                    else
-                        *t = JS_ERROR;
-                }
-            }
-            else
-                *t = JS_ERROR;
-        }
+        if (tt == JS_OBRACK)
+            v = _xs_json_load_array(f, &tt);
         else
-            *t = JS_ERROR;
-    }
-    else
-        *t = JS_ERROR;
+        if (tt == JS_OCURLY)
+            v = _xs_json_load_object(f, &tt);
 
-    if (*t == JS_ERROR)
+        if (tt < JS_VALUE)
+            break;
+
+        d = xs_dict_append(d, k, v);
+        c++;
+    }
+
+    if (*t == JS_INCOMPLETE || *t == JS_ERROR)
         d = xs_free(d);
 
     return d;
@@ -496,8 +461,6 @@ xs_val *xs_json_load(FILE *f)
     else
     if (t == JS_OCURLY)
         v = _xs_json_load_object(f, &t);
-    else
-        t = JS_ERROR;
 
     return v;
 }
