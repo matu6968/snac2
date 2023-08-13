@@ -1013,7 +1013,7 @@ xs_dict *xs_dict_set(xs_dict *dict, const xs_str *key, const xs_val *data)
     dict = xs_dict_del(dict, key);
 
     /* add the data */
-    dict = xs_dict_prepend(dict, key, data);
+    dict = xs_dict_append(dict, key, data);
 
     return dict;
 }
