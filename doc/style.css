@@ -21,5 +21,7 @@ pre { overflow-x: scroll; }
 .snac-btn-unfollow { float: right; margin-left: 0.5em }
 .snac-btn-hide { float: right; margin-left: 0.5em }
 .snac-btn-delete { float: right; margin-left: 0.5em }
+.snac-btn-limit { float: right; margin-left: 0.5em }
+.snac-btn-unlimit { float: right; margin-left: 0.5em }
 .snac-footer { margin-top: 2em; font-size: 75% }
 .snac-poll-result { margin-left: auto; margin-right: auto; }

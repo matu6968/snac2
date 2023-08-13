@@ -54,6 +54,8 @@ const char *default_css =
     ".snac-btn-unfollow { float: right; margin-left: 0.5em }\n"
     ".snac-btn-hide { float: right; margin-left: 0.5em }\n"
     ".snac-btn-delete { float: right; margin-left: 0.5em }\n"
+    ".snac-btn-limit { float: right; margin-left: 0.5em }\n"
+    ".snac-btn-unlimit { float: right; margin-left: 0.5em }\n"
     ".snac-footer { margin-top: 2em; font-size: 75% }\n"
     ".snac-poll-result { margin-left: auto; margin-right: auto; }\n"
 ;
