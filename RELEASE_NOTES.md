@@ -6,6 +6,8 @@ Announces (boosts) can now be disabled/reenabled on a per-people basis (to limit
 
 Added hints to web UI buttons.
 
+Mastodon API: some minor fixes to allow the semaphore.social web client to work.
+
 Fixed miscalculation of the `votersCount` field in multiple-choice polls.
 
 ## 2.39
