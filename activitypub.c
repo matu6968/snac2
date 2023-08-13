@@ -1562,6 +1562,11 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
             else
                 snac_log(snac, xs_fmt("spurious follow accept from %s", actor));
         }
+        else
+        if (strcmp(utype, "Create") == 0) {
+            /* some implementations send Create confirmations, go figure */
+            snac_debug(snac, 1, xs_dup("ignored 'Accept' + 'Create'"));
+        }
         else {
             srv_archive_error("accept", "ignored Accept", req, msg);
             snac_debug(snac, 1, xs_fmt("ignored 'Accept' for object type '%s'", utype));
