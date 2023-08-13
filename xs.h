@@ -137,6 +137,10 @@ unsigned int xs_hash_func(const char *data, int size);
 extern xs_val xs_stock_null[];
 extern xs_val xs_stock_true[];
 extern xs_val xs_stock_false[];
+extern xs_val xs_stock_0[];
+extern xs_val xs_stock_1[];
+extern xs_val xs_stock_list[];
+extern xs_val xs_stock_dict[];
 
 #define xs_return(v) xs_val *__r = v; v = NULL; return __r
 
@@ -146,7 +150,10 @@ extern xs_val xs_stock_false[];
 xs_val xs_stock_null[]  = { XSTYPE_NULL };
 xs_val xs_stock_true[]  = { XSTYPE_TRUE };
 xs_val xs_stock_false[] = { XSTYPE_FALSE };
-
+xs_val xs_stock_0[]     = { XSTYPE_NUMBER, '0', '\0' };
+xs_val xs_stock_1[]     = { XSTYPE_NUMBER, '1', '\0' };
+xs_val xs_stock_list[]  = { XSTYPE_LIST, 0, 0, 5, XSTYPE_EOM };
+xs_val xs_stock_dict[]  = { XSTYPE_DICT, 0, 0, 5, XSTYPE_EOM };
 
 void *_xs_realloc(void *ptr, size_t size, const char *file, int line, const char *func)
 {

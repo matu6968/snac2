@@ -1462,19 +1462,16 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
         ins = xs_dict_append(ins, "email", v);
 
-        xs *l1 = xs_list_new();
-        ins = xs_dict_append(ins, "rules", l1);
+        ins = xs_dict_append(ins, "rules", xs_stock_list);
 
-        l1 = xs_list_append(l1, "en");
+        xs *l1 = xs_list_append(xs_list_new(), "en");
         ins = xs_dict_append(ins, "languages", l1);
 
-        xs *d1 = xs_dict_new();
-        ins = xs_dict_append(ins, "urls", d1);
+        ins = xs_dict_append(ins, "urls", xs_stock_dict);
 
-        xs *z = xs_number_new(0);
-        xs *d2 = xs_dict_append(xs_dict_new(), "user_count", z);
-        d2 = xs_dict_append(d2, "status_count", z);
-        d2 = xs_dict_append(d2, "domain_count", z);
+        xs *d2 = xs_dict_append(xs_dict_new(), "user_count", xs_stock_0);
+        d2 = xs_dict_append(d2, "status_count", xs_stock_0);
+        d2 = xs_dict_append(d2, "domain_count", xs_stock_0);
         ins = xs_dict_append(ins, "stats", d2);
 
         ins = xs_dict_append(ins, "registrations",     xs_stock_false);
