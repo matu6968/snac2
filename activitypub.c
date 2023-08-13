@@ -1412,6 +1412,12 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     if (xs_is_null(type))
         type = "Note";
 
+    /* reject uninteresting messages right now */
+    if (strcmp(type, "Add") == 0) {
+        snac_debug(snac, 0, xs_fmt("Ignored message of type '%s'", type));
+        return 1;
+    }
+
     if (xs_is_null(actor)) {
         snac_debug(snac, 0, xs_fmt("malformed message"));
         return 1;
@@ -2084,9 +2090,9 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
 
     /* decode the message */
     xs *msg = xs_json_loads(payload);
-    const char *id;
+    const char *id = xs_dict_get(msg, "id");
 
-    if (msg == NULL || xs_is_null(id = xs_dict_get(msg, "id"))) {
+    if (msg == NULL) {
         srv_log(xs_fmt("activitypub_post_handler JSON error %s", q_path));
 
         srv_archive_error("activitypub_post_handler", "JSON error", req, payload);
@@ -2096,7 +2102,7 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
         return 400;
     }
 
-    if (is_instance_blocked(id)) {
+    if (id && is_instance_blocked(id)) {
         srv_debug(1, xs_fmt("full instance block for %s", id));
 
         *body  = xs_str_new("blocked");
@@ -2106,7 +2112,6 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
 
     /* get the user and path */
     xs *l = xs_split_n(q_path, "/", 2);
-    char *uid;
 
     if (xs_list_len(l) != 3 || strcmp(xs_list_get(l, 2), "inbox") != 0) {
         /* strange q_path */
@@ -2114,7 +2119,7 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
         return 404;
     }
 
-    uid = xs_list_get(l, 1);
+    const char *uid = xs_list_get(l, 1);
     if (!user_open(&snac, uid)) {
         /* invalid user */
         srv_debug(1, xs_fmt("activitypub_post_handler bad user %s", uid));
