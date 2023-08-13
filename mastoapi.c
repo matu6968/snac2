@@ -992,6 +992,9 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             xs *res         = xs_list_new();
             const char *md5 = xs_dict_get(args, "id[]");
 
+            if (xs_is_null(md5))
+                md5 = xs_dict_get(args, "id");
+
             if (!xs_is_null(md5)) {
                 if (xs_type(md5) == XSTYPE_LIST)
                     md5 = xs_list_get(md5, 0);
@@ -1792,6 +1795,9 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             if (xs_is_null(media_ids))
                 media_ids = xs_dict_get(args, "media_ids[]");
 
+            if (xs_is_null(media_ids))
+                media_ids = xs_dict_get(args, "media_ids");
+
             if (xs_is_null(visibility))
                 visibility = "public";
 
@@ -2157,6 +2163,9 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                     else
                     if (strcmp(op, "votes") == 0) {
                         xs_list *choices = xs_dict_get(args, "choices[]");
+
+                        if (xs_is_null(choices))
+                            choices = xs_dict_get(args, "choices");
 
                         if (xs_type(choices) == XSTYPE_LIST) {
                             xs_str *v;
