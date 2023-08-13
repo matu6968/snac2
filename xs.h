@@ -71,9 +71,9 @@ xs_str *xs_replace_in(xs_str *str, const char *sfrom, const char *sto, int times
 #define xs_replace_n(str, sfrom, sto, times) xs_replace_in(xs_dup(str), sfrom, sto, times)
 xs_str *xs_fmt(const char *fmt, ...);
 int xs_str_in(const char *haystack, const char *needle);
-int _xs_startsorends(const char *str, const char *xfix, int ends);
-#define xs_startswith(str, prefix) _xs_startsorends(str, prefix, 0)
-#define xs_endswith(str, postfix) _xs_startsorends(str, postfix, 1)
+int xs_starts_and_ends(const char *prefix, const char *str, const char *suffix);
+#define xs_startswith(str, prefix) xs_starts_and_ends(prefix, str, NULL)
+#define xs_endswith(str, suffix) xs_starts_and_ends(NULL, str, suffix)
 xs_str *xs_crop_i(xs_str *str, int start, int end);
 xs_str *xs_strip_chars_i(xs_str *str, const char *chars);
 #define xs_strip_i(str) xs_strip_chars_i(str, " \r\n\t\v\f")
@@ -436,7 +436,7 @@ xs_str *xs_str_wrap_i(const char *prefix, xs_str *str, const char *suffix)
         str = xs_insert_m(str, 0, prefix, strlen(prefix));
 
     if (suffix)
-        str = xs_insert_m(str, xs_size(str) - 1, suffix, xs_size(suffix));
+        str = xs_insert_m(str, strlen(str), suffix, strlen(suffix));
 
     return str;
 }
@@ -455,8 +455,11 @@ xs_str *xs_replace_in(xs_str *str, const char *sfrom, const char *sto, int times
     while (times > 0 && (ss = strstr(str + offset, sfrom)) != NULL) {
         int n_offset = ss - str;
 
-        str = xs_collapse(str, n_offset, sfsz);
-        str = xs_expand(str, n_offset, stsz);
+        if (sfsz != stsz) {
+            str = xs_collapse(str, n_offset, sfsz);
+            str = xs_expand(str, n_offset, stsz);
+        }
+
         memcpy(str + n_offset, sto, stsz);
 
         offset = n_offset + stsz;
@@ -504,13 +507,23 @@ int xs_str_in(const char *haystack, const char *needle)
 }
 
 
-int _xs_startsorends(const char *str, const char *xfix, int ends)
-/* returns true if str starts or ends with xfix */
+int xs_starts_and_ends(const char *prefix, const char *str, const char *suffix)
+/* returns true if str starts with prefix and ends with suffix */
 {
-    int ssz = strlen(str);
-    int psz = strlen(xfix);
+    int sz = strlen(str);
+    int psz = prefix ? strlen(prefix) : 0;
+    int ssz = suffix ? strlen(suffix) : 0;
 
-    return !!(ssz >= psz && memcmp(xfix, str + (ends ? ssz - psz : 0), psz) == 0);
+    if (sz < psz || sz < ssz)
+        return 0;
+
+    if (prefix && memcmp(str, prefix, psz) != 0)
+        return 0;
+
+    if (suffix && memcmp(str + sz - ssz, suffix, ssz) != 0)
+        return 0;
+
+    return 1;
 }
 
 
@@ -576,15 +589,10 @@ xs_str *xs_tolower_i(xs_str *str)
 xs_list *xs_list_new(void)
 /* creates a new list */
 {
-    xs_list *list;
-
-    list = xs_realloc(NULL, _xs_blk_size(5));
-    list[0] = XSTYPE_LIST;
-    list[4] = XSTYPE_EOM;
-
-    _xs_put_24b(list + 1, 5);
-
-    return list;
+    return memcpy(
+        xs_realloc(NULL, _xs_blk_size(sizeof(xs_stock_list))),
+        xs_stock_list, sizeof(xs_stock_list)
+    );
 }
 
 
@@ -593,10 +601,10 @@ xs_list *_xs_list_write_litem(xs_list *list, int offset, const char *mem, int ds
 {
     XS_ASSERT_TYPE(list, XSTYPE_LIST);
 
-    char c = XSTYPE_LITEM;
+    list = xs_expand(list, offset, dsz + 1);
 
-    list = xs_insert_m(list, offset,     &c,  1);
-    list = xs_insert_m(list, offset + 1, mem, dsz);
+    list[offset] = XSTYPE_LITEM;
+    memcpy(list + offset + 1, mem, dsz);
 
     return list;
 }
@@ -882,15 +890,10 @@ xs_list *xs_list_cat(xs_list *l1, const xs_list *l2)
 xs_dict *xs_dict_new(void)
 /* creates a new dict */
 {
-    xs_dict *dict;
-
-    dict = xs_realloc(NULL, _xs_blk_size(5));
-    dict[0] = XSTYPE_DICT;
-    dict[4] = XSTYPE_EOM;
-
-    _xs_put_24b(dict + 1, 5);
-
-    return dict;
+    return memcpy(
+        xs_realloc(NULL, _xs_blk_size(sizeof(xs_stock_dict))),
+        xs_stock_dict, sizeof(xs_stock_dict)
+    );
 }
 
 
