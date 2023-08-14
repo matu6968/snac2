@@ -36,7 +36,7 @@ const char *nodeinfo_2_0_template = ""
     "\"localPosts\":%d},"
     "\"openRegistrations\":false,\"metadata\":{}}";
 
-d_char *nodeinfo_2_0(void)
+xs_str *nodeinfo_2_0(void)
 /* builds a nodeinfo json object */
 {
     xs *users   = user_list();
@@ -47,7 +47,64 @@ d_char *nodeinfo_2_0(void)
 }
 
 
-int server_get_handler(xs_dict *req, char *q_path,
+static xs_str *greeting_html(void)
+/* processes and returns greeting.html */
+{
+    /* try to open greeting.html */
+    xs *fn = xs_fmt("%s/greeting.html", srv_basedir);
+    FILE *f;
+    xs_str *s = NULL;
+
+    if ((f = fopen(fn, "r")) != NULL) {
+        s = xs_readall(f);
+        fclose(f);
+
+        /* replace %host% */
+        s = xs_replace_i(s, "%host%", xs_dict_get(srv_config, "host"));
+
+        const char *adm_email = xs_dict_get(srv_config, "admin_email");
+        if (xs_is_null(adm_email) || *adm_email == '\0')
+            adm_email = "the administrator of this instance";
+
+        /* replace %admin_email */
+        s = xs_replace_i(s, "%admin_email%", adm_email);
+
+        /* does it have a %userlist% mark? */
+        if (xs_str_in(s, "%userlist%") != -1) {
+            const char *host = xs_dict_get(srv_config, "host");
+            xs *list = user_list();
+            xs_list *p;
+            xs_str *uid;
+            xs *ul = xs_str_new("<ul class=\"snac-user-list\">\n");
+
+            p = list;
+            while (xs_list_iter(&p, &uid)) {
+                snac user;
+
+                if (user_open(&user, uid)) {
+                    xs *uname = encode_html(xs_dict_get(user.config, "name"));
+
+                    xs *u = xs_fmt(
+                        "<li><a href=\"%s\">@%s@%s (%s)</a></li>\n",
+                            user.actor, uid, host, uname);
+
+                    ul = xs_str_cat(ul, u);
+
+                    user_free(&user);
+                }
+            }
+
+            ul = xs_str_cat(ul, "</ul>\n");
+
+            s = xs_replace_i(s, "%userlist%", ul);
+        }
+    }
+
+    return s;
+}
+
+
+int server_get_handler(xs_dict *req, const char *q_path,
                        char **body, int *b_size, char **ctype)
 /* basic server services */
 {
@@ -57,56 +114,8 @@ int server_get_handler(xs_dict *req, char *q_path,
 
     /* is it the server root? */
     if (*q_path == '\0') {
-        /* try to open greeting.html */
-        xs *fn = xs_fmt("%s/greeting.html", srv_basedir);
-        FILE *f;
-
-        if ((f = fopen(fn, "r")) != NULL) {
-            d_char *s = xs_readall(f);
-            fclose(f);
-
+        if ((*body = greeting_html()) != NULL)
             status = 200;
-
-            /* replace %host% */
-            s = xs_replace_i(s, "%host%", xs_dict_get(srv_config, "host"));
-
-            const char *adm_email = xs_dict_get(srv_config, "admin_email");
-            if (xs_is_null(adm_email) || *adm_email == '\0')
-                adm_email = "the administrator of this instance";
-
-            /* replace %admin_email */
-            s = xs_replace_i(s, "%admin_email%", adm_email);
-
-            /* does it have a %userlist% mark? */
-            if (xs_str_in(s, "%userlist%") != -1) {
-                char *host = xs_dict_get(srv_config, "host");
-                xs *list = user_list();
-                char *p, *uid;
-                xs *ul = xs_str_new("<ul class=\"snac-user-list\">\n");
-
-                p = list;
-                while (xs_list_iter(&p, &uid)) {
-                    snac snac;
-
-                    if (user_open(&snac, uid)) {
-                        xs *u = xs_fmt(
-                            "<li><a href=\"%s\">@%s@%s (%s)</a></li>\n",
-                                snac.actor, uid, host,
-                                xs_dict_get(snac.config, "name"));
-
-                        ul = xs_str_cat(ul, u);
-
-                        user_free(&snac);
-                    }
-                }
-
-                ul = xs_str_cat(ul, "</ul>\n");
-
-                s = xs_replace_i(s, "%userlist%", ul);
-            }
-
-            *body = s;
-        }
     }
     else
     if (strcmp(q_path, "/susie.png") == 0 || strcmp(q_path, "/favicon.ico") == 0 ) {
@@ -150,7 +159,7 @@ void httpd_connection(FILE *f)
     xs *req;
     char *method;
     int status   = 0;
-    d_char *body = NULL;
+    xs_str *body = NULL;
     int b_size   = 0;
     char *ctype  = NULL;
     xs *headers  = xs_dict_new();

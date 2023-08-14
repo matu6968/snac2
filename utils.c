@@ -13,7 +13,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
-const char *default_srv_config = "{"
+static const char *default_srv_config = "{"
     "\"host\":                 \"\","
     "\"prefix\":               \"\","
     "\"address\":              \"127.0.0.1\","
@@ -30,7 +30,7 @@ const char *default_srv_config = "{"
     "\"admin_account\":        \"\""
     "}";
 
-const char *default_css =
+static const char *default_css =
     "body { max-width: 48em; margin: auto; line-height: 1.5; padding: 0.8em; word-wrap: break-word; }\n"
     "pre { overflow-x: scroll; }\n"
     ".snac-embedded-video, img { max-width: 100% }\n"
@@ -60,7 +60,7 @@ const char *default_css =
     ".snac-poll-result { margin-left: auto; margin-right: auto; }\n"
 ;
 
-const char *greeting_html =
+static const char *greeting_html =
     "<!DOCTYPE html>\n"
     "<html><head>\n"
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n"
