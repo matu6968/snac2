@@ -4,6 +4,8 @@
 
 Announces (boosts) can now be disabled/reenabled on a per-people basis (to limit those boost-trigger-happy friends from flooding your timeline). This is operated from the people page.
 
+It's now possible to show an instance timeline instead of the classic greeting static page at the base URL. This can be enabled by setting the `show_instance_timeline` field to `true` in the server configuration file. Other metadata fields can be set to add information to this page; please see `snac(8)` (the Administrator manual page) for details.
+
 Added hints to web UI buttons.
 
 Mastodon API: some minor fixes to allow the semaphore.social web client to work.
