@@ -556,6 +556,8 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
 
         "<p>%s: <input type=\"file\" name=\"avatar_file\"></p>\n"
 
+        "<p>%s: <input type=\"file\" name=\"header_file\"></p>\n"
+
         "<p>%s:<br>\n"
         "<textarea name=\"bio\" cols=\"40\" rows=\"4\" placeholder=\"Write about yourself here...\">%s</textarea></p>\n"
 
@@ -667,6 +669,7 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         L("Display name"),
         es1,
         L("Avatar"),
+        L("Header image (banner)"),
         L("Bio"),
         es2,
         strcmp(cw, "open") == 0 ? "checked" : "",
@@ -2402,25 +2405,31 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         else
             snac.config = xs_dict_set(snac.config, "bot", xs_stock_false);
 
-        /* avatar upload */
-        xs_list *avatar_file = xs_dict_get(p_vars, "avatar_file");
-        if (xs_type(avatar_file) == XSTYPE_LIST) {
-            const char *fn = xs_list_get(avatar_file, 0);
+        /* uploads */
+        const char *uploads[] = { "avatar", "header", NULL };
+        int n;
+        for (n = 0; uploads[n]; n++) {
+            xs *var_name = xs_fmt("%s_file", uploads[n]);
 
-            if (fn && *fn) {
-                const char *mimetype = xs_mime_by_ext(fn);
+            xs_list *uploaded_file = xs_dict_get(p_vars, var_name);
+            if (xs_type(uploaded_file) == XSTYPE_LIST) {
+                const char *fn = xs_list_get(uploaded_file, 0);
 
-                if (xs_startswith(mimetype, "image/")) {
-                    const char *ext = strrchr(fn, '.');
-                    xs *id          = xs_fmt("avatar%s", ext);
-                    xs *url         = xs_fmt("%s/s/%s", snac.actor, id);
-                    int fo          = xs_number_get(xs_list_get(avatar_file, 1));
-                    int fs          = xs_number_get(xs_list_get(avatar_file, 2));
+                if (fn && *fn) {
+                    const char *mimetype = xs_mime_by_ext(fn);
 
-                    /* store */
-                    static_put(&snac, id, payload + fo, fs);
+                    if (xs_startswith(mimetype, "image/")) {
+                        const char *ext = strrchr(fn, '.');
+                        xs *id          = xs_fmt("%s%s", uploads[n], ext);
+                        xs *url         = xs_fmt("%s/s/%s", snac.actor, id);
+                        int fo          = xs_number_get(xs_list_get(uploaded_file, 1));
+                        int fs          = xs_number_get(xs_list_get(uploaded_file, 2));
 
-                    snac.config = xs_dict_set(snac.config, "avatar", url);
+                        /* store */
+                        static_put(&snac, id, payload + fo, fs);
+
+                        snac.config = xs_dict_set(snac.config, uploads[n], url);
+                    }
                 }
             }
         }
