@@ -2415,20 +2415,24 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
         /* avatar upload */
         xs_list *avatar_file = xs_dict_get(p_vars, "avatar_file");
-        if (!xs_is_null(avatar_file) && xs_type(avatar_file) == XSTYPE_LIST) {
-            char *fn = xs_list_get(avatar_file, 0);
+        if (xs_type(avatar_file) == XSTYPE_LIST) {
+            const char *fn = xs_list_get(avatar_file, 0);
 
-            if (*fn != '\0') {
-                char *ext = strrchr(fn, '.');
-                xs *id    = xs_fmt("avatar%s", ext);
-                xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
-                int fo    = xs_number_get(xs_list_get(avatar_file, 1));
-                int fs    = xs_number_get(xs_list_get(avatar_file, 2));
+            if (fn && *fn) {
+                const char *mimetype = xs_mime_by_ext(fn);
 
-                /* store */
-                static_put(&snac, id, payload + fo, fs);
+                if (xs_startswith(mimetype, "image/")) {
+                    const char *ext = strrchr(fn, '.');
+                    xs *id          = xs_fmt("avatar%s", ext);
+                    xs *url         = xs_fmt("%s/s/%s", snac.actor, id);
+                    int fo          = xs_number_get(xs_list_get(avatar_file, 1));
+                    int fs          = xs_number_get(xs_list_get(avatar_file, 2));
 
-                snac.config = xs_dict_set(snac.config, "avatar", url);
+                    /* store */
+                    static_put(&snac, id, payload + fo, fs);
+
+                    snac.config = xs_dict_set(snac.config, "avatar", url);
+                }
             }
         }
 
