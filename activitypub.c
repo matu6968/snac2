@@ -955,6 +955,16 @@ xs_dict *msg_actor(snac *snac)
     if (xs_type(xs_dict_get(snac->config, "bot")) == XSTYPE_TRUE)
         msg = xs_dict_set(msg, "type", "Service");
 
+    /* add the header image, if there is one defined */
+    const char *header = xs_dict_get(snac->config, "header");
+    if (!xs_is_null(header)) {
+        xs *d = xs_dict_new();
+        d = xs_dict_append(d, "type",       "Image");
+        d = xs_dict_append(d, "mediaType",  xs_mime_by_ext(header));
+        d = xs_dict_append(d, "url",        header);
+        msg = xs_dict_set(msg, "image", d);
+    }
+
     return msg;
 }
 
