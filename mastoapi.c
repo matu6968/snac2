@@ -1445,16 +1445,18 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     if (strcmp(cmd, "/v1/instance") == 0) { /** **/
         /* returns an instance object */
         xs *ins = xs_dict_new();
-        const char *host = xs_dict_get(srv_config, "host");
+        const char *host  = xs_dict_get(srv_config, "host");
+        const char *title = xs_dict_get(srv_config, "title");
+        const char *sdesc = xs_dict_get(srv_config, "short_description");
 
         ins = xs_dict_append(ins, "uri",         host);
         ins = xs_dict_append(ins, "domain",      host);
-        ins = xs_dict_append(ins, "title",       host);
+        ins = xs_dict_append(ins, "title",       title && *title ? title : host);
         ins = xs_dict_append(ins, "version",     "4.0.0 (not true; really " USER_AGENT ")");
         ins = xs_dict_append(ins, "source_url",  WHAT_IS_SNAC_URL);
         ins = xs_dict_append(ins, "description", host);
 
-        ins = xs_dict_append(ins, "short_description", host);
+        ins = xs_dict_append(ins, "short_description", sdesc && *sdesc ? sdesc : host);
 
         xs *susie = xs_fmt("%s/susie.png", srv_baseurl);
         ins = xs_dict_append(ins, "thumbnail", susie);
