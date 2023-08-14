@@ -459,8 +459,19 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
 
     /* user info */
     {
-        char *_tmpl =
-            "<div class=\"h-card snac-top-user\">\n"
+        s = xs_str_cat(s, "<div class=\"h-card snac-top-user\">\n");
+
+        if (local) {
+            const char *header = xs_dict_get(snac->config, "header");
+            if (header && *header) {
+                xs *h = encode_html(header);
+                xs *s1 = xs_fmt("<div class=\"snac-top-user-banner\" style=\"clear: both\">"
+                    "<br><img src=\"%s\"/></div>\n", h);
+                s = xs_str_cat(s, s1);
+            }
+        }
+
+        const char *_tmpl =
             "<p class=\"p-name snac-top-user-name\">%s</p>\n"
             "<p class=\"snac-top-user-id\">@%s@%s</p>\n";
 
