@@ -591,7 +591,7 @@ int object_get_by_md5(const char *md5, xs_dict **obj)
 /* returns a stored object, optionally of the requested type */
 {
     int status = 404;
-    xs *fn     = _object_fn_by_md5(md5, "object_get_my_md5");
+    xs *fn     = _object_fn_by_md5(md5, "object_get_by_md5");
     FILE *f;
 
     if ((f = fopen(fn, "r")) != NULL) {

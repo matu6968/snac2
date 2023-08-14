@@ -662,7 +662,19 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     st = xs_dict_append(st, "url",          id);
     st = xs_dict_append(st, "created_at",   xs_dict_get(msg, "published"));
     st = xs_dict_append(st, "account",      acct);
-    st = xs_dict_append(st, "content",      xs_dict_get(msg, "content"));
+
+    {
+        const char *content = xs_dict_get(msg, "content");
+        const char *name    = xs_dict_get(msg, "name");
+        xs *s1 = NULL;
+
+        if (name)
+            s1 = xs_fmt("%s<br><br>%s", name, content);
+        else
+            s1 = xs_dup(content);
+
+        st = xs_dict_append(st, "content", s1);
+    }
 
     st = xs_dict_append(st, "visibility",
         is_msg_public(msg) ? "public" : "private");
@@ -683,17 +695,34 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     xs *matt = xs_list_new();
     xs_list *att = xs_dict_get(msg, "attachment");
     xs_str *aobj;
+    xs *attr_list = NULL;
 
+    if (xs_type(att) == XSTYPE_DICT) {
+        attr_list = xs_list_new();
+        attr_list = xs_list_append(attr_list, att);
+    }
+    else
+        attr_list = xs_dup(att);
+
+    /* if it has an image, add it as an attachment */
+    xs_dict *image = xs_dict_get(msg, "image");
+    if (!xs_is_null(image))
+        attr_list = xs_list_append(attr_list, image);
+
+    att = attr_list;
     while (xs_list_iter(&att, &aobj)) {
         const char *mtype = xs_dict_get(aobj, "mediaType");
+        if (xs_is_null(mtype))
+            mtype = xs_dict_get(aobj, "type");
 
         if (!xs_is_null(mtype)) {
-            if (xs_startswith(mtype, "image/") || xs_startswith(mtype, "video/")) {
+            if (xs_startswith(mtype, "image/") || xs_startswith(mtype, "video/") ||
+                strcmp(mtype, "Image") == 0) {
                 xs *matteid = xs_fmt("%s_%d", id, xs_list_len(matt));
                 xs *matte   = xs_dict_new();
 
                 matte = xs_dict_append(matte, "id",          matteid);
-                matte = xs_dict_append(matte, "type",        *mtype == 'i' ? "image" : "video");
+                matte = xs_dict_append(matte, "type",        *mtype == 'v' ? "video" : "image");
                 matte = xs_dict_append(matte, "url",         xs_dict_get(aobj, "url"));
                 matte = xs_dict_append(matte, "preview_url", xs_dict_get(aobj, "url"));
                 matte = xs_dict_append(matte, "remote_url",  xs_dict_get(aobj, "url"));
