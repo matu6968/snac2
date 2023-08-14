@@ -937,7 +937,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
     xs *boosts = NULL;
 
     /* do not show non-public messages in the public timeline */
-    if (local && !is_msg_public(msg))
+    if ((local || !user) && !is_msg_public(msg))
         return os;
 
     /* hidden? do nothing more for this conversation */
@@ -1484,7 +1484,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local, int skip, int 
         if (!valid_status(status))
             continue;
 
-        s = html_entry(user, s, msg, local, 0, v, 0);
+        s = html_entry(user, s, msg, local, 0, v, user ? 0 : 1);
     }
 
     s = xs_str_cat(s, "</div>\n");
