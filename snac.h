@@ -271,6 +271,8 @@ int snac_init(const char *_basedir);
 int adduser(const char *uid);
 int resetpwd(snac *snac);
 
+extern const char *snac_blurb;
+
 int job_fifo_ready(void);
 void job_post(const xs_val *job, int urgent);
 void job_wait(xs_val **job);

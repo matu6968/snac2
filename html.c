@@ -273,18 +273,7 @@ xs_str *html_instance_header(xs_str *s)
     s = xs_str_cat(s, "<div class=\"snac-instance-blurb\">\n");
 
     {
-        xs *s1 = xs_fmt(
-            "<p><b>%s</b> is a "
-            "<a href=\"https:/" "/en.wikipedia.org/wiki/Fediverse\">Fediverse</a> "
-            "instance that uses the "
-            "<a href=\"https:/" "/en.wikipedia.org/wiki/ActivityPub\">ActivityPub</a> "
-            "protocol. In other words, users at this host can communicate with people "
-            "that use software like Mastodon, Pleroma, Friendica, etc. "
-            "all around the world.</p>\n"
-            "<p>This server runs the "
-            "<a href=\"" WHAT_IS_SNAC_URL "\">snac</a> software and there is no "
-            "automatic sign-up process.</p>\n",
-            host);
+        xs *s1 = xs_replace(snac_blurb, "%host%", host);
         s = xs_str_cat(s, s1);
     }
 

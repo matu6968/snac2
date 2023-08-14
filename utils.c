@@ -62,24 +62,27 @@ static const char *default_css =
     ".snac-poll-result { margin-left: auto; margin-right: auto; }\n"
 ;
 
+const char *snac_blurb =
+    "<p><b>%host%</b> is a <a href=\"https:/"
+    "/en.wikipedia.org/wiki/Fediverse\">Fediverse</a> "
+    "instance that uses the <a href=\"https:/"
+    "/en.wikipedia.org/wiki/ActivityPub\">ActivityPub</a> "
+    "protocol. In other words, users at this host can communicate with people "
+    "that use software like Mastodon, Pleroma, Friendica, etc. "
+    "all around the world.</p>\n"
+    "<p>This server runs the "
+    "<a href=\"" WHAT_IS_SNAC_URL "\">snac</a> software and there is no "
+    "automatic sign-up process.</p>\n"
+;
+
 static const char *greeting_html =
     "<!DOCTYPE html>\n"
     "<html><head>\n"
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n"
     "<title>Welcome to %host%</title>\n"
     "<body style=\"margin: auto; max-width: 50em\">\n"
-    "<h1>Welcome to %host%</h1>\n"
-    "<p>This is a <a href=\"https://en.wikipedia.org/wiki/Fediverse\">Fediverse</a> instance\n"
-    "that uses the <a href=\"https://en.wikipedia.org/wiki/ActivityPub\">ActivityPub</a> protocol.\n"
-    "In other words, users at this host can communicate with people that use software like\n"
-    "Mastodon, Pleroma, Friendica, etc. all around the world.</p>\n"
-    "\n"
-    "<p>There is no automatic sign up process for this server. If you want to be a part of\n"
-    "this community, please write an email to %admin_email%\n"
-    "and ask politely indicating what is your preferred user id (alphanumeric characters\n"
-    "only).</p>\n"
-    "\n"
-    "<p>The following users are already part of this community:</p>\n"
+    "%blurb%"
+    "<p>The following users are part of this community:</p>\n"
     "\n"
     "%userlist%\n"
     "\n"
@@ -180,7 +183,8 @@ int snac_init(const char *basedir)
         return 1;
     }
 
-    fwrite(greeting_html, strlen(greeting_html), 1, f);
+    xs *gh = xs_replace(greeting_html, "%blurb%", snac_blurb);
+    fwrite(gh, strlen(gh), 1, f);
     fclose(f);
 
     xs *sfn = xs_fmt("%s/style.css", srv_basedir);

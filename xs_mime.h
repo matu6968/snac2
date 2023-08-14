@@ -4,14 +4,14 @@
 
 #define _XS_MIME
 
-char *xs_mime_by_ext(const char *file);
+const char *xs_mime_by_ext(const char *file);
 
 #ifdef XS_IMPLEMENTATION
 
 /* intentionally brain-dead simple */
 struct _mime_info {
-    char *type;
-    char *ext;
+    const char *type;
+    const char *ext;
 } mime_info[] = {
     { "application/json",   ".json" },
     { "image/gif",          ".gif" },
@@ -19,23 +19,23 @@ struct _mime_info {
     { "image/jpeg",         ".jpg" },
     { "image/png",          ".png" },
     { "image/webp",         ".webp" },
-    { "video/mp4",          ".mp4"},
-    { "video/mp4",          ".mpg4"},
-    { "video/mp4",          ".m4v"},
-    { "video/webm",         ".webm"},
-    { "video/quicktime",    ".mov"},
-    { "video/3gpp",         ".3gp"},
-    { "video/ogg",          ".ogv"},
-    { "video/flv",          ".flv"},
-    { "audio/mp3",          ".mp3"},
-    { "audio/ogg",          ".ogg"},
-    { "audio/ogg",          ".oga"},
-    { "audio/ogg",          ".opus"},
-    { "audio/flac",         ".flac"},
-    { "audio/wav",          ".wav"},
-    { "audio/wma",          ".wma"},
-    { "audio/aac",          ".aac"},
-    { "audio/aac",          ".m4a"},
+    { "video/mp4",          ".mp4" },
+    { "video/mp4",          ".mpg4" },
+    { "video/mp4",          ".m4v" },
+    { "video/webm",         ".webm" },
+    { "video/quicktime",    ".mov" },
+    { "video/3gpp",         ".3gp" },
+    { "video/ogg",          ".ogv" },
+    { "video/flv",          ".flv" },
+    { "audio/mp3",          ".mp3" },
+    { "audio/ogg",          ".ogg" },
+    { "audio/ogg",          ".oga" },
+    { "audio/ogg",          ".opus" },
+    { "audio/flac",         ".flac" },
+    { "audio/wav",          ".wav" },
+    { "audio/wma",          ".wma" },
+    { "audio/aac",          ".aac" },
+    { "audio/aac",          ".m4a" },
     { "text/css",           ".css" },
     { "text/html",          ".html" },
     { "text/plain",         ".txt" },
@@ -46,23 +46,20 @@ struct _mime_info {
 };
 
 
-char *xs_mime_by_ext(const char *file)
+const char *xs_mime_by_ext(const char *file)
 /* returns the MIME type by file extension */
 {
     struct _mime_info *mi = mime_info;
-    char *p = NULL;
+    xs *lfile = xs_tolower_i(xs_dup(file));
 
-    while (p == NULL && mi->type != NULL) {
-        if (xs_endswith(file, mi->ext))
-            p = mi->type;
+    while (mi->type != NULL) {
+        if (xs_endswith(lfile, mi->ext))
+            return mi->type;
 
         mi++;
     }
 
-    if (p == NULL)
-        p = "application/octet-stream";
-
-    return p;
+    return "application/octet-stream";
 }
 
 
