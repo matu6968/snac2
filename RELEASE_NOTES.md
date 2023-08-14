@@ -10,6 +10,8 @@ Mastodon API: some minor fixes to allow the semaphore.social web client to work.
 
 Fixed miscalculation of the `votersCount` field in multiple-choice polls.
 
+DNS or TLS errors in outgoing connections are considered fatal errors and not retried.
+
 ## 2.39
 
 Added support for Follow confirmation messages that only return the follow request id (this fixes following Guppe channels).
