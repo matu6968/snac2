@@ -449,16 +449,18 @@ xs_str *xs_replace_in(xs_str *str, const char *sfrom, const char *sto, int times
 
     int sfsz = strlen(sfrom);
     int stsz = strlen(sto);
+    int diff = stsz - sfsz;
     char *ss;
     int offset = 0;
 
     while (times > 0 && (ss = strstr(str + offset, sfrom)) != NULL) {
         int n_offset = ss - str;
 
-        if (sfsz != stsz) {
-            str = xs_collapse(str, n_offset, sfsz);
-            str = xs_expand(str, n_offset, stsz);
-        }
+        if (diff < 0)
+            str = xs_collapse(str, n_offset, -diff);
+        else
+        if (diff > 0)
+            str = xs_expand(str, n_offset, diff);
 
         memcpy(str + n_offset, sto, stsz);
 
