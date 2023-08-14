@@ -218,10 +218,10 @@ xs_str *html_msg_icon(xs_str *os, const xs_dict *msg)
 }
 
 
-xs_str *html_user_header(snac *snac, xs_str *s, int local)
-/* creates the HTML header */
+xs_str *html_base_header(xs_str *s)
 {
-    char *p, *v;
+    xs_list *p;
+    xs_str *v;
 
     s = xs_str_cat(s, "<!DOCTYPE html>\n<html>\n<head>\n");
     s = xs_str_cat(s, "<meta name=\"viewport\" "
@@ -235,6 +235,25 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
         xs *s1 = xs_fmt("<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\"/>\n", v);
         s = xs_str_cat(s, s1);
     }
+
+    return s;
+}
+
+
+xs_str *html_instance_header(xs_str *s)
+{
+    s = html_base_header(s);
+
+    s = xs_str_cat(s, "</head>\n<body>\n");
+
+    return s;
+}
+
+
+xs_str *html_user_header(snac *snac, xs_str *s, int local)
+/* creates the HTML header */
+{
+    s = html_base_header(s);
 
     /* add the user CSS */
     {
@@ -1345,7 +1364,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 }
 
 
-xs_str *html_user_footer(xs_str *s)
+xs_str *html_footer(xs_str *s)
 {
     xs *s1 = xs_fmt(
         "<div class=\"snac-footer\">\n"
@@ -1361,7 +1380,7 @@ xs_str *html_user_footer(xs_str *s)
 }
 
 
-xs_str *html_timeline(snac *snac, const xs_list *list, int local, int skip, int show, int show_more)
+xs_str *html_timeline(snac *user, const xs_list *list, int local, int skip, int show, int show_more)
 /* returns the HTML for the timeline */
 {
     xs_str *s = xs_str_new(NULL);
@@ -1369,26 +1388,35 @@ xs_str *html_timeline(snac *snac, const xs_list *list, int local, int skip, int 
     char *v;
     double t = ftime();
 
-    s = html_user_header(snac, s, local);
+    if (user)
+        s = html_user_header(user, s, local);
+    else
+        s = html_instance_header(s);
 
-    if (!local)
-        s = html_top_controls(snac, s);
+    if (user && !local)
+        s = html_top_controls(user, s);
 
     s = xs_str_cat(s, "<a name=\"snac-posts\"></a>\n");
     s = xs_str_cat(s, "<div class=\"snac-posts\">\n");
 
     while (xs_list_iter(&p, &v)) {
         xs *msg = NULL;
+        int status;
 
-        if (!valid_status(timeline_get_by_md5(snac, v, &msg)))
+        if (user)
+            status = timeline_get_by_md5(user, v, &msg);
+        else
+            status = object_get_by_md5(v, &msg);
+
+        if (!valid_status(status))
             continue;
 
-        s = html_entry(snac, s, msg, local, 0, v, 0);
+        s = html_entry(user, s, msg, local, 0, v, 0);
     }
 
     s = xs_str_cat(s, "</div>\n");
 
-    if (local) {
+    if (user && local) {
         xs *s1 = xs_fmt(
             "<div class=\"snac-history\">\n"
             "<p class=\"snac-history-title\">%s</p><ul>\n",
@@ -1397,7 +1425,7 @@ xs_str *html_timeline(snac *snac, const xs_list *list, int local, int skip, int 
 
         s = xs_str_cat(s, s1);
 
-        xs *list = history_list(snac);
+        xs *list = history_list(user);
         char *p, *v;
 
         p = list;
@@ -1405,7 +1433,7 @@ xs_str *html_timeline(snac *snac, const xs_list *list, int local, int skip, int 
             xs *fn = xs_replace(v, ".html", "");
             xs *s1 = xs_fmt(
                         "<li><a href=\"%s/h/%s\">%s</a></li>\n",
-                        snac->actor, v, fn);
+                        user->actor, v, fn);
 
             s = xs_str_cat(s, s1);
         }
@@ -1419,19 +1447,21 @@ xs_str *html_timeline(snac *snac, const xs_list *list, int local, int skip, int 
     }
 
     if (show_more) {
+        const char *base_url = user ? user->actor : srv_baseurl;
+
         xs *s1 = xs_fmt(
             "<p>"
             "<a href=\"%s%s\" name=\"snac-more\">%s</a> - "
             "<a href=\"%s%s?skip=%d&show=%d\" name=\"snac-more\">%s</a>"
             "</p>\n",
-            snac->actor, local ? "" : "/admin", L("Back to top"),
-            snac->actor, local ? "" : "/admin", skip + show, show, L("Older entries...")
+            base_url, local ? "" : "/admin", L("Back to top"),
+            base_url, local ? "" : "/admin", skip + show, show, L("Older entries...")
         );
 
         s = xs_str_cat(s, s1);
     }
 
-    s = html_user_footer(s);
+    s = html_footer(s);
 
     s = xs_str_cat(s, "</body>\n</html>\n");
 
@@ -1567,7 +1597,7 @@ xs_str *html_people(snac *snac)
 
     s = html_people_list(snac, s, wers, L("People that follow you"), "e");
 
-    s = html_user_footer(s);
+    s = html_footer(s);
 
     s = xs_str_cat(s, "</body>\n</html>\n");
 
@@ -1684,7 +1714,7 @@ xs_str *html_notifications(snac *snac)
     else
         s = xs_str_cat(s, "</div>\n");
 
-    s = html_user_footer(s);
+    s = html_footer(s);
 
     s = xs_str_cat(s, "</body>\n</html>\n");
 
