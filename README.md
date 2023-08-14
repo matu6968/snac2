@@ -40,6 +40,8 @@ On OpenBSD you just need to install `curl`:
 pkg_add curl
 ```
 
+The source code is available [here](https://comam.es/what-is-snac).
+
 Run `make` and then `make install` as root.
 
 From version 2.27, `snac` includes support for the Mastodon API; if you are not interested on it, you can compile it out by running
