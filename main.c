@@ -55,8 +55,6 @@ char *get_argv(int *argi, int argc, char *argv[])
 
 #define GET_ARGV() get_argv(&argi, argc, argv)
 
-d_char *html_timeline(snac *snac, char *list, int local);
-
 int main(int argc, char *argv[])
 {
     char *cmd;

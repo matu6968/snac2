@@ -244,7 +244,80 @@ xs_str *html_instance_header(xs_str *s)
 {
     s = html_base_header(s);
 
+    {
+        FILE *f;
+        xs *g_css_fn = xs_fmt("%s/style.css", srv_basedir);
+
+        if ((f = fopen(g_css_fn, "r")) != NULL) {
+            xs *css = xs_readall(f);
+            fclose(f);
+
+            xs *s1 = xs_fmt("<style>%s</style>\n", css);
+            s = xs_str_cat(s, s1);
+        }
+    }
+
+    const char *host  = xs_dict_get(srv_config, "host");
+    const char *title = xs_dict_get(srv_config, "title");
+    const char *sdesc = xs_dict_get(srv_config, "short_description");
+    const char *email = xs_dict_get(srv_config, "admin_email");
+    const char *acct  = xs_dict_get(srv_config, "admin_account");
+
+    {
+        xs *s1 = xs_fmt("<title>%s</title>\n", title && *title ? title : host);
+        s = xs_str_cat(s, s1);
+    }
+
     s = xs_str_cat(s, "</head>\n<body>\n");
+
+    s = xs_str_cat(s, "<div class=\"snac-instance-blurb\">\n");
+
+    {
+        xs *s1 = xs_fmt(
+            "<p><b>%s</b> is a "
+            "<a href=\"https:/" "/en.wikipedia.org/wiki/Fediverse\">Fediverse</a> "
+            "instance that uses the "
+            "<a href=\"https:/" "/en.wikipedia.org/wiki/ActivityPub\">ActivityPub</a> "
+            "protocol. In other words, users at this host can communicate with people "
+            "that use software like Mastodon, Pleroma, Friendica, etc. "
+            "all around the world.</p>\n"
+            "<p>This server runs the "
+            "<a href=\"" WHAT_IS_SNAC_URL "\">snac</a> software and there is no "
+            "automatic sign-up process.</p>\n",
+            host);
+        s = xs_str_cat(s, s1);
+    }
+
+    s = xs_str_cat(s, "<dl>\n");
+
+    if (sdesc && *sdesc) {
+        xs *s1 = xs_fmt("<di><dt>%s</dt><dd>%s</dd></di>\n", L("Site description"), sdesc);
+        s = xs_str_cat(s, s1);
+    }
+    if (email && *email) {
+        xs *s1 = xs_fmt("<di><dt>%s</dt><dd>"
+                "<a href=\"mailto:%s\">%s</a></dd></di>\n",
+                L("Admin email"), email, email);
+
+        s = xs_str_cat(s, s1);
+    }
+    if (acct && *acct) {
+        xs *s1 = xs_fmt("<di><dt>%s</dt><dd>"
+                "<a href=\"%s/%s\">@%s@%s</a></dd></di>\n",
+                L("Admin account"), srv_baseurl, acct, acct, host);
+
+        s = xs_str_cat(s, s1);
+    }
+
+    s = xs_str_cat(s, "</dl>\n");
+
+    s = xs_str_cat(s, "</div>\n");
+
+    {
+        xs *s1 = xs_fmt("<h2 class=\"snac-header\">%s</h2>\n",
+            L("Recent posts by users in this instance"));
+        s = xs_str_cat(s, s1);
+    }
 
     return s;
 }

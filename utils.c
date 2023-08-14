@@ -27,7 +27,9 @@ static const char *default_srv_config = "{"
     "\"timeline_purge_days\":  120,"
     "\"local_purge_days\":     0,"
     "\"admin_email\":          \"\","
-    "\"admin_account\":        \"\""
+    "\"admin_account\":        \"\","
+    "\"title\":                \"\","
+    "\"short_description\":    \"\""
     "}";
 
 static const char *default_css =

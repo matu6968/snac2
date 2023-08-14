@@ -114,7 +114,14 @@ int server_get_handler(xs_dict *req, const char *q_path,
 
     /* is it the server root? */
     if (*q_path == '\0') {
-        if ((*body = greeting_html()) != NULL)
+        if (xs_type(xs_dict_get(srv_config, "show_instance_timeline")) == XSTYPE_TRUE) {
+            xs *tl = timeline_instance_list(0, 30);
+            *body = html_timeline(NULL, tl, 0, 0, 0, 0);
+        }
+        else
+            *body = greeting_html();
+
+        if (*body)
             status = 200;
     }
     else
