@@ -179,11 +179,16 @@ By setting this to true, no email notification will be sent for any user.
 .It Ic disable_inbox_collection
 By setting this to true, no inbox collection is done. Inbox collection helps
 being discovered from remote instances, but also increases network traffic.
+.It Ic show_instance_timeline
+If this is set to true, the instance base URL will show a timeline with the latest
+user posts instead of the default greeting static page. If other information
+fields are set (see below), they are also shown.
 .It Ic admin_email
 The email address of the instance administrator (optional).
 .It Ic admin_account
-The user name of the instance administrator (optional, used only in the
-Mastodon API).
+The user name of the instance administrator (optional).
+.It Ic short_description
+A textual short description about the instance (optional).
 .El
 .Pp
 You must restart the server to make effective these changes.
