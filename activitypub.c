@@ -1138,10 +1138,10 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     /* create the attachment list, if there are any */
     if (!xs_is_null(attach)) {
         while (xs_list_iter(&attach, &v)) {
-            xs *d      = xs_dict_new();
-            char *url  = xs_list_get(v, 0);
-            char *alt  = xs_list_get(v, 1);
-            char *mime = xs_mime_by_ext(url);
+            xs *d            = xs_dict_new();
+            const char *url  = xs_list_get(v, 0);
+            const char *alt  = xs_list_get(v, 1);
+            const char *mime = xs_mime_by_ext(url);
 
             d = xs_dict_append(d, "mediaType", mime);
             d = xs_dict_append(d, "url",       url);

@@ -1967,7 +1967,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
             if (valid_status(status)) {
                 *b_size = sz;
-                *ctype  = xs_mime_by_ext(id);
+                *ctype  = (char *)xs_mime_by_ext(id);
             }
         }
     }
