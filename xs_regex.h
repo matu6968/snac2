@@ -8,6 +8,8 @@ xs_list *xs_regex_split_n(const char *str, const char *rx, int count);
 #define xs_regex_split(str, rx) xs_regex_split_n(str, rx, XS_ALL)
 xs_list *xs_regex_match_n(const char *str, const char *rx, int count);
 #define xs_regex_match(str, rx) xs_regex_match_n(str, rx, XS_ALL)
+xs_list *xs_regex_replace_n(const char *str, const char *rx, const char *rep, int count);
+#define xs_regex_replace(str, rx, rep) xs_regex_replace_n(str, rx, rep, XS_ALL)
 
 #ifdef XS_IMPLEMENTATION
 
@@ -73,6 +75,53 @@ xs_list *xs_regex_match_n(const char *str, const char *rx, int count)
     }
 
     return list;
+}
+
+
+xs_list *xs_regex_replace_n(const char *str, const char *rx, const char *rep, int count)
+/* replaces all matches with the rep string. If it contains unescaped &,
+   they are replaced with the match */
+{
+    xs_str *s = xs_str_new(NULL);
+    xs *split = xs_regex_split_n(str, rx, count);
+    xs_list *p;
+    xs_val *v;
+    int n = 0;
+    int pholder = !!strchr(rep, '&');
+
+    p = split;
+    while (xs_list_iter(&p, &v)) {
+        if (n & 0x1) {
+            if (pholder) {
+                /* rep has a placeholder; process char by char */
+                const char *p = rep;
+
+                while (*p) {
+                    if (*p == '&')
+                        s = xs_str_cat(s, v);
+                    else {
+                        if (*p == '\\')
+                            p++;
+
+                        if (!*p)
+                            break;
+
+                        s = xs_append_m(s, p, 1);
+                    }
+
+                    p++;
+                }
+            }
+            else
+                s = xs_str_cat(s, rep);
+        }
+        else
+            s = xs_str_cat(s, v);
+
+        n++;
+    }
+
+    return s;
 }
 
 #endif /* XS_IMPLEMENTATION */

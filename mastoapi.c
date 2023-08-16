@@ -980,7 +980,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         if (logged_in) {
             xs *acct = xs_dict_new();
 
-            acct = xs_dict_append(acct, "id",           xs_dict_get(snac1.config, "uid"));
+            acct = xs_dict_append(acct, "id",           snac1.md5);
             acct = xs_dict_append(acct, "username",     xs_dict_get(snac1.config, "uid"));
             acct = xs_dict_append(acct, "acct",         xs_dict_get(snac1.config, "uid"));
             acct = xs_dict_append(acct, "display_name", xs_dict_get(snac1.config, "name"));
