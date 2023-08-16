@@ -7,7 +7,7 @@ A simple, minimalistic ActivityPub instance
 - Lightweight, minimal dependencies
 - Extensive support of ActivityPub operations, e.g. write public notes, follow users, be followed, reply to the notes of others, admire wonderful content (like or boost), write private messages...
 - Multiuser
-- Mastodon API support, so Mastodon-compatible apps can be used (work in progress)
+- Mastodon API support, so Mastodon-compatible apps can be used
 - Simple but effective web interface
 - Easily-accessed MUTE button to silence morons
 - Tested interoperability with related software
