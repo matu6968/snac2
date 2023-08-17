@@ -4,8 +4,10 @@
 
 #define _XS_UNICODE_H
 
+ int _xs_utf8_enc(char buf[4], unsigned int cpoint);
  xs_str *xs_utf8_enc(xs_str *str, unsigned int cpoint);
  unsigned int xs_utf8_dec(char **str);
+ int xs_unicode_width(unsigned int cpoint);
  unsigned int *_xs_unicode_upper_search(unsigned int cpoint);
  unsigned int *_xs_unicode_lower_search(unsigned int cpoint);
  #define xs_unicode_is_upper(cpoint) (!!_xs_unicode_upper_search(cpoint))
@@ -18,8 +20,8 @@
 #ifdef XS_IMPLEMENTATION
 
 
-char *_xs_utf8_enc(char buf[4], unsigned int cpoint)
-/* encodes an Unicode codepoint to utf-8 into buf and returns the new position */
+int _xs_utf8_enc(char buf[4], unsigned int cpoint)
+/* encodes an Unicode codepoint to utf-8 into buf and returns the size in bytes */
 {
     unsigned char *p = (unsigned char *)buf;
 
@@ -42,18 +44,18 @@ char *_xs_utf8_enc(char buf[4], unsigned int cpoint)
         *p++ = 0x80 | (cpoint & 0x3f);
     }
 
-    return (char *)p;
+    return p - (unsigned char *)buf;
 }
 
 
 xs_str *xs_utf8_enc(xs_str *str, unsigned int cpoint)
 /* encodes an Unicode codepoint to utf-8 into str */
 {
-    char tmp[4], *p;
+    char tmp[4];
 
-    p = _xs_utf8_enc(tmp, cpoint);
+    int c = _xs_utf8_enc(tmp, cpoint);
 
-    return xs_append_m(str, tmp, p - tmp);
+    return xs_append_m(str, tmp, c);
 }
 
 
@@ -99,9 +101,44 @@ unsigned int xs_utf8_dec(char **str)
 }
 
 
+/* intentionally dead simple */
+
+static unsigned int xs_unicode_width_table[] = {
+    0x300,      0x36f,      0,      /* diacritics */
+    0x1100,     0x11ff,     2,      /* Hangul */
+    0x2e80,     0xa4cf,     2,      /* CJK */
+    0xac00,     0xd7a3,     2,      /* more Hangul */
+    0xe000,     0xf8ff,     0,      /* private use */
+    0xf900,     0xfaff,     2,      /* CJK compatibility */
+    0xff00,     0xff60,     2,      /* full width things */
+    0xffdf,     0xffe6,     2,      /* full width things */
+    0x1f200,    0x1ffff,    2,      /* emojis */
+    0x20000,    0x2fffd,    2       /* more CJK */
+};
+
+int xs_unicode_width(unsigned int cpoint)
+/* returns the width in columns of a Unicode codepoint (somewhat simplified) */
+{
+    unsigned int *p = xs_unicode_width_table;
+    unsigned int *e = p + sizeof(xs_unicode_width_table) / sizeof(unsigned int);
+
+    while (p < e) {
+        if (cpoint < p[0])
+            return 1;
+
+        if (cpoint >= p[0] && cpoint <= p[1])
+            return p[2];
+
+        p += 3;
+    }
+
+    return 0;
+}
+
+
 #ifdef _XS_UNICODE_TBL_H
 
-/* include xs_unicode_tbl.h before to use these functions */
+/* include xs_unicode_tbl.h before this one to use these functions */
 
 static int int_cmp(const void *p1, const void *p2)
 {

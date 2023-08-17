@@ -1313,6 +1313,16 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             if (xs_is_null(url))
                 continue;
 
+            /* if it's a plain Link, check if it can be "rewritten" */
+            if (strcmp(t, "Link") == 0) {
+                const char *mt = xs_mime_by_ext(url);
+
+                if (xs_startswith(mt, "image/") ||
+                    xs_startswith(mt, "audio/") ||
+                    xs_startswith(mt, "video/"))
+                    t = mt;
+            }
+
             const char *name = xs_dict_get(v, "name");
             if (xs_is_null(name))
                 name = xs_dict_get(msg, "name");

@@ -6,57 +6,67 @@
 
 const char *xs_mime_by_ext(const char *file);
 
+extern const char *xs_mime_types[];
+
 #ifdef XS_IMPLEMENTATION
 
 /* intentionally brain-dead simple */
-struct _mime_info {
-    const char *type;
-    const char *ext;
-} mime_info[] = {
-    { "application/json",   ".json" },
-    { "image/gif",          ".gif" },
-    { "image/jpeg",         ".jpeg" },
-    { "image/jpeg",         ".jpg" },
-    { "image/png",          ".png" },
-    { "image/webp",         ".webp" },
-    { "video/mp4",          ".mp4" },
-    { "video/mp4",          ".mpg4" },
-    { "video/mp4",          ".m4v" },
-    { "video/webm",         ".webm" },
-    { "video/quicktime",    ".mov" },
-    { "video/3gpp",         ".3gp" },
-    { "video/ogg",          ".ogv" },
-    { "video/flv",          ".flv" },
-    { "audio/mp3",          ".mp3" },
-    { "audio/ogg",          ".ogg" },
-    { "audio/ogg",          ".oga" },
-    { "audio/ogg",          ".opus" },
-    { "audio/flac",         ".flac" },
-    { "audio/wav",          ".wav" },
-    { "audio/wma",          ".wma" },
-    { "audio/aac",          ".aac" },
-    { "audio/aac",          ".m4a" },
-    { "text/css",           ".css" },
-    { "text/html",          ".html" },
-    { "text/plain",         ".txt" },
-    { "text/xml",           ".xml" },
-    { "text/markdown",      ".md" },
-    { "text/gemini",        ".gmi" },
-    { NULL, NULL }
+/* CAUTION: sorted */
+
+const char *xs_mime_types[] = {
+    "3gp",      "video/3gpp",
+    "aac",      "audio/aac",
+    "css",      "text/css",
+    "flac",     "audio/flac",
+    "flv",      "video/flv",
+    "gif",      "image/gif",
+    "gmi",      "text/gemini",
+    "html",     "text/html",
+    "jpeg",     "image/jpeg",
+    "jpg",      "image/jpeg",
+    "json",     "application/json",
+    "m4a",      "audio/aac",
+    "m4v",      "video/mp4",
+    "md",       "text/markdown",
+    "mov",      "video/quicktime",
+    "mp3",      "audio/mp3",
+    "mp4",      "video/mp4",
+    "mpg4",     "video/mp4",
+    "oga",      "audio/ogg",
+    "ogg",      "audio/ogg",
+    "ogv",      "video/ogg",
+    "opus",     "audio/ogg",
+    "png",      "image/png",
+    "txt",      "text/plain",
+    "wav",      "audio/wav",
+    "webm",     "video/webm",
+    "webp",     "image/webp",
+    "wma",      "audio/wma",
+    "xml",      "text/xml",
+    NULL,       NULL,
 };
 
 
 const char *xs_mime_by_ext(const char *file)
 /* returns the MIME type by file extension */
 {
-    struct _mime_info *mi = mime_info;
-    xs *lfile = xs_tolower_i(xs_dup(file));
+    const char *ext = strrchr(file, '.');
 
-    while (mi->type != NULL) {
-        if (xs_endswith(lfile, mi->ext))
-            return mi->type;
+    if (ext) {
+        const char **p = xs_mime_types;
+        xs *uext       = xs_tolower_i(xs_dup(ext + 1));
 
-        mi++;
+        while (**p) {
+            int c;
+
+            if ((c = strcmp(*p, uext)) == 0)
+                return p[1];
+            else
+            if (c > 0)
+                break;
+
+            p += 2;
+        }
     }
 
     return "application/octet-stream";

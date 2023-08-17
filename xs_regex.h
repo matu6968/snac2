@@ -8,8 +8,10 @@ xs_list *xs_regex_split_n(const char *str, const char *rx, int count);
 #define xs_regex_split(str, rx) xs_regex_split_n(str, rx, XS_ALL)
 xs_list *xs_regex_match_n(const char *str, const char *rx, int count);
 #define xs_regex_match(str, rx) xs_regex_match_n(str, rx, XS_ALL)
-xs_list *xs_regex_replace_n(const char *str, const char *rx, const char *rep, int count);
-#define xs_regex_replace(str, rx, rep) xs_regex_replace_n(str, rx, rep, XS_ALL)
+xs_list *xs_regex_replace_in(xs_str *str, const char *rx, const char *rep, int count);
+#define xs_regex_replace_i(str, rx, rep) xs_regex_replace_in(str, rx, rep, XS_ALL)
+#define xs_regex_replace_n(str, rx, rep, count) xs_regex_replace_in(xs_dup(str), rx, rep, count)
+#define xs_regex_replace(str, rx, rep) xs_regex_replace_in(xs_dup(str), rx, rep, XS_ALL)
 
 #ifdef XS_IMPLEMENTATION
 
@@ -78,7 +80,7 @@ xs_list *xs_regex_match_n(const char *str, const char *rx, int count)
 }
 
 
-xs_list *xs_regex_replace_n(const char *str, const char *rx, const char *rep, int count)
+xs_list *xs_regex_replace_in(xs_str *str, const char *rx, const char *rep, int count)
 /* replaces all matches with the rep string. If it contains unescaped &,
    they are replaced with the match */
 {
@@ -120,6 +122,8 @@ xs_list *xs_regex_replace_n(const char *str, const char *rx, const char *rep, in
 
         n++;
     }
+
+    xs_free(str);
 
     return s;
 }
