@@ -1711,7 +1711,7 @@ xs_list *history_list(snac *snac)
 {
     xs *spec = xs_fmt("%s/history/" "*.html", snac->basedir);
 
-    return xs_glob(spec, 1, 0);
+    return xs_glob(spec, 1, 1);
 }
 
 
