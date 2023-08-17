@@ -12,6 +12,7 @@
 #include "xs_set.h"
 #include "xs_random.h"
 #include "xs_httpd.h"
+#include "xs_mime.h"
 
 #include "snac.h"
 
@@ -1524,11 +1525,32 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             xs *d13 = xs_json_loads("{\"image_matrix_limit\":33177600,"
                         "\"image_size_limit\":16777216,"
-                        "\"supported_mime_types\":[\"image/jpeg\"],"
                         "\"video_frame_rate_limit\":120,"
                         "\"video_matrix_limit\":8294400,"
                         "\"video_size_limit\":103809024}"
             );
+
+            {
+                /* get the supported mime types from the internal list */
+                const char **p = xs_mime_types;
+                xs_set mtypes;
+                xs_set_init(&mtypes);
+
+                while (*p) {
+                    const char *type = p[1];
+
+                    if (xs_startswith(type, "image/") ||
+                        xs_startswith(type, "video/") ||
+                        xs_startswith(type, "audio/"))
+                        xs_set_add(&mtypes, type);
+
+                    p += 2;
+                }
+
+                xs *l = xs_set_result(&mtypes);
+                d13 = xs_dict_append(d13, "supported_mime_types", l);
+            }
+
             cfg = xs_dict_append(cfg, "media_attachments", d13);
 
             xs *d14 = xs_json_loads("{\"max_characters_per_option\":50,"

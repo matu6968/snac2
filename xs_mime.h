@@ -56,7 +56,7 @@ const char *xs_mime_by_ext(const char *file)
         const char **p = xs_mime_types;
         xs *uext       = xs_tolower_i(xs_dup(ext + 1));
 
-        while (**p) {
+        while (*p) {
             int c;
 
             if ((c = strcmp(*p, uext)) == 0)
