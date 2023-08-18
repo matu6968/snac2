@@ -2059,6 +2059,10 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         xs *id = xs_fmt("%s/%s", snac.actor, p_path);
 
         status = object_get(id, &msg);
+
+        /* don't return non-public objects */
+        if (valid_status(status) && !is_msg_public(msg))
+            status = 404;
     }
     else
         status = 404;
