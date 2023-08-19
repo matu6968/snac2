@@ -150,7 +150,8 @@ xs_str *static_get_meta(snac *snac, const char *id);
 
 double history_mtime(snac *snac, const char *id);
 void history_add(snac *snac, const char *id, const char *content, int size);
-xs_str *history_get(snac *snac, const char *id);
+int history_get(snac *snac, const char *id, xs_str **content, int *size,
+                const char *inm, xs_str **etag);
 int history_del(snac *snac, const char *id);
 xs_list *history_list(snac *snac);
 

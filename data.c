@@ -1681,18 +1681,23 @@ void history_add(snac *snac, const char *id, const char *content, int size)
 }
 
 
-xs_str *history_get(snac *snac, const char *id)
+int history_get(snac *snac, const char *id, xs_str **content, int *size,
+                const char *inm, xs_str **etag)
 {
-    xs_str *content = NULL;
     xs *fn = _history_fn(snac, id);
     FILE *f;
+    int status = 404;
 
     if (fn && (f = fopen(fn, "r")) != NULL) {
-        content = xs_readall(f);
+        *content = xs_readall(f);
         fclose(f);
+
+        *size = strlen(*content);
+
+        status = 200;
     }
 
-    return content;
+    return status;
 }
 
 
