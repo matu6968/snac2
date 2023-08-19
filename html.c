@@ -1317,7 +1317,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                 continue;
 
             /* if it's a plain Link, check if it can be "rewritten" */
-            if (strcmp(t, "Link") == 0) {
+            if (xs_list_len(attach) < 2 && strcmp(t, "Link") == 0) {
                 const char *mt = xs_mime_by_ext(url);
 
                 if (xs_startswith(mt, "image/") ||
