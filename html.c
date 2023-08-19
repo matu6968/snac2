@@ -1220,13 +1220,16 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
                 while (xs_list_iter(&p, &v)) {
                     const char *name = xs_dict_get(v, "name");
+                    const xs_dict *replies = xs_dict_get(v, "replies");
 
                     if (name) {
+                        int nr = xs_number_get(xs_dict_get(replies, "totalItems"));
                         xs *es1 = encode_html(name);
                         xs *opt = xs_fmt("<input type=\"%s\""
-                                    " id=\"%s\" value=\"%s\" name=\"question\"> %s<br>\n",
+                                    " id=\"%s\" value=\"%s\""
+                                    " name=\"question\"> <span title=\"%d\">%s</span><br>\n",
                                     !xs_is_null(oo) ? "radio" : "checkbox",
-                                    es1, es1, es1);
+                                    es1, es1, nr, es1);
 
                         s1 = xs_str_cat(s1, opt);
                     }
