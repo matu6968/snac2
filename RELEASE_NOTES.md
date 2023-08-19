@@ -1,5 +1,15 @@
 # Release Notes
 
+## 2.41
+
+Show inline `Link` objects that are image, audio or video media.
+
+The history in the public page is returned in reverse chronological order.
+
+Mastodon API: minor fixes.
+
+Be more strict when serving note objects.
+
 ## 2.40
 
 Announces (boosts) can now be disabled/reenabled on a per-people basis (to limit those boost-trigger-happy friends from flooding your timeline). This is operated from the people page.
