@@ -1875,7 +1875,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         if (cache && history_mtime(&snac, h) > timeline_mtime(&snac)) {
             snac_debug(&snac, 1, xs_fmt("serving cached local timeline"));
 
-            status = history_get(&snac, h, body, b_size, NULL, NULL);
+            status = history_get(&snac, h, body, b_size,
+                        xs_dict_get(req, "if-none-match"), etag);
         }
         else {
             xs *list = timeline_list(&snac, "public", skip, show);
@@ -1903,7 +1904,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             if (cache && history_mtime(&snac, "timeline.html_") > timeline_mtime(&snac)) {
                 snac_debug(&snac, 1, xs_fmt("serving cached timeline"));
 
-                status = history_get(&snac, "timeline.html_", body, b_size, NULL, NULL);
+                status = history_get(&snac, "timeline.html_", body, b_size,
+                            xs_dict_get(req, "if-none-match"), etag);
             }
             else {
                 snac_debug(&snac, 1, xs_fmt("building timeline"));
@@ -1992,7 +1994,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 status = 404;
             }
             else
-                status = history_get(&snac, id, body, b_size, NULL, NULL);
+                status = history_get(&snac, id, body, b_size,
+                            xs_dict_get(req, "if-none-match"), etag);
         }
     }
     else

@@ -1538,21 +1538,10 @@ int limited(snac *user, const char *id, int cmd)
 
 /** static data **/
 
-xs_str *_static_fn(snac *snac, const char *id)
-/* gets the filename for a static file */
+static int _load_raw_file(const char *fn, xs_val **data, int *size,
+                        const char *inm, xs_str **etag)
+/* loads a cached file */
 {
-    if (strchr(id, '/'))
-        return NULL;
-    else
-        return xs_fmt("%s/static/%s", snac->basedir, id);
-}
-
-
-int static_get(snac *snac, const char *id, xs_val **data, int *size,
-                const char *inm, xs_str **etag)
-/* returns static content */
-{
-    xs *fn = _static_fn(snac, id);
     int status = 404;
 
     if (fn) {
@@ -1584,11 +1573,31 @@ int static_get(snac *snac, const char *id, xs_val **data, int *size,
             if (etag != NULL)
                 *etag = xs_dup(e);
 
-            srv_debug(1, xs_fmt("static_get(): %s %d", id, status));
+            srv_debug(1, xs_fmt("_load_raw_file(): %s %d", fn, status));
         }
     }
 
     return status;
+}
+
+
+xs_str *_static_fn(snac *snac, const char *id)
+/* gets the filename for a static file */
+{
+    if (strchr(id, '/'))
+        return NULL;
+    else
+        return xs_fmt("%s/static/%s", snac->basedir, id);
+}
+
+
+int static_get(snac *snac, const char *id, xs_val **data, int *size,
+                const char *inm, xs_str **etag)
+/* returns static content */
+{
+    xs *fn = _static_fn(snac, id);
+
+    return _load_raw_file(fn, data, size, inm, etag);
 }
 
 
@@ -1685,19 +1694,8 @@ int history_get(snac *snac, const char *id, xs_str **content, int *size,
                 const char *inm, xs_str **etag)
 {
     xs *fn = _history_fn(snac, id);
-    FILE *f;
-    int status = 404;
 
-    if (fn && (f = fopen(fn, "r")) != NULL) {
-        *content = xs_readall(f);
-        fclose(f);
-
-        *size = strlen(*content);
-
-        status = 200;
-    }
-
-    return status;
+    return _load_raw_file(fn, content, size, inm, etag);
 }
 
 
