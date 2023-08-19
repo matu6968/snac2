@@ -2,6 +2,8 @@
 
 ## 2.41
 
+Added more aggressive caching to timelines and history files.
+
 Show inline `Link` objects that are image, audio or video media.
 
 The history in the public page is returned in reverse chronological order.
