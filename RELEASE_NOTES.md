@@ -12,6 +12,8 @@ Mastodon API: minor fixes.
 
 Be more strict when serving note objects.
 
+Additional HTTP headers can be added to the response by filling the `http_headers` object to the `server.json` configuration file.
+
 ## 2.40
 
 Announces (boosts) can now be disabled/reenabled on a per-people basis (to limit those boost-trigger-happy friends from flooding your timeline). This is operated from the people page.
