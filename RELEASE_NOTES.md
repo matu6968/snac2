@@ -4,15 +4,15 @@
 
 Added more aggressive caching to timelines and history files.
 
-Show inline `Link` objects that are image, audio or video media.
+Show `Link` objects that are image, audio or video media as if they were attachments.
 
-The history in the public page is returned in reverse chronological order.
+The history at the end of the public page is listed in reverse chronological order.
 
 Mastodon API: minor fixes.
 
 Be more strict when serving note objects.
 
-Additional HTTP headers can be added to the response by filling the `http_headers` object to the `server.json` configuration file.
+Additional HTTP response headers can be defined by adding an `http_headers` object with header/content pairs into the `server.json` configuration file.
 
 If you hover the mouse pointer over a vote option in a pool, the current count (as per the last update) is shown. This may be considered cheating in some cases, so try to be honest (or not).
 
