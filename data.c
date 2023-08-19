@@ -1677,7 +1677,8 @@ double history_mtime(snac *snac, const char *id)
 }
 
 
-void history_add(snac *snac, const char *id, const char *content, int size)
+void history_add(snac *snac, const char *id, const char *content, int size,
+                    xs_str **etag)
 /* adds something to the history */
 {
     xs *fn = _history_fn(snac, id);
@@ -1686,6 +1687,11 @@ void history_add(snac *snac, const char *id, const char *content, int size)
     if (fn && (f = fopen(fn, "w")) != NULL) {
         fwrite(content, size, 1, f);
         fclose(f);
+
+        if (etag) {
+            double tm = mtime(fn);
+            *etag = xs_fmt("W/\"snac-%.0lf\"", tm);
+        }
     }
 }
 

@@ -1891,7 +1891,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             status  = 200;
 
             if (save)
-                history_add(&snac, h, *body, *b_size);
+                history_add(&snac, h, *body, *b_size, etag);
         }
     }
     else
@@ -1922,7 +1922,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 status  = 200;
 
                 if (save)
-                    history_add(&snac, "timeline.html_", *body, *b_size);
+                    history_add(&snac, "timeline.html_", *body, *b_size, etag);
             }
         }
     }
