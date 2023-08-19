@@ -285,6 +285,14 @@ void httpd_connection(FILE *f)
     if (!xs_is_null(etag))
         headers = xs_dict_append(headers, "etag", etag);
 
+    /* if there are any additional headers, add them */
+    xs_dict *more_headers = xs_dict_get(srv_config, "http_headers");
+    if (xs_type(more_headers) == XSTYPE_DICT) {
+        char *k, *v;
+        while (xs_dict_iter(&more_headers, &k, &v))
+            headers = xs_dict_set(headers, k, v);
+    }
+
     if (b_size == 0 && body != NULL)
         b_size = strlen(body);
 
