@@ -669,10 +669,16 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
         const char *name    = xs_dict_get(msg, "name");
         xs *s1 = NULL;
 
-        if (name)
+        if (name && content)
             s1 = xs_fmt("%s<br><br>%s", name, content);
         else
+        if (name)
+            s1 = xs_dup(name);
+        else
+        if (content)
             s1 = xs_dup(content);
+        else
+            s1 = xs_str_new(NULL);
 
         st = xs_dict_append(st, "content", s1);
     }
@@ -716,6 +722,22 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
         if (xs_is_null(mtype))
             mtype = xs_dict_get(aobj, "type");
 
+        const char *url = xs_dict_get(aobj, "url");
+        if (xs_is_null(url))
+            url = xs_dict_get(aobj, "href");
+        if (xs_is_null(url))
+            continue;
+
+        /* if it's a plain Link, check if it can be "rewritten" */
+        if (xs_list_len(attr_list) < 2 && strcmp(mtype, "Link") == 0) {
+            const char *mt = xs_mime_by_ext(url);
+
+            if (xs_startswith(mt, "image/") ||
+                xs_startswith(mt, "audio/") ||
+                xs_startswith(mt, "video/"))
+                mtype = mt;
+        }
+
         if (!xs_is_null(mtype)) {
             if (xs_startswith(mtype, "image/") || xs_startswith(mtype, "video/") ||
                 strcmp(mtype, "Image") == 0) {
@@ -724,9 +746,9 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
                 matte = xs_dict_append(matte, "id",          matteid);
                 matte = xs_dict_append(matte, "type",        *mtype == 'v' ? "video" : "image");
-                matte = xs_dict_append(matte, "url",         xs_dict_get(aobj, "url"));
-                matte = xs_dict_append(matte, "preview_url", xs_dict_get(aobj, "url"));
-                matte = xs_dict_append(matte, "remote_url",  xs_dict_get(aobj, "url"));
+                matte = xs_dict_append(matte, "url",         url);
+                matte = xs_dict_append(matte, "preview_url", url);
+                matte = xs_dict_append(matte, "remote_url",  url);
 
                 const char *name = xs_dict_get(aobj, "name");
                 if (xs_is_null(name))
