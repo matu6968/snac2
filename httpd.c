@@ -39,11 +39,35 @@ const char *nodeinfo_2_0_template = ""
 xs_str *nodeinfo_2_0(void)
 /* builds a nodeinfo json object */
 {
-    xs *users   = user_list();
-    int n_users = xs_list_len(users);
-    int n_posts = 0; /* to be implemented someday */
+    int n_utotal = 0;
+    int n_umonth = 0;
+    int n_uhyear = 0;
+    int n_posts  = 0;
+    xs *users = user_list();
+    xs_list *p;
+    char *v;
 
-    return xs_fmt(nodeinfo_2_0_template, n_users, n_users, n_users, n_posts);
+    p = users;
+    while (xs_list_iter(&p, &v)) {
+        /* build the full path name to the last usage log */
+        xs *llfn = xs_fmt("%s/user/%s/lastlog.txt", srv_basedir, v);
+        double llsecs = (double)time(NULL) - mtime(llfn);
+
+        if (llsecs < 60 * 60 * 24 * 30 * 6) {
+            n_uhyear++;
+
+            if (llsecs < 60 * 60 * 24 * 30)
+                n_umonth++;
+        }
+
+        n_utotal++;
+
+        /* build the file to each user public.idx */
+        xs *pidxfn = xs_fmt("%s/user/%s/private.idx", srv_basedir, v);
+        n_posts += index_len(pidxfn);
+    }
+
+    return xs_fmt(nodeinfo_2_0_template, n_utotal, n_umonth, n_uhyear, n_posts);
 }
 
 
