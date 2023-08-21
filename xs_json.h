@@ -323,28 +323,24 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
 }
 
 
-static xs_list *_xs_json_load_array(FILE *f, js_type *t);
-static xs_dict *_xs_json_load_object(FILE *f, js_type *t);
+static xs_list *_xs_json_load_array(FILE *f);
+static xs_dict *_xs_json_load_object(FILE *f);
 
-static xs_list *_xs_json_load_array(FILE *f, js_type *t)
+static xs_list *_xs_json_load_array(FILE *f)
 /* parses a JSON array */
 {
     xs_list *l = xs_list_new();
     int c = 0;
 
-    *t = JS_INCOMPLETE;
-
-    while (*t == JS_INCOMPLETE) {
+    for (;;) {
         js_type tt;
         xs *v = _xs_json_load_lexer(f, &tt);
 
         if (tt == JS_ERROR)
             break;
 
-        if (tt == JS_CBRACK) {
-            *t = JS_ARRAY;
-            break;
-        }
+        if (tt == JS_CBRACK)
+            return l;
 
         if (c > 0) {
             if (tt == JS_COMMA)
@@ -354,26 +350,23 @@ static xs_list *_xs_json_load_array(FILE *f, js_type *t)
         }
 
         if (tt == JS_OBRACK)
-            v = _xs_json_load_array(f, &tt);
+            v = _xs_json_load_array(f);
         else
         if (tt == JS_OCURLY)
-            v = _xs_json_load_object(f, &tt);
+            v = _xs_json_load_object(f);
 
-        if (tt < JS_VALUE)
+        if (v == NULL)
             break;
 
         l = xs_list_append(l, v);
         c++;
     }
 
-    if (*t == JS_INCOMPLETE || *t == JS_ERROR)
-        l = xs_free(l);
-
-    return l;
+    return xs_free(l);
 }
 
 
-static xs_dict *_xs_json_load_object(FILE *f, js_type *t)
+static xs_dict *_xs_json_load_object(FILE *f)
 /* parses a JSON object */
 {
     xs_dict *d = xs_dict_new();
@@ -381,9 +374,7 @@ static xs_dict *_xs_json_load_object(FILE *f, js_type *t)
 
     d = xs_dict_new();
 
-    *t = JS_INCOMPLETE;
-
-    while (*t == JS_INCOMPLETE) {
+    for (;;) {
         js_type tt;
         xs *k = _xs_json_load_lexer(f, &tt);
         xs *v = NULL;
@@ -391,10 +382,8 @@ static xs_dict *_xs_json_load_object(FILE *f, js_type *t)
         if (tt == JS_ERROR)
             break;
 
-        if (tt == JS_CCURLY) {
-            *t = JS_OBJECT;
-            break;
-        }
+        if (tt == JS_CCURLY)
+            return d;
 
         if (c > 0) {
             if (tt == JS_COMMA)
@@ -414,22 +403,19 @@ static xs_dict *_xs_json_load_object(FILE *f, js_type *t)
         v = _xs_json_load_lexer(f, &tt);
 
         if (tt == JS_OBRACK)
-            v = _xs_json_load_array(f, &tt);
+            v = _xs_json_load_array(f);
         else
         if (tt == JS_OCURLY)
-            v = _xs_json_load_object(f, &tt);
+            v = _xs_json_load_object(f);
 
-        if (tt < JS_VALUE)
+        if (v == NULL)
             break;
 
         d = xs_dict_append(d, k, v);
         c++;
     }
 
-    if (*t == JS_INCOMPLETE || *t == JS_ERROR)
-        d = xs_free(d);
-
-    return d;
+    return xs_free(d);
 }
 
 
@@ -457,10 +443,10 @@ xs_val *xs_json_load(FILE *f)
     xs_free(_xs_json_load_lexer(f, &t));
 
     if (t == JS_OBRACK)
-        v = _xs_json_load_array(f, &t);
+        v = _xs_json_load_array(f);
     else
     if (t == JS_OCURLY)
-        v = _xs_json_load_object(f, &t);
+        v = _xs_json_load_object(f);
 
     return v;
 }
