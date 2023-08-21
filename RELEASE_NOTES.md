@@ -16,6 +16,8 @@ Additional HTTP response headers can be defined by adding an `http_headers` obje
 
 If you hover the mouse pointer over a vote option in a pool, the current count (as per the last update) is shown. This may be considered cheating in some cases, so try to be honest (or not).
 
+The `nodeinfo` URL now returns more accurate information.
+
 ## 2.40
 
 Announces (boosts) can now be disabled/reenabled on a per-people basis (to limit those boost-trigger-happy friends from flooding your timeline). This is operated from the people page.
