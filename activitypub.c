@@ -1122,6 +1122,10 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
             if ((v = xs_dict_get(p_msg, "context")))
                 ctxt = xs_dup(v);
 
+            /* propagate the conversation field, if there is one */
+            if ((v = xs_dict_get(p_msg, "conversation")))
+                msg = xs_dict_append(msg, "conversation", v);
+
             /* if this message is public, ours will also be */
             if (!priv && is_msg_public(p_msg) && xs_list_in(to, public_address) == -1)
                 to = xs_list_append(to, public_address);
