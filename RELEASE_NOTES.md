@@ -2,9 +2,11 @@
 
 ## 2.41
 
-Added more aggressive caching to timelines and history files.
+Added support for `Article` ActivityPub objects to correctly process reviews from #Bookwyrm instances and other similar software.
 
 Show `Link` objects that are image, audio or video media as if they were attachments.
+
+Added more aggressive caching to timelines and history files.
 
 The history at the end of the public page is listed in reverse chronological order.
 
