@@ -203,7 +203,8 @@ xs_str *html_msg_icon(xs_str *os, const xs_dict *msg)
         int priv    = 0;
         const char *type = xs_dict_get(msg, "type");
 
-        if (strcmp(type, "Note") == 0 || strcmp(type, "Question") == 0 || strcmp(type, "Page") == 0)
+        if (strcmp(type, "Note") == 0 || strcmp(type, "Question") == 0 ||
+            strcmp(type, "Page") == 0 || strcmp(type, "Article") == 0)
             url = xs_dict_get(msg, "id");
 
         priv = !is_msg_public(msg);
@@ -972,7 +973,8 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
         return xs_str_cat(os, s);
     }
     else
-    if (strcmp(type, "Note") != 0 && strcmp(type, "Question") != 0 && strcmp(type, "Page") != 0) {
+    if (strcmp(type, "Note") != 0 && strcmp(type, "Question") != 0 &&
+        strcmp(type, "Page") != 0 && strcmp(type, "Article") != 0) {
         /* skip oddities */
         return os;
     }
@@ -1316,8 +1318,9 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             if (xs_is_null(url))
                 continue;
 
-            /* if it's a plain Link, check if it can be "rewritten" */
-            if (xs_list_len(attach) < 2 && strcmp(t, "Link") == 0) {
+            /* infer MIME type from non-specific attachments */
+            if (xs_list_len(attach) < 2 &&
+                (strcmp(t, "Link") == 0 || strcmp(t, "Document") == 0)) {
                 const char *mt = xs_mime_by_ext(url);
 
                 if (xs_startswith(mt, "image/") ||
@@ -1371,7 +1374,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
     /* has this message an audience (i.e., comes from a channel or community)? */
     const char *audience = xs_dict_get(msg, "audience");
-    if (strcmp(type, "Page") == 0 && !xs_is_null(audience)) {
+    if (!xs_is_null(audience)) {
         xs *es1 = encode_html(audience);
         xs *s1 = xs_fmt("<p>(<a href=\"%s\" title=\"%s\">%s</a>)</p>\n",
             audience, L("Source channel or community"), es1);

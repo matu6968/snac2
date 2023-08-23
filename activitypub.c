@@ -192,7 +192,9 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
                         type = "(null)";
                 }
 
-                if (strcmp(type, "Note") == 0 || strcmp(type, "Page") == 0) {
+                if (strcmp(type, "Note") == 0 ||
+                    strcmp(type, "Page") == 0 ||
+                    strcmp(type, "Article") == 0) {
                     const char *actor = xs_dict_get(object, "attributedTo");
 
                     /* request (and drop) the actor for this entry */
