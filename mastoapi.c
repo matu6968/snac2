@@ -767,11 +767,22 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
         xs *ml  = xs_list_new();
         xs *htl = xs_list_new();
         xs *eml = xs_list_new();
-        xs_list *p = xs_dict_get(msg, "tag");
-        xs_dict *v;
+        xs_list *tag = xs_dict_get(msg, "tag");
         int n = 0;
 
-        while (xs_list_iter(&p, &v)) {
+        xs *tag_list = NULL;
+
+        if (xs_type(tag) == XSTYPE_DICT) {
+            tag_list = xs_list_new();
+            tag_list = xs_list_append(tag_list, tag);
+        }
+        else
+            tag_list = xs_dup(tag);
+
+        tag = tag_list;
+        xs_dict *v;
+
+        while (xs_list_iter(&tag, &v)) {
             const char *type = xs_dict_get(v, "type");
 
             if (xs_is_null(type))
