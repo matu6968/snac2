@@ -78,7 +78,7 @@ xs_str *actor_name(xs_dict *actor)
 
                 if (n && i) {
                     char *u = xs_dict_get(i, "url");
-                    xs *img = xs_fmt("<img src=\"%s\" style=\"height: 1em; vertical-align: middle;\" loading=\"lazy\"/>", u);
+                    xs *img = xs_fmt("<img loading=\"lazy\" src=\"%s\" style=\"height: 1em; vertical-align: middle;\"/>", u);
 
                     name = xs_replace_i(name, n, img);
                 }
@@ -110,8 +110,8 @@ xs_str *html_actor_icon(xs_str *os, char *actor,
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
 
     {
-        xs *s1 = xs_fmt("<p><img class=\"snac-avatar\" src=\"%s\" alt=\"\" "
-                        "loading=\"lazy\"/>\n", avatar);
+        xs *s1 = xs_fmt("<p><img class=\"snac-avatar\" loading=\"lazy\" "
+                        "src=\"%s\" alt=\"\"/>\n", avatar);
         s = xs_str_cat(s, s1);
     }
 
@@ -1164,8 +1164,9 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
                     if (n && i) {
                         char *u = xs_dict_get(i, "url");
-                        xs *img = xs_fmt("<img src=\"%s\" style=\"height: 2em; vertical-align: middle;\" "
-                                         "loading=\"lazy\" title=\"%s\"/>", u, n);
+                        xs *img = xs_fmt("<img loading=\"lazy\" src=\"%s\" "
+                                        "style=\"height: 2em; vertical-align: middle;\" "
+                                        "title=\"%s\"/>", u, n);
 
                         c = xs_replace_i(c, n, img);
                     }
@@ -1341,7 +1342,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             if (xs_startswith(t, "image/") || strcmp(t, "Image") == 0) {
                 s1 = xs_fmt(
                     "<a href=\"%s\" target=\"_blank\">"
-                    "<img src=\"%s\" alt=\"%s\" title=\"%s\" loading=\"lazy\"/></a>\n",
+                    "<img loading=\"lazy\" src=\"%s\" alt=\"%s\" title=\"%s\"/></a>\n",
                         url, url, es1, es1);
             }
             else
