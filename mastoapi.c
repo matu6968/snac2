@@ -709,7 +709,10 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
         attr_list = xs_list_append(attr_list, att);
     }
     else
+    if (xs_type(att) == XSTYPE_LIST)
         attr_list = xs_dup(att);
+    else
+        attr_list = xs_list_new();
 
     /* if it has an image, add it as an attachment */
     xs_dict *image = xs_dict_get(msg, "image");
@@ -777,7 +780,10 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
             tag_list = xs_list_append(tag_list, tag);
         }
         else
+        if (xs_type(tag) == XSTYPE_LIST)
             tag_list = xs_dup(tag);
+        else
+            tag_list = xs_list_new();
 
         tag = tag_list;
         xs_dict *v;
