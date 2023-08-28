@@ -1548,7 +1548,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local, int skip, int 
             "<a href=\"%s%s?skip=%d&show=%d\" name=\"snac-more\">%s</a>"
             "</p>\n",
             base_url, local ? "" : "/admin", L("Back to top"),
-            base_url, local ? "" : "/admin", skip + show, show, L("Older entries...")
+            base_url, local ? "" : "/admin", skip + show, show, L("More...")
         );
 
         s = xs_str_cat(s, s1);
