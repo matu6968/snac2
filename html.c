@@ -1147,10 +1147,12 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                 /* not a list */
                 tag = xs_list_new();
                 tag = xs_list_append(tag, p);
-            } else {
-                /* is a list */
-                tag = xs_dup(p);
             }
+            else
+            if (xs_type(p) == XSTYPE_LIST)
+                tag = xs_dup(p);
+            else
+                tag = xs_list_new();
 
             xs_list *tags = tag;
 
@@ -1291,7 +1293,10 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             attach = xs_list_append(attach, v);
         }
         else
+        if (xs_type(v) == XSTYPE_LIST)
             attach = xs_dup(v);
+        else
+            attach = xs_list_new();
 
         /* does the message have an image? */
         if (xs_type(v = xs_dict_get(msg, "image")) == XSTYPE_DICT) {
