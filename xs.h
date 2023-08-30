@@ -603,6 +603,11 @@ xs_list *_xs_list_write_litem(xs_list *list, int offset, const char *mem, int ds
 {
     XS_ASSERT_TYPE(list, XSTYPE_LIST);
 
+    if (mem == NULL) {
+        mem = xs_stock_null;
+        dsz = sizeof(xs_stock_null);
+    }
+
     list = xs_expand(list, offset, dsz + 1);
 
     list[offset] = XSTYPE_LITEM;
@@ -899,12 +904,17 @@ xs_dict *xs_dict_new(void)
 }
 
 
-xs_dict *xs_dict_insert_m(xs_dict *dict, int offset, const xs_str *key,
+xs_dict *_xs_dict_write_ditem(xs_dict *dict, int offset, const xs_str *key,
                           const xs_val *data, int dsz)
 /* inserts a memory block into the dict */
 {
     XS_ASSERT_TYPE(dict, XSTYPE_DICT);
     XS_ASSERT_TYPE(key, XSTYPE_STRING);
+
+    if (data == NULL) {
+        data = xs_stock_null;
+        dsz = sizeof(xs_stock_null);
+    }
 
     int ksz = xs_size(key);
 
@@ -921,14 +931,14 @@ xs_dict *xs_dict_insert_m(xs_dict *dict, int offset, const xs_str *key,
 xs_dict *xs_dict_append_m(xs_dict *dict, const xs_str *key, const xs_val *mem, int dsz)
 /* appends a memory block to the dict */
 {
-    return xs_dict_insert_m(dict, xs_size(dict) - 1, key, mem, dsz);
+    return _xs_dict_write_ditem(dict, xs_size(dict) - 1, key, mem, dsz);
 }
 
 
 xs_dict *xs_dict_prepend_m(xs_dict *dict, const xs_str *key, const xs_val *mem, int dsz)
 /* prepends a memory block to the dict */
 {
-    return xs_dict_insert_m(dict, 4, key, mem, dsz);
+    return _xs_dict_write_ditem(dict, 4, key, mem, dsz);
 }
 
 
