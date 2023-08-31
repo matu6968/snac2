@@ -761,6 +761,12 @@ xs_dict *msg_base(snac *snac, const char *type, const char *id,
     xs *did       = NULL;
     xs *published = NULL;
     xs *ntid      = tid(0);
+    const char *obj_id;
+
+    if (xs_type(object) == XSTYPE_DICT)
+        obj_id = xs_dict_get(object, "id");
+    else
+        obj_id = object;
 
     /* generated values */
     if (date && strcmp(date, "@now") == 0) {
@@ -776,8 +782,8 @@ xs_dict *msg_base(snac *snac, const char *type, const char *id,
         }
         else
         if (strcmp(id, "@object") == 0) {
-            if (object != NULL) {
-                did = xs_fmt("%s/%s_%s", xs_dict_get(object, "id"), type, ntid);
+            if (obj_id != NULL) {
+                did = xs_fmt("%s/%s_%s", obj_id, type, ntid);
                 id = did;
             }
             else
@@ -788,7 +794,7 @@ xs_dict *msg_base(snac *snac, const char *type, const char *id,
             /* like @object, but always generate the same id */
             if (object != NULL) {
                 date = xs_dict_get(object, "published");
-                did = xs_fmt("%s/%s", xs_dict_get(object, "id"), type);
+                did = xs_fmt("%s/%s", obj_id, type);
                 id = did;
             }
             else
@@ -996,8 +1002,10 @@ xs_dict *msg_undo(snac *snac, char *object)
 /* creates an 'Undo' message */
 {
     xs_dict *msg = msg_base(snac, "Undo", "@object", snac->actor, "@now", object);
+    const char *to;
 
-    msg = xs_dict_append(msg, "to", xs_dict_get(object, "object"));
+    if (xs_type(object) == XSTYPE_DICT && (to = xs_dict_get(object, "object")))
+        msg = xs_dict_append(msg, "to", to);
 
     return msg;
 }
