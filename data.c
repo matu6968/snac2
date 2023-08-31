@@ -23,7 +23,7 @@ double disk_layout = 2.7;
 /* storage serializer */
 pthread_mutex_t data_mutex = {0};
 
-int snac_upgrade(d_char **error);
+int snac_upgrade(xs_str **error);
 
 
 int srv_open(char *basedir, int auto_upgrade)

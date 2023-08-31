@@ -15,7 +15,7 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
     int p_size = 0;
     xs *headers = xs_dict_new();
     xs *l = NULL;
-    d_char *host = NULL;
+    xs_str *host = NULL;
     xs *resource = NULL;
 
     if (xs_startswith(qs, "https:/" "/")) {
@@ -106,7 +106,7 @@ int webfinger_request(const char *qs, char **actor, char **user)
 }
 
 
-int webfinger_get_handler(d_char *req, char *q_path,
+int webfinger_get_handler(xs_dict *req, char *q_path,
                            char **body, int *b_size, char **ctype)
 /* serves webfinger queries */
 {
@@ -170,7 +170,6 @@ int webfinger_get_handler(d_char *req, char *q_path,
         xs *aaj   = xs_dict_new();
         xs *links = xs_list_new();
         xs *obj   = xs_dict_new();
-        d_char *j;
 
         acct = xs_fmt("acct:%s@%s",
             xs_dict_get(snac.config, "uid"), xs_dict_get(srv_config, "host"));
@@ -184,7 +183,7 @@ int webfinger_get_handler(d_char *req, char *q_path,
         obj = xs_dict_append(obj, "subject", acct);
         obj = xs_dict_append(obj, "links",   links);
 
-        j = xs_json_dumps(obj, 4);
+        xs_str *j = xs_json_dumps(obj, 4);
 
         user_free(&snac);
 

@@ -210,7 +210,7 @@ int snac_init(const char *basedir)
 }
 
 
-void new_password(const char *uid, d_char **clear_pwd, d_char **hashed_pwd)
+void new_password(const char *uid, xs_str **clear_pwd, xs_str **hashed_pwd)
 /* creates a random password */
 {
     int rndbuf[3];
