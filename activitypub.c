@@ -1901,7 +1901,7 @@ void process_queue_item(xs_dict *q_item)
             retries++;
 
             /* error sending; requeue? */
-            if (status == 404 || status == 410 || status < 0)
+            if (status == 400 || status == 404 || status == 410 || status < 0)
                 /* explicit error: discard */
                 srv_log(xs_fmt("output message: fatal error %s %d", inbox, status));
             else
