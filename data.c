@@ -1759,8 +1759,11 @@ void inbox_add_by_actor(const xs_dict *actor)
     char *v;
 
     if (!xs_is_null(v = xs_dict_get(actor, "endpoints")) &&
-        !xs_is_null(v = xs_dict_get(v, "sharedInbox")))
-        inbox_add(v);
+        !xs_is_null(v = xs_dict_get(v, "sharedInbox"))) {
+        /* only collect this inbox if its instance is not blocked */
+        if (!is_instance_blocked(v))
+            inbox_add(v);
+    }
 }
 
 

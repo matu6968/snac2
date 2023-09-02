@@ -1875,6 +1875,11 @@ void process_queue_item(xs_dict *q_item)
             return;
         }
 
+        if (is_instance_blocked(inbox)) {
+            srv_debug(0, xs_fmt("discarded output message to blocked instance %s", inbox));
+            return;
+        }
+
         /* deliver */
         status = send_to_inbox_raw(keyid, seckey, inbox, msg, &payload, &p_size, retries == 0 ? 3 : 8);
 
