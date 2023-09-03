@@ -6,8 +6,13 @@
 
 int xs_json_dump(const xs_val *data, int indent, FILE *f);
 xs_str *xs_json_dumps(const xs_val *data, int indent);
-xs_val *xs_json_loads(const xs_str *json);
+
 xs_val *xs_json_load(FILE *f);
+xs_val *xs_json_loads(const xs_str *json);
+
+xstype xs_json_load_type(FILE *f);
+int xs_json_load_array_iter(FILE *f, xs_val **value, int *c);
+int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, int *c);
 
 
 #ifdef XS_IMPLEMENTATION
@@ -176,8 +181,6 @@ int xs_json_dump(const xs_val *data, int indent, FILE *f)
 
 /** JSON loads **/
 
-/* this code comes mostly from the Minimum Profit Text Editor (MPDM) */
-
 typedef enum {
     JS_ERROR = -1,
     JS_INCOMPLETE,
@@ -326,6 +329,40 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
 static xs_list *_xs_json_load_array(FILE *f);
 static xs_dict *_xs_json_load_object(FILE *f);
 
+int xs_json_load_array_iter(FILE *f, xs_val **value, int *c)
+{
+    js_type t;
+
+    *value = _xs_json_load_lexer(f, &t);
+
+    if (t == JS_ERROR)
+        return -1;
+
+    if (t == JS_CBRACK)
+        return 0;
+
+    if (*c > 0) {
+        if (t == JS_COMMA)
+            *value = _xs_json_load_lexer(f, &t);
+        else
+            return -1;
+    }
+
+    if (t == JS_OBRACK)
+        *value = _xs_json_load_array(f);
+    else
+    if (t == JS_OCURLY)
+        *value = _xs_json_load_object(f);
+
+    if (*value == NULL)
+        return -1;
+
+    *c = *c + 1;
+
+    return 1;
+}
+
+
 static xs_list *_xs_json_load_array(FILE *f)
 /* parses a JSON array */
 {
@@ -333,36 +370,63 @@ static xs_list *_xs_json_load_array(FILE *f)
     int c = 0;
 
     for (;;) {
-        js_type tt;
-        xs *v = _xs_json_load_lexer(f, &tt);
+        xs *v = NULL;
+        int r = xs_json_load_array_iter(f, &v, &c);
 
-        if (tt == JS_ERROR)
-            break;
+        if (r == -1)
+            l = xs_free(l);
 
-        if (tt == JS_CBRACK)
-            return l;
-
-        if (c > 0) {
-            if (tt == JS_COMMA)
-                v = _xs_json_load_lexer(f, &tt);
-            else
-                break;
-        }
-
-        if (tt == JS_OBRACK)
-            v = _xs_json_load_array(f);
+        if (r == 1)
+            l = xs_list_append(l, v);
         else
-        if (tt == JS_OCURLY)
-            v = _xs_json_load_object(f);
-
-        if (v == NULL)
             break;
-
-        l = xs_list_append(l, v);
-        c++;
     }
 
-    return xs_free(l);
+    return l;
+}
+
+
+int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, int *c)
+{
+    js_type t;
+
+    *key = _xs_json_load_lexer(f, &t);
+
+    if (t == JS_ERROR)
+        return -1;
+
+    if (t == JS_CCURLY)
+        return 0;
+
+    if (*c > 0) {
+        if (t == JS_COMMA)
+            *key = _xs_json_load_lexer(f, &t);
+        else
+            return -1;
+    }
+
+    if (t != JS_STRING)
+        return -1;
+
+    xs_free(_xs_json_load_lexer(f, &t));
+
+    if (t != JS_COLON)
+        return -1;
+
+    *value = _xs_json_load_lexer(f, &t);
+
+    if (t == JS_OBRACK)
+        *value = _xs_json_load_array(f);
+    else
+    if (t == JS_OCURLY)
+        *value = _xs_json_load_object(f);
+
+    if (*value == NULL)
+        return -1;
+
+    *c = *c + 1;
+
+    return 1;
 }
 
 
@@ -375,47 +439,20 @@ static xs_dict *_xs_json_load_object(FILE *f)
     d = xs_dict_new();
 
     for (;;) {
-        js_type tt;
-        xs *k = _xs_json_load_lexer(f, &tt);
+        xs *k = NULL;
         xs *v = NULL;
+        int r = xs_json_load_object_iter(f, &k, &v, &c);
 
-        if (tt == JS_ERROR)
-            break;
+        if (r == -1)
+            d = xs_free(d);
 
-        if (tt == JS_CCURLY)
-            return d;
-
-        if (c > 0) {
-            if (tt == JS_COMMA)
-                k = _xs_json_load_lexer(f, &tt);
-            else
-                break;
-        }
-
-        if (tt != JS_STRING)
-            break;
-
-        xs_free(_xs_json_load_lexer(f, &tt));
-
-        if (tt != JS_COLON)
-            break;
-
-        v = _xs_json_load_lexer(f, &tt);
-
-        if (tt == JS_OBRACK)
-            v = _xs_json_load_array(f);
+        if (r == 1)
+            d = xs_dict_append(d, k, v);
         else
-        if (tt == JS_OCURLY)
-            v = _xs_json_load_object(f);
-
-        if (v == NULL)
             break;
-
-        d = xs_dict_append(d, k, v);
-        c++;
     }
 
-    return xs_free(d);
+    return d;
 }
 
 
@@ -434,18 +471,34 @@ xs_val *xs_json_loads(const xs_str *json)
 }
 
 
+xstype xs_json_load_type(FILE *f)
+/* identifies the type of a JSON stream */
+{
+    xstype t = XSTYPE_NULL;
+    js_type jt;
+
+    xs_free(_xs_json_load_lexer(f, &jt));
+
+    if (jt == JS_OBRACK)
+        t = XSTYPE_LIST;
+    else
+    if (jt == JS_OCURLY)
+        t = XSTYPE_DICT;
+
+    return t;
+}
+
+
 xs_val *xs_json_load(FILE *f)
 /* loads a JSON file */
 {
     xs_val *v = NULL;
-    js_type t;
+    xstype t = xs_json_load_type(f);
 
-    xs_free(_xs_json_load_lexer(f, &t));
-
-    if (t == JS_OBRACK)
+    if (t == XSTYPE_LIST)
         v = _xs_json_load_array(f);
     else
-    if (t == JS_OCURLY)
+    if (t == XSTYPE_DICT)
         v = _xs_json_load_object(f);
 
     return v;

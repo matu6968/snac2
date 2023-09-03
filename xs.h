@@ -28,9 +28,6 @@ typedef enum {
 } xstype;
 
 
-/* dynamic strings */
-typedef char d_char;
-
 /* types */
 typedef char xs_val;
 typedef char xs_str;
@@ -157,7 +154,7 @@ xs_val xs_stock_dict[]  = { XSTYPE_DICT, 0, 0, 5, XSTYPE_EOM };
 
 void *_xs_realloc(void *ptr, size_t size, const char *file, int line, const char *func)
 {
-    d_char *ndata = realloc(ptr, size);
+    xs_val *ndata = realloc(ptr, size);
 
     if (ndata == NULL) {
         fprintf(stderr, "**OUT OF MEMORY**\n");
@@ -530,7 +527,7 @@ int xs_starts_and_ends(const char *prefix, const char *str, const char *suffix)
 
 
 xs_str *xs_crop_i(xs_str *str, int start, int end)
-/* crops the d_char to be only from start to end */
+/* crops the string to be only from start to end */
 {
     XS_ASSERT_TYPE(str, XSTYPE_STRING);
 
