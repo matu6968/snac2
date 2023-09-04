@@ -5,9 +5,11 @@
 #define _XS_SOCKET_H
 
 int xs_socket_timeout(int s, double rto, double sto);
+int xs_socket_server_serv(const char *addr, const char *serv);
 int xs_socket_server(const char *addr, int port);
 FILE *xs_socket_accept(int rs);
 xs_str *xs_socket_peername(int s);
+int xs_socket_connect(const char *addr, const char *serv);
 
 
 #ifdef XS_IMPLEMENTATION
@@ -42,8 +44,8 @@ int xs_socket_timeout(int s, double rto, double sto)
 }
 
 
-int xs_socket_server(const char *addr, int port)
-/* opens a server socket */
+int xs_socket_server_serv(const char *addr, const char *serv)
+/* opens a server socket by service name (or port as string) */
 {
     int rs = -1;
     struct sockaddr_in host;
@@ -59,8 +61,14 @@ int xs_socket_server(const char *addr, int port)
             goto end;
     }
 
+    struct servent *se;
+
+    if ((se = getservbyname(serv, "tcp")) != NULL)
+        host.sin_port = se->s_port;
+    else
+        host.sin_port = htons(atoi(serv));
+
     host.sin_family = AF_INET;
-    host.sin_port   = htons(port);
 
     if ((rs = socket(AF_INET, SOCK_STREAM, 0)) != -1) {
         /* reuse addr */
@@ -77,6 +85,16 @@ int xs_socket_server(const char *addr, int port)
 
 end:
     return rs;
+}
+
+
+int xs_socket_server(const char *addr, int port)
+/* opens a server socket (port as integer) */
+{
+    char serv[32];
+
+    snprintf(serv, sizeof(serv), "%d", port);
+    return xs_socket_server_serv(addr, serv);
 }
 
 
@@ -121,6 +139,70 @@ xs_str *xs_socket_peername(int s)
     }
 
     return ip;
+}
+
+
+int xs_socket_connect(const char *addr, const char *serv)
+/* creates a client connection socket */
+{
+    int d = -1;
+
+#ifndef WITHOUT_GETADDRINFO
+    struct addrinfo *res;
+    struct addrinfo hints;
+
+    memset(&hints, '\0', sizeof(hints));
+
+    hints.ai_socktype   = SOCK_STREAM;
+    hints.ai_flags      = AI_ADDRCONFIG;
+
+    if (getaddrinfo(addr, serv, &hints, &res) == 0) {
+        struct addrinfo *r;
+
+        for (r = res; r != NULL; r = r->ai_next) {
+            d = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
+
+            if (d != -1) {
+                if (connect(d, r->ai_addr, r->ai_addrlen) == 0)
+                    break;
+
+                close(d);
+                d = -1;
+            }
+        }
+
+        freeaddrinfo(res);
+    }
+
+#else /* WITHOUT_GETADDRINFO */
+
+    /* traditional socket interface */
+    struct hostent *he;
+
+    if ((he = gethostbyname(addr)) != NULL) {
+        struct sockaddr_in host;
+
+        memset(&host, '\0', sizeof(host));
+
+        memcpy(&host.sin_addr, he->h_addr_list[0], he->h_length);
+        host.sin_family = he->h_addrtype;
+
+        struct servent *se;
+
+        if ((se = getservbyname(serv, "tcp")) != NULL)
+            host.sin_port = se->s_port;
+        else
+            host.sin_port = htons(atoi(serv));
+
+        if ((d = socket(AF_INET, SOCK_STREAM, 0)) != -1) {
+            if (connect(d, (struct sockaddr *)&host, sizeof(host)) == -1)
+                d = -1;
+        }
+    }
+
+#endif  /* WITHOUT_GETADDRINFO */
+
+    return d;
 }
 
 
