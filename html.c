@@ -2282,6 +2282,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         char *id     = xs_dict_get(p_vars, "id");
         char *actor  = xs_dict_get(p_vars, "actor");
         char *action = xs_dict_get(p_vars, "action");
+        char *group  = xs_dict_get(p_vars, "group");
 
         if (action == NULL)
             return 404;
@@ -2353,6 +2354,36 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 enqueue_output_by_actor(&snac, msg, actor, 0);
 
                 snac_log(&snac, xs_fmt("unfollowed actor %s", actor));
+            }
+            else
+                snac_log(&snac, xs_fmt("actor is not being followed %s", actor));
+        }
+        else
+        if (strcmp(action, L("Follow Group")) == 0) { /** **/
+            xs *msg = msg_follow(&snac, group);
+
+            if (msg != NULL) {
+                /* reload the group from the message, in may be different */
+                group = xs_dict_get(msg, "object");
+
+                following_add(&snac, group, msg);
+
+                enqueue_output_by_actor(&snac, msg, group, 0);
+            }
+        }
+        else
+        if (strcmp(action, L("Unfollow Group")) == 0) { /** **/
+            /* get the following object */
+            xs *object = NULL;
+
+            if (valid_status(following_get(&snac, group, &object))) {
+                xs *msg = msg_undo(&snac, xs_dict_get(object, "object"));
+
+                following_del(&snac, group);
+
+                enqueue_output_by_actor(&snac, msg, group, 0);
+
+                snac_log(&snac, xs_fmt("unfollowed group %s", group));
             }
             else
                 snac_log(&snac, xs_fmt("actor is not being followed %s", actor));
