@@ -760,8 +760,10 @@ xs_str *build_mentions(snac *snac, const xs_dict *msg)
 
 xs_str *html_entry_controls(snac *snac, xs_str *os, const xs_dict *msg, const char *md5)
 {
-    char *id    = xs_dict_get(msg, "id");
-    char *actor = xs_dict_get(msg, "attributedTo");
+    const char *id    = xs_dict_get(msg, "id");
+    const char *actor = xs_dict_get(msg, "attributedTo");
+    const char *group = xs_dict_get(msg, "audience");
+
     xs *likes   = object_likes(id);
     xs *boosts  = object_announces(id);
 
@@ -774,10 +776,11 @@ xs_str *html_entry_controls(snac *snac, xs_str *os, const xs_dict *msg, const ch
             "<form autocomplete=\"off\" method=\"post\" action=\"%s/admin/action\">\n"
             "<input type=\"hidden\" name=\"id\" value=\"%s\">\n"
             "<input type=\"hidden\" name=\"actor\" value=\"%s\">\n"
+            "<input type=\"hidden\" name=\"group\" value=\"%s\">\n"
             "<input type=\"hidden\" name=\"redir\" value=\"%s_entry\">\n"
             "\n",
 
-            snac->actor, id, actor, md5
+            snac->actor, id, actor, group ? group : "", md5
         );
 
         s = xs_str_cat(s, s1);
@@ -810,6 +813,17 @@ xs_str *html_entry_controls(snac *snac, xs_str *os, const xs_dict *msg, const ch
         }
         else {
             s = html_button(s, "follow", L("Follow"), L("Start following this user's activity"));
+        }
+
+        if (!xs_is_null(group)) {
+            if (following_check(snac, group)) {
+                s = html_button(s, "unfollow", L("Unfollow Group"),
+                        L("Stop following this group or channel"));
+            }
+            else {
+                s = html_button(s, "follow", L("Follow Group"),
+                        L("Start following this group or channel"));
+            }
         }
 
         s = html_button(s, "mute", L("MUTE"),
