@@ -2,7 +2,7 @@
 
 ## Open
 
-Unfollowing lemmy groups are reject with an http status of 400.
+Unfollowing lemmy groups gets rejected with an http status of 400.
 
 Unfollowing guppe groups seems to work (http status of 200), but messages continue to arrive as it didn't.
 
