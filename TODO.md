@@ -2,6 +2,10 @@
 
 ## Open
 
+Unfollowing lemmy groups gets rejected with an http status of 400.
+
+Unfollowing guppe groups seems to work (http status of 200), but messages continue to arrive as it didn't.
+
 Fix `timeline_request_replies()` issues (more info there).
 
 Post edits should preserve the image and the image description somewhat.
