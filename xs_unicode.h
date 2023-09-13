@@ -16,6 +16,7 @@
  unsigned int xs_unicode_to_lower(unsigned int cpoint);
  int xs_unicode_nfd(unsigned int cpoint, unsigned int *base, unsigned int *diac);
  int xs_unicode_nfc(unsigned int base, unsigned int diac, unsigned int *cpoint);
+ int xs_unicode_is_alpha(unsigned int cpoint);
 
 #ifdef XS_IMPLEMENTATION
 
@@ -101,6 +102,15 @@ unsigned int xs_utf8_dec(char **str)
 }
 
 
+static int int_range_cmp(const void *p1, const void *p2)
+{
+    const unsigned int *a = p1;
+    const unsigned int *b = p2;
+
+    return *a < b[0] ? -1 : *a > b[1] ? 1 : 0;
+}
+
+
 /* intentionally dead simple */
 
 static unsigned int xs_unicode_width_table[] = {
@@ -119,20 +129,12 @@ static unsigned int xs_unicode_width_table[] = {
 int xs_unicode_width(unsigned int cpoint)
 /* returns the width in columns of a Unicode codepoint (somewhat simplified) */
 {
-    unsigned int *p = xs_unicode_width_table;
-    unsigned int *e = p + sizeof(xs_unicode_width_table) / sizeof(unsigned int);
+    unsigned int *r = bsearch(&cpoint, xs_unicode_width_table,
+                        sizeof(xs_unicode_width_table) / (sizeof(unsigned int) * 3),
+                        sizeof(unsigned int) * 3,
+                        int_range_cmp);
 
-    while (p < e) {
-        if (cpoint < p[0])
-            return 1;
-
-        if (cpoint >= p[0] && cpoint <= p[1])
-            return p[2];
-
-        p += 3;
-    }
-
-    return 0;
+    return r ? r[2] : 1;
 }
 
 
@@ -229,6 +231,18 @@ int xs_unicode_nfc(unsigned int base, unsigned int diac, unsigned int *cpoint)
     }
 
     return 0;
+}
+
+
+int xs_unicode_is_alpha(unsigned int cpoint)
+/* checks if a codepoint is an alpha (i.e. a letter) */
+{
+    unsigned int *r = bsearch(&cpoint, xs_unicode_alpha_table,
+                        sizeof(xs_unicode_alpha_table) / (sizeof(unsigned int) * 2),
+                        sizeof(unsigned int) * 2,
+                        int_range_cmp);
+
+    return !!r;
 }
 
 

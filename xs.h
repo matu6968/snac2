@@ -59,6 +59,7 @@ xs_val *xs_insert_m(xs_val *data, int offset, const char *mem, int size);
 #define xs_append_m(data, mem, size) xs_insert_m(data, xs_size(data) - 1, mem, size)
 
 xs_str *xs_str_new(const char *str);
+xs_str *xs_str_new_sz(const char *mem, int sz);
 xs_str *xs_str_wrap_i(const char *prefix, xs_str *str, const char *suffix);
 #define xs_str_prepend_i(str, prefix) xs_str_wrap_i(prefix, str, NULL)
 #define xs_str_cat(str, suffix) xs_str_wrap_i(NULL, str, suffix)
@@ -72,6 +73,8 @@ int xs_starts_and_ends(const char *prefix, const char *str, const char *suffix);
 #define xs_startswith(str, prefix) xs_starts_and_ends(prefix, str, NULL)
 #define xs_endswith(str, suffix) xs_starts_and_ends(NULL, str, suffix)
 xs_str *xs_crop_i(xs_str *str, int start, int end);
+xs_str *xs_lstrip_chars_i(xs_str *str, const char *chars);
+xs_str *xs_rstrip_chars_i(xs_str *str, const char *chars);
 xs_str *xs_strip_chars_i(xs_str *str, const char *chars);
 #define xs_strip_i(str) xs_strip_chars_i(str, " \r\n\t\v\f")
 xs_str *xs_tolower_i(xs_str *str);
@@ -424,6 +427,17 @@ xs_str *xs_str_new(const char *str)
 }
 
 
+xs_str *xs_str_new_sz(const char *mem, int sz)
+/* creates a new string from a memory block, adding an asciiz */
+{
+    xs_str *s = xs_realloc(NULL, _xs_blk_size(sz + 1));
+    memcpy(s, mem, sz);
+    s[sz] = '\0';
+
+    return s;
+}
+
+
 xs_str *xs_str_wrap_i(const char *prefix, xs_str *str, const char *suffix)
 /* wraps str with prefix and suffix */
 {
@@ -546,26 +560,36 @@ xs_str *xs_crop_i(xs_str *str, int start, int end)
 }
 
 
-xs_str *xs_strip_chars_i(xs_str *str, const char *chars)
-/* strips the string of chars from the start and the end */
+xs_str *xs_lstrip_chars_i(xs_str *str, const char *chars)
+/* strips all chars from the start of str */
 {
-    XS_ASSERT_TYPE(str, XSTYPE_STRING);
-
     int n;
 
-    /* strip first from the end */
+    for (n = 0; str[n] && strchr(chars, str[n]); n++);
+
+    if (n)
+        str = xs_collapse(str, 0, n);
+
+    return str;
+}
+
+
+xs_str *xs_rstrip_chars_i(xs_str *str, const char *chars)
+/* strips all chars from the end of str */
+{
+    int n;
+
     for (n = strlen(str); n > 0 && strchr(chars, str[n - 1]); n--);
     str[n] = '\0';
 
-    if (str[0]) {
-        /* now strip from the beginning */
-        for (n = 0; str[n] && strchr(chars, str[n]); n++);
-
-        if (n)
-            str = xs_collapse(str, 0, n);
-    }
-
     return str;
+}
+
+
+xs_str *xs_strip_chars_i(xs_str *str, const char *chars)
+/* strips the string of chars from the start and the end */
+{
+    return xs_lstrip_chars_i(xs_rstrip_chars_i(str, chars), chars);
 }
 
 
@@ -859,11 +883,9 @@ xs_list *xs_split_n(const char *str, const char *sep, int times)
     list = xs_list_new();
 
     while (times > 0 && (ss = strstr(str, sep)) != NULL) {
-        /* add the first part (without the asciiz) */
-        list = xs_list_append_m(list, str, ss - str);
-
-        /* add the asciiz */
-        list = xs_insert_m(list, xs_size(list) - 1, "", 1);
+        /* create a new string with this slice and add it to the list */
+        xs *s = xs_str_new_sz(str, ss - str);
+        list = xs_list_append(list, s);
 
         /* skip past the separator */
         str = ss + sz;
@@ -1131,8 +1153,7 @@ int xs_data_size(const xs_data *value)
 void xs_data_get(const xs_data *value, void *data)
 /* copies the raw data stored inside value into data */
 {
-    int size = _xs_get_24b(value + 1) - 4;
-    memcpy(data, &value[4], size);
+    memcpy(data, &value[4], xs_data_size(value));
 }
 
 
