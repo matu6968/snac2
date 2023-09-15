@@ -37,6 +37,8 @@ const char *xs_mime_types[] = {
     "ogv",      "video/ogg",
     "opus",     "audio/ogg",
     "png",      "image/png",
+    "svg",      "image/svg+xml",
+    "svgz",     "image/svg+xml",
     "txt",      "text/plain",
     "wav",      "audio/wav",
     "webm",     "video/webm",
