@@ -1648,14 +1648,16 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     }
     else
     if (strcmp(type, "Update") == 0) { /** **/
-        if (strcmp(utype, "Person") == 0 || strcmp(utype, "Service") == 0) {
+        if (strcmp(utype, "Person") == 0 || strcmp(utype, "Service") == 0) { /** **/
             actor_add(actor, xs_dict_get(msg, "object"));
             timeline_touch(snac);
 
             snac_log(snac, xs_fmt("updated actor %s", actor));
         }
         else
-        if (strcmp(utype, "Note") == 0) { /** **/
+        if (strcmp(utype, "Note") == 0 || /** **/
+            strcmp(utype, "Page") == 0 || /** **/
+            strcmp(utype, "Article") == 0) { /** **/
             const char *id = xs_dict_get(object, "id");
 
             object_add_ow(id, object);
