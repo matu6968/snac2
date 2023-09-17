@@ -235,7 +235,7 @@ xs_str *sanitize(const char *content)
 
             if (valid_tags[i]) {
                 /* accepted tag: rebuild it with only the accepted elements */
-                xs *el = xs_regex_match(v, "(src|href|rel|class|target)=\"[^\"]*\"");
+                xs *el = xs_regex_select(v, "(src|href|rel|class|target)=\"[^\"]*\"");
                 xs *s3 = xs_join(el, " ");
 
                 s2 = xs_fmt("<%s%s%s%s>",

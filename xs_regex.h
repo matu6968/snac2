@@ -6,8 +6,8 @@
 
 xs_list *xs_regex_split_n(const char *str, const char *rx, int count);
 #define xs_regex_split(str, rx) xs_regex_split_n(str, rx, XS_ALL)
-xs_list *xs_regex_match_n(const char *str, const char *rx, int count);
-#define xs_regex_match(str, rx) xs_regex_match_n(str, rx, XS_ALL)
+xs_list *xs_regex_select_n(const char *str, const char *rx, int count);
+#define xs_regex_select(str, rx) xs_regex_select_n(str, rx, XS_ALL)
 xs_list *xs_regex_replace_in(xs_str *str, const char *rx, const char *rep, int count);
 #define xs_regex_replace_i(str, rx, rep) xs_regex_replace_in(str, rx, rep, XS_ALL)
 #define xs_regex_replace_n(str, rx, rep, count) xs_regex_replace_in(xs_dup(str), rx, rep, count)
@@ -55,8 +55,8 @@ xs_list *xs_regex_split_n(const char *str, const char *rx, int count)
 }
 
 
-xs_list *xs_regex_match_n(const char *str, const char *rx, int count)
-/* returns a list with upto count matches */
+xs_list *xs_regex_select_n(const char *str, const char *rx, int count)
+/* selects all matches and return them as a list */
 {
     xs_list *list = xs_list_new();
     xs *split = NULL;

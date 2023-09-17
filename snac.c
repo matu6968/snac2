@@ -17,6 +17,7 @@
 #include "xs_time.h"
 #include "xs_glob.h"
 #include "xs_random.h"
+#include "xs_match.h"
 
 #include "snac.h"
 
