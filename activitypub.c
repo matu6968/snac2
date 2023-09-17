@@ -9,6 +9,7 @@
 #include "xs_regex.h"
 #include "xs_time.h"
 #include "xs_set.h"
+#include "xs_match.h"
 
 #include "snac.h"
 
@@ -192,9 +193,7 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
                         type = "(null)";
                 }
 
-                if (strcmp(type, "Note") == 0 ||
-                    strcmp(type, "Page") == 0 ||
-                    strcmp(type, "Article") == 0) {
+                if (xs_match(type, "Note|Page|Article")) {
                     const char *actor = xs_dict_get(object, "attributedTo");
 
                     /* request (and drop) the actor for this entry */
@@ -441,7 +440,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 {
     const char *type = xs_dict_get(c_msg, "type");
 
-    if (strcmp(type, "Like") == 0 || strcmp(type, "Announce") == 0) {
+    if (xs_match(type, "Like|Announce")) {
         const char *object = xs_dict_get(c_msg, "object");
 
         if (xs_type(object) == XSTYPE_DICT)
@@ -1648,16 +1647,14 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     }
     else
     if (strcmp(type, "Update") == 0) { /** **/
-        if (strcmp(utype, "Person") == 0 || strcmp(utype, "Service") == 0) { /** **/
+        if (xs_match(utype, "Person|Service")) { /** **/
             actor_add(actor, xs_dict_get(msg, "object"));
             timeline_touch(snac);
 
             snac_log(snac, xs_fmt("updated actor %s", actor));
         }
         else
-        if (strcmp(utype, "Note") == 0 || /** **/
-            strcmp(utype, "Page") == 0 || /** **/
-            strcmp(utype, "Article") == 0) { /** **/
+        if (xs_match(utype, "Note|Page|Article")) { /** **/
             const char *id = xs_dict_get(object, "id");
 
             object_add_ow(id, object);
