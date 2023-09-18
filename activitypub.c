@@ -972,6 +972,26 @@ xs_dict *msg_actor(snac *snac)
         msg = xs_dict_set(msg, "image", d);
     }
 
+    /* add the metadata as attachments of PropertyValue */
+    xs_dict *metadata = xs_dict_get(snac->config, "metadata");
+    if (xs_type(metadata) == XSTYPE_DICT) {
+        xs *attach = xs_list_new();
+        xs_str *k;
+        xs_str *v;
+
+        while (xs_dict_iter(&metadata, &k, &v)) {
+            xs *d = xs_dict_new();
+
+            d = xs_dict_append(d, "type",  "PropertyValue");
+            d = xs_dict_append(d, "name",  k);
+            d = xs_dict_append(d, "value", v);
+
+            attach = xs_list_append(attach, d);
+        }
+
+        msg = xs_dict_set(msg, "attachment", attach);
+    }
+
     return msg;
 }
 
