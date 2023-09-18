@@ -2,6 +2,8 @@
 
 ## 2.42
 
+It's now possible to add profile metadata.
+
 If a post comes from a group or community (i.e. it has an `audience` field set), the buttons `Follow Group` or `Unfollow Group` are shown.
 
 ## 2.41
