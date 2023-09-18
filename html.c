@@ -481,6 +481,32 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
             xs *s1   = xs_fmt("<div class=\"p-note snac-top-user-bio\">%s</div>\n", bio2);
 
             s = xs_str_cat(s, s1);
+
+            xs_dict *metadata = xs_dict_get(snac->config, "metadata");
+            if (xs_type(metadata) == XSTYPE_DICT) {
+                xs_str *k;
+                xs_str *v;
+
+                s = xs_str_cat(s, "<br><div class=\"snac-metadata\">\n");
+
+                while (xs_dict_iter(&metadata, &k, &v)) {
+                    xs *k2 = encode_html(k);
+                    xs *v2 = encode_html(v);
+                    xs *v3 = NULL;
+
+                    if (xs_startswith(v, "https:/" "/"))
+                        v3 = xs_fmt("<a href=\"%s\">%s</a>", v2, v2);
+                    else
+                        v3 = xs_dup(v2);
+
+                    xs *s1 = xs_fmt("<span class=\"snac-property-name\">%s</span>:<br>"
+                            "<span class=\"snac-property-value\">%s</span><br>\n", k2, v3);
+
+                    s = xs_str_cat(s, s1);
+                }
+
+                s = xs_str_cat(s, "</div>\n");
+            }
         }
 
         s = xs_str_cat(s, "</div>\n");
