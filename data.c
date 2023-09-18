@@ -1343,6 +1343,13 @@ int is_pinned(snac *user, const char *id)
 }
 
 
+int is_pinned_by_md5(snac *user, const char *md5)
+{
+    xs *fn = xs_fmt("%s/pinned/%s.json", user->basedir, md5);
+    return !!(mtime(fn) != 0.0);
+}
+
+
 int pin(snac *user, const char *id)
 /* pins a message */
 {
@@ -2436,7 +2443,6 @@ void purge_user(snac *snac)
     _purge_user_subdir(snac, "hidden",  priv_days);
     _purge_user_subdir(snac, "private", priv_days);
 
-    _purge_user_subdir(snac, "pinned",  pub_days);
     _purge_user_subdir(snac, "public",  pub_days);
 
     const char *idxs[] = { "followers.idx", "private.idx", "public.idx", "pinned.idx", NULL };

@@ -1563,7 +1563,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local, int skip, int 
         xs *msg = NULL;
         int status;
 
-        if (user)
+        if (user && !is_pinned_by_md5(user, v))
             status = timeline_get_by_md5(user, v, &msg);
         else
             status = object_get_by_md5(v, &msg);
