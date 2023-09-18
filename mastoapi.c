@@ -1044,6 +1044,25 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             acct = xs_dict_append(acct, "avatar", avatar);
             acct = xs_dict_append(acct, "avatar_static", avatar);
 
+            xs_dict *metadata = xs_dict_get(snac1.config, "metadata");
+            if (xs_type(metadata) == XSTYPE_DICT) {
+                xs *fields = xs_list_new();
+                xs_str *k;
+                xs_str *v;
+
+                while (xs_dict_iter(&metadata, &k, &v)) {
+                    xs *d = xs_dict_new();
+
+                    d = xs_dict_append(d, "name", k);
+                    d = xs_dict_append(d, "value", v);
+                    d = xs_dict_append(d, "verified_at", xs_stock_null);
+
+                    fields = xs_list_append(fields, d);
+                }
+
+                acct = xs_dict_set(acct, "fields", fields);
+            }
+
             *body  = xs_json_dumps(acct, 4);
             *ctype = "application/json";
             status = 200;
