@@ -582,6 +582,11 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         "<label for=\"bot\">%s</label></p>\n"
 
         "<p>%s:<br>\n"
+        "<textarea name=\"metadata\" cols=\"40\" rows=\"4\" "
+        "placeholder=\"Blog=https:/" "/example.com/my-blog\nGPG Key=1FA54\n...\">"
+        "%s</textarea></p>\n"
+
+        "<p>%s:<br>\n"
         "<input type=\"password\" name=\"passwd1\" value=\"\"></p>\n"
 
         "<p>%s:<br>\n"
@@ -636,6 +641,19 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
     xs *es5 = encode_html(telegram_chat_id);
     xs *es6 = encode_html(purge_days);
 
+    xs *metadata = xs_str_new(NULL);
+    xs_dict *md = xs_dict_get(snac->config, "metadata");
+    xs_str *k;
+    xs_str *v;
+
+    while (xs_dict_iter(&md, &k, &v)) {
+        xs *kp = xs_fmt("%s=%s", k, v);
+
+        if (*metadata)
+            metadata = xs_str_cat(metadata, "\n");
+        metadata = xs_str_cat(metadata, kp);
+    }
+
     xs *s1 = xs_fmt(_tmpl,
         L("New Post..."),
         snac->actor,
@@ -686,6 +704,10 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         L("Drop direct messages from people you don't follow"),
         xs_type(bot) == XSTYPE_TRUE ? "checked" : "",
         L("This account is a bot"),
+
+        L("Profile metadata (key=value pairs in each line)"),
+        metadata,
+
         L("New password"),
         L("Repeat new password"),
         L("Update user info")
@@ -2467,6 +2489,25 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "bot", xs_stock_true);
         else
             snac.config = xs_dict_set(snac.config, "bot", xs_stock_false);
+        if ((v = xs_dict_get(p_vars, "metadata")) != NULL) {
+            /* split the metadata and store it as a dict */
+            xs_dict *md = xs_dict_new();
+            xs *l = xs_split(v, "\n");
+            xs_list *p = l;
+            xs_str *kp;
+
+            while (xs_list_iter(&p, &kp)) {
+                xs *kpl = xs_split_n(kp, "=", 1);
+                if (xs_list_len(kpl) == 2) {
+                    xs *k2 = xs_strip_i(xs_dup(xs_list_get(kpl, 0)));
+                    xs *v2 = xs_strip_i(xs_dup(xs_list_get(kpl, 1)));
+
+                    md = xs_dict_set(md, k2, v2);
+                }
+            }
+
+            snac.config = xs_dict_set(snac.config, "metadata", md);
+        }
 
         /* uploads */
         const char *uploads[] = { "avatar", "header", NULL };
