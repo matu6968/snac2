@@ -1035,8 +1035,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
         return xs_str_cat(os, s);
     }
     else
-    if (strcmp(type, "Note") != 0 && strcmp(type, "Question") != 0 &&
-        strcmp(type, "Page") != 0 && strcmp(type, "Article") != 0) {
+    if (!xs_match(type, "Note|Question|Page|Article")) {
         /* skip oddities */
         return os;
     }
@@ -1390,9 +1389,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             if (xs_list_len(attach) < 2 && xs_match(t, "Link|Document")) {
                 const char *mt = xs_mime_by_ext(url);
 
-                if (xs_startswith(mt, "image/") ||
-                    xs_startswith(mt, "audio/") ||
-                    xs_startswith(mt, "video/"))
+                if (xs_match(mt, "image/*|audio/*|video/*")) /* */
                     t = mt;
             }
 
