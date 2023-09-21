@@ -9,6 +9,7 @@
 #include "xs_openssl.h"
 #include "xs_time.h"
 #include "xs_mime.h"
+#include "xs_match.h"
 
 #include "snac.h"
 
@@ -203,8 +204,7 @@ xs_str *html_msg_icon(xs_str *os, const xs_dict *msg)
         int priv    = 0;
         const char *type = xs_dict_get(msg, "type");
 
-        if (strcmp(type, "Note") == 0 || strcmp(type, "Question") == 0 ||
-            strcmp(type, "Page") == 0 || strcmp(type, "Article") == 0)
+        if (xs_match(type, "Note|Question|Page|Article"))
             url = xs_dict_get(msg, "id");
 
         priv = !is_msg_public(msg);
@@ -1387,8 +1387,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                 continue;
 
             /* infer MIME type from non-specific attachments */
-            if (xs_list_len(attach) < 2 &&
-                (strcmp(t, "Link") == 0 || strcmp(t, "Document") == 0)) {
+            if (xs_list_len(attach) < 2 && xs_match(t, "Link|Document")) {
                 const char *mt = xs_mime_by_ext(url);
 
                 if (xs_startswith(mt, "image/") ||
