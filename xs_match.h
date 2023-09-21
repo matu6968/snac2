@@ -17,50 +17,72 @@ int xs_match(const char *str, const char *spec);
 
 int xs_match(const char *str, const char *spec)
 {
-    const char *o_str = str;
+    const char *b_str;
+    const char *b_spec = NULL;
+    const char *o_str  = str;
 
-again:
-    if (*spec == '*') {
-        spec++;                 /* wildcard */
+retry:
 
-        do {
-            if (xs_match(str, spec))
+    for (;;) {
+        char c = *str++;
+        char p = *spec++;
+
+        if (c == '\0') {
+            /* end of string; also end of spec? */
+            if (p == '\0' || p == '|')
                 return 1;
-            str++;
-        } while (*str);
+            else
+                break;
+        }
+        else
+        if (p == '?') {
+            /* match anything except the end */
+            if (c == '\0')
+                return 0;
+        }
+        else
+        if (p == '*') {
+            /* end of spec? match */
+            if (*spec == '\0')
+                return 1;
 
-        return 0;
+            /* store spec for later */
+            b_spec = spec;
+
+            /* back one char */
+            b_str  = --str;
+        }
+        else {
+            if (p == '\\')
+                p = *spec++;
+
+            if (c != p) {
+                /* mismatch; do we have a backtrack? */
+                if (b_spec) {
+                    /* continue where we left, one char forward */
+                    spec = b_spec;
+                    str  = ++b_str;
+                }
+                else
+                    break;
+            }
+        }
     }
 
-    if (*spec == '?' && *str) {
-        spec++;                 /* any character */
-        str++;
-        goto again;
-    }
-
-    if (*spec == '|')
-        return 1;               /* alternative separator? positive match */
-
-    if (!*spec)
-        return 1;               /* end of spec? positive match */
-
-    if (*spec == '\\')
-        spec++;                 /* escaped char */
-
-    if (*spec == *str) {
-        spec++;                 /* matched 1 char */
-        str++;
-        goto again;
-    }
-
-    /* not matched; are there any alternatives? */
+    /* try to find an alternative mark */
     while (*spec) {
-        if (*spec == '|')
-            return xs_match(o_str, spec + 1);   /* try next alternative */
+        char p = *spec++;
 
-        if (*spec == '\\')
-            spec++;             /* escaped char */
-        spec++;
+        if (p == '\\')
+            p = *spec++;
+
+        if (p == '|') {
+            /* no backtrack spec, restart str from the beginning */
+            b_spec = NULL;
+            str    = o_str;
+
+            goto retry;
+        }
     }
 
     return 0;
