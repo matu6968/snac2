@@ -147,6 +147,11 @@ int token_del(const char *id)
 
 const char *login_page = ""
 "<!DOCTYPE html>\n"
+"<html>\n"
+"<head>\n"
+"<title>%s OAuth - Snac2</title>\n"
+"<style>:root {color-scheme: light dark}</style>\n"
+"</head>\n"
 "<body><h1>%s OAuth identify</h1>\n"
 "<div style=\"background-color: red; color: white\">%s</div>\n"
 "<form method=\"post\" action=\"https:/" "/%s/%s\">\n"
@@ -156,7 +161,7 @@ const char *login_page = ""
 "<input type=\"hidden\" name=\"cid\" value=\"%s\">\n"
 "<input type=\"hidden\" name=\"state\" value=\"%s\">\n"
 "<input type=\"submit\" value=\"OK\">\n"
-"</form><p>%s</p></body>\n"
+"</form><p>%s</p></body></html>\n"
 "";
 
 int oauth_get_handler(const xs_dict *req, const char *q_path,
@@ -190,7 +195,7 @@ int oauth_get_handler(const xs_dict *req, const char *q_path,
                 if (xs_is_null(state))
                     state = "";
 
-                *body  = xs_fmt(login_page, host, "", host, "oauth/x-snac-login",
+                *body  = xs_fmt(login_page, host, host, "", host, "oauth/x-snac-login",
                                 ruri, cid, state, USER_AGENT);
                 *ctype = "text/html";
                 status = 200;
@@ -207,7 +212,7 @@ int oauth_get_handler(const xs_dict *req, const char *q_path,
     if (strcmp(cmd, "/x-snac-get-token") == 0) { /** **/
         const char *host = xs_dict_get(srv_config, "host");
 
-        *body  = xs_fmt(login_page, host, "", host, "oauth/x-snac-get-token",
+        *body  = xs_fmt(login_page, host, host, "", host, "oauth/x-snac-get-token",
                         "", "", "", USER_AGENT);
         *ctype = "text/html";
         status = 200;
@@ -257,7 +262,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
         const char *host = xs_dict_get(srv_config, "host");
 
         /* by default, generate another login form with an error */
-        *body  = xs_fmt(login_page, host, "LOGIN INCORRECT", host, "oauth/x-snac-login",
+        *body  = xs_fmt(login_page, host, host, "LOGIN INCORRECT", host, "oauth/x-snac-login",
                         redir, cid, state, USER_AGENT);
         *ctype = "text/html";
         status = 200;
@@ -426,7 +431,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
         const char *host = xs_dict_get(srv_config, "host");
 
         /* by default, generate another login form with an error */
-        *body  = xs_fmt(login_page, host, "LOGIN INCORRECT", host, "oauth/x-snac-get-token",
+        *body  = xs_fmt(login_page, host, host, "LOGIN INCORRECT", host, "oauth/x-snac-get-token",
                         "", "", "", USER_AGENT);
         *ctype = "text/html";
         status = 200;
