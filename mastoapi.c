@@ -147,6 +147,10 @@ int token_del(const char *id)
 
 const char *login_page = ""
 "<!DOCTYPE html>\n"
+"<html>\n"
+"<head>\n"
+"<style>:root {color-scheme: light dark}</style>\n"
+"</head>\n"
 "<body><h1>%s OAuth identify</h1>\n"
 "<div style=\"background-color: red; color: white\">%s</div>\n"
 "<form method=\"post\" action=\"https:/" "/%s/%s\">\n"
@@ -156,7 +160,7 @@ const char *login_page = ""
 "<input type=\"hidden\" name=\"cid\" value=\"%s\">\n"
 "<input type=\"hidden\" name=\"state\" value=\"%s\">\n"
 "<input type=\"submit\" value=\"OK\">\n"
-"</form><p>%s</p></body>\n"
+"</form><p>%s</p></body></html>\n"
 "";
 
 int oauth_get_handler(const xs_dict *req, const char *q_path,
