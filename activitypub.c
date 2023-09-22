@@ -982,9 +982,19 @@ xs_dict *msg_actor(snac *snac)
         while (xs_dict_iter(&metadata, &k, &v)) {
             xs *d = xs_dict_new();
 
+            xs *k2 = encode_html(k);
+            xs *v2 = NULL;
+
+            if (xs_startswith(v, "https:")) {
+                xs *t = encode_html(v);
+                v2 = xs_fmt("<a href=\"%s\">%s</a>", t, t);
+            }
+            else
+                v2 = encode_html(v);
+
             d = xs_dict_append(d, "type",  "PropertyValue");
-            d = xs_dict_append(d, "name",  k);
-            d = xs_dict_append(d, "value", v);
+            d = xs_dict_append(d, "name",  k2);
+            d = xs_dict_append(d, "value", v2);
 
             attach = xs_list_append(attach, d);
         }
