@@ -5,8 +5,7 @@
 #define _XS_SOCKET_H
 
 int xs_socket_timeout(int s, double rto, double sto);
-int xs_socket_server_serv(const char *addr, const char *serv);
-int xs_socket_server(const char *addr, int port);
+int xs_socket_server(const char *addr, const char *serv);
 FILE *xs_socket_accept(int rs);
 xs_str *xs_socket_peername(int s);
 int xs_socket_connect(const char *addr, const char *serv);
@@ -44,7 +43,7 @@ int xs_socket_timeout(int s, double rto, double sto)
 }
 
 
-int xs_socket_server_serv(const char *addr, const char *serv)
+int xs_socket_server(const char *addr, const char *serv)
 /* opens a server socket by service name (or port as string) */
 {
     int rs = -1;
@@ -85,16 +84,6 @@ int xs_socket_server_serv(const char *addr, const char *serv)
 
 end:
     return rs;
-}
-
-
-int xs_socket_server(const char *addr, int port)
-/* opens a server socket (port as integer) */
-{
-    char serv[32];
-
-    snprintf(serv, sizeof(serv), "%d", port);
-    return xs_socket_server_serv(addr, serv);
 }
 
 

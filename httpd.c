@@ -537,8 +537,8 @@ static void *background_thread(void *arg)
 void httpd(void)
 /* starts the server */
 {
-    char *address;
-    int port;
+    const char *address;
+    const char *port;
     int rs;
     pthread_t threads[MAX_THREADS] = {0};
     int n_threads = 0;
@@ -548,10 +548,10 @@ void httpd(void)
     sem_t anon_job_sem;
 
     address = xs_dict_get(srv_config, "address");
-    port    = xs_number_get(xs_dict_get(srv_config, "port"));
+    port    = xs_number_str(xs_dict_get(srv_config, "port"));
 
     if ((rs = xs_socket_server(address, port)) == -1) {
-        srv_log(xs_fmt("cannot bind socket to %s:%d", address, port));
+        srv_log(xs_fmt("cannot bind socket to %s:%s", address, port));
         return;
     }
 
@@ -561,7 +561,7 @@ void httpd(void)
     signal(SIGTERM, term_handler);
     signal(SIGINT,  term_handler);
 
-    srv_log(xs_fmt("httpd start %s:%d %s", address, port, USER_AGENT));
+    srv_log(xs_fmt("httpd start %s:%s %s", address, port, USER_AGENT));
 
     /* show the number of usable file descriptors */
     struct rlimit r;
@@ -648,5 +648,5 @@ void httpd(void)
 
     xs *uptime = xs_str_time_diff(time(NULL) - start_time);
 
-    srv_log(xs_fmt("httpd stop %s:%d (run time: %s)", address, port, uptime));
+    srv_log(xs_fmt("httpd stop %s:%s (run time: %s)", address, port, uptime));
 }
