@@ -849,17 +849,18 @@ xs_str *xs_join(const xs_list *list, const char *sep)
             int sz;
 
             /* add the separator */
-            if (c != 0) {
+            if (c != 0 && ssz) {
                 s = xs_realloc(s, offset + ssz);
                 memcpy(s + offset, sep, ssz);
                 offset += ssz;
             }
 
             /* add the element */
-            sz = strlen(v);
-            s = xs_realloc(s, offset + sz);
-            memcpy(s + offset, v, sz);
-            offset += sz;
+            if ((sz = strlen(v)) > 0) {
+                s = xs_realloc(s, offset + sz);
+                memcpy(s + offset, v, sz);
+                offset += sz;
+            }
 
             c++;
         }
