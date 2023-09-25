@@ -11,7 +11,7 @@
 #include "xs_glob.h"
 #include "xs_set.h"
 #include "xs_random.h"
-#include "xs_httpd.h"
+#include "xs_url.h"
 #include "xs_mime.h"
 
 #include "snac.h"
