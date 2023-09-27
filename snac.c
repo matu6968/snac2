@@ -90,7 +90,7 @@ int validate_uid(const char *uid)
 }
 
 
-void srv_debug(int level, xs_str *str)
+void srv_log(xs_str *str)
 /* logs a debug message */
 {
     if (xs_str_in(str, srv_basedir) != -1) {
@@ -98,25 +98,23 @@ void srv_debug(int level, xs_str *str)
         str = xs_replace_i(str, srv_basedir, "~");
     }
 
-    if (dbglevel >= level) {
-        xs *tm = xs_str_localtime(0, "%H:%M:%S");
-        fprintf(stderr, "%s %s\n", tm, str);
+    xs *tm = xs_str_localtime(0, "%H:%M:%S");
+    fprintf(stderr, "%s %s\n", tm, str);
 
-        /* if the ~/log/ folder exists, also write to a file there */
-        xs *dt = xs_str_localtime(0, "%Y-%m-%d");
-        xs *lf = xs_fmt("%s/log/%s.log", srv_basedir, dt);
-        FILE *f;
-        if ((f = fopen(lf, "a")) != NULL) {
-            fprintf(f, "%s %s\n", tm, str);
-            fclose(f);
-        }
+    /* if the ~/log/ folder exists, also write to a file there */
+    xs *dt = xs_str_localtime(0, "%Y-%m-%d");
+    xs *lf = xs_fmt("%s/log/%s.log", srv_basedir, dt);
+    FILE *f;
+    if ((f = fopen(lf, "a")) != NULL) {
+        fprintf(f, "%s %s\n", tm, str);
+        fclose(f);
     }
 
     xs_free(str);
 }
 
 
-void snac_debug(snac *snac, int level, xs_str *str)
+void snac_log(snac *snac, xs_str *str)
 /* prints a user debugging information */
 {
     xs *o_str = str;
@@ -127,7 +125,7 @@ void snac_debug(snac *snac, int level, xs_str *str)
         msg = xs_replace_i(msg, snac->basedir, "~");
     }
 
-    srv_debug(level, msg);
+    srv_log(msg);
 }
 
 

@@ -27,11 +27,9 @@ int valid_status(int status);
 xs_str *tid(int offset);
 double ftime(void);
 
-void srv_debug(int level, xs_str *str);
-#define srv_log(str) srv_debug(0, str)
-
-int srv_open(char *basedir, int auto_upgrade);
-void srv_free(void);
+void srv_log(xs_str *str);
+#define srv_debug(level, str) do { if (dbglevel >= (level)) \
+    { srv_log((str)); } } while (0)
 
 typedef struct _snac {
     xs_str *uid;        /* uid */
@@ -43,13 +41,17 @@ typedef struct _snac {
     xs_str *md5;        /* actor url md5 */
 } snac;
 
+void snac_log(snac *user, xs_str *str);
+#define snac_debug(user, level, str) do { if (dbglevel >= (level)) \
+    { snac_log((user), (str)); } } while (0)
+
+int srv_open(char *basedir, int auto_upgrade);
+void srv_free(void);
+
 int user_open(snac *snac, const char *uid);
 void user_free(snac *snac);
 xs_list *user_list(void);
 int user_open_by_md5(snac *snac, const char *md5);
-
-void snac_debug(snac *snac, int level, xs_str *str);
-#define snac_log(snac, str) snac_debug(snac, 0, str)
 
 int validate_uid(const char *uid);
 
