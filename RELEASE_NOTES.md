@@ -4,6 +4,8 @@
 
 It's now possible to add profile metadata.
 
+Outgoing connections that fail with a timeout are retried with a higher timeout limit. But, if the instance keeps timing out, it's penalized by skipping one retry.
+
 If a post comes from a group or community (i.e. it has an `audience` field set), the buttons `Follow Group` or `Unfollow Group` are shown.
 
 Pinned posts are never purged.
