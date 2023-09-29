@@ -2041,12 +2041,15 @@ void enqueue_input(snac *snac, const xs_dict *msg, const xs_dict *req, int retri
 
 
 void enqueue_output_raw(const char *keyid, const char *seckey,
-                        xs_dict *msg, xs_str *inbox, int retries)
+                        xs_dict *msg, xs_str *inbox, int retries, int p_status)
 /* enqueues an output message to an inbox */
 {
     xs *qmsg   = _new_qmsg("output", msg, retries);
     char *ntid = xs_dict_get(qmsg, "ntid");
     xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
+
+    xs *ns = xs_number_new(p_status);
+    qmsg = xs_dict_append(qmsg, "p_status", ns);
 
     qmsg = xs_dict_append(qmsg, "inbox",  inbox);
     qmsg = xs_dict_append(qmsg, "keyid",  keyid);
@@ -2062,7 +2065,7 @@ void enqueue_output_raw(const char *keyid, const char *seckey,
 }
 
 
-void enqueue_output(snac *snac, xs_dict *msg, xs_str *inbox, int retries)
+void enqueue_output(snac *snac, xs_dict *msg, xs_str *inbox, int retries, int p_status)
 /* enqueues an output message to an inbox */
 {
     if (xs_startswith(inbox, snac->actor)) {
@@ -2072,7 +2075,7 @@ void enqueue_output(snac *snac, xs_dict *msg, xs_str *inbox, int retries)
 
     char *seckey = xs_dict_get(snac->key, "secret");
 
-    enqueue_output_raw(snac->actor, seckey, msg, inbox, retries);
+    enqueue_output_raw(snac->actor, seckey, msg, inbox, retries, p_status);
 }
 
 
@@ -2082,7 +2085,7 @@ void enqueue_output_by_actor(snac *snac, xs_dict *msg, const xs_str *actor, int 
     xs *inbox = get_actor_inbox(snac, actor);
 
     if (!xs_is_null(inbox))
-        enqueue_output(snac, msg, inbox, retries);
+        enqueue_output(snac, msg, inbox, retries, 0);
     else
         snac_log(snac, xs_fmt("enqueue_output_by_actor cannot get inbox %s", actor));
 }

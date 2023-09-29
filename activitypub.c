@@ -1798,7 +1798,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
             if (inbox != NULL) {
                 /* add to the set and, if it's not there, send message */
                 if (xs_set_add(&inboxes, inbox) == 1)
-                    enqueue_output(snac, msg, inbox, 0);
+                    enqueue_output(snac, msg, inbox, 0, 0);
             }
             else
                 snac_log(snac, xs_fmt("cannot find inbox for %s", actor));
@@ -1812,7 +1812,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
             p = shibx;
             while (xs_list_iter(&p, &inbox)) {
                 if (xs_set_add(&inboxes, inbox) == 1)
-                    enqueue_output(snac, msg, inbox, 0);
+                    enqueue_output(snac, msg, inbox, 0, 0);
             }
         }
 
@@ -1896,6 +1896,7 @@ void process_queue_item(xs_dict *q_item)
         xs_str *seckey = xs_dict_get(q_item, "seckey");
         xs_dict *msg   = xs_dict_get(q_item, "message");
         int retries    = xs_number_get(xs_dict_get(q_item, "retries"));
+        int p_status   = xs_number_get(xs_dict_get(q_item, "p_status"));
         xs *payload    = NULL;
         int p_size     = 0;
 
@@ -1909,8 +1910,9 @@ void process_queue_item(xs_dict *q_item)
             return;
         }
 
-        /* deliver */
-        status = send_to_inbox_raw(keyid, seckey, inbox, msg, &payload, &p_size, retries == 0 ? 3 : 8);
+        /* deliver (if previous error status was a timeout, try now longer) */
+        status = send_to_inbox_raw(keyid, seckey, inbox, msg,
+                    &payload, &p_size, p_status == 599 ? 20 : 3);
 
         if (payload) {
             if (p_size > 64) {
@@ -1934,6 +1936,11 @@ void process_queue_item(xs_dict *q_item)
         if (!valid_status(status)) {
             retries++;
 
+            /* if it's not the first time it fails with a timeout,
+               penalize the server by skipping one retry */
+            if (p_status == status && status == 499)
+                retries++;
+
             /* error sending; requeue? */
             if (status == 400 || status == 404 || status == 410 || status < 0)
                 /* explicit error: discard */
@@ -1943,7 +1950,7 @@ void process_queue_item(xs_dict *q_item)
                 srv_log(xs_fmt("output message: giving up %s %d", inbox, status));
             else {
                 /* requeue */
-                enqueue_output_raw(keyid, seckey, msg, inbox, retries);
+                enqueue_output_raw(keyid, seckey, msg, inbox, retries, status);
                 srv_log(xs_fmt("output message: requeue %s #%d", inbox, retries));
             }
         }
