@@ -260,7 +260,7 @@ xs_str *sanitize(const char *content)
 }
 
 
-xs_str *encode_html(const char *str)
+xs_str *encode_html_strict(const char *str)
 /* escapes html characters */
 {
     xs_str *encoded = xs_replace(str, "&", "&amp;");
@@ -268,6 +268,15 @@ xs_str *encode_html(const char *str)
     encoded = xs_replace_i(encoded, ">", "&gt;");
     encoded = xs_replace_i(encoded, "\"", "&#34;");
     encoded = xs_replace_i(encoded, "'", "&#39;");
+
+    return encoded;
+}
+
+
+xs_str *encode_html(const char *str)
+/* escapes html characters */
+{
+    xs_str *encoded = encode_html_strict(str);
 
     /* Restore only <br>. Probably safe. Let's hope nothing goes wrong with this. */
     encoded = xs_replace_i(encoded, "&lt;br&gt;", "<br>");

@@ -2075,10 +2075,10 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         xs *bio   = not_really_markdown(xs_dict_get(snac.config, "bio"), NULL);
         char *p, *v;
 
-        xs *es1 = encode_html(xs_dict_get(snac.config, "name"));
-        xs *es2 = encode_html(snac.uid);
-        xs *es3 = encode_html(xs_dict_get(srv_config, "host"));
-        xs *es4 = encode_html(bio);
+        xs *es1 = encode_html_strict(xs_dict_get(snac.config, "name"));
+        xs *es2 = encode_html_strict(snac.uid);
+        xs *es3 = encode_html_strict(xs_dict_get(srv_config, "host"));
+        xs *es4 = encode_html_strict(bio);
         rss = xs_fmt(
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             "<rss version=\"0.91\">\n"
@@ -2106,7 +2106,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             if (!xs_startswith(id, snac.actor))
                 continue;
 
-            xs *content = sanitize(xs_dict_get(msg, "content"));
+            xs *content = encode_html_strict(xs_dict_get(msg, "content"));
 
             // We SHOULD only use sanitized one for description.
             // So, only encode for feed title, while the description just keep it sanitized as is.
@@ -2115,7 +2115,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *title   = xs_str_new(NULL);
             int i;
 
-            for (i = 0; es_title[i] && es_title[i] != '\n' && i < 50; i++)
+            for (i = 0; es_title[i] && es_title[i] != '\n' && es_title[i] != '&' && i < 50; i++)
                 title = xs_append_m(title, &es_title[i], 1);
 
             xs *s = xs_fmt(
