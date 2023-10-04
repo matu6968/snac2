@@ -10,6 +10,8 @@ If a post comes from a group or community (i.e. it has an `audience` field set),
 
 Pinned posts are never purged.
 
+Some RSS validation fixes.
+
 ## 2.41
 
 Added support for `Article` ActivityPub objects to correctly process reviews from #Bookwyrm instances and other similar software.
