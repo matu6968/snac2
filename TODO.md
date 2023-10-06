@@ -18,6 +18,8 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
+Add a flag to make accounts private, i.e., they don't expose any content from the web interface (only through ActivityPub).
+
 Add a list of hashtags to drop.
 
 Add domain/subdomain flexibility according to https://codeberg.org/grunfink/snac2/issues/3
