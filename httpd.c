@@ -284,6 +284,9 @@ void httpd_connection(FILE *f)
         status = 404;
     }
 
+    if (status == 403)
+        body = xs_str_new("<h1>403 Forbidden</h1>");
+
     if (status == 404)
         body = xs_str_new("<h1>404 Not Found</h1>");
 

@@ -1567,6 +1567,25 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local, int skip, int 
         if (!valid_status(status))
             continue;
 
+        /* if it's an instance page, discard private users */
+        if (user == NULL) {
+            const char *atto = xs_dict_get(msg, "attributedTo");
+            xs *l = xs_split(atto, "/");
+            const char *uid = xs_list_get(l, -1);
+            snac user;
+            int skip = 1;
+
+            if (uid && user_open(&user, uid)) {
+                if (xs_type(xs_dict_get(user.config, "private")) != XSTYPE_TRUE)
+                    skip = 0;
+
+                user_free(&user);
+            }
+
+            if (skip)
+                continue;
+        }
+
         s = html_entry(user, s, msg, local, 0, v, user ? 0 : 1);
     }
 
@@ -1940,6 +1959,9 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         show = atoi(v), cache = 0, save = 0;
 
     if (p_path == NULL) { /** public timeline **/
+        if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
+            return 403;
+
         xs *h = xs_str_localtime(0, "%Y-%m.html");
 
         if (cache && history_mtime(&snac, h) > timeline_mtime(&snac)) {
@@ -2022,6 +2044,9 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (xs_startswith(p_path, "p/")) { /** a timeline with just one entry **/
+        if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
+            return 403;
+
         xs *id  = xs_fmt("%s/%s", snac.actor, p_path);
         xs *msg = NULL;
 
@@ -2054,6 +2079,9 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (xs_startswith(p_path, "h/")) { /** an entry from the history **/
+        if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
+            return 403;
+
         xs *l    = xs_split(p_path, "/");
         char *id = xs_list_get(l, 1);
 
@@ -2070,6 +2098,9 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(p_path, ".rss") == 0) { /** public timeline in RSS format **/
+        if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
+            return 403;
+
         xs_str *rss;
         xs *elems = timeline_simple_list(&snac, "public", 0, 20);
         xs *bio   = not_really_markdown(xs_dict_get(snac.config, "bio"), NULL);

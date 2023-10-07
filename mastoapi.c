@@ -1377,6 +1377,25 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             if (strcmp(type, "Note") != 0 && strcmp(type, "Question") != 0)
                 continue;
 
+            /* discard private users */
+            {
+                const char *atto = xs_dict_get(msg, "attributedTo");
+                xs *l = xs_split(atto, "/");
+                const char *uid = xs_list_get(l, -1);
+                snac p_user;
+                int skip = 1;
+
+                if (uid && user_open(&p_user, uid)) {
+                    if (xs_type(xs_dict_get(p_user.config, "private")) != XSTYPE_TRUE)
+                        skip = 0;
+
+                    user_free(&p_user);
+                }
+
+                if (skip)
+                    continue;
+            }
+
             /* convert the Note into a Mastodon status */
             xs *st = mastoapi_status(user, msg);
 
