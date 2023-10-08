@@ -1591,7 +1591,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local, int skip, int 
 
     s = xs_str_cat(s, "</div>\n");
 
-    if (user && local) {
+    if (list && user && local) {
         xs *s1 = xs_fmt(
             "<div class=\"snac-history\">\n"
             "<p class=\"snac-history-title\">%s</p><ul>\n",
@@ -1959,11 +1959,14 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         show = atoi(v), cache = 0, save = 0;
 
     if (p_path == NULL) { /** public timeline **/
-        if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
-            return 403;
-
         xs *h = xs_str_localtime(0, "%Y-%m.html");
 
+        if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE) {
+            *body = html_timeline(&snac, NULL, 1, 0, 0, 0);
+            *b_size = strlen(*body);
+            status  = 200;
+        }
+        else
         if (cache && history_mtime(&snac, h) > timeline_mtime(&snac)) {
             snac_debug(&snac, 1, xs_fmt("serving cached local timeline"));
 
