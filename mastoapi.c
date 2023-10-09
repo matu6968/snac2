@@ -748,7 +748,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
         if (!xs_is_null(mtype)) {
             if (xs_startswith(mtype, "image/") || xs_startswith(mtype, "video/") ||
-                strcmp(mtype, "Image") == 0) {
+                strcmp(mtype, "Image") == 0 || strcmp(mtype, "Document") == 0) {
                 xs *matteid = xs_fmt("%s_%d", id, xs_list_len(matt));
                 xs *matte   = xs_dict_new();
 
