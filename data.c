@@ -1121,15 +1121,6 @@ xs_list *timeline_top_level(snac *snac, xs_list *list)
 xs_list *timeline_simple_list(snac *snac, const char *idx_name, int skip, int show)
 /* returns a timeline (with all entries) */
 {
-    int c_max;
-
-    /* maximum number of items in the timeline */
-    c_max = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
-
-    /* never more timeline entries than the configured maximum */
-    if (show > c_max)
-        show = c_max;
-
     xs *idx = xs_fmt("%s/%s.idx", snac->basedir, idx_name);
 
     return index_list_desc(idx, skip, show);
@@ -1139,6 +1130,15 @@ xs_list *timeline_simple_list(snac *snac, const char *idx_name, int skip, int sh
 xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show)
 /* returns a timeline (only top level entries) */
 {
+    int c_max;
+
+    /* maximum number of items in the timeline */
+    c_max = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
+
+    /* never more timeline entries than the configured maximum */
+    if (show > c_max)
+        show = c_max;
+
     xs *list = timeline_simple_list(snac, idx_name, skip, show);
 
     return timeline_top_level(snac, list);

@@ -1265,7 +1265,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             if (limit == 0)
                 limit = 20;
 
-            xs *timeline = timeline_simple_list(&snac1, "private", 0, 256);
+            xs *timeline = timeline_simple_list(&snac1, "private", 0, 2048);
 
             xs *out      = xs_list_new();
             xs_list *p   = timeline;
@@ -1304,19 +1304,24 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 if (strcmp(type, "Note") != 0 && strcmp(type, "Question") != 0)
                     continue;
 
-#if 0
-                /* discard notes from people we don't follow with no boosts */
-                if (!following_check(&snac1, xs_dict_get(msg, "attributedTo")) &&
-                    object_announces_len(xs_dict_get(msg, "id")) == 0)
-                    continue;
-#endif
+                const char *atto = xs_dict_get(msg, "attributedTo");
+                const char *id   = xs_dict_get(msg, "id");
+
+                /* is this message from a person we don't follow? */
+                if (strcmp(atto, snac1.actor) && !following_check(&snac1, atto)) {
+                    /* if we didn't boost it, discard */
+                    xs *idx = object_announces(id);
+
+                    if (xs_list_in(idx, snac1.md5) == -1)
+                        continue;
+                }
 
                 /* discard notes from muted morons */
-                if (is_muted(&snac1, xs_dict_get(msg, "attributedTo")))
+                if (is_muted(&snac1, atto))
                     continue;
 
                 /* discard hidden notes */
-                if (is_hidden(&snac1, xs_dict_get(msg, "id")))
+                if (is_hidden(&snac1, id))
                     continue;
 
                 /* discard poll votes (they have a name) */
