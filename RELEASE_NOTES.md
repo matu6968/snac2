@@ -12,6 +12,8 @@ Pinned posts are never purged.
 
 Some RSS validation fixes.
 
+Mastodon API: some tweaks to better match Mastodon behaviour in timeline entries.
+
 ## 2.41
 
 Added support for `Article` ActivityPub objects to correctly process reviews from #Bookwyrm instances and other similar software.
