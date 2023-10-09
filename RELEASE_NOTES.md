@@ -8,7 +8,7 @@ Outgoing connections that fail with a timeout are retried with a higher timeout 
 
 If a post comes from a group or community (i.e. it has an `audience` field set), the buttons `Follow Group` or `Unfollow Group` are shown.
 
-Pinned posts are never purged.
+Pinned posts are never (incorrectly) purged.
 
 Some RSS validation fixes.
 
