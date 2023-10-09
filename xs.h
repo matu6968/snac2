@@ -365,19 +365,21 @@ xs_val *xs_expand(xs_val *data, int offset, int size)
 /* opens a hole in data */
 {
     int sz = xs_size(data);
+    int n;
+
+    sz += size;
 
     /* open room */
-    if (sz == 0 || _xs_blk_size(sz) != _xs_blk_size(sz + size))
-        data = xs_realloc(data, _xs_blk_size(sz + size));
+    data = xs_realloc(data, _xs_blk_size(sz));
 
     /* move up the rest of the data */
-    if (data != NULL)
-        memmove(data + offset + size, data + offset, sz - offset);
+    for (n = sz - 1; n >= offset + size; n--)
+        data[n] = data[n - size];
 
     if (xs_type(data) == XSTYPE_LIST ||
         xs_type(data) == XSTYPE_DICT ||
         xs_type(data) == XSTYPE_DATA)
-        _xs_put_24b(data + 1, sz + size);
+        _xs_put_24b(data + 1, sz);
 
     return data;
 }
