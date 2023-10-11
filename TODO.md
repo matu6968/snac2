@@ -2,6 +2,8 @@
 
 ## Open
 
+Fix case-sensitivity issue described in https://codeberg.org/grunfink/snac2/issues/82 .
+
 Unfollowing lemmy groups gets rejected with an http status of 400.
 
 Unfollowing guppe groups seems to work (http status of 200), but messages continue to arrive as it didn't.
