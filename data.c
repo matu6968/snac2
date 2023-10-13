@@ -154,12 +154,34 @@ int user_open(snac *snac, const char *uid)
     memset(snac, '\0', sizeof(struct _snac));
 
     if (validate_uid(uid)) {
-        xs *cfg_file;
+        xs *cfg_file = NULL;
         FILE *f;
 
-        snac->uid = xs_str_new(uid);
+        xs *t = xs_fmt("%s/user/%s", srv_basedir, uid);
 
-        snac->basedir = xs_fmt("%s/user/%s", srv_basedir, uid);
+        if (mtime(t) == 0.0) {
+            /* user folder does not exist; try with a different case */
+            xs *lcuid = xs_tolower_i(xs_dup(uid));
+            xs *ulist = user_list();
+            xs_list *p = ulist;
+            xs_str *v;
+
+            while (xs_list_iter(&p, &v)) {
+                xs *v2 = xs_tolower_i(xs_dup(v));
+
+                if (strcmp(lcuid, v2) == 0) {
+                    snac->uid = xs_dup(v);
+                    break;
+                }
+            }
+        }
+        else
+            snac->uid = xs_str_new(uid);
+
+        if (snac->uid == NULL)
+            return ret;
+
+        snac->basedir = xs_fmt("%s/user/%s", srv_basedir, snac->uid);
 
         cfg_file = xs_fmt("%s/user.json", snac->basedir);
 
@@ -176,7 +198,7 @@ int user_open(snac *snac, const char *uid)
                     fclose(f);
 
                     if (snac->key != NULL) {
-                        snac->actor = xs_fmt("%s/%s", srv_baseurl, uid);
+                        snac->actor = xs_fmt("%s/%s", srv_baseurl, snac->uid);
                         snac->md5   = xs_md5_hex(snac->actor, strlen(snac->actor));
 
                         /* everything is ok right now */

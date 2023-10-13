@@ -4,6 +4,7 @@
 #include "xs.h"
 #include "xs_json.h"
 #include "xs_curl.h"
+#include "xs_mime.h"
 
 #include "snac.h"
 
@@ -128,20 +129,11 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
 
     if (xs_startswith(resource, "https:/" "/")) {
         /* actor search: find a user with this actor */
-        xs *list = user_list();
-        char *p, *uid;
+        xs *l = xs_split(resource, "/");
+        char *uid = xs_list_get(l, -1);
 
-        p = list;
-        while (xs_list_iter(&p, &uid)) {
-            if (user_open(&snac, uid)) {
-                if (strcmp(snac.actor, resource) == 0) {
-                    found = 1;
-                    break;
-                }
-
-                user_free(&snac);
-            }
-        }
+        if (uid)
+            found = user_open(&snac, uid);
     }
     else
     if (xs_startswith(resource, "acct:")) {
@@ -179,6 +171,17 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
         aaj = xs_dict_append(aaj, "href", snac.actor);
 
         links = xs_list_append(links, aaj);
+
+        char *avatar = xs_dict_get(snac.config, "avatar");
+        if (!xs_is_null(avatar) && *avatar) {
+            xs *d = xs_dict_new();
+
+            d = xs_dict_append(d, "rel",  "http:/" "/webfinger.net/rel/avatar");
+            d = xs_dict_append(d, "type", xs_mime_by_ext(avatar));
+            d = xs_dict_append(d, "href", avatar);
+
+            links = xs_list_append(links, d);
+        }
 
         obj = xs_dict_append(obj, "subject", acct);
         obj = xs_dict_append(obj, "links",   links);

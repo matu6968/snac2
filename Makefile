@@ -53,4 +53,4 @@ snac.o: snac.c xs.h xs_io.h xs_unicode.h xs_json.h xs_curl.h xs_openssl.h \
 upgrade.o: upgrade.c xs.h xs_io.h xs_json.h xs_glob.h snac.h
 utils.o: utils.c xs.h xs_io.h xs_json.h xs_time.h xs_openssl.h \
  xs_random.h snac.h
-webfinger.o: webfinger.c xs.h xs_json.h xs_curl.h snac.h
+webfinger.o: webfinger.c xs.h xs_json.h xs_curl.h xs_mime.h snac.h

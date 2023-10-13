@@ -79,6 +79,9 @@ double ftime(void)
 int validate_uid(const char *uid)
 /* returns if uid is a valid identifier */
 {
+    if (!uid || *uid == '\0')
+        return 0;
+
     while (*uid) {
         if (!(isalnum(*uid) || *uid == '_'))
             return 0;

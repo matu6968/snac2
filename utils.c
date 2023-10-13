@@ -244,7 +244,7 @@ int adduser(const char *uid)
     }
 
     if (user_open(&snac, uid)) {
-        printf("ERROR: user '%s' already exists\n", uid);
+        printf("ERROR: user '%s' already exists\n", snac.uid);
         return 1;
     }
 
