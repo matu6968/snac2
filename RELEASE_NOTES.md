@@ -14,6 +14,8 @@ Some RSS validation fixes.
 
 Mastodon API: some tweaks to better match Mastodon behaviour in timeline entries.
 
+Don't allow creating users which user name strings only differ in case.
+
 ## 2.41
 
 Added support for `Article` ActivityPub objects to correctly process reviews from #Bookwyrm instances and other similar software.
