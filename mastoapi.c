@@ -878,6 +878,11 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     st = xs_dict_append(st, "reblogged",
         (snac && xs_list_in(idx, snac->md5) != -1) ? xs_stock_true : xs_stock_false);
 
+    /* get the last person who boosted this */
+    xs *boosted_by_md5 = NULL;
+    if (xs_list_len(idx))
+        boosted_by_md5 = xs_dup(xs_list_get(idx, -1));
+
     xs_free(idx);
     xs_free(ixc);
     idx = object_children(id);
@@ -932,6 +937,28 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
     st = xs_dict_append(st, "pinned",
         (snac && is_pinned(snac, id)) ? xs_stock_true : xs_stock_false);
+
+    /* is it a boost? */
+    if (!xs_is_null(boosted_by_md5)) {
+        /* create a new dummy status, using st as the 'reblog' field */
+        xs_dict *bst = xs_dict_new();
+        xs *b_actor = NULL;
+
+        if (valid_status(object_get_by_md5(boosted_by_md5, &b_actor))) {
+            xs *b_acct   = mastoapi_account(b_actor);
+            xs *fake_uri = xs_fmt("%s/d/%s", srv_baseurl, mid);
+
+            bst = xs_dict_append(bst, "id", mid);
+            bst = xs_dict_append(bst, "created_at", xs_dict_get(st, "created_at"));
+            bst = xs_dict_append(bst, "account", b_acct);
+            bst = xs_dict_append(bst, "uri", fake_uri);
+            bst = xs_dict_append(bst, "content", "");
+            bst = xs_dict_append(bst, "reblog", st);
+
+            xs_free(st);
+            st = bst;
+        }
+    }
 
     return st;
 }
