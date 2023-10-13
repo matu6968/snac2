@@ -946,12 +946,17 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
         if (valid_status(object_get_by_md5(boosted_by_md5, &b_actor))) {
             xs *b_acct   = mastoapi_account(b_actor);
-            xs *fake_uri = xs_fmt("%s/d/%s", srv_baseurl, mid);
+            xs *fake_uri = NULL;
+
+            if (snac)
+                fake_uri = xs_fmt("%s/d/%s/Announce", snac->actor, mid);
+            else
+                fake_uri = xs_fmt("%s#%s", srv_baseurl, mid);
 
             bst = xs_dict_append(bst, "id", mid);
             bst = xs_dict_append(bst, "created_at", xs_dict_get(st, "created_at"));
-            bst = xs_dict_append(bst, "account", b_acct);
             bst = xs_dict_append(bst, "uri", fake_uri);
+            bst = xs_dict_append(bst, "account", b_acct);
             bst = xs_dict_append(bst, "content", "");
             bst = xs_dict_append(bst, "reblog", st);
 
