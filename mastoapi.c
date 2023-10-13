@@ -1309,10 +1309,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                 /* is this message from a person we don't follow? */
                 if (strcmp(atto, snac1.actor) && !following_check(&snac1, atto)) {
-                    /* if we didn't boost it, discard */
+                    /* discard if it was not boosted */
                     xs *idx = object_announces(id);
 
-                    if (xs_list_in(idx, snac1.md5) == -1)
+                    if (xs_list_len(idx) == 0)
                         continue;
                 }
 
