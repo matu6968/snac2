@@ -941,7 +941,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     /* is it a boost? */
     if (!xs_is_null(boosted_by_md5)) {
         /* create a new dummy status, using st as the 'reblog' field */
-        xs_dict *bst = xs_dict_new();
+        xs_dict *bst = xs_dup(st);
         xs *b_actor = NULL;
 
         if (valid_status(object_get_by_md5(boosted_by_md5, &b_actor))) {
@@ -953,12 +953,11 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
             else
                 fake_uri = xs_fmt("%s#%s", srv_baseurl, mid);
 
-            bst = xs_dict_append(bst, "id", mid);
-            bst = xs_dict_append(bst, "created_at", xs_dict_get(st, "created_at"));
-            bst = xs_dict_append(bst, "uri", fake_uri);
-            bst = xs_dict_append(bst, "account", b_acct);
-            bst = xs_dict_append(bst, "content", "");
-            bst = xs_dict_append(bst, "reblog", st);
+            bst = xs_dict_set(bst, "uri", fake_uri);
+            bst = xs_dict_set(bst, "url", fake_uri);
+            bst = xs_dict_set(bst, "account", b_acct);
+            bst = xs_dict_set(bst, "content", "");
+            bst = xs_dict_set(bst, "reblog", st);
 
             xs_free(st);
             st = bst;
