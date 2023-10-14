@@ -115,7 +115,7 @@ const char *xs_number_str(const xs_number *v);
 
 xs_data *xs_data_new(const void *data, int size);
 int xs_data_size(const xs_data *value);
-void xs_data_get(const xs_data *value, void *data);
+void xs_data_get(void *data, const xs_data *value);
 
 void *xs_memmem(const char *haystack, int h_size, const char *needle, int n_size);
 
@@ -1153,7 +1153,7 @@ int xs_data_size(const xs_data *value)
 }
 
 
-void xs_data_get(const xs_data *value, void *data)
+void xs_data_get(void *data, const xs_data *value)
 /* copies the raw data stored inside value into data */
 {
     memcpy(data, &value[4], xs_data_size(value));

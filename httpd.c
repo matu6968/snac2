@@ -448,7 +448,7 @@ static void *job_thread(void *arg)
             /* it's a socket */
             FILE *f = NULL;
 
-            xs_data_get(job, &f);
+            xs_data_get(&f, job);
 
             if (f != NULL)
                 httpd_connection(f);
