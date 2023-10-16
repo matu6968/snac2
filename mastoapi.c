@@ -13,6 +13,7 @@
 #include "xs_random.h"
 #include "xs_url.h"
 #include "xs_mime.h"
+#include "xs_match.h"
 
 #include "snac.h"
 
@@ -1336,15 +1337,19 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     continue;
 
                 /* discard non-Notes */
+                const char *id   = xs_dict_get(msg, "id");
                 const char *type = xs_dict_get(msg, "type");
-                if (strcmp(type, "Note") != 0 && strcmp(type, "Question") != 0)
+                if (!xs_match(type, "Note|Question|Page|Article"))
                     continue;
 
-                const char *atto = xs_dict_get(msg, "attributedTo");
-                const char *id   = xs_dict_get(msg, "id");
+                const char *from;
+                if (strcmp(type, "Page") == 0)
+                    from = xs_dict_get(msg, "audience");
+                else
+                    from = xs_dict_get(msg, "attributedTo");
 
                 /* is this message from a person we don't follow? */
-                if (strcmp(atto, snac1.actor) && !following_check(&snac1, atto)) {
+                if (strcmp(from, snac1.actor) && !following_check(&snac1, from)) {
                     /* discard if it was not boosted */
                     xs *idx = object_announces(id);
 
@@ -1353,7 +1358,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 }
 
                 /* discard notes from muted morons */
-                if (is_muted(&snac1, atto))
+                if (is_muted(&snac1, from))
                     continue;
 
                 /* discard hidden notes */
@@ -1361,7 +1366,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     continue;
 
                 /* discard poll votes (they have a name) */
-                if (!xs_is_null(xs_dict_get(msg, "name")))
+                if (strcmp(type, "Page") != 0 && !xs_is_null(xs_dict_get(msg, "name")))
                     continue;
 
                 /* convert the Note into a Mastodon status */
