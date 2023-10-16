@@ -1692,10 +1692,14 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         if (xs_match(utype, "Note|Page|Article")) { /** **/
             const char *id = xs_dict_get(object, "id");
 
-            object_add_ow(id, object);
-            timeline_touch(snac);
+            if (object_here(id)) {
+                object_add_ow(id, object);
+                timeline_touch(snac);
 
-            snac_log(snac, xs_fmt("updated post %s", id));
+                snac_log(snac, xs_fmt("updated post %s", id));
+            }
+            else
+                snac_log(snac, xs_fmt("dropped update for unknown post %s", id));
         }
         else
         if (strcmp(utype, "Question") == 0) { /** **/
