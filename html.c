@@ -607,6 +607,9 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         "<p><input type=\"checkbox\" name=\"bot\" id=\"bot\" %s>\n"
         "<label for=\"bot\">%s</label></p>\n"
 
+        "<p><input type=\"checkbox\" name=\"private\" id=\"private\" %s>\n"
+        "<label for=\"private\">%s</label></p>\n"
+
         "<p>%s:<br>\n"
         "<textarea name=\"metadata\" cols=\"40\" rows=\"4\" "
         "placeholder=\"Blog=https:/" "/example.com/my-blog\nGPG Key=1FA54\n...\">"
@@ -659,6 +662,7 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
     const char *d_dm_f_u = xs_dict_get(snac->config, "drop_dm_from_unknown");
 
     const char *bot = xs_dict_get(snac->config, "bot");
+    const char *a_private = xs_dict_get(snac->config, "private");
 
     xs *es1 = encode_html(xs_dict_get(snac->config, "name"));
     xs *es2 = encode_html(xs_dict_get(snac->config, "bio"));
@@ -730,6 +734,8 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         L("Drop direct messages from people you don't follow"),
         xs_type(bot) == XSTYPE_TRUE ? "checked" : "",
         L("This account is a bot"),
+        xs_type(a_private) == XSTYPE_TRUE ? "checked" : "",
+        L("This account is private (posts are not shown through the web)"),
 
         L("Profile metadata (key=value pairs in each line)"),
         metadata,
@@ -2545,6 +2551,10 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "bot", xs_stock_true);
         else
             snac.config = xs_dict_set(snac.config, "bot", xs_stock_false);
+        if ((v = xs_dict_get(p_vars, "private")) != NULL && strcmp(v, "on") == 0)
+            snac.config = xs_dict_set(snac.config, "private", xs_stock_true);
+        else
+            snac.config = xs_dict_set(snac.config, "private", xs_stock_false);
         if ((v = xs_dict_get(p_vars, "metadata")) != NULL) {
             /* split the metadata and store it as a dict */
             xs_dict *md = xs_dict_new();
