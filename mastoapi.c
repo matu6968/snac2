@@ -531,9 +531,14 @@ xs_dict *mastoapi_account(const xs_dict *actor)
     xs *avatar  = NULL;
     xs_dict *av = xs_dict_get(actor, "icon");
 
-    if (xs_type(av) == XSTYPE_DICT)
-        avatar = xs_dup(xs_dict_get(av, "url"));
-    else
+    if (xs_type(av) == XSTYPE_DICT) {
+        char *url = xs_dict_get(av, "url");
+
+        if (url != NULL)
+            avatar = xs_dup(url);
+    }
+
+    if (avatar == NULL)
         avatar = xs_fmt("%s/susie.png", srv_baseurl);
 
     acct = xs_dict_append(acct, "avatar", avatar);
