@@ -4,6 +4,8 @@
 
 It's now possible to add profile metadata.
 
+Accounts can be marked as 'private', so that they are not accesible from any non-authorized web UI (i.e. only through the Fediverse).
+
 Outgoing connections that fail with a timeout are retried with a higher timeout limit. But, if the instance keeps timing out, it's penalized by skipping one retry.
 
 If a post comes from a group or community (i.e. it has an `audience` field set), the buttons `Follow Group` or `Unfollow Group` are shown.
@@ -14,7 +16,7 @@ Some RSS validation fixes.
 
 Mastodon API: some tweaks to better match Mastodon behaviour in timeline entries and boosted posts are correctly returned, and some fixes for crashes.
 
-Don't allow creating users which user name strings only differ in case.
+Don't allow creating users which user name strings only differ in case. This was creating some problems (e.g. the webfinger interface doesn't allow case sensitivity).
 
 ## 2.41
 
