@@ -12,7 +12,7 @@ Pinned posts are never (incorrectly) purged.
 
 Some RSS validation fixes.
 
-Mastodon API: some tweaks to better match Mastodon behaviour in timeline entries and boosted posts are correctly returned.
+Mastodon API: some tweaks to better match Mastodon behaviour in timeline entries and boosted posts are correctly returned, and some fixes for crashes.
 
 Don't allow creating users which user name strings only differ in case.
 
