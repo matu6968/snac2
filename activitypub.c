@@ -1577,18 +1577,23 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
             char *in_reply_to = xs_dict_get(object, "inReplyTo");
             xs *wrk           = NULL;
 
-            timeline_request(snac, &in_reply_to, &wrk, 0);
-
-            if (timeline_add(snac, id, object)) {
-                snac_log(snac, xs_fmt("new 'Note' %s %s", actor, id));
-                do_notify = 1;
+            if (!xs_is_null(in_reply_to) && is_hidden(snac, in_reply_to)) {
+                snac_debug(snac, 0, xs_fmt("dropped reply %s to hidden post %s", id, in_reply_to));
             }
+            else {
+                timeline_request(snac, &in_reply_to, &wrk, 0);
 
-            /* if it has a "name" field, it may be a vote for a question */
-            const char *name = xs_dict_get(object, "name");
+                if (timeline_add(snac, id, object)) {
+                    snac_log(snac, xs_fmt("new 'Note' %s %s", actor, id));
+                    do_notify = 1;
+                }
 
-            if (!xs_is_null(name) && *name && !xs_is_null(in_reply_to) && *in_reply_to)
-                update_question(snac, in_reply_to);
+                /* if it has a "name" field, it may be a vote for a question */
+                const char *name = xs_dict_get(object, "name");
+
+                if (!xs_is_null(name) && *name && !xs_is_null(in_reply_to) && *in_reply_to)
+                    update_question(snac, in_reply_to);
+            }
         }
         else
         if (strcmp(utype, "Question") == 0) { /**  **/
