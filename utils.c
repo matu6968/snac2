@@ -29,7 +29,8 @@ static const char *default_srv_config = "{"
     "\"admin_email\":          \"\","
     "\"admin_account\":        \"\","
     "\"title\":                \"\","
-    "\"short_description\":    \"\""
+    "\"short_description\":    \"\","
+    "\"fastcgi\":              false"
     "}";
 
 static const char *default_css =

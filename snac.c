@@ -19,6 +19,7 @@
 #include "xs_glob.h"
 #include "xs_random.h"
 #include "xs_match.h"
+#include "xs_fcgi.h"
 
 #include "snac.h"
 

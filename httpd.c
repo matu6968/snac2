@@ -9,6 +9,7 @@
 #include "xs_mime.h"
 #include "xs_time.h"
 #include "xs_openssl.h"
+#include "xs_fcgi.h"
 
 #include "snac.h"
 
@@ -23,6 +24,8 @@
 #ifdef USE_POLL_FOR_SLEEP
 #include <poll.h>
 #endif
+
+int use_fcgi = 0;
 
 int srv_running = 0;
 
@@ -199,8 +202,12 @@ void httpd_connection(FILE *f)
     xs *etag     = NULL;
     int p_size   = 0;
     char *p;
+    int fcgi_id;
 
-    req = xs_httpd_request(f, &payload, &p_size);
+    if (use_fcgi)
+        req = xs_fcgi_request(f, &payload, &p_size, &fcgi_id);
+    else
+        req = xs_httpd_request(f, &payload, &p_size);
 
     if (req == NULL) {
         /* probably because a timeout */
@@ -330,7 +337,10 @@ void httpd_connection(FILE *f)
     headers = xs_dict_append(headers, "access-control-allow-origin", "*");
     headers = xs_dict_append(headers, "access-control-allow-headers", "*");
 
-    xs_httpd_response(f, status, headers, body, b_size);
+    if (use_fcgi)
+        xs_fcgi_response(f, status, headers, body, b_size, fcgi_id);
+    else
+        xs_httpd_response(f, status, headers, body, b_size);
 
     fclose(f);
 
@@ -550,6 +560,8 @@ void httpd(void)
     char sem_name[24];
     sem_t anon_job_sem;
 
+    use_fcgi = xs_type(xs_dict_get(srv_config, "fastcgi")) == XSTYPE_TRUE;
+
     address = xs_dict_get(srv_config, "address");
     port    = xs_number_str(xs_dict_get(srv_config, "port"));
 
@@ -564,7 +576,8 @@ void httpd(void)
     signal(SIGTERM, term_handler);
     signal(SIGINT,  term_handler);
 
-    srv_log(xs_fmt("httpd start %s:%s %s", address, port, USER_AGENT));
+    srv_log(xs_fmt("httpd%s start %s:%s %s", use_fcgi ? " (FastCGI)" : "",
+                    address, port, USER_AGENT));
 
     /* show the number of usable file descriptors */
     struct rlimit r;
@@ -651,5 +664,6 @@ void httpd(void)
 
     xs *uptime = xs_str_time_diff(time(NULL) - start_time);
 
-    srv_log(xs_fmt("httpd stop %s:%s (run time: %s)", address, port, uptime));
+    srv_log(xs_fmt("httpd%s stop %s:%s (run time: %s)", use_fcgi ? " (FastCGI)" : "",
+                address, port, uptime));
 }
