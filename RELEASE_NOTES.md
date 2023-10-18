@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.43
+
+Added FastCGI support. This allows for simpler setups (e.g. on #OpenBSD, it's no longer necessary to enable and configure `relayd`, as the native `httpd` daemon includes FastCGI support).
+
 ## 2.42
 
 It's now possible to add profile metadata.
