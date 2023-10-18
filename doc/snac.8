@@ -386,7 +386,6 @@ location /.well-known/nodeinfo {
     proxy_pass http://localhost:8001;
     proxy_set_header Host $http_host;
 }
-
 .Ed
 .Pp
 Restart the nginx daemon and connect to
@@ -395,6 +394,40 @@ The empty, default screen will be shown. Enter the admin section with the
 credentials defined for this user. Search people, start following
 them, engage in arid discussions and generally enjoy the frustrating
 experience of Social Media.
+.Pp
+The following example configures OpenBSD's httpd as a frontend using the
+FastCGI interface. There is no need to use relayd, as httpd includes
+native FastCGI support (please take note that you must reconfigure
+.Nm
+by setting the fastcgi value to true in the
+.Pa server.json
+configuration file). Add the following to the example.com server section in
+.Pa /etc/httpd.conf :
+.Bd -literal -offset indent
+location "/social*" {
+    fastcgi socket tcp "127.0.0.1" 8001
+}
+
+location "/.well-known/webfinger" {
+    fastcgi socket tcp "127.0.0.1" 8001
+}
+
+location "/oauth/*" {
+    fastcgi socket tcp "127.0.0.1" 8001
+}
+
+location "/api/v1/*" {
+    fastcgi socket tcp "127.0.0.1" 8001
+}
+
+location "/api/v2/*" {
+    fastcgi socket tcp "127.0.0.1" 8001
+}
+
+location "/.well-known/nodeinfo" {
+    fastcgi socket tcp "127.0.0.1" 8001
+}
+.Ed
 .Sh SEE ALSO
 .Xr snac 1 ,
 .Xr snac 5
