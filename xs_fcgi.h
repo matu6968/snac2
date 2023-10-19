@@ -222,7 +222,11 @@ xs_dict *xs_fcgi_request(FILE *f, xs_str **payload, int *p_size, int *fcgi_id)
                 b_size += psz;
             }
             else {
-                /* the packet is complete; fill the payload info and finish */
+                /* add an asciiz to be able to treat it as a string */
+                buf = xs_realloc(buf, _xs_blk_size(b_size + 1));
+                buf[b_size] = '\0';
+
+                /* fill the payload info and finish */
                 *payload = (xs_str *)buf;
                 *p_size  = b_size;
 
