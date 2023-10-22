@@ -395,15 +395,30 @@ credentials defined for this user. Search people, start following
 them, engage in arid discussions and generally enjoy the frustrating
 experience of Social Media.
 .Pp
-The following example configures OpenBSD's httpd as a frontend using the
-FastCGI interface. There is no need to use relayd, as httpd includes
-native FastCGI support (please take note that you must reconfigure
+Since version 2.43,
 .Nm
-by setting the fastcgi value to true in the
-.Pa server.json
-configuration file). Add the following to the example.com server section in
-.Pa /etc/httpd.conf :
+supports communicating from / to the front end http server using the FastCGI
+protocol. There is no special advantage in using this, only that some servers
+allow for simpler configuration. For example, in the case of nginx, you can
+replace the two 'proxy_pass' and 'proxy_set_header' lines in the example
+above with just
 .Bd -literal -offset indent
+fastcgi_pass localhost:8001;
+.Ed
+.Pp
+The only thing to change on
+.Nm
+size is to the set 'fastcgi' value to true in
+.Pa server.json .
+.Pp
+Further, using the FastCGI interface allows a much simpler configuration
+under OpenBSD's native httpd, given that it's natively implemented there
+and you no longer need to configure the complicated relayd server. This is
+an example:
+.Bd -literal -offset indent
+# other server configuration
+[...]
+
 location "/fedi*" {
     fastcgi socket tcp "127.0.0.1" 8001
 }
