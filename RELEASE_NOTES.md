@@ -4,6 +4,8 @@
 
 Added FastCGI support. This allows for simpler setups (e.g. on #OpenBSD, it's no longer necessary to enable and configure `relayd`, as the native `httpd` daemon includes FastCGI support).
 
+New command-line option `deluser`, to delete a user (including unfollowing everybody).
+
 ## 2.42
 
 It's now possible to add profile metadata.
