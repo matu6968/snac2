@@ -7,6 +7,7 @@
 #include "xs_time.h"
 #include "xs_openssl.h"
 #include "xs_random.h"
+#include "xs_glob.h"
 
 #include "snac.h"
 
@@ -339,6 +340,41 @@ int resetpwd(snac *snac)
 }
 
 
+void rm_rf(const char *dir)
+/* does an rm -rf (yes, I'm also scared) */
+{
+    xs *d = xs_str_cat(xs_dup(dir), "/" "*");
+    xs *l = xs_glob(d, 0, 0);
+    xs_list *p = l;
+    xs_str *v;
+
+    if (dbglevel >= 1)
+        printf("Deleting directory %s\n", dir);
+
+    while (xs_list_iter(&p, &v)) {
+        struct stat st;
+
+        if (stat(v, &st) != -1) {
+            if (st.st_mode & S_IFDIR) {
+                rm_rf(v);
+            }
+            else {
+                if (dbglevel >= 1)
+                    printf("Deleting file %s\n", v);
+
+                if (unlink(v) == -1)
+                    printf("ERROR: cannot delete file %s\n", v);
+            }
+        }
+        else
+            printf("ERROR: stat() fail for %s\n", v);
+    }
+
+    if (rmdir(dir) == -1)
+        printf("ERROR: cannot delete directory %s\n", dir);
+}
+
+
 int deluser(snac *user)
 /* deletes a user */
 {
@@ -360,6 +396,8 @@ int deluser(snac *user)
             printf("Unfollowing actor %s\n", v);
         }
     }
+
+    rm_rf(user->basedir);
 
     return ret;
 }
