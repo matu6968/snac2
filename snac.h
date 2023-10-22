@@ -276,6 +276,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 int snac_init(const char *_basedir);
 int adduser(const char *uid);
 int resetpwd(snac *snac);
+int deluser(snac *user);
 
 extern const char *snac_blurb;
 

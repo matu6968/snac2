@@ -19,6 +19,7 @@ int usage(void)
     printf("init [{basedir}]                    Initializes the data storage\n");
     printf("upgrade {basedir}                   Upgrade to a new version\n");
     printf("adduser {basedir} [{uid}]           Adds a new user\n");
+    printf("deluser {basedir} {uid}             Deletes a user\n");
     printf("httpd {basedir}                     Starts the HTTPD daemon\n");
     printf("purge {basedir}                     Purges old data\n");
     printf("webfinger {basedir} {actor}         Queries about an actor (@user@host or actor url)\n");
@@ -169,7 +170,7 @@ int main(int argc, char *argv[])
     }
 
     if (!user_open(&snac, user)) {
-        printf("error in user '%s'\n", user);
+        printf("invalid user '%s'\n", user);
         return 1;
     }
 
@@ -177,6 +178,10 @@ int main(int argc, char *argv[])
 
     if (strcmp(cmd, "resetpwd") == 0) { /** **/
         return resetpwd(&snac);
+    }
+
+    if (strcmp(cmd, "deluser") == 0) { /** **/
+        return deluser(&snac);
     }
 
     if (strcmp(cmd, "queue") == 0) { /** **/

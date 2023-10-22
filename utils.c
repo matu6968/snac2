@@ -337,3 +337,29 @@ int resetpwd(snac *snac)
 
     return ret;
 }
+
+
+int deluser(snac *user)
+/* deletes a user */
+{
+    int ret = 0;
+    xs *fwers = following_list(user);
+    xs_list *p = fwers;
+    xs_str *v;
+
+    while (xs_list_iter(&p, &v)) {
+        xs *object = NULL;
+
+        if (valid_status(following_get(user, v, &object))) {
+            xs *msg = msg_undo(user, xs_dict_get(object, "object"));
+
+            following_del(user, v);
+
+            enqueue_output_by_actor(user, msg, v, 0);
+
+            printf("Unfollowing actor %s\n", v);
+        }
+    }
+
+    return ret;
+}
