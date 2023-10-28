@@ -1049,8 +1049,6 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
         return 0;
 
-    srv_debug(1, xs_fmt("mastoapi_get_handler %s", q_path));
-
     int status    = 404;
     xs_dict *args = xs_dict_get(req, "q_vars");
     xs *cmd       = xs_replace_n(q_path, "/api", "", 1);
@@ -1141,6 +1139,33 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         }
         else
             status = 422;
+    }
+    else
+    if (strcmp(cmd, "/v1/accounts/lookup") == 0) { /** **/
+        /* lookup an account */
+        char *acct = xs_dict_get(args, "acct");
+
+        if (!xs_is_null(acct)) {
+            xs *s = xs_strip_chars_i(xs_dup(acct), "@");
+            xs *l = xs_split_n(s, "@", 1);
+            char *uid = xs_list_get(l, 0);
+            char *host = xs_list_get(l, 1);
+
+            if (uid && (!host || strcmp(host, xs_dict_get(srv_config, "host")) == 0)) {
+                snac user;
+
+                if (user_open(&user, uid)) {
+                    xs *actor = msg_actor(&user);
+                    xs *macct = mastoapi_account(actor);
+
+                    *body  = xs_json_dumps(macct, 4);
+                    *ctype = "application/json";
+                    status = 200;
+
+                    user_free(&user);
+                }
+            }
+        }
     }
     else
     if (xs_startswith(cmd, "/v1/accounts/")) { /** **/
@@ -1882,6 +1907,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     /* user cleanup */
     if (logged_in)
         user_free(&snac1);
+
+    srv_debug(1, xs_fmt("mastoapi_get_handler %s %d", q_path, status));
 
     return status;
 }
