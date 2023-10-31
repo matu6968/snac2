@@ -436,8 +436,6 @@ static xs_dict *_xs_json_load_object(FILE *f)
     xs_dict *d = xs_dict_new();
     int c = 0;
 
-    d = xs_dict_new();
-
     for (;;) {
         xs *k = NULL;
         xs *v = NULL;
