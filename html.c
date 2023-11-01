@@ -2590,7 +2590,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
                     if (xs_startswith(mimetype, "image/")) {
                         const char *ext = strrchr(fn, '.');
-                        xs *id          = xs_fmt("%s%s", uploads[n], ext);
+                        xs *hash        = xs_md5_hex(fn, strlen(fn));
+                        xs *id          = xs_fmt("%s%s", hash, ext);
                         xs *url         = xs_fmt("%s/s/%s", snac.actor, id);
                         int fo          = xs_number_get(xs_list_get(uploaded_file, 1));
                         int fs          = xs_number_get(xs_list_get(uploaded_file, 2));
