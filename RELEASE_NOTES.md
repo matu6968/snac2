@@ -6,6 +6,8 @@ Added FastCGI support. This allows for simpler setups (e.g. on #OpenBSD, it's no
 
 New command-line option `deluser`, to delete a user (including unfollowing everybody).
 
+Fixed a minor memory leak.
+
 ## 2.42
 
 It's now possible to add profile metadata.
