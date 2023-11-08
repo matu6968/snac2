@@ -1028,13 +1028,13 @@ int process_auth_token(snac *snac, const xs_dict *req)
                 /* this counts as a 'login' */
                 lastlog_write(snac, "mastoapi");
 
-                srv_debug(2, xs_fmt("mastoapi auth: valid token for user %s", uid));
+                srv_debug(2, xs_fmt("mastoapi auth: valid token for user '%s'", uid));
             }
             else
-                srv_log(xs_fmt("mastoapi auth: corrupted token %s", tokid));
+                srv_log(xs_fmt("mastoapi auth: corrupted token '%s'", tokid));
         }
         else
-            srv_log(xs_fmt("mastoapi auth: invalid token %s", tokid));
+            srv_log(xs_fmt("mastoapi auth: invalid token '%s'", tokid));
     }
 
     return logged_in;

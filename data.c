@@ -2498,7 +2498,25 @@ void purge_server(void)
     xs *itl_fn = xs_fmt("%s/public.idx", srv_basedir);
     int itl_gc = index_gc(itl_fn);
 
-    srv_debug(1, xs_fmt("purge: global (obj: %d, idx: %d, itl: %d)", cnt, icnt, itl_gc));
+    /* purge tag indexes */
+    xs *tag_spec = xs_fmt("%s/tag/??", srv_basedir);
+    xs *tag_dirs = xs_glob(tag_spec, 0, 0);
+    p = tag_dirs;
+
+    int tag_gc = 0;
+    while (xs_list_iter(&p, &v)) {
+        xs *spec2 = xs_fmt("%s/" "*.idx", v);
+        xs *files = xs_glob(spec2, 0, 0);
+        xs_list *p2;
+        xs_str *v2;
+
+        p2 = files;
+        while (xs_list_iter(&p2, &v2))
+            tag_gc += index_gc(v2);
+    }
+
+    srv_debug(1, xs_fmt("purge: global "
+            "(obj: %d, idx: %d, itl: %d, tag: %d)", cnt, icnt, itl_gc, tag_gc));
 }
 
 
