@@ -1081,6 +1081,8 @@ int timeline_add(snac *snac, const char *id, const xs_dict *o_msg)
     int ret = object_add(id, o_msg);
     timeline_update_indexes(snac, id);
 
+    tag_index(id, o_msg);
+
     snac_debug(snac, 1, xs_fmt("timeline_add %s", id));
 
     return ret;
@@ -1562,6 +1564,65 @@ int limited(snac *user, const char *id, int cmd)
     }
 
     return ret;
+}
+
+
+/** tag indexing **/
+
+void tag_index(const char *id, const xs_dict *obj)
+/* update the tag indexes for this object */
+{
+    xs_list *tags = xs_dict_get(obj, "tag");
+
+    if (is_msg_public(obj) && xs_type(tags) == XSTYPE_LIST && xs_list_len(tags) > 0) {
+        xs *md5_id    = xs_md5_hex(id, strlen(id));
+        xs *g_tag_dir = xs_fmt("%s/tag", srv_basedir);
+
+        mkdirx(g_tag_dir);
+
+        xs_dict *v;
+        while (xs_list_iter(&tags, &v)) {
+            char *type = xs_dict_get(v, "type");
+            char *name = xs_dict_get(v, "name");
+
+            if (!xs_is_null(type) && !xs_is_null(name) && strcmp(type, "Hashtag") == 0) {
+                if (*name == '#')
+                    name++;
+
+                name = xs_tolower_i(name);
+
+                xs *md5_tag   = xs_md5_hex(name, strlen(name));
+                xs *tag_dir   = xs_fmt("%s/%c%c", g_tag_dir, md5_tag[0], md5_tag[1]);
+                mkdirx(tag_dir);
+
+                xs *g_tag_idx = xs_fmt("%s/%s.idx", tag_dir, md5_tag);
+                index_add(g_tag_idx, md5_id);
+
+                FILE *f;
+                xs *g_tag_name = xs_replace(g_tag_idx, ".idx", ".tag");
+                if ((f = fopen(g_tag_name, "w")) != NULL) {
+                    fprintf(f, "%s\n", name);
+                    fclose(f);
+                }
+
+                srv_debug(0, xs_fmt("tagged %s #%s (%s #%s)", id, name, md5_id, md5_tag));
+            }
+        }
+    }
+}
+
+
+xs_list *tag_search(char *tag, int skip, int show)
+/* returns the list of posts tagged with tag */
+{
+    if (*tag == '#')
+        tag++;
+
+    xs *lw_tag = xs_tolower_i(xs_dup(tag));
+    xs *md5    = xs_md5_hex(lw_tag, strlen(lw_tag));
+    xs *idx    = xs_fmt("%s/tag/%c%c/%s.idx", srv_basedir, md5[0], md5[1], md5);
+
+    return index_list_desc(idx, skip, show);
 }
 
 

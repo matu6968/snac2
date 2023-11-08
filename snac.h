@@ -143,6 +143,8 @@ int limited(snac *user, const char *id, int cmd);
 void hide(snac *snac, const char *id);
 int is_hidden(snac *snac, const char *id);
 
+void tag_index(const char *id, const xs_dict *obj);
+
 int actor_add(const char *actor, xs_dict *msg);
 int actor_get(const char *actor, xs_dict **data);
 
