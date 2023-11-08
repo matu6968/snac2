@@ -2511,8 +2511,11 @@ void purge_server(void)
         xs_str *v2;
 
         p2 = files;
-        while (xs_list_iter(&p2, &v2))
+        while (xs_list_iter(&p2, &v2)) {
             tag_gc += index_gc(v2);
+            xs *bak = xs_fmt("%s.bak", v2);
+            unlink(bak);
+        }
     }
 
     srv_debug(1, xs_fmt("purge: global "
