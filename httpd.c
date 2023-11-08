@@ -145,15 +145,24 @@ int server_get_handler(xs_dict *req, const char *q_path,
         char *t = NULL;
 
         if (xs_type(q_vars) == XSTYPE_DICT && (t = xs_dict_get(q_vars, "t"))) {
-            /* tag search query */
-            int skip = xs_number_get(xs_dict_get(q_vars, "skip"));
-            int show = xs_number_get(xs_dict_get(q_vars, "show"));
+            int skip = 0;
+            int show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
+            char *v;
 
-            if (show == 0)
-                show = 64;
+            if ((v = xs_dict_get(q_vars, "skip")) != NULL)
+                skip = atoi(v);
+            if ((v = xs_dict_get(q_vars, "show")) != NULL)
+                show = atoi(v);
 
-            xs *tl = tag_search(t, skip, show);
-            *body = html_timeline(NULL, tl, 0, skip, show, 0);
+            xs *tl = tag_search(t, skip, show + 1);
+            int more = 0;
+            if (xs_list_len(tl) >= show + 1) {
+                /* drop the last one */
+                tl = xs_list_del(tl, -1);
+                more = 1;
+            }
+
+            *body = html_timeline(NULL, tl, 0, skip, show, more);
         }
         else
         if (xs_type(xs_dict_get(srv_config, "show_instance_timeline")) == XSTYPE_TRUE) {
