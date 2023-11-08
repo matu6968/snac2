@@ -1542,7 +1542,8 @@ xs_str *html_footer(xs_str *s)
 }
 
 
-xs_str *html_timeline(snac *user, const xs_list *list, int local, int skip, int show, int show_more)
+xs_str *html_timeline(snac *user, const xs_list *list, int local,
+                      int skip, int show, int show_more, char *tag)
 /* returns the HTML for the timeline */
 {
     xs_str *s = xs_str_new(NULL);
@@ -1628,15 +1629,25 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local, int skip, int 
     }
 
     if (show_more) {
-        const char *base_url = user ? user->actor : srv_baseurl;
+        xs *t = NULL;
+        xs *m = NULL;
+
+        if (tag) {
+            t = xs_fmt("%s?t=%s", srv_baseurl, tag);
+            m = xs_fmt("%s&skip=%d&show=%d", t, skip + show, show);
+        }
+        else {
+            t = xs_fmt("%s%s", user ? user->actor : srv_baseurl, local ? "" : "/admin");
+            m = xs_fmt("%s?&skip=%d&show=%d", t, skip + show, show);
+        }
 
         xs *s1 = xs_fmt(
             "<p>"
-            "<a href=\"%s%s\" name=\"snac-more\">%s</a> - "
-            "<a href=\"%s%s?skip=%d&show=%d\" name=\"snac-more\">%s</a>"
+            "<a href=\"%s\" name=\"snac-more\">%s</a> - "
+            "<a href=\"%s\" name=\"snac-more\">%s</a>"
             "</p>\n",
-            base_url, local ? "" : "/admin", L("Back to top"),
-            base_url, local ? "" : "/admin", skip + show, show, L("More...")
+            t, L("Back to top"),
+            m, L("More...")
         );
 
         s = xs_str_cat(s, s1);
@@ -1968,7 +1979,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         xs *h = xs_str_localtime(0, "%Y-%m.html");
 
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE) {
-            *body = html_timeline(&snac, NULL, 1, 0, 0, 0);
+            *body = html_timeline(&snac, NULL, 1, 0, 0, 0, NULL);
             *b_size = strlen(*body);
             status  = 200;
         }
@@ -1986,7 +1997,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *pins = pinned_list(&snac);
             pins = xs_list_cat(pins, list);
 
-            *body = html_timeline(&snac, pins, 1, skip, show, xs_list_len(next));
+            *body = html_timeline(&snac, pins, 1, skip, show, xs_list_len(next), NULL);
 
             *b_size = strlen(*body);
             status  = 200;
@@ -2017,7 +2028,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 xs *pins = pinned_list(&snac);
                 pins = xs_list_cat(pins, list);
 
-                *body = html_timeline(&snac, pins, 0, skip, show, xs_list_len(next));
+                *body = html_timeline(&snac, pins, 0, skip, show, xs_list_len(next), NULL);
 
                 *b_size = strlen(*body);
                 status  = 200;
@@ -2065,7 +2076,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
             list = xs_list_append(list, md5);
 
-            *body   = html_timeline(&snac, list, 1, 0, 0, 0);
+            *body   = html_timeline(&snac, list, 1, 0, 0, 0, NULL);
             *b_size = strlen(*body);
             status  = 200;
         }

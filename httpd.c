@@ -162,12 +162,12 @@ int server_get_handler(xs_dict *req, const char *q_path,
                 more = 1;
             }
 
-            *body = html_timeline(NULL, tl, 0, skip, show, more);
+            *body = html_timeline(NULL, tl, 0, skip, show, more, t);
         }
         else
         if (xs_type(xs_dict_get(srv_config, "show_instance_timeline")) == XSTYPE_TRUE) {
             xs *tl = timeline_instance_list(0, 30);
-            *body = html_timeline(NULL, tl, 0, 0, 0, 0);
+            *body = html_timeline(NULL, tl, 0, 0, 0, 0, NULL);
         }
         else
             *body = greeting_html();
