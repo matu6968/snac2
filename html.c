@@ -241,7 +241,7 @@ xs_str *html_base_header(xs_str *s)
 }
 
 
-xs_str *html_instance_header(xs_str *s)
+xs_str *html_instance_header(xs_str *s, char *tag)
 {
     s = html_base_header(s);
 
@@ -304,8 +304,10 @@ xs_str *html_instance_header(xs_str *s)
     s = xs_str_cat(s, "</div>\n");
 
     {
-        xs *s1 = xs_fmt("<h2 class=\"snac-header\">%s</h2>\n",
-            L("Recent posts by users in this instance"));
+        xs *l = tag ? xs_fmt(L("Search results for #%s"), tag) :
+            xs_dup(L("Recent posts by users in this instance"));
+
+        xs *s1 = xs_fmt("<h2 class=\"snac-header\">%s</h2>\n", l);
         s = xs_str_cat(s, s1);
     }
 
@@ -1554,7 +1556,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
     if (user)
         s = html_user_header(user, s, local);
     else
-        s = html_instance_header(s);
+        s = html_instance_header(s, tag);
 
     if (user && !local)
         s = html_top_controls(user, s);
@@ -1629,16 +1631,17 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
     }
 
     if (show_more) {
-        xs *t = NULL;
-        xs *m = NULL;
+        xs *t  = NULL;
+        xs *m  = NULL;
+        xs *ss = xs_fmt("skip=%d&show=%d", skip + show, show);
 
         if (tag) {
             t = xs_fmt("%s?t=%s", srv_baseurl, tag);
-            m = xs_fmt("%s&skip=%d&show=%d", t, skip + show, show);
+            m = xs_fmt("%s&%s", t, ss);
         }
         else {
             t = xs_fmt("%s%s", user ? user->actor : srv_baseurl, local ? "" : "/admin");
-            m = xs_fmt("%s?&skip=%d&show=%d", t, skip + show, show);
+            m = xs_fmt("%s?%s", t, ss);
         }
 
         xs *s1 = xs_fmt(
