@@ -69,7 +69,8 @@ double mtime_nl(const char *fn, int *n_link);
 #define mtime(fn) mtime_nl(fn, NULL)
 double f_ctime(const char *fn);
 
-int index_add(const char *fn, const char *md5);
+int index_add_md5(const char *fn, const char *md5);
+int index_add(const char *fn, const char *id);
 int index_gc(const char *fn);
 int index_first(const char *fn, char *buf, int size);
 int index_len(const char *fn);
@@ -144,6 +145,7 @@ void hide(snac *snac, const char *id);
 int is_hidden(snac *snac, const char *id);
 
 void tag_index(const char *id, const xs_dict *obj);
+xs_list *tag_search(char *tag, int skip, int show);
 
 int actor_add(const char *actor, xs_dict *msg);
 int actor_get(const char *actor, xs_dict **data);

@@ -1574,7 +1574,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local, int skip, int 
             continue;
 
         /* if it's an instance page, discard private users */
-        if (user == NULL) {
+        if (user == NULL && xs_startswith(xs_dict_get(msg, "id"), srv_baseurl)) {
             const char *atto = xs_dict_get(msg, "attributedTo");
             xs *l = xs_split(atto, "/");
             const char *uid = xs_list_get(l, -1);

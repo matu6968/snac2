@@ -141,6 +141,21 @@ int server_get_handler(xs_dict *req, const char *q_path,
 
     /* is it the server root? */
     if (*q_path == '\0') {
+        xs_dict *q_vars = xs_dict_get(req, "q_vars");
+        char *t = NULL;
+
+        if (xs_type(q_vars) == XSTYPE_DICT && (t = xs_dict_get(q_vars, "t"))) {
+            /* tag search query */
+            int skip = xs_number_get(xs_dict_get(q_vars, "skip"));
+            int show = xs_number_get(xs_dict_get(q_vars, "show"));
+
+            if (show == 0)
+                show = 64;
+
+            xs *tl = tag_search(t, skip, show);
+            *body = html_timeline(NULL, tl, 0, skip, show, 0);
+        }
+        else
         if (xs_type(xs_dict_get(srv_config, "show_instance_timeline")) == XSTYPE_TRUE) {
             xs *tl = timeline_instance_list(0, 30);
             *body = html_timeline(NULL, tl, 0, 0, 0, 0);
