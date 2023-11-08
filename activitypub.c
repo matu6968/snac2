@@ -587,7 +587,7 @@ xs_str *process_tags(snac *snac, const char *content, xs_list **tag)
                 /* hashtag */
                 xs *d = xs_dict_new();
                 xs *n = xs_tolower_i(xs_dup(v));
-                xs *h = xs_fmt("%s%s", snac->actor, n);
+                xs *h = xs_fmt("%s?t=%s", srv_baseurl, n + 1);
                 xs *l = xs_fmt("<a href=\"%s\" class=\"mention hashtag\" rel=\"tag\">%s</a>", h, v);
 
                 d = xs_dict_append(d, "type",   "Hashtag");
