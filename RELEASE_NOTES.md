@@ -8,7 +8,9 @@ Added FastCGI support. This allows for simpler setups (e.g. on #OpenBSD, it's no
 
 New command-line option `deluser`, to delete a user (including unfollowing everybody).
 
-Fixed a minor memory leak.
+Fixed a minor memory leak :facepalm:
+
+Fixed some HTML errors :facepalm:
 
 ## 2.42
 
