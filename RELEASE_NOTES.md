@@ -2,6 +2,8 @@
 
 ## 2.43
 
+Tags in posts are now indexed and searching by tag is possible. It's still not very useful, but at least new user posts contain links that return real search-by-tag results. Also, no "re-indexing" of the previously stored data is done (only new local and remote posts will be searchable by tag).
+
 Added FastCGI support. This allows for simpler setups (e.g. on #OpenBSD, it's no longer necessary to enable and configure `relayd`, as the native `httpd` daemon includes FastCGI support).
 
 New command-line option `deluser`, to delete a user (including unfollowing everybody).
