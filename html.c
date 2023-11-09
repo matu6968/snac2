@@ -1116,7 +1116,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             xs *es1 = encode_html(xs_dict_get(user->config, "name"));
             xs *s1 = xs_fmt(
                 "<div class=\"snac-origin\">"
-                "<a href=\"%s\">%s</a> %s</a></div>",
+                "<a href=\"%s\">%s</a> %s</div>",
                 user->actor, es1, L("boosted")
             );
 
