@@ -558,8 +558,8 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
 
         "<p><input type=\"submit\" class=\"button\" value=\"%s\">\n"
         "</form><p>\n"
-        "</div>\n"
         "</details>\n"
+        "</div>\n"
 
         "<div class=\"snac-top-controls-more\">\n"
         "<details><summary>%s</summary>\n"
