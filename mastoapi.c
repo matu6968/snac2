@@ -4,6 +4,7 @@
 #ifndef NO_MASTODON_API
 
 #include "xs.h"
+#include "xs_hex.h"
 #include "xs_openssl.h"
 #include "xs_json.h"
 #include "xs_io.h"

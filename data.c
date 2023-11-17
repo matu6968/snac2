@@ -2,6 +2,7 @@
 /* copyright (c) 2022 - 2023 grunfink et al. / MIT license */
 
 #include "xs.h"
+#include "xs_hex.h"
 #include "xs_io.h"
 #include "xs_json.h"
 #include "xs_openssl.h"

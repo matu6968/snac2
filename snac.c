@@ -4,6 +4,7 @@
 #define XS_IMPLEMENTATION
 
 #include "xs.h"
+#include "xs_hex.h"
 #include "xs_io.h"
 #include "xs_unicode.h"
 #include "xs_json.h"
