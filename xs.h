@@ -1180,6 +1180,8 @@ void *xs_memmem(const char *haystack, int h_size, const char *needle, int n_size
 
 /** hex **/
 
+static char xs_hex_digits[] = "0123456789abcdef";
+
 xs_str *xs_hex_enc(const xs_val *data, int size)
 /* returns an hexdump of data */
 {
@@ -1190,8 +1192,9 @@ xs_str *xs_hex_enc(const xs_val *data, int size)
     p = s = xs_realloc(NULL, _xs_blk_size(size * 2 + 1));
 
     for (n = 0; n < size; n++) {
-        snprintf(p, 3, "%02x", (unsigned char)data[n]);
-        p += 2;
+        *p++ = xs_hex_digits[*data >> 4 & 0xf];
+        *p++ = xs_hex_digits[*data      & 0xf];
+        data++;
     }
 
     *p = '\0';

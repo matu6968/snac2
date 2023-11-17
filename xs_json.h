@@ -248,24 +248,20 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
                         break;
                     }
 
-                    if (cp >= 0xd800 && cp <= 0xdfff) {
-                        /* it's a surrogate pair */
-                        cp = (cp & 0x3ff) << 10;
-
+                    if (xs_is_surrogate(cp)) {
                         /* \u must follow */
                         if (fgetc(f) != '\\' || fgetc(f) != 'u') {
                             *t = JS_ERROR;
                             break;
                         }
 
-                        unsigned int i;
-                        if (fscanf(f, "%04x", &i) != 1) {
+                        unsigned int p2;
+                        if (fscanf(f, "%04x", &p2) != 1) {
                             *t = JS_ERROR;
                             break;
                         }
 
-                        cp |= (i & 0x3ff);
-                        cp += 0x10000;
+                        cp = xs_surrogate_dec(cp, p2);
                     }
 
                     /* replace dangerous control codes with their visual representations */

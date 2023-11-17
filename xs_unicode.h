@@ -8,6 +8,9 @@
  xs_str *xs_utf8_enc(xs_str *str, unsigned int cpoint);
  unsigned int xs_utf8_dec(char **str);
  int xs_unicode_width(unsigned int cpoint);
+ int xs_is_surrogate(unsigned int cpoint);
+ unsigned int xs_surrogate_dec(unsigned int p1, unsigned int p2);
+ unsigned int xs_surrogate_enc(unsigned int cpoint);
  unsigned int *_xs_unicode_upper_search(unsigned int cpoint);
  unsigned int *_xs_unicode_lower_search(unsigned int cpoint);
  #define xs_unicode_is_upper(cpoint) (!!_xs_unicode_upper_search(cpoint))
@@ -135,6 +138,32 @@ int xs_unicode_width(unsigned int cpoint)
                         int_range_cmp);
 
     return r ? r[2] : 1;
+}
+
+
+/** surrogate pairs **/
+
+int xs_is_surrogate(unsigned int cpoint)
+/* checks if cpoint is the first element of a Unicode surrogate pair */
+{
+    return cpoint >= 0xd800 && cpoint <= 0xdfff;
+}
+
+
+unsigned int xs_surrogate_dec(unsigned int p1, unsigned int p2)
+/* "decodes" a surrogate pair into a codepoint */
+{
+    return 0x10000 | ((p1 & 0x3ff) << 10) | (p2 & 0x3ff);
+}
+
+
+unsigned int xs_surrogate_enc(unsigned int cpoint)
+/* "encodes" a Unicode into a surrogate pair (p1 in the MSB word) */
+{
+    unsigned int p1 = 0xd7c0 + (cpoint >> 10);
+    unsigned int p2 = 0xdc00 + (cpoint & 0x3ff);
+
+    return (p1 << 16) | p2;
 }
 
 
