@@ -6,6 +6,8 @@ Tags in posts are now indexed and searching by tag is possible. It's still not v
 
 Added FastCGI support. This allows for simpler setups (e.g. on #OpenBSD, it's no longer necessary to enable and configure `relayd`, as the native `httpd` daemon includes FastCGI support).
 
+History can be disabled by administrators by setting the `disable_history` field to true.
+
 New command-line option `deluser`, to delete a user (including unfollowing everybody).
 
 Fixed a minor memory leak :facepalm:
