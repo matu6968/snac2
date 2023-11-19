@@ -1600,7 +1600,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
 
     s = xs_str_cat(s, "</div>\n");
 
-    if (list && user && local) {
+    if (list && user && local && xs_type(xs_dict_get(srv_config, "disable_history")) != XSTYPE_TRUE) {
         xs *s1 = xs_fmt(
             "<div class=\"snac-history\">\n"
             "<p class=\"snac-history-title\">%s</p><ul>\n",
@@ -2103,6 +2103,9 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     else
     if (xs_startswith(p_path, "h/")) { /** an entry from the history **/
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
+            return 403;
+
+        if (xs_type(xs_dict_get(srv_config, "disable_history")) == XSTYPE_TRUE)
             return 403;
 
         xs *l    = xs_split(p_path, "/");
