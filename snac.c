@@ -21,6 +21,7 @@
 #include "xs_random.h"
 #include "xs_match.h"
 #include "xs_fcgi.h"
+#include "xs_html.h"
 
 #include "snac.h"
 

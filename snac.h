@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2023 grunfink et al. / MIT license */
 
-#define VERSION "2.43"
+#define VERSION "2.44-dev"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -266,7 +266,6 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
 
 xs_str *not_really_markdown(const char *content, xs_list **attach);
 xs_str *sanitize(const char *content);
-xs_str *encode_html_strict(const char *str);
 xs_str *encode_html(const char *str);
 
 xs_str *html_timeline(snac *user, const xs_list *list, int local,

@@ -4,6 +4,7 @@
 #include "xs.h"
 #include "xs_regex.h"
 #include "xs_mime.h"
+#include "xs_html.h"
 
 #include "snac.h"
 
@@ -260,23 +261,10 @@ xs_str *sanitize(const char *content)
 }
 
 
-xs_str *encode_html_strict(const char *str)
-/* escapes html characters */
-{
-    xs_str *encoded = xs_replace(str, "&", "&amp;");
-    encoded = xs_replace_i(encoded, "<", "&lt;");
-    encoded = xs_replace_i(encoded, ">", "&gt;");
-    encoded = xs_replace_i(encoded, "\"", "&#34;");
-    encoded = xs_replace_i(encoded, "'", "&#39;");
-
-    return encoded;
-}
-
-
 xs_str *encode_html(const char *str)
 /* escapes html characters */
 {
-    xs_str *encoded = encode_html_strict(str);
+    xs_str *encoded = xs_html_encode((char *)str);
 
     /* Restore only <br>. Probably safe. Let's hope nothing goes wrong with this. */
     encoded = xs_replace_i(encoded, "&lt;br&gt;", "<br>");

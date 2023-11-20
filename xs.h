@@ -62,7 +62,8 @@ xs_str *xs_str_new(const char *str);
 xs_str *xs_str_new_sz(const char *mem, int sz);
 xs_str *xs_str_wrap_i(const char *prefix, xs_str *str, const char *suffix);
 #define xs_str_prepend_i(str, prefix) xs_str_wrap_i(prefix, str, NULL)
-#define xs_str_cat(str, suffix) xs_str_wrap_i(NULL, str, suffix)
+xs_str *_xs_str_cat(xs_str *str, const char *strs[]);
+#define xs_str_cat(str, ...) _xs_str_cat(str, (const char *[]){ __VA_ARGS__, NULL })
 xs_str *xs_replace_in(xs_str *str, const char *sfrom, const char *sto, int times);
 #define xs_replace_i(str, sfrom, sto) xs_replace_in(str, sfrom, sto, XS_ALL)
 #define xs_replace(str, sfrom, sto) xs_replace_in(xs_dup(str), sfrom, sto, XS_ALL)
@@ -446,6 +447,22 @@ xs_str *xs_str_wrap_i(const char *prefix, xs_str *str, const char *suffix)
 
     if (suffix)
         str = xs_insert_m(str, strlen(str), suffix, strlen(suffix));
+
+    return str;
+}
+
+
+xs_str *_xs_str_cat(xs_str *str, const char *strs[])
+/* concatenates all strings after str */
+{
+    int o = strlen(str);
+
+    while (*strs) {
+        int sz = strlen(*strs);
+        str = xs_insert_m(str, o, *strs, sz);
+        o += sz;
+        strs++;
+    }
 
     return str;
 }

@@ -10,6 +10,7 @@
 #include "xs_time.h"
 #include "xs_mime.h"
 #include "xs_match.h"
+#include "xs_html.h"
 
 #include "snac.h"
 
@@ -2137,10 +2138,10 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         xs *bio   = not_really_markdown(xs_dict_get(snac.config, "bio"), NULL);
         char *p, *v;
 
-        xs *es1 = encode_html_strict(xs_dict_get(snac.config, "name"));
-        xs *es2 = encode_html_strict(snac.uid);
-        xs *es3 = encode_html_strict(xs_dict_get(srv_config, "host"));
-        xs *es4 = encode_html_strict(bio);
+        xs *es1 = xs_html_encode(xs_dict_get(snac.config, "name"));
+        xs *es2 = xs_html_encode(snac.uid);
+        xs *es3 = xs_html_encode(xs_dict_get(srv_config, "host"));
+        xs *es4 = xs_html_encode(bio);
         rss = xs_fmt(
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             "<rss version=\"0.91\">\n"
@@ -2168,7 +2169,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             if (!xs_startswith(id, snac.actor))
                 continue;
 
-            xs *content = encode_html_strict(xs_dict_get(msg, "content"));
+            xs *content = xs_html_encode(xs_dict_get(msg, "content"));
 
             // We SHOULD only use sanitized one for description.
             // So, only encode for feed title, while the description just keep it sanitized as is.
