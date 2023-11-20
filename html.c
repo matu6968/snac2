@@ -1781,26 +1781,50 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
             s = xs_str_cat(s, "</form>\n");
 
             /* the post textarea */
-            xs *s2 = xs_fmt(
-                "<p><details><summary>%s</summary>\n"
-                "<p><div class=\"snac-note\" id=\"%s_%s_dm\">\n"
-                "<form autocomplete=\"off\" method=\"post\" action=\"%s/admin/note\" "
-                "enctype=\"multipart/form-data\" id=\"%s_reply_form\">\n"
-                "<textarea class=\"snac-textarea\" name=\"content\" "
-                "rows=\"4\" wrap=\"virtual\" required=\"required\"></textarea>\n"
-                "<input type=\"hidden\" name=\"to\" value=\"%s\">\n"
-                "<p><input type=\"file\" name=\"attach\">\n"
-                "<p><input type=\"submit\" class=\"button\" value=\"%s\">\n"
-                "</form><p></div>\n"
-                "</details><p>\n",
+            xs *dm_form_id  = xs_fmt("%s_%s_dm", md5, t);
+            xs *dm_action   = xs_fmt("%s/admin/note", snac->actor);
+            xs *dm_form_id2 = xs_fmt("%s_reply_form", md5);
 
-                L("Direct Message..."),
-                md5, t,
-                snac->actor, md5,
-                actor_id,
-                L("Post")
-            );
-            s = xs_str_cat(s, s2);
+            xs_html *dm_textarea = xs_html_tag("div",
+                xs_html_tag("details",
+                    xs_html_tag("summary",
+                        xs_html_text(L("Direct Message..."))),
+                    xs_html_sctag("p", NULL),
+                    xs_html_tag("div",
+                        xs_html_attr("class", "snac-note"),
+                        xs_html_attr("id",    dm_form_id),
+                        xs_html_tag("form",
+                            xs_html_attr("autocomplete", "off"),
+                            xs_html_attr("method",       "post"),
+                            xs_html_attr("action",       dm_action),
+                            xs_html_attr("enctype",      "multipart/form-data"),
+                            xs_html_attr("id",           dm_form_id2),
+                            xs_html_tag("textarea",
+                                xs_html_attr("class",    "snac-textarea"),
+                                xs_html_attr("name",     "content"),
+                                xs_html_attr("rows",     "4"),
+                                xs_html_attr("wrap",     "virtual"),
+                                xs_html_attr("required", "required")),
+                            xs_html_sctag("input",
+                                xs_html_attr("type",     "hidden"),
+                                xs_html_attr("name",     "to"),
+                                xs_html_attr("value",    actor_id)),
+                            xs_html_sctag("p", NULL),
+                            xs_html_sctag("input",
+                                xs_html_attr("type",     "file"),
+                                xs_html_attr("name",     "attach")),
+                            xs_html_sctag("p", NULL),
+                            xs_html_sctag("input",
+                                xs_html_attr("type",     "submit"),
+                                xs_html_attr("class",    "button"),
+                                xs_html_attr("value",    L("Post")))),
+                        xs_html_sctag("p", NULL))),
+                xs_html_sctag("p", NULL));
+
+            {
+                xs *s1 = xs_html_render(dm_textarea);
+                s = xs_str_cat(s, s1);
+            }
 
             s = xs_str_cat(s, "</div>\n");
 
