@@ -1692,7 +1692,8 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
     xs *s = xs_str_new(NULL);
     xs *es1 = encode_html(header);
     xs *h = xs_fmt("<h2 class=\"snac-header\">%s</h2>\n", es1);
-    char *p, *actor_id;
+    xs_list *p;
+    char *actor_id;
 
     s = xs_str_cat(s, h);
 
@@ -1704,31 +1705,38 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
         xs *actor = NULL;
 
         if (valid_status(actor_get(actor_id, &actor))) {
-            s = xs_str_cat(s, "<div class=\"snac-post\">\n<div class=\"snac-post-header\">\n");
+            s = xs_str_cat(s, "<div class=\"snac-post\">\n");
+
+            xs_html *snac_post_header = xs_html_tag("div",
+                xs_html_attr("class", "snac-post-header"),
+                html_actor_icon(actor, xs_dict_get(actor, "published"), NULL, NULL, 0));
 
             {
-                xs_html *actor_icon = html_actor_icon(actor,
-                    xs_dict_get(actor, "published"), NULL, NULL, 0);
-                xs *s1 = xs_html_render(actor_icon);
-                s = xs_str_cat(s, s1, "</div>\n");
+                xs *s1 = xs_html_render(snac_post_header);
+                s = xs_str_cat(s, s1);
             }
 
             /* content (user bio) */
             char *c = xs_dict_get(actor, "summary");
 
             if (!xs_is_null(c)) {
-                s = xs_str_cat(s, "<div class=\"snac-content\">\n");
-
                 xs *sc = sanitize(c);
 
+                xs_html *snac_content = xs_html_tag("div",
+                    xs_html_attr("class", "snac-content"));
+
                 if (xs_startswith(sc, "<p>"))
-                    s = xs_str_cat(s, sc);
-                else {
-                    xs *s1 = xs_fmt("<p>%s</p>", sc);
+                    xs_html_add(snac_content,
+                        xs_html_raw(sc)); /* already sanitized */
+                else
+                    xs_html_add(snac_content,
+                        xs_html_tag("p",
+                            xs_html_raw(sc))); /* already sanitized */
+
+                {
+                    xs *s1 = xs_html_render(snac_content);
                     s = xs_str_cat(s, s1);
                 }
-
-                s = xs_str_cat(s, "</div>\n");
             }
 
 
