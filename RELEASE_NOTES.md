@@ -10,6 +10,8 @@ History can be disabled by administrators by setting the `disable_history` field
 
 New command-line option `deluser`, to delete a user (including unfollowing everybody).
 
+Mastodon API: account lookups has been implemented.
+
 Fixed a minor memory leak :facepalm:
 
 Fixed some HTML errors :facepalm:
