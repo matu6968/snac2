@@ -144,11 +144,9 @@ xs_str *html_actor_icon(xs_str *os, char *actor,
         if (!xs_is_null(udate)) {
             xs *sd = xs_crop_i(xs_dup(udate), 0, 10);
 
-            date_label = xs_str_cat(date_label, " / ");
-            date_label = xs_str_cat(date_label, sd);
+            date_label = xs_str_cat(date_label, " / ", sd);
 
-            date_title = xs_str_cat(date_title, " / ");
-            date_title = xs_str_cat(date_title, udate);
+            date_title = xs_str_cat(date_title, " / ", udate);
         }
 
         xs *edt = encode_html(date_title);
@@ -1531,17 +1529,22 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
 xs_str *html_footer(xs_str *s)
 {
-    xs *s1 = xs_fmt(
-        "<div class=\"snac-footer\">\n"
-        "<a href=\"%s\">%s</a> - "
-        "powered by <a href=\"%s\">"
-        "<abbr title=\"Social Networks Are Crap\">snac</abbr></a></div>\n",
-        srv_baseurl,
-        L("about this site"),
-        WHAT_IS_SNAC_URL
-    );
+    xs_html *footer = xs_html_tag("div",
+        xs_html_attr("class", "snac-footer"),
+        xs_html_tag("a",
+            xs_html_attr("href", srv_baseurl),
+            xs_html_text(L("about this site"))),
+        xs_html_text(" - "),
+        xs_html_text(L("powered by ")),
+        xs_html_tag("a",
+            xs_html_attr("href", WHAT_IS_SNAC_URL),
+            xs_html_tag("abbr",
+                xs_html_attr("title", "Social Network Are Crap"),
+                xs_html_text("snac"))));
 
-    return xs_str_cat(s, s1);
+    xs *s1 = xs_html_render(footer);
+
+    return xs_str_cat(s, s1, "\n");
 }
 
 
