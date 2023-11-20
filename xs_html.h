@@ -12,12 +12,15 @@ xs_html *xs_html_attr(char *key, char *value);
 xs_html *xs_html_text(char *content);
 xs_html *xs_html_raw(char *content);
 
-xs_html *xs_html_add(xs_html *tag, xs_html *data);
+xs_html *_xs_html_add(xs_html *tag, xs_html *var[]);
+#define xs_html_add(tag, ...) _xs_html_add(tag, (xs_html *[]) { __VA_ARGS__, NULL })
 
 xs_html *_xs_html_tag(char *tag, xs_html *var[]);
 #define xs_html_tag(tag, ...) _xs_html_tag(tag, (xs_html *[]) { __VA_ARGS__, NULL })
+
 xs_html *_xs_html_sctag(char *tag, xs_html *var[]);
 #define xs_html_sctag(tag, ...) _xs_html_sctag(tag, (xs_html *[]) { __VA_ARGS__, NULL })
+
 xs_str *_xs_html_render(xs_html *h, xs_str *s);
 #define xs_html_render(h) _xs_html_render(h, xs_str_new(NULL))
 
@@ -127,28 +130,32 @@ xs_html *xs_html_raw(char *content)
 }
 
 
-xs_html *xs_html_add(xs_html *tag, xs_html *data)
+xs_html *_xs_html_add(xs_html *tag, xs_html *var[])
 /* add data (attrs, tags or text) to a tag */
 {
-    xs_html **first;
-    xs_html **last;
+    while (*var) {
+        xs_html *data = *var++;
 
-    if (data->type == XS_HTML_ATTR) {
-        first = &tag->f_attr;
-        last  = &tag->l_attr;
+        xs_html **first;
+        xs_html **last;
+
+        if (data->type == XS_HTML_ATTR) {
+            first = &tag->f_attr;
+            last  = &tag->l_attr;
+        }
+        else {
+            first = &tag->f_tag;
+            last  = &tag->l_tag;
+        }
+
+        if (*first == NULL)
+            *first = data;
+
+        if (*last != NULL)
+            (*last)->next = data;
+
+        *last = data;
     }
-    else {
-        first = &tag->f_tag;
-        last  = &tag->l_tag;
-    }
-
-    if (*first == NULL)
-        *first = data;
-
-    if (*last != NULL)
-        (*last)->next = data;
-
-    *last = data;
 
     return tag;
 }
@@ -162,8 +169,7 @@ static xs_html *_xs_html_tag_t(xs_html_type type, char *tag, xs_html *var[])
     a->type    = type;
     a->content = xs_dup(tag);
 
-    while (*var)
-        xs_html_add(a, *var++);
+    _xs_html_add(a, var);
 
     return a;
 }

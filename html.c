@@ -95,7 +95,7 @@ xs_str *actor_name(xs_dict *actor)
 xs_str *html_actor_icon(xs_dict *actor, const char *date,
                         const char *udate, const char *url, int priv)
 {
-    xs_str *s = xs_str_new(NULL);
+    xs_html *actor_icon = xs_html_tag("p", NULL);
 
     xs *avatar = NULL;
     char *v;
@@ -111,31 +111,45 @@ xs_str *html_actor_icon(xs_dict *actor, const char *date,
     if (avatar == NULL)
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
 
-    {
-        xs *s1 = xs_fmt("<p><img class=\"snac-avatar\" loading=\"lazy\" "
-                        "src=\"%s\" alt=\"\"/>\n", avatar);
-        s = xs_str_cat(s, s1);
-    }
+    xs_html_add(actor_icon,
+        xs_html_sctag("img",
+            xs_html_attr("loading", "lazy"),
+            xs_html_attr("class",   "snac-avatar"),
+            xs_html_attr("src",     avatar),
+            xs_html_attr("alt",     "")),
+        xs_html_tag("a",
+            xs_html_attr("href",    xs_dict_get(actor, "id")),
+            xs_html_attr("class",   "p-author h-card snac-author"),
+            xs_html_raw(name))); /* name is already html-escaped */
 
-    {
-        xs *s1 = xs_fmt("<a href=\"%s\" class=\"p-author h-card snac-author\">%s</a>",
-            xs_dict_get(actor, "id"), name);
-        s = xs_str_cat(s, s1);
-    }
 
     if (!xs_is_null(url)) {
-        xs *s1 = xs_fmt(" <a href=\"%s\">»</a>", url);
-        s = xs_str_cat(s, s1);
+        xs_html_add(actor_icon,
+            xs_html_text(" "),
+            xs_html_tag("a",
+                xs_html_attr("href", (char *)url),
+                xs_html_text("»")));
     }
 
-    if (priv)
-        s = xs_str_cat(s, " <span title=\"private\">&#128274;</span>");
+    if (priv) {
+        xs_html_add(actor_icon,
+            xs_html_text(" "),
+            xs_html_tag("span",
+                xs_html_attr("title", "private"),
+                xs_html_raw("&#128274;")));
+    }
 
-    if (strcmp(xs_dict_get(actor, "type"), "Service") == 0)
-        s = xs_str_cat(s, " <span title=\"bot\">&#129302;</span>");
+    if (strcmp(xs_dict_get(actor, "type"), "Service") == 0) {
+        xs_html_add(actor_icon,
+            xs_html_text(" "),
+            xs_html_tag("span",
+                xs_html_attr("title", "bot"),
+                xs_html_raw("&#129302;")));
+    }
 
     if (xs_is_null(date)) {
-        s = xs_str_cat(s, "\n&nbsp;\n");
+        xs_html_add(actor_icon,
+            xs_html_raw("&nbsp;"));
     }
     else {
         xs *date_label = xs_crop_i(xs_dup(date), 0, 10);
@@ -149,18 +163,16 @@ xs_str *html_actor_icon(xs_dict *actor, const char *date,
             date_title = xs_str_cat(date_title, " / ", udate);
         }
 
-        xs *edt = encode_html(date_title);
-        xs *edl = encode_html(date_label);
-        xs *s1 = xs_fmt(
-            "\n<time class=\"dt-published snac-pubdate\" title=\"%s\">%s</time>\n",
-                edt, edl);
-
-        s = xs_str_cat(s, s1);
+        xs_html_add(actor_icon,
+            xs_html_text(" "),
+            xs_html_tag("time",
+                xs_html_attr("class", "dt-published snac-pubdate"),
+                xs_html_attr("title", date_title),
+                xs_html_text(date_label)));
     }
 
     {
         char *username, *id;
-        xs *s1;
 
         if (xs_is_null(username = xs_dict_get(actor, "preferredUsername")) || *username == '\0') {
             /* This should never be reached */
@@ -176,15 +188,15 @@ xs_str *html_actor_icon(xs_dict *actor, const char *date,
         xs *domain = xs_split(id, "/");
         xs *user   = xs_fmt("@%s@%s", username, xs_list_get(domain, 2));
 
-        xs *u1 = encode_html(user);
-        s1 = xs_fmt(
-            "<br><a href=\"%s\" class=\"p-author-tag h-card snac-author-tag\">%s</a>",
-                xs_dict_get(actor, "id"), u1);
-
-        s = xs_str_cat(s, s1);
+        xs_html_add(actor_icon,
+            xs_html_sctag("br", NULL),
+            xs_html_tag("a",
+                xs_html_attr("href",  xs_dict_get(actor, "id")),
+                xs_html_attr("class", "p-author-tag h-card snac-author-tag"),
+                xs_html_text(user)));
     }
 
-    return s;
+    return xs_html_render(actor_icon);
 }
 
 
