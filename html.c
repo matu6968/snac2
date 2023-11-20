@@ -2136,31 +2136,33 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
             return 403;
 
-        xs_str *rss;
         xs *elems = timeline_simple_list(&snac, "public", 0, 20);
         xs *bio   = not_really_markdown(xs_dict_get(snac.config, "bio"), NULL);
-        char *p, *v;
 
-        xs *es1 = xs_html_encode(xs_dict_get(snac.config, "name"));
-        xs *es2 = xs_html_encode(snac.uid);
-        xs *es3 = xs_html_encode(xs_dict_get(srv_config, "host"));
-        xs *es4 = xs_html_encode(bio);
-        rss = xs_fmt(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            "<rss version=\"0.91\">\n"
-            "<channel>\n"
-            "<title>%s (@%s@%s)</title>\n"
-            "<language>en</language>\n"
-            "<link>%s.rss</link>\n"
-            "<description>%s</description>\n",
-            es1,
-            es2,
-            es3,
-            snac.actor,
-            es4
-        );
+        xs *rss_title = xs_fmt("%s (@%s@%s)",
+            xs_dict_get(snac.config, "name"),
+            snac.uid,
+            xs_dict_get(srv_config, "host"));
+        xs *rss_link = xs_fmt("%s.rss", snac.actor);
 
-        p = elems;
+        xs_html *rss = xs_html_tag("rss",
+            xs_html_attr("version", "0.91"));
+
+        xs_html *channel = xs_html_tag("channel",
+            xs_html_tag("title",
+                xs_html_text(rss_title)),
+            xs_html_tag("language",
+                xs_html_text("en")),
+            xs_html_tag("link",
+                xs_html_text(rss_link)),
+            xs_html_tag("description",
+                xs_html_text(bio)));
+
+        xs_html_add(rss, channel);
+
+        xs_list *p = elems;
+        char *v;
+
         while (xs_list_iter(&p, &v)) {
             xs *msg  = NULL;
 
@@ -2168,38 +2170,31 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 continue;
 
             char *id = xs_dict_get(msg, "id");
+            char *content = xs_dict_get(msg, "content");
 
             if (!xs_startswith(id, snac.actor))
                 continue;
 
-            xs *content = xs_html_encode(xs_dict_get(msg, "content"));
-
-            // We SHOULD only use sanitized one for description.
-            // So, only encode for feed title, while the description just keep it sanitized as is.
-            xs *es_title_enc = encode_html(xs_dict_get(msg, "content"));
-            xs *es_title = xs_replace(es_title_enc, "<br>", "\n");
+            /* create a title with the first line of the content */
+            xs *es_title = xs_replace(content, "<br>", "\n");
             xs *title   = xs_str_new(NULL);
             int i;
 
             for (i = 0; es_title[i] && es_title[i] != '\n' && es_title[i] != '&' && i < 50; i++)
                 title = xs_append_m(title, &es_title[i], 1);
 
-            xs *s = xs_fmt(
-                "<item>\n"
-                "<title>%s...</title>\n"
-                "<link>%s</link>\n"
-                "<description>%s</description>\n"
-                "</item>\n",
-                title, id, content
-            );
-
-            rss = xs_str_cat(rss, s);
+            xs_html_add(channel,
+                xs_html_tag("item",
+                    xs_html_tag("title",
+                        xs_html_text(title)),
+                    xs_html_tag("link",
+                        xs_html_text(id)),
+                    xs_html_tag("description",
+                        xs_html_text(content))));
         }
 
-        rss = xs_str_cat(rss, "</channel>\n</rss>\n");
-
-        *body   = rss;
-        *b_size = strlen(rss);
+        *body   = _xs_html_render(rss, xs_dup("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+        *b_size = strlen(*body);
         *ctype  = "application/rss+xml; charset=utf-8";
         status  = 200;
 
