@@ -766,7 +766,7 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
 }
 
 
-xs_str *html_button(xs_str *s, const char *clss, const char *label, const char *hint)
+static xs_str *html_button(xs_str *s, const char *clss, const char *label, const char *hint)
 {
     xs *s1 = xs_fmt(
                "<input type=\"submit\" name=\"action\" "
@@ -774,6 +774,19 @@ xs_str *html_button(xs_str *s, const char *clss, const char *label, const char *
                 clss, label, hint);
 
     return xs_str_cat(s, s1);
+}
+
+
+static xs_html *html_button_2(char *clss, char *label, char *hint)
+{
+    xs *c = xs_fmt("snac-btn-%s", clss);
+
+    return xs_html_sctag("input",
+        xs_html_attr("type",    "submit"),
+        xs_html_attr("name",    "action"),
+        xs_html_attr("class",   c),
+        xs_html_attr("value",   label),
+        xs_html_attr("title",   hint));
 }
 
 
@@ -1739,46 +1752,59 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
                 }
             }
 
-
             /* buttons */
-            s = xs_str_cat(s, "<div class=\"snac-controls\">\n");
+            xs *btn_form_action = xs_fmt("%s/admin/action", snac->actor);
 
-            xs *s1 = xs_fmt(
-                "<p><form autocomplete=\"off\" method=\"post\" action=\"%s/admin/action\">\n"
-                "<input type=\"hidden\" name=\"actor\" value=\"%s\">\n"
-                "<input type=\"hidden\" name=\"actor-form\" value=\"yes\">\n",
+            xs_html *snac_controls = xs_html_tag("DIV",
+                xs_html_attr("class",   "snac-controls"));
 
-                snac->actor, actor_id
-            );
-            s = xs_str_cat(s, s1);
+            xs_html *form = xs_html_tag("form",
+                xs_html_attr("autocomplete",    "off"),
+                xs_html_attr("method",          "post"),
+                xs_html_attr("action",          btn_form_action),
+                xs_html_sctag("input",
+                    xs_html_attr("type",    "hidden"),
+                    xs_html_attr("name",    "actor"),
+                    xs_html_attr("value",   actor_id)),
+                xs_html_sctag("input",
+                    xs_html_attr("type",    "hidden"),
+                    xs_html_attr("name",    "actor-form"),
+                    xs_html_attr("value",   "yes")));
+
+            xs_html_add(snac_controls, form);
 
             if (following_check(snac, actor_id)) {
-                s = html_button(s, "unfollow", L("Unfollow"),
-                                L("Stop following this user's activity"));
+                xs_html_add(form,
+                    html_button_2("unfollow", L("Unfollow"),
+                                L("Stop following this user's activity")));
 
                 if (is_limited(snac, actor_id))
-                    s = html_button(s, "unlimit", L("Unlimit"),
-                                L("Allow announces (boosts) from this user"));
+                    xs_html_add(form,
+                        html_button_2("unlimit", L("Unlimit"),
+                                L("Allow announces (boosts) from this user")));
                 else
-                    s = html_button(s, "limit", L("Limit"),
-                                L("Block announces (boosts) from this user"));
+                    xs_html_add(form,
+                        html_button_2("limit", L("Limit"),
+                                L("Block announces (boosts) from this user")));
             }
             else {
-                s = html_button(s, "follow", L("Follow"),
-                                L("Start following this user's activity"));
+                xs_html_add(form,
+                    html_button_2("follow", L("Follow"),
+                                L("Start following this user's activity")));
 
                 if (follower_check(snac, actor_id))
-                    s = html_button(s, "delete", L("Delete"), L("Delete this user"));
+                    xs_html_add(form,
+                        html_button_2("delete", L("Delete"), L("Delete this user")));
             }
 
             if (is_muted(snac, actor_id))
-                s = html_button(s, "unmute", L("Unmute"),
-                                L("Stop blocking activities from this user"));
+                xs_html_add(form,
+                    html_button_2("unmute", L("Unmute"),
+                                L("Stop blocking activities from this user")));
             else
-                s = html_button(s, "mute", L("MUTE"),
-                                L("Block any activity from this user"));
-
-            s = xs_str_cat(s, "</form>\n");
+                xs_html_add(form,
+                    html_button_2("mute", L("MUTE"),
+                                L("Block any activity from this user")));
 
             /* the post textarea */
             xs *dm_form_id  = xs_fmt("%s_%s_dm", md5, t);
@@ -1821,12 +1847,12 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
                         xs_html_sctag("p", NULL))),
                 xs_html_sctag("p", NULL));
 
+            xs_html_add(snac_controls, dm_textarea);
+
             {
-                xs *s1 = xs_html_render(dm_textarea);
+                xs *s1 = xs_html_render(snac_controls);
                 s = xs_str_cat(s, s1);
             }
-
-            s = xs_str_cat(s, "</div>\n");
 
             s = xs_str_cat(s, "</div>\n");
         }
