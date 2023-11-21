@@ -1718,16 +1718,11 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
         xs *actor = NULL;
 
         if (valid_status(actor_get(actor_id, &actor))) {
-            s = xs_str_cat(s, "<div class=\"snac-post\">\n");
-
-            xs_html *snac_post_header = xs_html_tag("div",
-                xs_html_attr("class", "snac-post-header"),
-                html_actor_icon(actor, xs_dict_get(actor, "published"), NULL, NULL, 0));
-
-            {
-                xs *s1 = xs_html_render(snac_post_header);
-                s = xs_str_cat(s, s1);
-            }
+            xs_html *snac_post = xs_html_tag("div",
+                xs_html_attr("class", "snac-post"),
+                xs_html_tag("div",
+                    xs_html_attr("class", "snac-post-header"),
+                    html_actor_icon(actor, xs_dict_get(actor, "published"), NULL, NULL, 0)));
 
             /* content (user bio) */
             char *c = xs_dict_get(actor, "summary");
@@ -1746,16 +1741,13 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
                         xs_html_tag("p",
                             xs_html_raw(sc))); /* already sanitized */
 
-                {
-                    xs *s1 = xs_html_render(snac_content);
-                    s = xs_str_cat(s, s1);
-                }
+                xs_html_add(snac_post, snac_content);
             }
 
             /* buttons */
             xs *btn_form_action = xs_fmt("%s/admin/action", snac->actor);
 
-            xs_html *snac_controls = xs_html_tag("DIV",
+            xs_html *snac_controls = xs_html_tag("div",
                 xs_html_attr("class",   "snac-controls"));
 
             xs_html *form = xs_html_tag("form",
@@ -1849,12 +1841,12 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
 
             xs_html_add(snac_controls, dm_textarea);
 
+            xs_html_add(snac_post, snac_controls);
+
             {
-                xs *s1 = xs_html_render(snac_controls);
+                xs *s1 = xs_html_render(snac_post);
                 s = xs_str_cat(s, s1);
             }
-
-            s = xs_str_cat(s, "</div>\n");
         }
     }
 
