@@ -1887,12 +1887,21 @@ xs_str *html_notifications(snac *snac)
 
     s = html_user_header(snac, s, 0);
 
-    xs *s1 = xs_fmt(
-        "<form autocomplete=\"off\" "
-        "method=\"post\" action=\"%s/admin/clear-notifications\" id=\"clear\">\n"
-        "<input type=\"submit\" class=\"snac-btn-like\" value=\"%s\">\n"
-        "</form><p>\n", snac->actor, L("Clear all"));
-    s = xs_str_cat(s, s1);
+    xs *clear_all_action = xs_fmt("%s/admin/clear-notifications", snac->actor);
+    xs_html *clear_all_form = xs_html_tag("form",
+        xs_html_attr("autocomplete", "off"),
+        xs_html_attr("method",       "post"),
+        xs_html_attr("action",       clear_all_action),
+        xs_html_attr("id",           "clear"),
+        xs_html_sctag("input",
+            xs_html_attr("type",     "submit"),
+            xs_html_attr("class",    "snac-btn-like"),
+            xs_html_attr("value",    L("Clear all"))));
+
+    {
+        xs *s1 = xs_html_render(clear_all_form);
+        s = xs_str_cat(s, s1);
+    }
 
     while (xs_list_iter(&p, &v)) {
         xs *noti = notify_get(snac, v);
