@@ -1807,7 +1807,7 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
                 xs_html_tag("details",
                     xs_html_tag("summary",
                         xs_html_text(L("Direct Message..."))),
-                    xs_html_sctag("p", NULL),
+                    xs_html_tag("p", NULL),
                     xs_html_tag("div",
                         xs_html_attr("class", "snac-note"),
                         xs_html_attr("id",    dm_div_id),
@@ -1829,11 +1829,11 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
                                 xs_html_attr("type",     "hidden"),
                                 xs_html_attr("name",     "to"),
                                 xs_html_attr("value",    actor_id)),
-                            xs_html_sctag("p", NULL),
+                            xs_html_tag("p", NULL),
                             xs_html_tag("details",
                                 xs_html_tag("summary",
                                     xs_html_text(L("Attachment..."))),
-                                xs_html_sctag("p", NULL),
+                                xs_html_tag("p", NULL),
                                 xs_html_sctag("input",
                                     xs_html_attr("type",    "file"),
                                     xs_html_attr("name",    "attach")),
@@ -1841,20 +1841,20 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
                                     xs_html_attr("type",    "text"),
                                     xs_html_attr("name",    "alt_text"),
                                     xs_html_attr("placeholder", L("Attachment description")))),
-                            xs_html_sctag("p", NULL),
+                            xs_html_tag("p", NULL),
                             xs_html_sctag("input",
                                 xs_html_attr("type",     "submit"),
                                 xs_html_attr("class",    "button"),
                                 xs_html_attr("value",    L("Post")))),
-                        xs_html_sctag("p", NULL))),
-                xs_html_sctag("p", NULL));
+                        xs_html_tag("p", NULL))),
+                xs_html_tag("p", NULL));
 
             xs_html_add(snac_controls, dm_textarea);
 
             xs_html_add(snac_post, snac_controls);
 
             {
-                xs *s1 = xs_html_render(snac_post);
+                xs *s1 = xs_html_render_s(snac_post, xs_dup("\n"));
                 s = xs_str_cat(s, s1);
             }
         }
