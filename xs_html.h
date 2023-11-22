@@ -21,8 +21,8 @@ xs_html *_xs_html_tag(char *tag, xs_html *var[]);
 xs_html *_xs_html_sctag(char *tag, xs_html *var[]);
 #define xs_html_sctag(tag, ...) _xs_html_sctag(tag, (xs_html *[]) { __VA_ARGS__, NULL })
 
-xs_str *_xs_html_render(xs_html *h, xs_str *s);
-#define xs_html_render(h) _xs_html_render(h, xs_str_new(NULL))
+xs_str *xs_html_render_s(xs_html *h, xs_str *s);
+#define xs_html_render(h) xs_html_render_s(h, xs_str_new(NULL))
 
 #ifdef XS_IMPLEMENTATION
 
@@ -187,8 +187,8 @@ xs_html *_xs_html_sctag(char *tag, xs_html *var[])
 }
 
 
-xs_str *_xs_html_render(xs_html *h, xs_str *s)
-/* renders the tag and its subtags */
+xs_str *xs_html_render_s(xs_html *h, xs_str *s)
+/* renders the tag and its subtags into s */
 {
     xs_html *st;
 
@@ -201,7 +201,7 @@ xs_str *_xs_html_render(xs_html *h, xs_str *s)
         st = h->f_attr;
         while (st) {
             xs_html *nst = st->next;
-            s = _xs_html_render(st, s);
+            s = xs_html_render_s(st, s);
             st = nst;
         }
 
@@ -216,7 +216,7 @@ xs_str *_xs_html_render(xs_html *h, xs_str *s)
             st = h->f_tag;
             while (st) {
                 xs_html *nst = st->next;
-                s = _xs_html_render(st, s);
+                s = xs_html_render_s(st, s);
                 st = nst;
             }
 
