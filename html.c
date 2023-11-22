@@ -1799,9 +1799,9 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
                                 L("Block any activity from this user")));
 
             /* the post textarea */
-            xs *dm_form_id  = xs_fmt("%s_%s_dm", md5, t);
-            xs *dm_action   = xs_fmt("%s/admin/note", snac->actor);
-            xs *dm_form_id2 = xs_fmt("%s_reply_form", md5);
+            xs *dm_div_id  = xs_fmt("%s_%s_dm", md5, t);
+            xs *dm_action  = xs_fmt("%s/admin/note", snac->actor);
+            xs *dm_form_id = xs_fmt("%s_reply_form", md5);
 
             xs_html *dm_textarea = xs_html_tag("div",
                 xs_html_tag("details",
@@ -1810,27 +1810,37 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
                     xs_html_sctag("p", NULL),
                     xs_html_tag("div",
                         xs_html_attr("class", "snac-note"),
-                        xs_html_attr("id",    dm_form_id),
+                        xs_html_attr("id",    dm_div_id),
                         xs_html_tag("form",
                             xs_html_attr("autocomplete", "off"),
                             xs_html_attr("method",       "post"),
                             xs_html_attr("action",       dm_action),
                             xs_html_attr("enctype",      "multipart/form-data"),
-                            xs_html_attr("id",           dm_form_id2),
+                            xs_html_attr("id",           dm_form_id),
                             xs_html_tag("textarea",
                                 xs_html_attr("class",    "snac-textarea"),
                                 xs_html_attr("name",     "content"),
                                 xs_html_attr("rows",     "4"),
                                 xs_html_attr("wrap",     "virtual"),
-                                xs_html_attr("required", "required")),
+                                xs_html_attr("required", "required"),
+                                xs_html_attr("placeholder", ""),
+                                xs_html_text("")),
                             xs_html_sctag("input",
                                 xs_html_attr("type",     "hidden"),
                                 xs_html_attr("name",     "to"),
                                 xs_html_attr("value",    actor_id)),
                             xs_html_sctag("p", NULL),
-                            xs_html_sctag("input",
-                                xs_html_attr("type",     "file"),
-                                xs_html_attr("name",     "attach")),
+                            xs_html_tag("details",
+                                xs_html_tag("summary",
+                                    xs_html_text(L("Attachment..."))),
+                                xs_html_sctag("p", NULL),
+                                xs_html_sctag("input",
+                                    xs_html_attr("type",    "file"),
+                                    xs_html_attr("name",    "attach")),
+                                xs_html_sctag("input",
+                                    xs_html_attr("type",    "text"),
+                                    xs_html_attr("name",    "alt_text"),
+                                    xs_html_attr("placeholder", L("Attachment description")))),
                             xs_html_sctag("p", NULL),
                             xs_html_sctag("input",
                                 xs_html_attr("type",     "submit"),
