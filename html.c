@@ -1702,9 +1702,9 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 }
 
 
-xs_str *html_footer(xs_str *s)
+xs_html *html_footer(void)
 {
-    xs_html *footer = xs_html_tag("div",
+    return xs_html_tag("div",
         xs_html_attr("class", "snac-footer"),
         xs_html_tag("a",
             xs_html_attr("href", srv_baseurl),
@@ -1716,10 +1716,6 @@ xs_str *html_footer(xs_str *s)
             xs_html_tag("abbr",
                 xs_html_attr("title", "Social Network Are Crap"),
                 xs_html_text("snac"))));
-
-    xs *s1 = xs_html_render(footer);
-
-    return xs_str_cat(s, s1, "\n");
 }
 
 
@@ -1840,7 +1836,11 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
         s = xs_str_cat(s, s1);
     }
 
-    s = html_footer(s);
+    {
+        xs_html *h = html_footer();
+        xs *s1 = xs_html_render(h);
+        s = xs_str_cat(s, s1);
+    }
 
     s = xs_str_cat(s, "</body>\n</html>\n");
 
@@ -1989,7 +1989,11 @@ xs_str *html_people(snac *snac)
         s = xs_str_cat(s, s1);
     }
 
-    s = html_footer(s);
+    {
+        xs_html *h = html_footer();
+        xs *s1 = xs_html_render(h);
+        s = xs_str_cat(s, s1);
+    }
 
     s = xs_str_cat(s, "</body>\n</html>\n");
 
@@ -2116,7 +2120,11 @@ xs_str *html_notifications(snac *snac)
     else
         s = xs_str_cat(s, "</div>\n");
 
-    s = html_footer(s);
+    {
+        xs_html *h = html_footer();
+        xs *s1 = xs_html_render(h);
+        s = xs_str_cat(s, s1);
+    }
 
     s = xs_str_cat(s, "</body>\n</html>\n");
 
