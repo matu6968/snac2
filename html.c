@@ -1848,19 +1848,19 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
 }
 
 
-xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *header, const char *t)
+xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
 {
-    xs *s = xs_str_new(NULL);
-    xs *es1 = encode_html(header);
-    xs *h = xs_fmt("<h2 class=\"snac-header\">%s</h2>\n", es1);
-    xs_list *p;
+    xs_html *snac_posts;
+    xs_html *people = xs_html_tag("div",
+        xs_html_tag("h2",
+            xs_html_attr("class", "snac-header"),
+            xs_html_text(header)),
+        snac_posts = xs_html_tag("div",
+            xs_html_attr("class", "snac-posts")));
+
+    xs_list *p = list;
     char *actor_id;
 
-    s = xs_str_cat(s, h);
-
-    s = xs_str_cat(s, "<div class=\"snac-posts\">\n");
-
-    p = list;
     while (xs_list_iter(&p, &actor_id)) {
         xs *md5 = xs_md5_hex(actor_id, strlen(actor_id));
         xs *actor = NULL;
@@ -1950,28 +1950,22 @@ xs_str *html_people_list(snac *snac, xs_str *os, xs_list *list, const char *head
             xs *dm_div_id  = xs_fmt("%s_%s_dm", md5, t);
             xs *dm_form_id = xs_fmt("%s_reply_form", md5);
 
-            xs_html *dm_textarea = html_note(snac, "Direct Message...",
-                dm_div_id, dm_form_id,
-                "", "",
-                NULL, actor_id,
-                xs_stock_false, "",
-                xs_stock_false, NULL,
-                NULL, 0);
-
-            xs_html_add(snac_controls, dm_textarea);
+            xs_html_add(snac_controls,
+                html_note(snac, L("Direct Message..."),
+                    dm_div_id, dm_form_id,
+                    "", "",
+                    NULL, actor_id,
+                    xs_stock_false, "",
+                    xs_stock_false, NULL,
+                    NULL, 0));
 
             xs_html_add(snac_post, snac_controls);
 
-            {
-                xs *s1 = xs_html_render_s(snac_post, xs_dup("\n"));
-                s = xs_str_cat(s, s1);
-            }
+            xs_html_add(snac_posts, snac_post);
         }
     }
 
-    s = xs_str_cat(s, "</div>\n");
-
-    return xs_str_cat(os, s);
+    return people;
 }
 
 
@@ -1983,9 +1977,17 @@ xs_str *html_people(snac *snac)
 
     s = html_user_header(snac, s, 0);
 
-    s = html_people_list(snac, s, wing, L("People you follow"), "i");
+    {
+        xs_html *h = html_people_list(snac, wing, L("People you follow"), "i");
+        xs *s1 = xs_html_render(h);
+        s = xs_str_cat(s, s1);
+    }
 
-    s = html_people_list(snac, s, wers, L("People that follow you"), "e");
+    {
+        xs_html *h = html_people_list(snac, wers, L("People that follow you"), "e");
+        xs *s1 = xs_html_render(h);
+        s = xs_str_cat(s, s1);
+    }
 
     s = html_footer(s);
 
