@@ -380,7 +380,7 @@ xs_html *html_note(snac *user, char *summary,
 }
 
 
-xs_str *html_base_header(xs_str *s)
+static xs_str *html_base_header(xs_str *s)
 {
     xs_list *p;
     xs_str *v;
@@ -402,9 +402,34 @@ xs_str *html_base_header(xs_str *s)
 }
 
 
+static xs_html *html_base_head(void)
+{
+    xs_html *head = xs_html_tag("head",
+        xs_html_sctag("meta",
+            xs_html_attr("name", "viewport"),
+            xs_html_attr("content", "width=device-width, initial-scale=1")),
+        xs_html_sctag("meta",
+            xs_html_attr("name", "generator"),
+            xs_html_attr("content", USER_AGENT)));
+
+    /* add server CSS */
+    xs_list *p = xs_dict_get(srv_config, "cssurls");
+    char *v;
+    while (xs_list_iter(&p, &v)) {
+        xs_html_add(head,
+            xs_html_sctag("link",
+                xs_html_attr("rel",  "stylesheet"),
+                xs_html_attr("type", "text/css"),
+                xs_html_attr("href", v)));
+    }
+
+    return head;
+}
+
+
 xs_str *html_instance_header(xs_str *s, char *tag)
 {
-    s = html_base_header(s);
+    xs_html *head = html_base_head();
 
     {
         FILE *f;
@@ -414,23 +439,28 @@ xs_str *html_instance_header(xs_str *s, char *tag)
             xs *css = xs_readall(f);
             fclose(f);
 
-            xs *s1 = xs_fmt("<style>%s</style>\n", css);
-            s = xs_str_cat(s, s1);
+            xs_html_add(head,
+                xs_html_tag("style",
+                    xs_html_text(css)));
         }
     }
 
-    const char *host  = xs_dict_get(srv_config, "host");
-    const char *title = xs_dict_get(srv_config, "title");
-    const char *sdesc = xs_dict_get(srv_config, "short_description");
-    const char *email = xs_dict_get(srv_config, "admin_email");
-    const char *acct  = xs_dict_get(srv_config, "admin_account");
+    char *host  = xs_dict_get(srv_config, "host");
+    char *title = xs_dict_get(srv_config, "title");
+    char *sdesc = xs_dict_get(srv_config, "short_description");
+    char *email = xs_dict_get(srv_config, "admin_email");
+    char *acct  = xs_dict_get(srv_config, "admin_account");
+
+    xs_html_add(head,
+        xs_html_tag("title",
+            xs_html_text(title && *title ? title : host)));
 
     {
-        xs *s1 = xs_fmt("<title>%s</title>\n", title && *title ? title : host);
-        s = xs_str_cat(s, s1);
+        xs *s1 = xs_html_render(head);
+        s = xs_str_cat(s, "<!DOCTYPE html><html>\n", s1);
     }
 
-    s = xs_str_cat(s, "</head>\n<body>\n");
+    s = xs_str_cat(s, "<body>\n");
 
     s = xs_str_cat(s, "<div class=\"snac-instance-blurb\">\n");
 
