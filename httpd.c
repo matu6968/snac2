@@ -10,6 +10,7 @@
 #include "xs_time.h"
 #include "xs_openssl.h"
 #include "xs_fcgi.h"
+#include "xs_html.h"
 
 #include "snac.h"
 
@@ -98,32 +99,37 @@ static xs_str *greeting_html(void)
 
         /* does it have a %userlist% mark? */
         if (xs_str_in(s, "%userlist%") != -1) {
-            const char *host = xs_dict_get(srv_config, "host");
+            char *host = xs_dict_get(srv_config, "host");
             xs *list = user_list();
-            xs_list *p;
+            xs_list *p = list;
             xs_str *uid;
-            xs *ul = xs_str_new("<ul class=\"snac-user-list\">\n");
+
+            xs_html *ul = xs_html_tag("ul",
+                xs_html_attr("class", "snac-user-list"));
 
             p = list;
             while (xs_list_iter(&p, &uid)) {
                 snac user;
 
                 if (user_open(&user, uid)) {
-                    xs *uname = encode_html(xs_dict_get(user.config, "name"));
-
-                    xs *u = xs_fmt(
-                        "<li><a href=\"%s\">@%s@%s (%s)</a></li>\n",
-                            user.actor, uid, host, uname);
-
-                    ul = xs_str_cat(ul, u);
+                    xs_html_add(ul,
+                        xs_html_tag("li",
+                            xs_html_tag("a",
+                                xs_html_attr("href", user.actor),
+                                xs_html_text("@"),
+                                xs_html_text(uid),
+                                xs_html_text("@"),
+                                xs_html_text(host),
+                                xs_html_text(" ("),
+                                xs_html_text(xs_dict_get(user.config, "name")),
+                                xs_html_text(")"))));
 
                     user_free(&user);
                 }
             }
 
-            ul = xs_str_cat(ul, "</ul>\n");
-
-            s = xs_replace_i(s, "%userlist%", ul);
+            xs *s1 = xs_html_render(ul);
+            s = xs_replace_i(s, "%userlist%", s1);
         }
     }
 
