@@ -56,6 +56,16 @@ char *get_argv(int *argi, int argc, char *argv[])
 
 #define GET_ARGV() get_argv(&argi, argc, argv)
 
+#include "xs_html.h"
+
+xs_html *html_note(snac *user, char *summary,
+                   char *div_id, char *form_id,
+                   char *ta_plh, char *ta_content,
+                   char *edit_id, char *actor_id,
+                   xs_val *cw_yn, char *cw_text,
+                   xs_val *mnt_only, char *redir,
+                   char *in_reply_to, int poll);
+
 int main(int argc, char *argv[])
 {
     char *cmd;
@@ -198,6 +208,19 @@ int main(int argc, char *argv[])
         user_free(&snac);
         srv_free();
 #endif
+
+        {
+            xs_html *note = html_note(&snac, "Note...",
+                "DIV_ID", "FORM_ID",
+                "TEXTAREA_PLACEHOLDER", "TEXTAREA_CONTENT",
+                "EDIT_ID", "ACTOR_ID",
+                xs_stock_false, "CW_TEXT",
+                xs_stock_false, "REDIR",
+                "IN_REPLY_TO", 1);
+
+            xs *s1 = xs_html_render(note);
+            printf("\n%s\n", s1);
+        }
 
         xs *idx  = xs_fmt("%s/private.idx", snac.basedir);
         xs *list = index_list_desc(idx, 0, 256);

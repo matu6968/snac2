@@ -232,6 +232,150 @@ xs_str *html_msg_icon(xs_str *os, const xs_dict *msg)
 }
 
 
+xs_html *html_note(snac *user, char *summary,
+                   char *div_id, char *form_id,
+                   char *ta_plh, char *ta_content,
+                   char *edit_id, char *actor_id,
+                   xs_val *cw_yn, char *cw_text,
+                   xs_val *mnt_only, char *redir,
+                   char *in_reply_to, int poll)
+{
+    xs *action = xs_fmt("%s/admin/note", user->actor);
+
+    xs_html *form;
+
+    xs_html *note = xs_html_tag("div",
+        xs_html_tag("details",
+            xs_html_tag("summary",
+                xs_html_text(summary)),
+                xs_html_tag("p", NULL),
+                xs_html_tag("div",
+                    xs_html_attr("class", "snac-note"),
+                    xs_html_attr("id",    div_id),
+                    form = xs_html_tag("form",
+                        xs_html_attr("autocomplete", "off"),
+                        xs_html_attr("method",       "post"),
+                        xs_html_attr("action",       action),
+                        xs_html_attr("enctype",      "multipart/form-data"),
+                        xs_html_attr("id",           form_id),
+                        xs_html_tag("textarea",
+                            xs_html_attr("class",    "snac-textarea"),
+                            xs_html_attr("name",     "content"),
+                            xs_html_attr("rows",     "4"),
+                            xs_html_attr("wrap",     "virtual"),
+                            xs_html_attr("required", "required"),
+                            xs_html_attr("placeholder", ta_plh),
+                            xs_html_text(ta_content)),
+                        xs_html_tag("p", NULL),
+                        xs_html_text(L("Sensitive content: ")),
+                        xs_html_sctag("input",
+                            xs_html_attr("type", "checkbox"),
+                            xs_html_attr("name", "sensitive"),
+                            xs_html_attr(xs_type(cw_yn) == XSTYPE_TRUE ? "checked" : "", NULL)),
+                        xs_html_sctag("input",
+                            xs_html_attr("type", "text"),
+                            xs_html_attr("name", "summary"),
+                            xs_html_attr("placeholder", L("Sensitive content description")),
+                            xs_html_attr("value", cw_text))))));
+
+    if (actor_id)
+        xs_html_add(form,
+            xs_html_sctag("input",
+                xs_html_attr("type",  "hidden"),
+                xs_html_attr("name",  "to"),
+                xs_html_attr("value", actor_id)));
+    else {
+        /* no actor_id; ask for mentioned_only */
+        xs_html_add(form,
+            xs_html_tag("p", NULL),
+            xs_html_text(L("Only for mentioned people")),
+            xs_html_sctag("input",
+                xs_html_attr("type",  "checkbox"),
+                xs_html_attr("name",  "mentioned_only"),
+                xs_html_attr(xs_type(mnt_only) == XSTYPE_TRUE ? "checked" : "", NULL)));
+    }
+
+    if (redir)
+        xs_html_add(form,
+            xs_html_sctag("input",
+                xs_html_attr("type",  "hidden"),
+                xs_html_attr("name",  "redir"),
+                xs_html_attr("value", redir)));
+
+    if (in_reply_to)
+        xs_html_add(form,
+            xs_html_sctag("input",
+                xs_html_attr("type",  "hidden"),
+                xs_html_attr("name",  "in_reply_to"),
+                xs_html_attr("value", in_reply_to)));
+
+    if (edit_id)
+        xs_html_add(form,
+            xs_html_sctag("input",
+                xs_html_attr("type",  "hidden"),
+                xs_html_attr("name",  "edit_id"),
+                xs_html_attr("value", edit_id)));
+
+    xs_html_add(form,
+        xs_html_tag("details",
+            xs_html_tag("summary",
+                xs_html_text(L("Attachment..."))),
+                xs_html_tag("p", NULL),
+                xs_html_sctag("input",
+                    xs_html_attr("type",    "file"),
+                    xs_html_attr("name",    "attach")),
+                xs_html_sctag("input",
+                    xs_html_attr("type",    "text"),
+                    xs_html_attr("name",    "alt_text"),
+                    xs_html_attr("placeholder", L("Attachment description")))));
+
+    /* add poll controls */
+    if (poll) {
+        xs_html_add(form,
+            xs_html_tag("details",
+                xs_html_tag("summary",
+                    xs_html_text(L("Poll..."))),
+                xs_html_tag("p", NULL),
+                xs_html_tag("textarea",
+                    xs_html_attr("class",    "snac-textarea"),
+                    xs_html_attr("name",     "poll_options"),
+                    xs_html_attr("rows",     "4"),
+                    xs_html_attr("wrap",     "virtual"),
+                    xs_html_attr("placeholder", "Option 1...\nOption 2...\nOption 3...\n...")),
+                xs_html_tag("p", NULL),
+                xs_html_tag("select",
+                    xs_html_attr("name",    "poll_multiple"),
+                    xs_html_tag("option",
+                        xs_html_attr("value", "off"),
+                        xs_html_text(L("One choice"))),
+                    xs_html_tag("option",
+                        xs_html_attr("value", "on"),
+                        xs_html_text(L("Multiple choices")))),
+                xs_html_tag("select",
+                    xs_html_attr("name",    "poll_end_secs"),
+                    xs_html_tag("option",
+                        xs_html_attr("value", "300"),
+                        xs_html_text(L("End in 5 minutes"))),
+                    xs_html_tag("option",
+                        xs_html_attr("value", "3600"),
+                        xs_html_attr("selected", NULL),
+                        xs_html_text(L("End in 1 hour"))),
+                    xs_html_tag("option",
+                        xs_html_attr("value", "86400"),
+                        xs_html_text(L("End in 1 day"))))));
+    }
+
+    xs_html_add(form,
+        xs_html_tag("p", NULL),
+        xs_html_sctag("input",
+            xs_html_attr("type",     "submit"),
+            xs_html_attr("class",    "button"),
+            xs_html_attr("value",    L("Post"))));
+
+    return note;
+}
+
+
 xs_str *html_base_header(xs_str *s)
 {
     xs_list *p;
