@@ -1065,54 +1065,24 @@ xs_str *html_entry_controls(snac *snac, xs_str *os, const xs_dict *msg, const ch
 
     s = xs_str_cat(s, "</form>\n");
 
-    const char *prev_src1 = xs_dict_get(msg, "sourceContent");
+    char *prev_src = xs_dict_get(msg, "sourceContent");
 
-    if (!xs_is_null(prev_src1) && strcmp(actor, snac->actor) == 0) { /** edit **/
-        xs *prev_src = encode_html(prev_src1);
-        const xs_val *sensitive = xs_dict_get(msg, "sensitive");
-        const char *summary = xs_dict_get(msg, "summary");
-
+    if (!xs_is_null(prev_src) && strcmp(actor, snac->actor) == 0) { /** edit **/
         /* post can be edited */
-        xs *s1 = xs_fmt(
-            "<p><details><summary>%s</summary>\n"
-            "<p><div class=\"snac-note\" id=\"%s_edit\">\n"
-            "<form autocomplete=\"off\" method=\"post\" action=\"%s/admin/note\" "
-            "enctype=\"multipart/form-data\" id=\"%s_edit_form\">\n"
-            "<textarea class=\"snac-textarea\" name=\"content\" "
-            "rows=\"4\" wrap=\"virtual\" required=\"required\">%s</textarea>\n"
-            "<input type=\"hidden\" name=\"edit_id\" value=\"%s\">\n"
+        xs *div_id  = xs_fmt("%s_edit", md5);
+        xs *form_id = xs_fmt("%s_edit_form", md5);
+        xs *redir   = xs_fmt("%s_entry", md5);
 
-            "<p>%s: <input type=\"checkbox\" name=\"sensitive\" %s> "
-            "<input type=\"text\" name=\"summary\" placeholder=\"%s\" value=\"%s\">\n"
-            "<p>%s: <input type=\"checkbox\" name=\"mentioned_only\">\n"
+        xs_html *h = xs_html_tag("p",
+            html_note(snac, L("Edit..."),
+                div_id, form_id,
+                "", prev_src,
+                (char *)id, NULL,
+                xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
+                xs_stock_false, redir,
+                NULL, 0));
 
-            "<details><summary>%s</summary>\n"
-            "<p>%s: <input type=\"file\" name=\"attach\">\n"
-            "<p>%s: <input type=\"text\" name=\"alt_text\">\n"
-            "</details>\n"
-
-            "<input type=\"hidden\" name=\"redir\" value=\"%s_entry\">\n"
-            "<p><input type=\"submit\" class=\"button\" value=\"%s\">\n"
-            "</form><p></div>\n"
-            "</details><p>"
-            "\n",
-
-            L("Edit..."),
-            md5,
-            snac->actor, md5,
-            prev_src,
-            id,
-            L("Sensitive content"),
-            xs_type(sensitive) == XSTYPE_TRUE ? "checked" : "",
-            L("Sensitive content description"),
-            xs_is_null(summary) ? "" : summary,
-            L("Only for mentioned people"),
-            L("Attach..."),
-            L("File"),
-            L("File description"),
-            md5,
-            L("Post")
-        );
+        xs *s1 = xs_html_render(h);
 
         s = xs_str_cat(s, s1);
     }
@@ -1125,7 +1095,7 @@ xs_str *html_entry_controls(snac *snac, xs_str *os, const xs_dict *msg, const ch
         xs *redir   = xs_fmt("%s_entry", md5);
 
         xs_html *h = xs_html_tag("p",
-                html_note(snac, L("Reply..."),
+            html_note(snac, L("Reply..."),
                 div_id, form_id,
                 "", ct,
                 NULL, NULL,
