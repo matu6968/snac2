@@ -1108,14 +1108,16 @@ xs_html *html_entry_controls(snac *snac, const xs_dict *msg, const char *md5)
         xs *form_id = xs_fmt("%s_edit_form", md5);
         xs *redir   = xs_fmt("%s_entry", md5);
 
-        xs_html_add(controls, xs_html_tag("p",
+        xs_html_add(controls, xs_html_tag("div",
+            xs_html_tag("p", NULL),
             html_note(snac, L("Edit..."),
                 div_id, form_id,
                 "", prev_src,
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock_false, redir,
-                NULL, 0)));
+                NULL, 0)),
+            xs_html_tag("p", NULL));
     }
 
     { /** reply **/
@@ -1125,14 +1127,16 @@ xs_html *html_entry_controls(snac *snac, const xs_dict *msg, const char *md5)
         xs *form_id = xs_fmt("%s_reply_form", md5);
         xs *redir   = xs_fmt("%s_entry", md5);
 
-        xs_html_add(controls, xs_html_tag("p",
+        xs_html_add(controls, xs_html_tag("div",
+            xs_html_tag("p", NULL),
             html_note(snac, L("Reply..."),
                 div_id, form_id,
                 "", ct,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock_false, redir,
-                id, 0)));
+                id, 0)),
+            xs_html_tag("p", NULL));
     }
 
     return controls;
@@ -1919,13 +1923,15 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
             xs *dm_form_id = xs_fmt("%s_reply_form", md5);
 
             xs_html_add(snac_controls,
+                xs_html_tag("p", NULL),
                 html_note(snac, L("Direct Message..."),
                     dm_div_id, dm_form_id,
                     "", "",
                     NULL, actor_id,
                     xs_stock_false, "",
                     xs_stock_false, NULL,
-                    NULL, 0));
+                    NULL, 0),
+                xs_html_tag("p", NULL));
 
             xs_html_add(snac_post, snac_controls);
 
