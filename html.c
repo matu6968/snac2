@@ -1018,82 +1018,98 @@ xs_str *build_mentions(snac *snac, const xs_dict *msg)
 }
 
 
-xs_str *html_entry_controls(snac *snac, xs_str *os, const xs_dict *msg, const char *md5)
+xs_html *html_entry_controls(snac *snac, const xs_dict *msg, const char *md5)
 {
-    const char *id    = xs_dict_get(msg, "id");
-    const char *actor = xs_dict_get(msg, "attributedTo");
-    const char *group = xs_dict_get(msg, "audience");
+    char *id    = xs_dict_get(msg, "id");
+    char *actor = xs_dict_get(msg, "attributedTo");
+    char *group = xs_dict_get(msg, "audience");
 
     xs *likes   = object_likes(id);
     xs *boosts  = object_announces(id);
 
-    xs *s   = xs_str_new(NULL);
+    xs *action = xs_fmt("%s/admin/action", snac->actor);
+    xs *redir  = xs_fmt("%s_entry", md5);
 
-    s = xs_str_cat(s, "<div class=\"snac-controls\">\n");
-
-    {
-        xs *s1 = xs_fmt(
-            "<form autocomplete=\"off\" method=\"post\" action=\"%s/admin/action\">\n"
-            "<input type=\"hidden\" name=\"id\" value=\"%s\">\n"
-            "<input type=\"hidden\" name=\"actor\" value=\"%s\">\n"
-            "<input type=\"hidden\" name=\"group\" value=\"%s\">\n"
-            "<input type=\"hidden\" name=\"redir\" value=\"%s_entry\">\n"
-            "\n",
-
-            snac->actor, id, actor, group ? group : "", md5
-        );
-
-        s = xs_str_cat(s, s1);
-    }
+    xs_html *form;
+    xs_html *controls = xs_html_tag("div",
+        xs_html_attr("class", "snac-controls"),
+        form = xs_html_tag("form",
+            xs_html_attr("autocomplete", "off"),
+            xs_html_attr("method",       "post"),
+            xs_html_attr("action",       action),
+            xs_html_sctag("input",
+                xs_html_attr("type",     "hidden"),
+                xs_html_attr("name",     "id"),
+                xs_html_attr("value",    id)),
+            xs_html_sctag("input",
+                xs_html_attr("type",     "hidden"),
+                xs_html_attr("name",     "actor"),
+                xs_html_attr("value",    actor)),
+            xs_html_sctag("input",
+                xs_html_attr("type",     "hidden"),
+                xs_html_attr("name",     "group"),
+                xs_html_attr("value",    xs_is_null(group) ? "" : group)),
+            xs_html_sctag("input",
+                xs_html_attr("type",     "hidden"),
+                xs_html_attr("name",     "redir"),
+                xs_html_attr("value",    redir))));
 
     if (!xs_startswith(id, snac->actor)) {
         if (xs_list_in(likes, snac->md5) == -1) {
             /* not already liked; add button */
-            s = html_button(s, "like", L("Like"), L("Say you like this post"));
+            xs_html_add(form,
+                html_button_2("like", L("Like"), L("Say you like this post")));
         }
     }
     else {
         if (is_pinned(snac, id))
-            s = html_button(s, "unpin", L("Unpin"), L("Unpin this post from your timeline"));
+            xs_html_add(form,
+                html_button_2("unpin", L("Unpin"), L("Unpin this post from your timeline")));
         else
-            s = html_button(s, "pin", L("Pin"), L("Pin this post to the top of your timeline"));
+            xs_html_add(form,
+                html_button_2("pin", L("Pin"), L("Pin this post to the top of your timeline")));
     }
 
     if (is_msg_public(msg)) {
         if (strcmp(actor, snac->actor) == 0 || xs_list_in(boosts, snac->md5) == -1) {
             /* not already boosted or us; add button */
-            s = html_button(s, "boost", L("Boost"), L("Announce this post to your followers"));
+            xs_html_add(form,
+                html_button_2("boost", L("Boost"), L("Announce this post to your followers")));
         }
     }
 
     if (strcmp(actor, snac->actor) != 0) {
         /* controls for other actors than this one */
         if (following_check(snac, actor)) {
-            s = html_button(s, "unfollow", L("Unfollow"), L("Stop following this user's activity"));
+            xs_html_add(form,
+                html_button_2("unfollow", L("Unfollow"), L("Stop following this user's activity")));
         }
         else {
-            s = html_button(s, "follow", L("Follow"), L("Start following this user's activity"));
+            xs_html_add(form,
+                html_button_2("follow", L("Follow"), L("Start following this user's activity")));
         }
 
         if (!xs_is_null(group)) {
             if (following_check(snac, group)) {
-                s = html_button(s, "unfollow", L("Unfollow Group"),
-                        L("Stop following this group or channel"));
+                xs_html_add(form,
+                    html_button_2("unfollow", L("Unfollow Group"),
+                        L("Stop following this group or channel")));
             }
             else {
-                s = html_button(s, "follow", L("Follow Group"),
-                        L("Start following this group or channel"));
+                xs_html_add(form,
+                    html_button_2("follow", L("Follow Group"),
+                        L("Start following this group or channel")));
             }
         }
 
-        s = html_button(s, "mute", L("MUTE"),
-            L("Block any activity from this user forever"));
+        xs_html_add(form,
+            html_button_2("mute", L("MUTE"),
+                L("Block any activity from this user forever")));
     }
 
-    s = html_button(s, "delete", L("Delete"), L("Delete this post"));
-    s = html_button(s, "hide",   L("Hide"), L("Hide this post and its children"));
-
-    s = xs_str_cat(s, "</form>\n");
+    xs_html_add(form,
+        html_button_2("delete", L("Delete"), L("Delete this post")),
+        html_button_2("hide",   L("Hide"), L("Hide this post and its children")));
 
     char *prev_src = xs_dict_get(msg, "sourceContent");
 
@@ -1103,18 +1119,14 @@ xs_str *html_entry_controls(snac *snac, xs_str *os, const xs_dict *msg, const ch
         xs *form_id = xs_fmt("%s_edit_form", md5);
         xs *redir   = xs_fmt("%s_entry", md5);
 
-        xs_html *h = xs_html_tag("p",
+        xs_html_add(controls, xs_html_tag("p",
             html_note(snac, L("Edit..."),
                 div_id, form_id,
                 "", prev_src,
-                (char *)id, NULL,
+                id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock_false, redir,
-                NULL, 0));
-
-        xs *s1 = xs_html_render(h);
-
-        s = xs_str_cat(s, s1);
+                NULL, 0)));
     }
 
     { /** reply **/
@@ -1124,23 +1136,17 @@ xs_str *html_entry_controls(snac *snac, xs_str *os, const xs_dict *msg, const ch
         xs *form_id = xs_fmt("%s_reply_form", md5);
         xs *redir   = xs_fmt("%s_entry", md5);
 
-        xs_html *h = xs_html_tag("p",
+        xs_html_add(controls, xs_html_tag("p",
             html_note(snac, L("Reply..."),
                 div_id, form_id,
                 "", ct,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock_false, redir,
-                (char *)id, 0));
-
-        xs *s1 = xs_html_render(h);
-
-        s = xs_str_cat(s, s1);
+                id, 0)));
     }
 
-    s = xs_str_cat(s, "</div>\n");
-
-    return xs_str_cat(os, s);
+    return controls;
 }
 
 
@@ -1604,8 +1610,11 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
     /** controls **/
 
-    if (!local && user)
-        s = html_entry_controls(user, s, msg, md5);
+    if (!local && user) {
+        xs_html *h = html_entry_controls(user, msg, md5);
+        xs *s1 = xs_html_render(h);
+        s = xs_str_cat(s, s1);
+    }
 
     /** children **/
     if (!hide_children) {
