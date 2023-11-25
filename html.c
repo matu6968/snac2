@@ -944,18 +944,7 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
 }
 
 
-static xs_str *html_button(xs_str *s, const char *clss, const char *label, const char *hint)
-{
-    xs *s1 = xs_fmt(
-               "<input type=\"submit\" name=\"action\" "
-               "class=\"snac-btn-%s\" value=\"%s\" title=\"%s\">\n",
-                clss, label, hint);
-
-    return xs_str_cat(s, s1);
-}
-
-
-static xs_html *html_button_2(char *clss, char *label, char *hint)
+static xs_html *html_button(char *clss, char *label, char *hint)
 {
     xs *c = xs_fmt("snac-btn-%s", clss);
 
@@ -1058,23 +1047,23 @@ xs_html *html_entry_controls(snac *snac, const xs_dict *msg, const char *md5)
         if (xs_list_in(likes, snac->md5) == -1) {
             /* not already liked; add button */
             xs_html_add(form,
-                html_button_2("like", L("Like"), L("Say you like this post")));
+                html_button("like", L("Like"), L("Say you like this post")));
         }
     }
     else {
         if (is_pinned(snac, id))
             xs_html_add(form,
-                html_button_2("unpin", L("Unpin"), L("Unpin this post from your timeline")));
+                html_button("unpin", L("Unpin"), L("Unpin this post from your timeline")));
         else
             xs_html_add(form,
-                html_button_2("pin", L("Pin"), L("Pin this post to the top of your timeline")));
+                html_button("pin", L("Pin"), L("Pin this post to the top of your timeline")));
     }
 
     if (is_msg_public(msg)) {
         if (strcmp(actor, snac->actor) == 0 || xs_list_in(boosts, snac->md5) == -1) {
             /* not already boosted or us; add button */
             xs_html_add(form,
-                html_button_2("boost", L("Boost"), L("Announce this post to your followers")));
+                html_button("boost", L("Boost"), L("Announce this post to your followers")));
         }
     }
 
@@ -1082,34 +1071,34 @@ xs_html *html_entry_controls(snac *snac, const xs_dict *msg, const char *md5)
         /* controls for other actors than this one */
         if (following_check(snac, actor)) {
             xs_html_add(form,
-                html_button_2("unfollow", L("Unfollow"), L("Stop following this user's activity")));
+                html_button("unfollow", L("Unfollow"), L("Stop following this user's activity")));
         }
         else {
             xs_html_add(form,
-                html_button_2("follow", L("Follow"), L("Start following this user's activity")));
+                html_button("follow", L("Follow"), L("Start following this user's activity")));
         }
 
         if (!xs_is_null(group)) {
             if (following_check(snac, group)) {
                 xs_html_add(form,
-                    html_button_2("unfollow", L("Unfollow Group"),
+                    html_button("unfollow", L("Unfollow Group"),
                         L("Stop following this group or channel")));
             }
             else {
                 xs_html_add(form,
-                    html_button_2("follow", L("Follow Group"),
+                    html_button("follow", L("Follow Group"),
                         L("Start following this group or channel")));
             }
         }
 
         xs_html_add(form,
-            html_button_2("mute", L("MUTE"),
+            html_button("mute", L("MUTE"),
                 L("Block any activity from this user forever")));
     }
 
     xs_html_add(form,
-        html_button_2("delete", L("Delete"), L("Delete this post")),
-        html_button_2("hide",   L("Hide"), L("Hide this post and its children")));
+        html_button("delete", L("Delete"), L("Delete this post")),
+        html_button("hide",   L("Hide"), L("Hide this post and its children")));
 
     char *prev_src = xs_dict_get(msg, "sourceContent");
 
@@ -1894,35 +1883,35 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
 
             if (following_check(snac, actor_id)) {
                 xs_html_add(form,
-                    html_button_2("unfollow", L("Unfollow"),
+                    html_button("unfollow", L("Unfollow"),
                                 L("Stop following this user's activity")));
 
                 if (is_limited(snac, actor_id))
                     xs_html_add(form,
-                        html_button_2("unlimit", L("Unlimit"),
+                        html_button("unlimit", L("Unlimit"),
                                 L("Allow announces (boosts) from this user")));
                 else
                     xs_html_add(form,
-                        html_button_2("limit", L("Limit"),
+                        html_button("limit", L("Limit"),
                                 L("Block announces (boosts) from this user")));
             }
             else {
                 xs_html_add(form,
-                    html_button_2("follow", L("Follow"),
+                    html_button("follow", L("Follow"),
                                 L("Start following this user's activity")));
 
                 if (follower_check(snac, actor_id))
                     xs_html_add(form,
-                        html_button_2("delete", L("Delete"), L("Delete this user")));
+                        html_button("delete", L("Delete"), L("Delete this user")));
             }
 
             if (is_muted(snac, actor_id))
                 xs_html_add(form,
-                    html_button_2("unmute", L("Unmute"),
+                    html_button("unmute", L("Unmute"),
                                 L("Stop blocking activities from this user")));
             else
                 xs_html_add(form,
-                    html_button_2("mute", L("MUTE"),
+                    html_button("mute", L("MUTE"),
                                 L("Block any activity from this user")));
 
             /* the post textarea */
