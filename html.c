@@ -709,27 +709,25 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
 }
 
 
-xs_str *html_top_controls(snac *snac, xs_str *s)
+xs_html *html_top_controls(snac *snac)
 /* generates the top controls */
 {
-    xs_str_cat(s, "<div class=\"snac-top-controls\">\n");
+    xs *ops_action = xs_fmt("%s/admin/action", snac->actor);
 
-    xs_html *new_note = html_note(snac, L("New Post..."),
-        "new_post_div", "new_post_form",
-        L("What's on your mind?"), "",
-        NULL, NULL,
-        xs_stock_false, "",
-        xs_stock_false, NULL,
-        NULL, 1);
+    xs_html *top_controls = xs_html_tag("div",
+        xs_html_attr("class", "snac-top-controls"),
 
-    xs *s1 = xs_html_render(new_note);
+        /** new post **/
+        html_note(snac, L("New Post..."),
+            "new_post_div", "new_post_form",
+            L("What's on your mind?"), "",
+            NULL, NULL,
+            xs_stock_false, "",
+            xs_stock_false, NULL,
+            NULL, 1),
 
-    xs *s2 = NULL;
-
-    /** operations form **/
-    {
-        xs *ops_action = xs_fmt("%s/admin/action", snac->actor);
-        xs_html *ops = xs_html_tag("details",
+        /** operations **/
+        xs_html_tag("details",
             xs_html_tag("summary",
                 xs_html_text(L("Operations..."))),
             xs_html_tag("p", NULL),
@@ -762,12 +760,9 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
                     xs_html_attr("name",    "action"),
                     xs_html_attr("value",   L("Boost"))),
                 xs_html_text(L("(by URL)"))),
-            xs_html_tag("p", NULL));
+            xs_html_tag("p", NULL)));
 
-        s2 = xs_html_render(ops);
-    }
-
-    /** user settings form **/
+    /** user settings **/
 
     char *email = "[disabled by admin]";
 
@@ -818,7 +813,8 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
 
     xs *user_setup_action = xs_fmt("%s/admin/user-setup", snac->actor);
 
-    xs_html *user_settings = xs_html_tag("details",
+    xs_html_add(top_controls,
+        xs_html_tag("details",
         xs_html_tag("summary",
             xs_html_text(L("User Settings..."))),
         xs_html_tag("div",
@@ -946,13 +942,9 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
                 xs_html_tag("input",
                     xs_html_attr("type", "submit"),
                     xs_html_attr("class", "button"),
-                    xs_html_attr("value", L("Update user info"))))));
+                    xs_html_attr("value", L("Update user info")))))));
 
-    xs *s3 = xs_html_render(user_settings);
-
-    s = xs_str_cat(s, s1, s2, s3, "</div><!-- snac-top-controls -->\n");
-
-    return s;
+    return top_controls;
 }
 
 
@@ -1717,8 +1709,11 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
     else
         s = html_instance_header(s, tag);
 
-    if (user && !local)
-        s = html_top_controls(user, s);
+    if (user && !local) {
+        xs_html *h = html_top_controls(user);
+        xs *s1 = xs_html_render(h);
+        s = xs_str_cat(s, s1);
+    }
 
     s = xs_str_cat(s, "<a name=\"snac-posts\"></a>\n");
     s = xs_str_cat(s, "<div class=\"snac-posts\">\n");
