@@ -750,8 +750,9 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         "<p><input type=\"submit\" class=\"button\" value=\"%s\">\n"
         "</form><p>\n"
         "</details>\n"
-        "</div>\n"
+        "</div>\n";
 
+    char *_tmpl2 =
         "<div class=\"snac-top-controls-more\">\n"
         "<details><summary>%s</summary>\n"
 
@@ -764,8 +765,9 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         "<input type=\"text\" name=\"id\" required=\"required\" placeholder=\"https://fedi.example.com/bob/...\">\n"
         "<input type=\"submit\" name=\"action\" value=\"%s\"> %s\n"
         "</form><p>\n"
-        "</details>\n"
+        "</details>\n";
 
+    char *_tmpl3 =
         "<details><summary>%s</summary>\n"
 
         "<div class=\"snac-user-setup\">\n" /** user setup **/
@@ -896,16 +898,18 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         L("End in 1 hour"),
         L("End in 1 day"),
 
-        L("Post"),
+        L("Post"));
 
+    xs *s2 = xs_fmt(_tmpl2,
         L("Operations..."),
 
         snac->actor,
         L("Follow"), L("(by URL or user@host)"),
 
         snac->actor,
-        L("Boost"), L("(by URL)"),
+        L("Boost"), L("(by URL)"));
 
+    xs *s3 = xs_fmt(_tmpl3,
         L("User Settings..."),
         snac->actor,
         L("Display name"),
@@ -938,7 +942,7 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         L("Update user info")
     );
 
-    s = xs_str_cat(s, s1);
+    s = xs_str_cat(s, s1, s2, s3);
 
     return s;
 }
