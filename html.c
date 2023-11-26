@@ -713,8 +713,6 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
 /* generates the top controls */
 {
     char *_tmpl =
-        "<div class=\"snac-top-controls\">\n"
-
         "<div class=\"snac-note\">\n"
         "<details><summary>%s</summary>\n"
         "<form autocomplete=\"off\" method=\"post\" "
@@ -751,21 +749,6 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         "</form><p>\n"
         "</details>\n"
         "</div>\n";
-
-    char *_tmpl2 =
-        "<div class=\"snac-top-controls-more\">\n"
-        "<details><summary>%s</summary>\n"
-
-        "<form autocomplete=\"off\" method=\"post\" action=\"%s/admin/action\">\n" /** follow **/
-        "<input type=\"text\" name=\"actor\" required=\"required\" placeholder=\"bob@example.com\">\n"
-        "<input type=\"submit\" name=\"action\" value=\"%s\"> %s\n"
-        "</form><p>\n"
-
-        "<form autocomplete=\"off\" method=\"post\" action=\"%s/admin/action\">\n" /** boost **/
-        "<input type=\"text\" name=\"id\" required=\"required\" placeholder=\"https://fedi.example.com/bob/...\">\n"
-        "<input type=\"submit\" name=\"action\" value=\"%s\"> %s\n"
-        "</form><p>\n"
-        "</details>\n";
 
     char *_tmpl3 =
         "<details><summary>%s</summary>\n"
@@ -820,9 +803,7 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         "</form>\n"
 
         "</div>\n"
-        "</details>\n"
-        "</div>\n"
-        "</div>\n";
+        "</details>\n";
 
     const char *email = "[disabled by admin]";
 
@@ -879,6 +860,8 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         metadata = xs_str_cat(metadata, kp);
     }
 
+    xs_str_cat(s, "<div class=\"snac-top-controls\">\n");
+
     xs *s1 = xs_fmt(_tmpl,
         L("New Post..."),
         snac->actor,
@@ -900,14 +883,46 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
 
         L("Post"));
 
-    xs *s2 = xs_fmt(_tmpl2,
-        L("Operations..."),
+    xs *s2 = NULL;
 
-        snac->actor,
-        L("Follow"), L("(by URL or user@host)"),
+    {
+        xs *ops_action = xs_fmt("%s/admin/action", snac->actor);
+        xs_html *ops = xs_html_tag("details",
+            xs_html_tag("summary",
+                xs_html_text(L("Operations..."))),
+            xs_html_tag("form",
+                xs_html_attr("autocomplete", "off"),
+                xs_html_attr("method",       "post"),
+                xs_html_attr("action",       ops_action),
+                xs_html_sctag("input",
+                    xs_html_attr("type",     "text"),
+                    xs_html_attr("name",     "actor"),
+                    xs_html_attr("required", "required"),
+                    xs_html_attr("placeholder", "bob@example.com")),
+                xs_html_sctag("input",
+                    xs_html_attr("type",    "submit"),
+                    xs_html_attr("name",    "action"),
+                    xs_html_attr("value",   L("Follow"))),
+            xs_html_text(L("(by URL or user@host)"))),
+            xs_html_tag("p", NULL),
+            xs_html_tag("form",
+                xs_html_attr("autocomplete", "off"),
+                xs_html_attr("method",       "post"),
+                xs_html_attr("action",       ops_action),
+                xs_html_sctag("input",
+                    xs_html_attr("type",     "text"),
+                    xs_html_attr("name",     "id"),
+                    xs_html_attr("required", "required"),
+                    xs_html_attr("placeholder", "https:/" "/fedi.example.com/bob/...")),
+                xs_html_sctag("input",
+                    xs_html_attr("type",    "submit"),
+                    xs_html_attr("name",    "action"),
+                    xs_html_attr("value",   L("Boost"))),
+                xs_html_text(L("(by URL)"))),
+            xs_html_tag("p", NULL));
 
-        snac->actor,
-        L("Boost"), L("(by URL)"));
+        s2 = xs_html_render(ops);
+    }
 
     xs *s3 = xs_fmt(_tmpl3,
         L("User Settings..."),
@@ -942,7 +957,7 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         L("Update user info")
     );
 
-    s = xs_str_cat(s, s1, s2, s3);
+    s = xs_str_cat(s, s1, s2, s3, "</div><!-- snac-top-controls -->\n");
 
     return s;
 }
