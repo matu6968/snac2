@@ -712,116 +712,6 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
 xs_str *html_top_controls(snac *snac, xs_str *s)
 /* generates the top controls */
 {
-    char *_tmpl3 =
-        "<details><summary>%s</summary>\n"
-
-        "<div class=\"snac-user-setup\">\n" /** user setup **/
-        "<form autocomplete=\"off\" method=\"post\" "
-        "action=\"%s/admin/user-setup\" enctype=\"multipart/form-data\">\n"
-        "<p>%s:<br>\n"
-        "<input type=\"text\" name=\"name\" value=\"%s\" placeholder=\"Your name.\"></p>\n"
-
-        "<p>%s: <input type=\"file\" name=\"avatar_file\"></p>\n"
-
-        "<p>%s: <input type=\"file\" name=\"header_file\"></p>\n"
-
-        "<p>%s:<br>\n"
-        "<textarea name=\"bio\" cols=\"40\" rows=\"4\" placeholder=\"Write about yourself here...\">%s</textarea></p>\n"
-
-        "<p><input type=\"checkbox\" name=\"cw\" id=\"cw\" %s>\n"
-        "<label for=\"cw\">%s</label></p>\n"
-
-        "<p>%s:<br>\n"
-        "<input type=\"text\" name=\"email\" value=\"%s\" placeholder=\"bob@example.com\"></p>\n"
-
-        "<p>%s:<br>\n"
-        "<input type=\"text\" name=\"telegram_bot\" placeholder=\"Bot API key\" value=\"%s\"> "
-        "<input type=\"text\" name=\"telegram_chat_id\" placeholder=\"Chat id\" value=\"%s\"></p>\n"
-
-        "<p>%s:<br>\n"
-        "<input type=\"number\" name=\"purge_days\" value=\"%s\"></p>\n"
-
-        "<p><input type=\"checkbox\" name=\"drop_dm_from_unknown\" id=\"drop_dm_from_unknown\" %s>\n"
-        "<label for=\"drop_dm_from_unknown\">%s</label></p>\n"
-
-        "<p><input type=\"checkbox\" name=\"bot\" id=\"bot\" %s>\n"
-        "<label for=\"bot\">%s</label></p>\n"
-
-        "<p><input type=\"checkbox\" name=\"private\" id=\"private\" %s>\n"
-        "<label for=\"private\">%s</label></p>\n"
-
-        "<p>%s:<br>\n"
-        "<textarea name=\"metadata\" cols=\"40\" rows=\"4\" "
-        "placeholder=\"Blog=https:/" "/example.com/my-blog\nGPG Key=1FA54\n...\">"
-        "%s</textarea></p>\n"
-
-        "<p>%s:<br>\n"
-        "<input type=\"password\" name=\"passwd1\" value=\"\"></p>\n"
-
-        "<p>%s:<br>\n"
-        "<input type=\"password\" name=\"passwd2\" value=\"\"></p>\n"
-
-        "<input type=\"submit\" class=\"button\" value=\"%s\">\n"
-        "</form>\n"
-
-        "</div>\n"
-        "</details>\n";
-
-    const char *email = "[disabled by admin]";
-
-    if (xs_type(xs_dict_get(srv_config, "disable_email_notifications")) != XSTYPE_TRUE) {
-        email = xs_dict_get(snac->config_o, "email");
-        if (xs_is_null(email)) {
-            email = xs_dict_get(snac->config, "email");
-
-            if (xs_is_null(email))
-                email = "";
-        }
-    }
-
-    char *cw = xs_dict_get(snac->config, "cw");
-    if (xs_is_null(cw))
-        cw = "";
-
-    char *telegram_bot = xs_dict_get(snac->config, "telegram_bot");
-    if (xs_is_null(telegram_bot))
-        telegram_bot = "";
-
-    char *telegram_chat_id = xs_dict_get(snac->config, "telegram_chat_id");
-    if (xs_is_null(telegram_chat_id))
-        telegram_chat_id = "";
-
-    const char *purge_days = xs_dict_get(snac->config, "purge_days");
-    if (!xs_is_null(purge_days) && xs_type(purge_days) == XSTYPE_NUMBER)
-        purge_days = xs_number_str(purge_days);
-    else
-        purge_days = "0";
-
-    const char *d_dm_f_u = xs_dict_get(snac->config, "drop_dm_from_unknown");
-
-    const char *bot = xs_dict_get(snac->config, "bot");
-    const char *a_private = xs_dict_get(snac->config, "private");
-
-    xs *es1 = encode_html(xs_dict_get(snac->config, "name"));
-    xs *es2 = encode_html(xs_dict_get(snac->config, "bio"));
-    xs *es3 = encode_html(email);
-    xs *es4 = encode_html(telegram_bot);
-    xs *es5 = encode_html(telegram_chat_id);
-    xs *es6 = encode_html(purge_days);
-
-    xs *metadata = xs_str_new(NULL);
-    xs_dict *md = xs_dict_get(snac->config, "metadata");
-    xs_str *k;
-    xs_str *v;
-
-    while (xs_dict_iter(&md, &k, &v)) {
-        xs *kp = xs_fmt("%s=%s", k, v);
-
-        if (*metadata)
-            metadata = xs_str_cat(metadata, "\n");
-        metadata = xs_str_cat(metadata, kp);
-    }
-
     xs_str_cat(s, "<div class=\"snac-top-controls\">\n");
 
     xs_html *new_note = html_note(snac, L("New Post..."),
@@ -836,11 +726,13 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
 
     xs *s2 = NULL;
 
+    /** operations form **/
     {
         xs *ops_action = xs_fmt("%s/admin/action", snac->actor);
         xs_html *ops = xs_html_tag("details",
             xs_html_tag("summary",
                 xs_html_text(L("Operations..."))),
+            xs_html_tag("p", NULL),
             xs_html_tag("form",
                 xs_html_attr("autocomplete", "off"),
                 xs_html_attr("method",       "post"),
@@ -875,38 +767,188 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
         s2 = xs_html_render(ops);
     }
 
-    xs *s3 = xs_fmt(_tmpl3,
-        L("User Settings..."),
-        snac->actor,
-        L("Display name"),
-        es1,
-        L("Avatar"),
-        L("Header image (banner)"),
-        L("Bio"),
-        es2,
-        strcmp(cw, "open") == 0 ? "checked" : "",
-        L("Always show sensitive content"),
-        L("Email address for notifications"),
-        es3,
-        L("Telegram notifications (bot key and chat id)"),
-        es4,
-        es5,
-        L("Maximum days to keep posts (0: server settings)"),
-        es6,
-        xs_type(d_dm_f_u) == XSTYPE_TRUE ? "checked" : "",
-        L("Drop direct messages from people you don't follow"),
-        xs_type(bot) == XSTYPE_TRUE ? "checked" : "",
-        L("This account is a bot"),
-        xs_type(a_private) == XSTYPE_TRUE ? "checked" : "",
-        L("This account is private (posts are not shown through the web)"),
+    /** user settings form **/
 
-        L("Profile metadata (key=value pairs in each line)"),
-        metadata,
+    char *email = "[disabled by admin]";
 
-        L("New password"),
-        L("Repeat new password"),
-        L("Update user info")
-    );
+    if (xs_type(xs_dict_get(srv_config, "disable_email_notifications")) != XSTYPE_TRUE) {
+        email = xs_dict_get(snac->config_o, "email");
+        if (xs_is_null(email)) {
+            email = xs_dict_get(snac->config, "email");
+
+            if (xs_is_null(email))
+                email = "";
+        }
+    }
+
+    char *cw = xs_dict_get(snac->config, "cw");
+    if (xs_is_null(cw))
+        cw = "";
+
+    char *telegram_bot = xs_dict_get(snac->config, "telegram_bot");
+    if (xs_is_null(telegram_bot))
+        telegram_bot = "";
+
+    char *telegram_chat_id = xs_dict_get(snac->config, "telegram_chat_id");
+    if (xs_is_null(telegram_chat_id))
+        telegram_chat_id = "";
+
+    char *purge_days = xs_dict_get(snac->config, "purge_days");
+    if (!xs_is_null(purge_days) && xs_type(purge_days) == XSTYPE_NUMBER)
+        purge_days = (char *)xs_number_str(purge_days);
+    else
+        purge_days = "0";
+
+    xs_val *d_dm_f_u  = xs_dict_get(snac->config, "drop_dm_from_unknown");
+    xs_val *bot       = xs_dict_get(snac->config, "bot");
+    xs_val *a_private = xs_dict_get(snac->config, "private");
+
+    xs *metadata = xs_str_new(NULL);
+    xs_dict *md = xs_dict_get(snac->config, "metadata");
+    xs_str *k;
+    xs_str *v;
+
+    while (xs_dict_iter(&md, &k, &v)) {
+        xs *kp = xs_fmt("%s=%s", k, v);
+
+        if (*metadata)
+            metadata = xs_str_cat(metadata, "\n");
+        metadata = xs_str_cat(metadata, kp);
+    }
+
+    xs *user_setup_action = xs_fmt("%s/admin/user-setup", snac->actor);
+
+    xs_html *user_settings = xs_html_tag("details",
+        xs_html_tag("summary",
+            xs_html_text(L("User Settings..."))),
+        xs_html_tag("div",
+            xs_html_attr("class", "snac-user-setup"),
+            xs_html_tag("form",
+                xs_html_attr("autocomplete", "off"),
+                xs_html_attr("method",       "post"),
+                xs_html_attr("action",       user_setup_action),
+                xs_html_attr("enctype",      "multipart/form-data"),
+                xs_html_tag("p",
+                    xs_html_text(L("Display name:")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "text"),
+                        xs_html_attr("name", "name"),
+                        xs_html_attr("value", xs_dict_get(snac->config, "name")),
+                        xs_html_attr("placeholder", L("Your name")))),
+                xs_html_tag("p",
+                    xs_html_text(L("Avatar: ")),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "file"),
+                        xs_html_attr("name", "avatar_file"))),
+                xs_html_tag("p",
+                    xs_html_text(L("Header image (banner): ")),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "file"),
+                        xs_html_attr("name", "header_file"))),
+                xs_html_tag("p",
+                    xs_html_text(L("Bio:")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_tag("textarea",
+                        xs_html_attr("name", "bio"),
+                        xs_html_attr("cols", "40"),
+                        xs_html_attr("rows", "4"),
+                        xs_html_attr("placeholder", L("Write about yourself here...")),
+                        xs_html_text(xs_dict_get(snac->config, "bio")))),
+                xs_html_sctag("input",
+                    xs_html_attr("type", "checkbox"),
+                    xs_html_attr("name", "cw"),
+                    xs_html_attr("id",   "cw"),
+                    xs_html_attr(strcmp(cw, "open") == 0 ? "checked" : "", NULL)),
+                xs_html_tag("label",
+                    xs_html_attr("for", "cw"),
+                    xs_html_text(L("Always show sensitive content"))),
+                xs_html_tag("p",
+                    xs_html_text(L("Email address for notifications:")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "text"),
+                        xs_html_attr("name", "email"),
+                        xs_html_attr("value", email),
+                        xs_html_attr("placeholder", "bob@example.com"))),
+                xs_html_tag("p",
+                    xs_html_text(L("Telegram notifications (bot key and chat id):")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "text"),
+                        xs_html_attr("name", "telegram_bot"),
+                        xs_html_attr("value", telegram_bot),
+                        xs_html_attr("placeholder", "Bot API key")),
+                    xs_html_text(" "),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "text"),
+                        xs_html_attr("name", "telegram_chat_id"),
+                        xs_html_attr("value", telegram_chat_id),
+                        xs_html_attr("placeholder", "Chat id"))),
+                xs_html_tag("p",
+                    xs_html_text(L("Maximum days to keep posts (0: server settings):")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "number"),
+                        xs_html_attr("name", "purge_days"),
+                        xs_html_attr("value", purge_days))),
+                xs_html_tag("p",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "checkbox"),
+                        xs_html_attr("name", "drop_dm_from_unknown"),
+                        xs_html_attr("id", "drop_dm_from_unknown"),
+                        xs_html_attr(xs_type(d_dm_f_u) == XSTYPE_TRUE ? "checked" : "", NULL)),
+                    xs_html_tag("label",
+                        xs_html_attr("for", "drop_dm_from_unknown"),
+                        xs_html_text(L("Drop direct messages from people you don't follow")))),
+                xs_html_tag("p",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "checkbox"),
+                        xs_html_attr("name", "bot"),
+                        xs_html_attr("id", "bot"),
+                        xs_html_attr(xs_type(bot) == XSTYPE_TRUE ? "checked" : "", NULL)),
+                    xs_html_tag("label",
+                        xs_html_attr("for", "bot"),
+                        xs_html_text(L("This account is a bot")))),
+                xs_html_tag("p",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "checkbox"),
+                        xs_html_attr("name", "private"),
+                        xs_html_attr("id", "private"),
+                        xs_html_attr(xs_type(a_private) == XSTYPE_TRUE ? "checked" : "", NULL)),
+                    xs_html_tag("label",
+                        xs_html_attr("for", "private"),
+                        xs_html_text(L("This account is private (posts are not shown through the web)")))),
+                xs_html_tag("p",
+                    xs_html_text(L("Profile metadata (key=value pairs in each line):")),
+                    xs_html_tag("textarea",
+                        xs_html_attr("name", "metadata"),
+                        xs_html_attr("cols", "40"),
+                        xs_html_attr("rows", "4"),
+                        xs_html_attr("placeholder", "Blog=https:/" "/example.com/my-blog\nGPG Key=1FA54\n..."),
+                    xs_html_text(metadata))),
+
+                xs_html_tag("p",
+                    xs_html_text(L("New password:")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "password"),
+                        xs_html_attr("name", "passwd1"),
+                        xs_html_attr("value", ""))),
+                xs_html_tag("p",
+                    xs_html_text(L("Repeat new password:")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "password"),
+                        xs_html_attr("name", "passwd2"),
+                        xs_html_attr("value", ""))),
+
+                xs_html_tag("input",
+                    xs_html_attr("type", "submit"),
+                    xs_html_attr("class", "button"),
+                    xs_html_attr("value", L("Update user info"))))));
+
+    xs *s3 = xs_html_render(user_settings);
 
     s = xs_str_cat(s, s1, s2, s3, "</div><!-- snac-top-controls -->\n");
 
