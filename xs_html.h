@@ -207,7 +207,7 @@ xs_str *xs_html_render_s(xs_html *h, xs_str *s)
 
         if (h->type == XS_HTML_SCTAG) {
             /* self-closing tags should not have subtags */
-            s = xs_str_cat(s, "/>");
+            s = xs_str_cat(s, "/>\n");
         }
         else {
             s = xs_str_cat(s, ">");
