@@ -374,7 +374,8 @@ xs_html *html_note(snac *user, char *summary,
         xs_html_sctag("input",
             xs_html_attr("type",     "submit"),
             xs_html_attr("class",    "button"),
-            xs_html_attr("value",    L("Post"))));
+            xs_html_attr("value",    L("Post"))),
+        xs_html_tag("p", NULL));
 
     return note;
 }
