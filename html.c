@@ -918,6 +918,7 @@ xs_html *html_top_controls(snac *snac)
                         xs_html_text(L("This account is private (posts are not shown through the web)")))),
                 xs_html_tag("p",
                     xs_html_text(L("Profile metadata (key=value pairs in each line):")),
+                    xs_html_sctag("br", NULL),
                     xs_html_tag("textarea",
                         xs_html_attr("name", "metadata"),
                         xs_html_attr("cols", "40"),
