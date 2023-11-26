@@ -288,7 +288,7 @@ xs_html *html_note(snac *user, char *summary,
         /* no actor_id; ask for mentioned_only */
         xs_html_add(form,
             xs_html_tag("p", NULL),
-            xs_html_text(L("Only for mentioned people")),
+            xs_html_text(L("Only for mentioned people: ")),
             xs_html_sctag("input",
                 xs_html_attr("type",  "checkbox"),
                 xs_html_attr("name",  "mentioned_only"),
@@ -712,44 +712,6 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
 xs_str *html_top_controls(snac *snac, xs_str *s)
 /* generates the top controls */
 {
-    char *_tmpl =
-        "<div class=\"snac-note\">\n"
-        "<details><summary>%s</summary>\n"
-        "<form autocomplete=\"off\" method=\"post\" "
-        "action=\"%s/admin/note\" enctype=\"multipart/form-data\">\n"
-        "<textarea class=\"snac-textarea\" name=\"content\" "
-        "rows=\"8\" wrap=\"virtual\" required=\"required\" placeholder=\"What's on your mind?\"></textarea>\n"
-        "<input type=\"hidden\" name=\"in_reply_to\" value=\"\">\n"
-        "<p>%s: <input type=\"checkbox\" name=\"sensitive\"> "
-        "<input type=\"text\" name=\"summary\" placeholder=\"%s\">\n"
-        "<p>%s: <input type=\"checkbox\" name=\"mentioned_only\">\n"
-
-        "<details><summary>%s</summary>\n" /** attach **/
-        "<p>%s: <input type=\"file\" name=\"attach\">\n"
-        "<p>%s: <input type=\"text\" name=\"alt_text\" placeholder=\"[Optional]\">\n"
-        "</details>\n"
-
-        "<p>"
-        "<details><summary>%s</summary>\n" /** poll **/
-        "<p>%s:<br>\n"
-        "<textarea class=\"snac-textarea\" name=\"poll_options\" "
-        "rows=\"6\" wrap=\"virtual\" placeholder=\"Option 1...\nOption 2...\nOption 3...\n...\"></textarea>\n"
-        "<p><select name=\"poll_multiple\">\n"
-        "<option value=\"off\">%s</option>\n"
-        "<option value=\"on\">%s</option>\n"
-        "</select>\n"
-        "<select name=\"poll_end_secs\" id=\"poll_end_secs\">\n"
-        "<option value=\"300\">%s</option>\n"
-        "<option value=\"3600\" selected>%s</option>\n"
-        "<option value=\"86400\">%s</option>\n"
-        "</select>\n"
-        "</details>\n"
-
-        "<p><input type=\"submit\" class=\"button\" value=\"%s\">\n"
-        "</form><p>\n"
-        "</details>\n"
-        "</div>\n";
-
     char *_tmpl3 =
         "<details><summary>%s</summary>\n"
 
@@ -862,26 +824,15 @@ xs_str *html_top_controls(snac *snac, xs_str *s)
 
     xs_str_cat(s, "<div class=\"snac-top-controls\">\n");
 
-    xs *s1 = xs_fmt(_tmpl,
-        L("New Post..."),
-        snac->actor,
-        L("Sensitive content"),
-        L("Sensitive content description"),
-        L("Only for mentioned people"),
+    xs_html *new_note = html_note(snac, L("New Post..."),
+        "new_post_div", "new_post_form",
+        L("What's on your mind?"), "",
+        NULL, NULL,
+        xs_stock_false, "",
+        xs_stock_false, NULL,
+        NULL, 1);
 
-        L("Attachment..."),
-        L("File"),
-        L("File description"),
-
-        L("Poll..."),
-        L("Poll options (one per line, up to 8)"),
-        L("One choice"),
-        L("Multiple choices"),
-        L("End in 5 minutes"),
-        L("End in 1 hour"),
-        L("End in 1 day"),
-
-        L("Post"));
+    xs *s1 = xs_html_render(new_note);
 
     xs *s2 = NULL;
 
