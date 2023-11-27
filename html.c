@@ -500,6 +500,7 @@ xs_html *html_instance_body(char *tag)
 
 
 static xs_str *html_instance_header(xs_str *s, char *tag)
+/* TO BE REPLACED BY html_instance_body() */
 {
     xs_html *head = html_instance_head();
 
@@ -1249,14 +1250,6 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
     if (level >= 256)
         return os;
 
-    xs *s = xs_str_new("<div>\n");
-
-    {
-        xs *s1 = xs_fmt("<a name=\"%s_entry\"></a>\n", md5);
-
-        s = xs_str_cat(s, s1);
-    }
-
     if (strcmp(type, "Follow") == 0) {
         xs_html *h = xs_html_tag("div",
             xs_html_attr("class", "snac-post"),
@@ -1291,6 +1284,14 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
     if ((user == NULL || strcmp(actor, user->actor) != 0)
         && !valid_status(actor_get(actor, NULL)))
         return os;
+
+    xs *s = xs_str_new("<div>\n");
+
+    {
+        xs *s1 = xs_fmt("<a name=\"%s_entry\"></a>\n", md5);
+
+        s = xs_str_cat(s, s1);
+    }
 
     if (level == 0)
         s = xs_str_cat(s, "<div class=\"snac-post\">\n"); /** **/
