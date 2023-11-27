@@ -456,7 +456,72 @@ xs_html *html_instance_head(void)
 }
 
 
-xs_str *html_instance_header(xs_str *s, char *tag)
+xs_html *html_instance_body(char *tag)
+{
+    char *host  = xs_dict_get(srv_config, "host");
+    char *sdesc = xs_dict_get(srv_config, "short_description");
+    char *email = xs_dict_get(srv_config, "admin_email");
+    char *acct  = xs_dict_get(srv_config, "admin_account");
+
+    xs *blurb = xs_replace(snac_blurb, "%host%", host);
+
+    xs_html *dl;
+
+    xs_html *body = xs_html_tag("body",
+        xs_html_tag("div",
+            xs_html_attr("class", "snac-instance-blurb"),
+            xs_html_raw(blurb), /* pure html */
+            dl = xs_html_tag("dl", NULL)));
+
+    if (sdesc && *sdesc) {
+        xs_html_add(dl,
+            xs_html_tag("di",
+                xs_html_tag("dt",
+                    xs_html_text(L("Site description"))),
+                xs_html_tag("dd",
+                    xs_html_text(sdesc))));
+    }
+    if (email && *email) {
+        xs *mailto = xs_fmt("mailto:%s", email);
+
+        xs_html_add(dl,
+            xs_html_tag("di",
+                xs_html_tag("dt",
+                    xs_html_text(L("Admin email"))),
+                xs_html_tag("dd",
+                    xs_html_tag("a",
+                        xs_html_attr("href", mailto),
+                        xs_html_text(email)))));
+    }
+    if (acct && *acct) {
+        xs *url    = xs_fmt("%s/%s", srv_baseurl, acct);
+        xs *handle = xs_fmt("@%s@%s", acct, host);
+
+        xs_html_add(dl,
+            xs_html_tag("di",
+                xs_html_tag("dt",
+                    xs_html_text(L("Admin account"))),
+                xs_html_tag("dd",
+                    xs_html_tag("a",
+                        xs_html_attr("href", url),
+                        xs_html_text(handle)))));
+    }
+
+    {
+        xs *l = tag ? xs_fmt(L("Search results for #%s"), tag) :
+            xs_dup(L("Recent posts by users in this instance"));
+
+        xs_html_add(body,
+            xs_html_tag("h2",
+                xs_html_attr("class", "snac-header"),
+                xs_html_text(l)));
+    }
+
+    return body;
+}
+
+
+static xs_str *html_instance_header(xs_str *s, char *tag)
 {
     xs_html *head = html_instance_head();
 
