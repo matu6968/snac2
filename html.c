@@ -427,7 +427,7 @@ static xs_html *html_base_head(void)
 }
 
 
-xs_str *html_instance_header(xs_str *s, char *tag)
+xs_html *html_instance_head(void)
 {
     xs_html *head = html_base_head();
 
@@ -447,13 +447,23 @@ xs_str *html_instance_header(xs_str *s, char *tag)
 
     char *host  = xs_dict_get(srv_config, "host");
     char *title = xs_dict_get(srv_config, "title");
-    char *sdesc = xs_dict_get(srv_config, "short_description");
-    char *email = xs_dict_get(srv_config, "admin_email");
-    char *acct  = xs_dict_get(srv_config, "admin_account");
 
     xs_html_add(head,
         xs_html_tag("title",
             xs_html_text(title && *title ? title : host)));
+
+    return head;
+}
+
+
+xs_str *html_instance_header(xs_str *s, char *tag)
+{
+    xs_html *head = html_instance_head();
+
+    char *host  = xs_dict_get(srv_config, "host");
+    char *sdesc = xs_dict_get(srv_config, "short_description");
+    char *email = xs_dict_get(srv_config, "admin_email");
+    char *acct  = xs_dict_get(srv_config, "admin_account");
 
     {
         xs *s1 = xs_html_render(head);
