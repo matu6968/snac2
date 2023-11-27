@@ -209,7 +209,7 @@ void xs_html_render_f(xs_html *h, FILE *f)
 
         if (h->type == XS_HTML_SCTAG) {
             /* self-closing tags should not have subtags */
-            fprintf(f, "/>");
+            fprintf(f, "/>\n");
         }
         else {
             fprintf(f, ">");
