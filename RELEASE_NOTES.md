@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.44
+
+All code that generates HTML is being refactored. THIS IS A WORK IN PROGRESS.
+
 ## 2.43
 
 Tags in posts are now indexed and searching by tag is possible. It's still not very useful, but at least new user posts contain links that return real search-by-tag results. Also, no "re-indexing" of the previously stored data is done (only new local and remote posts will be searchable by tag).
