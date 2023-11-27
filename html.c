@@ -380,28 +380,6 @@ xs_html *html_note(snac *user, char *summary,
 }
 
 
-static xs_str *html_base_header(xs_str *s)
-{
-    xs_list *p;
-    xs_str *v;
-
-    s = xs_str_cat(s, "<!DOCTYPE html>\n<html>\n<head>\n");
-    s = xs_str_cat(s, "<meta name=\"viewport\" "
-                      "content=\"width=device-width, initial-scale=1\"/>\n");
-    s = xs_str_cat(s, "<meta name=\"generator\" "
-                      "content=\"" USER_AGENT "\"/>\n");
-
-    /* add server CSS */
-    p = xs_dict_get(srv_config, "cssurls");
-    while (xs_list_iter(&p, &v)) {
-        xs *s1 = xs_fmt("<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\"/>\n", v);
-        s = xs_str_cat(s, s1);
-    }
-
-    return s;
-}
-
-
 static xs_html *html_base_head(void)
 {
     xs_html *head = xs_html_tag("head",
@@ -581,10 +559,9 @@ static xs_str *html_instance_header(xs_str *s, char *tag)
 }
 
 
-xs_str *html_user_header(snac *snac, xs_str *s, int local)
-/* creates the HTML header */
+xs_html *html_user_head(snac *user)
 {
-    s = html_base_header(s);
+    xs_html *head = html_base_head();
 
     /* add the user CSS */
     {
@@ -592,7 +569,7 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
         int size;
 
         /* try to open the user css */
-        if (!valid_status(static_get(snac, "style.css", &css, &size, NULL, NULL))) {
+        if (!valid_status(static_get(user, "style.css", &css, &size, NULL, NULL))) {
             /* it's not there; try to open the server-wide css */
             FILE *f;
             xs *g_css_fn = xs_fmt("%s/style.css", srv_basedir);
@@ -604,21 +581,21 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
         }
 
         if (css != NULL) {
-            xs *s1 = xs_fmt("<style>%s</style>\n", css);
-            s = xs_str_cat(s, s1);
+            xs_html_add(head,
+                xs_html_tag("style",
+                    xs_html_text(css)));
         }
     }
 
-    {
-        xs *es1 = encode_html(xs_dict_get(snac->config, "name"));
-        xs *es2 = encode_html(snac->uid);
-        xs *es3 = encode_html(xs_dict_get(srv_config,   "host"));
-        xs *s1 = xs_fmt("<title>%s (@%s@%s)</title>\n", es1, es2, es3);
+    /* title */
+    xs *title = xs_fmt("%s (@%s@%s)", xs_dict_get(user->config, "name"),
+        user->uid, xs_dict_get(srv_config, "host"));
 
-        s = xs_str_cat(s, s1);
-    }
+    xs_html_add(head,
+        xs_html_tag("title",
+            xs_html_text(title)));
 
-    xs *avatar = xs_dup(xs_dict_get(snac->config, "avatar"));
+    xs *avatar = xs_dup(xs_dict_get(user->config, "avatar"));
 
     if (avatar == NULL || *avatar == '\0') {
         xs_free(avatar);
@@ -626,7 +603,7 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
     }
 
     {
-        xs *s_bio = xs_dup(xs_dict_get(snac->config, "bio"));
+        xs *s_bio = xs_dup(xs_dict_get(user->config, "bio"));
         int n;
 
         /* shorten the bio */
@@ -643,34 +620,61 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
         }
 
         /* og properties */
-        xs *es1 = encode_html(xs_dict_get(srv_config, "host"));
-        xs *es2 = encode_html(xs_dict_get(snac->config, "name"));
-        xs *es3 = encode_html(snac->uid);
-        xs *es4 = encode_html(xs_dict_get(srv_config, "host"));
-        xs *es5 = encode_html(s_bio);
-        xs *es6 = encode_html(s_avatar);
-
-        xs *s1 = xs_fmt(
-            "<meta property=\"og:site_name\" content=\"%s\"/>\n"
-            "<meta property=\"og:title\" content=\"%s (@%s@%s)\"/>\n"
-            "<meta property=\"og:description\" content=\"%s\"/>\n"
-            "<meta property=\"og:image\" content=\"%s\"/>\n"
-            "<meta property=\"og:image:width\" content=\"300\"/>\n"
-            "<meta property=\"og:image:height\" content=\"300\"/>\n",
-            es1, es2, es3, es4, es5, es6);
-        s = xs_str_cat(s, s1);
+        xs_html_add(head,
+            xs_html_sctag("meta",
+                xs_html_attr("property", "og:site_name"),
+                xs_html_attr("content", xs_dict_get(srv_config, "host"))),
+            xs_html_sctag("meta",
+                xs_html_attr("property", "og:title"),
+                xs_html_attr("content", title)),
+            xs_html_sctag("meta",
+                xs_html_attr("property", "og:description"),
+                xs_html_attr("content", s_bio)),
+            xs_html_sctag("meta",
+                xs_html_attr("property", "og:image"),
+                xs_html_attr("content", s_avatar)),
+            xs_html_sctag("meta",
+                xs_html_attr("property", "og:width"),
+                xs_html_attr("content", "300")),
+            xs_html_sctag("meta",
+                xs_html_attr("property", "og:height"),
+                xs_html_attr("content", "300")));
     }
+
+    /* RSS link */
+    xs *rss_url = xs_fmt("%s.rss", user->actor);
+    xs_html_add(head,
+        xs_html_sctag("link",
+            xs_html_attr("rel", "alternate"),
+            xs_html_attr("type", "application/rss+xml"),
+            xs_html_attr("title", "RSS"),
+            xs_html_attr("href", rss_url)));
+
+    return head;
+}
+
+
+xs_str *html_user_header(snac *snac, xs_str *s, int local)
+/* creates the HTML header */
+{
+    xs_html *head = html_user_head(snac);
 
     {
-        xs *s1 = xs_fmt("<link rel=\"alternate\" type=\"application/rss+xml\" "
-                        "title=\"RSS\" href=\"%s.rss\" />\n", snac->actor); /* snac->actor is likely need to be URLEncoded. */
-        s = xs_str_cat(s, s1);
+        xs *s1 = xs_html_render(head);
+        s = xs_str_cat(s, "<!DOCTYPE html><html>\n", s1);
     }
 
-    s = xs_str_cat(s, "</head>\n<body>\n");
+    s = xs_str_cat(s, "\n<body>\n");
 
     /* top nav */
     s = xs_str_cat(s, "<nav class=\"snac-top-nav\">");
+
+    xs *avatar = xs_dup(xs_dict_get(snac->config, "avatar"));
+
+    if (avatar == NULL || *avatar == '\0') {
+        xs_free(avatar);
+        avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
+    }
 
     {
         xs *s1;
