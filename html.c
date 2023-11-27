@@ -1298,23 +1298,32 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
     else
         s = xs_str_cat(s, "<div class=\"snac-child\">\n"); /** **/
 
-    s = xs_str_cat(s, "<div class=\"snac-post-header\">\n<div class=\"snac-score\">"); /** **/
+    s = xs_str_cat(s, "<div class=\"snac-post-header\">\n"); /** **/
+
+    xs_html *score = xs_html_tag("div",
+        xs_html_attr("class", "snac-score"));
 
     if (user && is_pinned(user, id)) {
         /* add a pin emoji */
-        xs *f = xs_fmt("<span title=\"%s\"> &#128204; </span>", L("Pinned"));
-        s = xs_str_cat(s, f);
+        xs_html_add(score,
+            xs_html_tag("span",
+                xs_html_attr("title", L("Pinned")),
+                xs_html_raw(" &#128204; ")));
     }
 
     if (strcmp(type, "Question") == 0) {
         /* add the ballot box emoji */
-        xs *f = xs_fmt("<span title=\"%s\"> &#128499; </span>", L("Poll"));
-        s = xs_str_cat(s, f);
+        xs_html_add(score,
+            xs_html_tag("span",
+                xs_html_attr("title", L("Poll")),
+                xs_html_raw(" &#128499; ")));
 
         if (user && was_question_voted(user, id)) {
             /* add a check to show this poll was voted */
-            xs *f2 = xs_fmt("<span title=\"%s\"> &#10003; </span>", L("Voted"));
-            s = xs_str_cat(s, f2);
+            xs_html_add(score,
+                xs_html_tag("span",
+                    xs_html_attr("title", L("Voted")),
+                    xs_html_raw(" &#10003; ")));
         }
     }
 
@@ -1324,13 +1333,16 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
         int n_boosts = object_announces_len(id);
 
         /* alternate emojis: %d &#128077; %d &#128257; */
-
         xs *s1 = xs_fmt("%d &#9733; %d &#8634;\n", n_likes, n_boosts);
 
-        s = xs_str_cat(s, s1);
+        xs_html_add(score,
+            xs_html_raw(s1));
     }
 
-    s = xs_str_cat(s, "</div>\n");
+    {
+        xs *s1 = xs_html_render(score);
+        s = xs_str_cat(s, s1);
+    }
 
     if (boosts == NULL)
         boosts = object_announces(id);
