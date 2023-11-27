@@ -1298,10 +1298,13 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
     else
         s = xs_str_cat(s, "<div class=\"snac-child\">\n"); /** **/
 
-    s = xs_str_cat(s, "<div class=\"snac-post-header\">\n"); /** **/
+    /** post header **/
 
-    xs_html *score = xs_html_tag("div",
-        xs_html_attr("class", "snac-score"));
+    xs_html *score;
+    xs_html *post_header = xs_html_tag("div",
+        xs_html_attr("class", "snac-post-header"),
+        score = xs_html_tag("div",
+            xs_html_attr("class", "snac-score")));
 
     if (user && is_pinned(user, id)) {
         /* add a pin emoji */
@@ -1339,11 +1342,6 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             xs_html_raw(s1));
     }
 
-    {
-        xs *s1 = xs_html_render(score);
-        s = xs_str_cat(s, s1);
-    }
-
     if (boosts == NULL)
         boosts = object_announces(id);
 
@@ -1354,33 +1352,28 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
         if (user && xs_list_in(boosts, user->md5) != -1) {
             /* we boosted this */
-            xs_html *h = xs_html_tag("div",
-                xs_html_attr("class", "snac-origin"),
-                xs_html_tag("a",
-                    xs_html_attr("href", user->actor),
-                    xs_html_text(xs_dict_get(user->config, "name"))),
-                    xs_html_text(" "),
-                    xs_html_text(L("boosted")));
-
-            xs *s1 = xs_html_render(h);
-            s = xs_str_cat(s, s1);
+            xs_html_add(post_header,
+                xs_html_tag("div",
+                    xs_html_attr("class", "snac-origin"),
+                    xs_html_tag("a",
+                        xs_html_attr("href", user->actor),
+                        xs_html_text(xs_dict_get(user->config, "name"))),
+                        xs_html_text(" "),
+                        xs_html_text(L("boosted"))));
         }
         else
         if (valid_status(object_get_by_md5(p, &actor_r))) {
             xs *name = actor_name(actor_r);
 
             if (!xs_is_null(name)) {
-                xs_html *h = xs_html_tag("div",
-                    xs_html_attr("class", "snac-origin"),
-                    xs_html_tag("a",
-                        xs_html_attr("href", xs_dict_get(actor_r, "id")),
-                        xs_html_text(name)),
-                        xs_html_text(" "),
-                        xs_html_text(L("boosted")));
-
-                xs *s1 = xs_html_render(h);
-
-                s = xs_str_cat(s, s1);
+                xs_html_add(post_header,
+                    xs_html_tag("div",
+                        xs_html_attr("class", "snac-origin"),
+                        xs_html_tag("a",
+                            xs_html_attr("href", xs_dict_get(actor_r, "id")),
+                            xs_html_text(name)),
+                            xs_html_text(" "),
+                            xs_html_text(L("boosted"))));
             }
         }
     }
@@ -1391,29 +1384,29 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             char *parent = xs_dict_get(msg, "inReplyTo");
 
             if (user && !xs_is_null(parent) && *parent && !timeline_here(user, parent)) {
-                xs_html *h = xs_html_tag("div",
-                    xs_html_attr("class", "snac-origin"),
-                    xs_html_text(L("in reply to")),
-                    xs_html_text(" "),
-                    xs_html_tag("a",
-                        xs_html_attr("href", parent),
-                        xs_html_text("»")));
-
-                xs *s1 = xs_html_render(h);
-
-                s = xs_str_cat(s, s1);
+                xs_html_add(post_header,
+                    xs_html_tag("div",
+                        xs_html_attr("class", "snac-origin"),
+                        xs_html_text(L("in reply to")),
+                        xs_html_text(" "),
+                        xs_html_tag("a",
+                            xs_html_attr("href", parent),
+                            xs_html_text("»"))));
             }
         }
     }
 
+    xs_html_add(post_header,
+        html_msg_icon(msg));
+
     {
-        xs_html *h = html_msg_icon(msg);
-        xs *s1 = xs_html_render(h);
+        xs *s1 = xs_html_render(post_header);
         s = xs_str_cat(s, s1);
     }
 
-    /* add the content */
-    s = xs_str_cat(s, "</div>\n<div class=\"e-content snac-content\">\n"); /** **/
+    /** post content **/
+
+    s = xs_str_cat(s, "\n<div class=\"e-content snac-content\">\n"); /** **/
 
     if (!xs_is_null(v = xs_dict_get(msg, "name"))) {
         xs *es1 = encode_html(v);
