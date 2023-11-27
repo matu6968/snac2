@@ -21,8 +21,10 @@ xs_html *_xs_html_tag(char *tag, xs_html *var[]);
 xs_html *_xs_html_sctag(char *tag, xs_html *var[]);
 #define xs_html_sctag(tag, ...) _xs_html_sctag(tag, (xs_html *[]) { __VA_ARGS__, NULL })
 
-xs_str *xs_html_render_s(xs_html *h, xs_str *s);
-#define xs_html_render(h) xs_html_render_s(h, xs_str_new(NULL))
+void xs_html_render_f(xs_html *h, FILE *f);
+xs_str *xs_html_render_s(xs_html *tag, char *prefix);
+#define xs_html_render(tag) xs_html_render_s(tag, NULL)
+
 
 #ifdef XS_IMPLEMENTATION
 
@@ -187,55 +189,72 @@ xs_html *_xs_html_sctag(char *tag, xs_html *var[])
 }
 
 
-xs_str *xs_html_render_s(xs_html *h, xs_str *s)
-/* renders the tag and its subtags into s */
+void xs_html_render_f(xs_html *h, FILE *f)
+/* renders the tag and its subtags into a file */
 {
     xs_html *st;
 
     switch (h->type) {
     case XS_HTML_TAG:
     case XS_HTML_SCTAG:
-        s = xs_str_cat(s, "<", h->content);
+        fprintf(f, "<%s", h->content);
 
         /* render the attributes */
         st = h->f_attr;
         while (st) {
             xs_html *nst = st->next;
-            s = xs_html_render_s(st, s);
+            xs_html_render_f(st, f);
             st = nst;
         }
 
         if (h->type == XS_HTML_SCTAG) {
             /* self-closing tags should not have subtags */
-            s = xs_str_cat(s, "/>\n");
+            fprintf(f, "/>");
         }
         else {
-            s = xs_str_cat(s, ">");
+            fprintf(f, ">");
 
             /* render the subtags */
             st = h->f_tag;
             while (st) {
                 xs_html *nst = st->next;
-                s = xs_html_render_s(st, s);
+                xs_html_render_f(st, f);
                 st = nst;
             }
 
-            s = xs_str_cat(s, "</", h->content, ">");
+            fprintf(f, "</%s>", h->content);
         }
 
         break;
 
     case XS_HTML_ATTR:
-        s = xs_str_cat(s, " ", h->content);
+        fprintf(f, " %s", h->content);
         break;
 
     case XS_HTML_TEXT:
-        s = xs_str_cat(s, h->content);
+        fprintf(f, "%s", h->content);
         break;
     }
 
     xs_free(h->content);
     xs_free(h);
+}
+
+
+xs_str *xs_html_render_s(xs_html *tag, char *prefix)
+/* renders to a string */
+{
+    xs_str *s = NULL;
+    size_t sz;
+    FILE *f;
+
+    if ((f = open_memstream(&s, &sz)) != NULL) {
+        if (prefix)
+            fprintf(f, "%s", prefix);
+
+        xs_html_render_f(tag, f);
+        fclose(f);
+    }
 
     return s;
 }

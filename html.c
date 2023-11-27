@@ -2382,7 +2382,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                         xs_html_text(content))));
         }
 
-        *body   = xs_html_render_s(rss, xs_dup("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+        *body   = xs_html_render_s(rss, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         *b_size = strlen(*body);
         *ctype  = "application/rss+xml; charset=utf-8";
         status  = 200;
