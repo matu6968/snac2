@@ -1020,7 +1020,7 @@ xs_html *html_top_controls(snac *snac)
                         xs_html_attr("name", "passwd2"),
                         xs_html_attr("value", ""))),
 
-                xs_html_tag("input",
+                xs_html_sctag("input",
                     xs_html_attr("type", "submit"),
                     xs_html_attr("class", "button"),
                     xs_html_attr("value", L("Update user info")))))));
@@ -1354,13 +1354,15 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
         if (user && xs_list_in(boosts, user->md5) != -1) {
             /* we boosted this */
-            xs *es1 = encode_html(xs_dict_get(user->config, "name"));
-            xs *s1 = xs_fmt(
-                "<div class=\"snac-origin\">"
-                "<a href=\"%s\">%s</a> %s</div>",
-                user->actor, es1, L("boosted")
-            );
+            xs_html *h = xs_html_tag("div",
+                xs_html_attr("class", "snac-origin"),
+                xs_html_tag("a",
+                    xs_html_attr("href", user->actor),
+                    xs_html_text(xs_dict_get(user->config, "name"))),
+                    xs_html_text(" "),
+                    xs_html_text(L("boosted")));
 
+            xs *s1 = xs_html_render(h);
             s = xs_str_cat(s, s1);
         }
         else
@@ -1368,13 +1370,15 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             xs *name = actor_name(actor_r);
 
             if (!xs_is_null(name)) {
-                xs *s1 = xs_fmt(
-                    "<div class=\"snac-origin\">"
-                    "<a href=\"%s\">%s</a> %s</div>\n",
-                    xs_dict_get(actor_r, "id"),
-                    name,
-                    L("boosted")
-                );
+                xs_html *h = xs_html_tag("div",
+                    xs_html_attr("class", "snac-origin"),
+                    xs_html_tag("a",
+                        xs_html_attr("href", xs_dict_get(actor_r, "id")),
+                        xs_html_text(name)),
+                        xs_html_text(" "),
+                        xs_html_text(L("boosted")));
+
+                xs *s1 = xs_html_render(h);
 
                 s = xs_str_cat(s, s1);
             }
@@ -1387,11 +1391,15 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             char *parent = xs_dict_get(msg, "inReplyTo");
 
             if (user && !xs_is_null(parent) && *parent && !timeline_here(user, parent)) {
-                xs *s1 = xs_fmt(
-                    "<div class=\"snac-origin\">%s "
-                    "<a href=\"%s\">»</a></div>\n",
-                    L("in reply to"), parent
-                );
+                xs_html *h = xs_html_tag("div",
+                    xs_html_attr("class", "snac-origin"),
+                    xs_html_text(L("in reply to")),
+                    xs_html_text(" "),
+                    xs_html_tag("a",
+                        xs_html_attr("href", parent),
+                        xs_html_text("»")));
+
+                xs *s1 = xs_html_render(h);
 
                 s = xs_str_cat(s, s1);
             }
