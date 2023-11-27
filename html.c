@@ -200,10 +200,11 @@ xs_html *html_actor_icon(xs_dict *actor, const char *date,
 }
 
 
-xs_str *html_msg_icon(xs_str *os, const xs_dict *msg)
+xs_html *html_msg_icon(const xs_dict *msg)
 {
     char *actor_id;
     xs *actor = NULL;
+    xs_html *actor_icon = NULL;
 
     if ((actor_id = xs_dict_get(msg, "attributedTo")) == NULL)
         actor_id = xs_dict_get(msg, "actor");
@@ -223,12 +224,10 @@ xs_str *html_msg_icon(xs_str *os, const xs_dict *msg)
         date  = xs_dict_get(msg, "published");
         udate = xs_dict_get(msg, "updated");
 
-        xs_html *actor_icon = html_actor_icon(actor, date, udate, url, priv);
-        xs *s1 = xs_html_render(actor_icon);
-        os = xs_str_cat(os, s1);
+        actor_icon = html_actor_icon(actor, date, udate, url, priv);
     }
 
-    return os;
+    return actor_icon;
 }
 
 
@@ -1180,16 +1179,17 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
     }
 
     if (strcmp(type, "Follow") == 0) {
-        s = xs_str_cat(s, "<div class=\"snac-post\">\n<div class=\"snac-post-header\">\n");
+        xs_html *h = xs_html_tag("div",
+            xs_html_attr("class", "snac-post"),
+            xs_html_tag("div",
+                xs_html_attr("class", "snac-post-header"),
+                xs_html_tag("div",
+                    xs_html_attr("class", "snac-origin"),
+                    xs_html_text(L("follows you"))),
+                html_msg_icon(msg)));
 
-        xs *s1 = xs_fmt("<div class=\"snac-origin\">%s</div>\n", L("follows you"));
-        s = xs_str_cat(s, s1);
-
-        s = html_msg_icon(s, msg);
-
-        s = xs_str_cat(s, "</div>\n</div>\n");
-
-        return xs_str_cat(os, s);
+        xs *s1 = xs_html_render(h);
+        return xs_str_cat(os, s1);
     }
     else
     if (!xs_match(type, "Note|Question|Page|Article")) {
@@ -1306,7 +1306,11 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
         }
     }
 
-    s = html_msg_icon(s, msg);
+    {
+        xs_html *h = html_msg_icon(msg);
+        xs *s1 = xs_html_render(h);
+        s = xs_str_cat(s, s1);
+    }
 
     /* add the content */
     s = xs_str_cat(s, "</div>\n<div class=\"e-content snac-content\">\n"); /** **/
