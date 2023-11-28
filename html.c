@@ -668,7 +668,8 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
     s = xs_str_cat(s, "\n<body>\n");
 
     /* top nav */
-    s = xs_str_cat(s, "<nav class=\"snac-top-nav\">");
+    xs_html *top_nav = xs_html_tag("nav",
+        xs_html_attr("class", "snac-top-nav"));
 
     xs *avatar = xs_dup(xs_dict_get(snac->config, "avatar"));
 
@@ -677,46 +678,68 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
     }
 
-    {
-        xs *s1;
-
-        s1 = xs_fmt("<img src=\"%s\" class=\"snac-avatar\" alt=\"\"/>&nbsp;", avatar);
-
-        s = xs_str_cat(s, s1);
-    }
+    xs_html_add(top_nav,
+        xs_html_sctag("img",
+            xs_html_attr("src", avatar),
+            xs_html_attr("class", "snac-avatar"),
+            xs_html_attr("alt", "")));
 
     {
-        xs *s1;
+        if (local) {
+            xs *rss_url = xs_fmt("%s.rss", snac->actor);
+            xs *admin_url = xs_fmt("%s/admin", snac->actor);
 
-        if (local)
-            s1 = xs_fmt(
-                "<a href=\"%s.rss\">%s</a> - "
-                "<a href=\"%s/admin\" rel=\"nofollow\">%s</a></nav>\n",
-                snac->actor, L("RSS"),
-                snac->actor, L("private"));
+            xs_html_add(top_nav,
+                xs_html_tag("a",
+                    xs_html_attr("href", rss_url),
+                    xs_html_text(L("RSS"))),
+                xs_html_text(" - "),
+                xs_html_tag("a",
+                    xs_html_attr("href", admin_url),
+                    xs_html_attr("rel", "nofollow"),
+                    xs_html_text(L("private"))));
+        }
         else {
             xs *n_list = notify_list(snac, 1);
             int n_len  = xs_list_len(n_list);
             xs *n_str  = NULL;
+            xs_html *notify_count = NULL;
 
             /* show the number of new notifications, if there are any */
-            if (n_len)
-                n_str = xs_fmt("<sup style=\"background-color: red; "
-                               "color: white;\"> %d </sup> ", n_len);
+            if (n_len) {
+                xs *n_len_str = xs_fmt(" %d ", n_len);
+                notify_count = xs_html_tag("sup",
+                    xs_html_attr("style", "background-color: red; color: white;"),
+                    xs_html_text(n_len_str));
+            }
             else
-                n_str = xs_str_new("");
+                notify_count = xs_html_text("");
 
-            s1 = xs_fmt(
-                "<a href=\"%s\">%s</a> - "
-                "<a href=\"%s/admin\">%s</a> - "
-                "<a href=\"%s/notifications\">%s</a>%s - "
-                "<a href=\"%s/people\">%s</a></nav>\n",
-                snac->actor, L("public"),
-                snac->actor, L("private"),
-                snac->actor, L("notifications"), n_str,
-                snac->actor, L("people"));
+            xs *admin_url = xs_fmt("%s/admin", snac->actor);
+            xs *notify_url = xs_fmt("%s/notifications", snac->actor);
+            xs *people_url = xs_fmt("%s/people", snac->actor);
+            xs_html_add(top_nav,
+                xs_html_tag("a",
+                    xs_html_attr("href", snac->actor),
+                    xs_html_text(L("public"))),
+                xs_html_text(" - "),
+                xs_html_tag("a",
+                    xs_html_attr("href", admin_url),
+                    xs_html_text(L("private"))),
+                xs_html_text(" - "),
+                xs_html_tag("a",
+                    xs_html_attr("href", notify_url),
+                    xs_html_text(L("notifications"))),
+                notify_count,
+                xs_html_text(" - "),
+                xs_html_tag("a",
+                    xs_html_attr("href", people_url),
+                    xs_html_text(L("people"))));
         }
+    }
 
+    {
+        xs *s1 = xs_html_render(top_nav);
         s = xs_str_cat(s, s1);
     }
 
