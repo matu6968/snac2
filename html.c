@@ -1430,8 +1430,8 @@ xs_html *html_entry_controls(snac *snac, const xs_dict *msg, const char *md5)
 }
 
 
-xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
-                   int level, const char *md5, int hide_children)
+xs_str *html_entry(snac *user, xs_dict *msg, int local,
+                   int level, char *md5, int hide_children)
 {
     char *id    = xs_dict_get(msg, "id");
     char *type  = xs_dict_get(msg, "type");
@@ -1442,15 +1442,15 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
     /* do not show non-public messages in the public timeline */
     if ((local || !user) && !is_msg_public(msg))
-        return os;
+        return NULL;
 
     /* hidden? do nothing more for this conversation */
     if (user && is_hidden(user, id))
-        return os;
+        return NULL;
 
     /* avoid too deep nesting, as it may be a loop */
     if (level >= 256)
-        return os;
+        return NULL;
 
     if (strcmp(type, "Follow") == 0) {
         xs_html *h = xs_html_tag("div",
@@ -1462,32 +1462,31 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                     xs_html_text(L("follows you"))),
                 html_msg_icon(msg)));
 
-        xs *s1 = xs_html_render(h);
-        return xs_str_cat(os, s1);
+        return xs_html_render(h);
     }
     else
     if (!xs_match(type, "Note|Question|Page|Article")) {
         /* skip oddities */
-        return os;
+        return NULL;
     }
 
     /* ignore notes with "name", as they are votes to Questions */
     if (strcmp(type, "Note") == 0 && !xs_is_null(xs_dict_get(msg, "name")))
-        return os;
+        return NULL;
 
     /* bring the main actor */
     if ((actor = xs_dict_get(msg, "attributedTo")) == NULL)
-        return os;
+        return NULL;
 
     /* ignore muted morons immediately */
     if (user && is_muted(user, actor))
-        return os;
+        return NULL;
 
     if ((user == NULL || strcmp(actor, user->actor) != 0)
         && !valid_status(actor_get(actor, NULL)))
-        return os;
+        return NULL;
 
-    xs *s = xs_str_new("<div>\n");
+    xs_str *s = xs_str_new("<div>\n");
 
     {
         xs *s1 = xs_fmt("<a name=\"%s_entry\"></a>\n", md5);
@@ -2018,15 +2017,16 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                     object_get_by_md5(cmd5, &chd);
 
                 if (chd != NULL && xs_is_null(xs_dict_get(chd, "name"))) {
-                    xs *s1 = xs_str_new(NULL);
-                    s1 = html_entry(user, s1, chd, local, level + 1, cmd5, hide_children);
+                    xs *s1 = html_entry(user, chd, local, level + 1, cmd5, hide_children);
 
-                    if (left > 3)
-                        xs_html_add(ch_older,
-                            xs_html_raw(s1));
-                    else
-                        xs_html_add(ch_container,
-                            xs_html_raw(s1));
+                    if (s1 != NULL) {
+                        if (left > 3)
+                            xs_html_add(ch_older,
+                                xs_html_raw(s1));
+                        else
+                            xs_html_add(ch_container,
+                                xs_html_raw(s1));
+                    }
                 }
                 else
                     srv_debug(2, xs_fmt("cannot read child %s", cmd5));
@@ -2041,7 +2041,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
     s = xs_str_cat(s, "</div>\n</div>\n");
 
-    return xs_str_cat(os, s);
+    return s;
 }
 
 
@@ -2116,7 +2116,8 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
                 continue;
         }
 
-        s = html_entry(user, s, msg, local, 0, v, user ? 0 : 1);
+        xs *s1 = html_entry(user, msg, local, 0, v, user ? 0 : 1);
+        s = xs_str_cat(s, s1);
     }
 
     s = xs_str_cat(s, "</div>\n");
@@ -2439,7 +2440,10 @@ xs_str *html_notifications(snac *snac)
         else {
             xs *md5 = xs_md5_hex(id, strlen(id));
 
-            s = html_entry(snac, s, obj, 0, 0, md5, 1);
+            xs *s1 = html_entry(snac, obj, 0, 0, md5, 1);
+
+            if (s1 != NULL)
+                s = xs_str_cat(s, s1);
         }
 
         s = xs_str_cat(s, "</div>\n");
