@@ -1845,12 +1845,13 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
         }
 
         /* make custom css for attachments easier */
-        s = xs_str_cat(s, "<div class=\"snac-content-attachments\">\n");
+        xs_html *content_attachments = xs_html_tag("div",
+            xs_html_attr("class", "snac-content-attachments"));
 
         xs_list *p = attach;
 
         while (xs_list_iter(&p, &v)) {
-            const char *t = xs_dict_get(v, "mediaType");
+            char *t = xs_dict_get(v, "mediaType");
 
             if (xs_is_null(t))
                 t = xs_dict_get(v, "type");
@@ -1858,7 +1859,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             if (xs_is_null(t))
                 continue;
 
-            const char *url = xs_dict_get(v, "url");
+            char *url = xs_dict_get(v, "url");
             if (xs_is_null(url))
                 url = xs_dict_get(v, "href");
             if (xs_is_null(url))
@@ -1866,53 +1867,80 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
             /* infer MIME type from non-specific attachments */
             if (xs_list_len(attach) < 2 && xs_match(t, "Link|Document")) {
-                const char *mt = xs_mime_by_ext(url);
+                char *mt = (char *)xs_mime_by_ext(url);
 
                 if (xs_match(mt, "image/*|audio/*|video/*")) /* */
                     t = mt;
             }
 
-            const char *name = xs_dict_get(v, "name");
+            char *name = xs_dict_get(v, "name");
             if (xs_is_null(name))
                 name = xs_dict_get(msg, "name");
             if (xs_is_null(name))
                 name = L("No description");
 
-            xs *es1 = encode_html(name);
-            xs *s1  = NULL;
-
             if (xs_startswith(t, "image/") || strcmp(t, "Image") == 0) {
-                s1 = xs_fmt(
-                    "<a href=\"%s\" target=\"_blank\">"
-                    "<img loading=\"lazy\" src=\"%s\" alt=\"%s\" title=\"%s\"/></a>\n",
-                        url, url, es1, es1);
+                xs_html_add(content_attachments,
+                    xs_html_tag("a",
+                        xs_html_attr("href", url),
+                        xs_html_attr("target", "_blank"),
+                        xs_html_sctag("img",
+                            xs_html_attr("loading", "lazy"),
+                            xs_html_attr("src", url),
+                            xs_html_attr("alt", name),
+                            xs_html_attr("title", name))));
             }
             else
             if (xs_startswith(t, "video/")) {
-                s1 = xs_fmt("<video style=\"width: 100%\" class=\"snac-embedded-video\" "
-                        "controls src=\"%s\">Video: "
-                        "<a href=\"%s\">%s</a></video>\n", url, url, es1);
+                xs_html_add(content_attachments,
+                    xs_html_tag("video",
+                        xs_html_attr("style", "width: 100%"),
+                        xs_html_attr("class", "snac-embedded-video"),
+                        xs_html_attr("controls", NULL),
+                        xs_html_attr("src", url),
+                        xs_html_text(L("Video")),
+                        xs_html_text(": "),
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_text(name))));
             }
             else
             if (xs_startswith(t, "audio/")) {
-                s1 = xs_fmt("<audio style=\"width: 100%\" class=\"snac-embedded-audio\" "
-                        "controls src=\"%s\">Audio: "
-                        "<a href=\"%s\">%s</a></audio>\n", url, url, es1);
+                xs_html_add(content_attachments,
+                    xs_html_tag("audio",
+                        xs_html_attr("style", "width: 100%"),
+                        xs_html_attr("class", "snac-embedded-audio"),
+                        xs_html_attr("controls", NULL),
+                        xs_html_attr("src", url),
+                        xs_html_text(L("Audio")),
+                        xs_html_text(": "),
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_text(name))));
             }
             else
             if (strcmp(t, "Link") == 0) {
-                xs *es2 = encode_html(url);
-                s1  = xs_fmt("<p><a href=\"%s\">%s</a></p>\n", url, es2);
+                xs_html_add(content_attachments,
+                    xs_html_tag("p",
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_text(url))));
             }
             else {
-                s1 = xs_fmt("<p><a href=\"%s\">Attachment: %s</a></p>\n", url, es1);
+                xs_html_add(content_attachments,
+                    xs_html_tag("p",
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_text(L("Attachment")),
+                            xs_html_text(": "),
+                            xs_html_text(url))));
             }
-
-            if (!xs_is_null(s1))
-                s = xs_str_cat(s, s1);
         }
 
-        s = xs_str_cat(s, "</div>\n");
+        {
+            xs *s1 = xs_html_render(content_attachments);
+            s = xs_str_cat(s, s1);
+        }
     }
 
     /* has this message an audience (i.e., comes from a channel or community)? */
