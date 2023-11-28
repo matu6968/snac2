@@ -1639,9 +1639,11 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 #endif
 
     {
-        const char *content = xs_dict_get(msg, "content");
+        /** build the content string **/
 
-        xs *c  = sanitize(xs_is_null(content) ? "" : content);
+        char *content = xs_dict_get(msg, "content");
+
+        xs *c = sanitize(xs_is_null(content) ? "" : content);
         char *p, *v;
 
         /* do some tweaks to the content */
@@ -1692,6 +1694,9 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                 }
             }
         }
+
+        /* c contains sanitized HTML */
+        s = xs_str_cat(s, c);
 
         if (strcmp(type, "Question") == 0) { /** question content **/
             xs_list *oo = xs_dict_get(msg, "oneOf");
@@ -1821,10 +1826,8 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             }
 
             xs *s1 = xs_html_render(poll);
-            c = xs_str_cat(c, s1);
+            s = xs_str_cat(s, s1);
         }
-
-        s = xs_str_cat(s, c);
     }
 
     s = xs_str_cat(s, "\n");
