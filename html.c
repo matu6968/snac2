@@ -1700,6 +1700,8 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
             xs_dict *v;
             int closed = 0;
 
+            xs_html *poll = xs_html_tag("div", NULL);
+
             if (xs_dict_get(msg, "closed"))
                 closed = 2;
             else
@@ -1734,14 +1736,14 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                     }
                 }
 
-                xs *s1 = xs_html_render(poll_result);
-                c = xs_str_cat(c, s1);
+                xs_html_add(poll,
+                    poll_result);
             }
             else {
                 /* poll still active */
                 xs *vote_action = xs_fmt("%s/admin/vote", user->actor);
                 xs_html *form;
-                xs_html *poll = xs_html_tag("div",
+                xs_html *poll_form = xs_html_tag("div",
                     xs_html_attr("class", "snac-poll-form"),
                     form = xs_html_tag("form",
                         xs_html_attr("autocomplete", "off"),
@@ -1784,18 +1786,19 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                         xs_html_attr("class", "button"),
                         xs_html_attr("value", L("Vote"))));
 
-                xs *s1 = xs_html_render(poll);
-                c = xs_str_cat(c, s1);
+                xs_html_add(poll,
+                    poll_form);
             }
 
             /* if it's *really* closed, say it */
             if (closed == 2) {
-                xs *s1 = xs_fmt("<p>%s</p>\n", L("Closed"));
-                c = xs_str_cat(c, s1);
+                xs_html_add(poll,
+                    xs_html_tag("p",
+                        xs_html_text(L("Closed"))));
             }
             else {
                 /* show when the poll closes */
-                const char *end_time = xs_dict_get(msg, "endTime");
+                char *end_time = xs_dict_get(msg, "endTime");
                 if (!xs_is_null(end_time)) {
                     time_t t0 = time(NULL);
                     time_t t1 = xs_parse_iso_date(end_time, 0);
@@ -1808,12 +1811,17 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                         /* skip leading zeros */
                         for (; *p == '0' || *p == ':'; p++);
 
-                        xs *es1 = encode_html(p);
-                        xs *s1 = xs_fmt("<p>%s %s</p>", L("Closes in"), es1);
-                        c = xs_str_cat(c, s1);
+                        xs_html_add(poll,
+                            xs_html_tag("p",
+                                xs_html_text(L("Closes in")),
+                                xs_html_text(" "),
+                                xs_html_text(p)));
                     }
                 }
             }
+
+            xs *s1 = xs_html_render(poll);
+            c = xs_str_cat(c, s1);
         }
 
         s = xs_str_cat(s, c);
