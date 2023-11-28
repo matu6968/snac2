@@ -1573,7 +1573,7 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                         xs_html_attr("class", "snac-origin"),
                         xs_html_tag("a",
                             xs_html_attr("href", xs_dict_get(actor_r, "id")),
-                            xs_html_text(name)),
+                            xs_html_raw(name)), /* already sanitized */
                             xs_html_text(" "),
                             xs_html_text(L("boosted"))));
             }
