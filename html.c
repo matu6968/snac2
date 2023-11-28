@@ -1430,7 +1430,7 @@ xs_html *html_entry_controls(snac *snac, const xs_dict *msg, const char *md5)
 }
 
 
-xs_str *html_entry(snac *user, xs_dict *msg, int local,
+xs_html *html_entry(snac *user, xs_dict *msg, int local,
                    int level, char *md5, int hide_children)
 {
     char *id    = xs_dict_get(msg, "id");
@@ -1452,7 +1452,7 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
         return NULL;
 
     if (strcmp(type, "Follow") == 0) {
-        xs_html *h = xs_html_tag("div",
+        return xs_html_tag("div",
             xs_html_attr("class", "snac-post"),
             xs_html_tag("div",
                 xs_html_attr("class", "snac-post-header"),
@@ -1460,8 +1460,6 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
                     xs_html_attr("class", "snac-origin"),
                     xs_html_text(L("follows you"))),
                 html_msg_icon(msg)));
-
-        return xs_html_render(h);
     }
     else
     if (!xs_match(type, "Note|Question|Page|Article")) {
@@ -2017,15 +2015,15 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
                     object_get_by_md5(cmd5, &chd);
 
                 if (chd != NULL && xs_is_null(xs_dict_get(chd, "name"))) {
-                    xs *s1 = html_entry(user, chd, local, level + 1, cmd5, hide_children);
+                    xs_html *che = html_entry(user, chd, local, level + 1, cmd5, hide_children);
 
-                    if (s1 != NULL) {
+                    if (che != NULL) {
                         if (left > 3)
                             xs_html_add(ch_older,
-                                xs_html_raw(s1));
+                                che);
                         else
                             xs_html_add(ch_container,
-                                xs_html_raw(s1));
+                                che);
                     }
                 }
                 else
@@ -2036,7 +2034,7 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
         }
     }
 
-    return xs_html_render(entry_top);
+    return entry_top;
 }
 
 
@@ -2111,8 +2109,12 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
                 continue;
         }
 
-        xs *s1 = html_entry(user, msg, local, 0, v, user ? 0 : 1);
-        s = xs_str_cat(s, s1);
+        xs_html *entry = html_entry(user, msg, local, 0, v, user ? 0 : 1);
+
+        if (entry != NULL) {
+            xs *s1 = xs_html_render(entry);
+            s = xs_str_cat(s, s1);
+        }
     }
 
     s = xs_str_cat(s, "</div>\n");
@@ -2435,10 +2437,12 @@ xs_str *html_notifications(snac *snac)
         else {
             xs *md5 = xs_md5_hex(id, strlen(id));
 
-            xs *s1 = html_entry(snac, obj, 0, 0, md5, 1);
+            xs_html *entry = html_entry(snac, obj, 0, 0, md5, 1);
 
-            if (s1 != NULL)
+            if (entry != NULL) {
+                xs *s1 = xs_html_render(entry);
                 s = xs_str_cat(s, s1);
+            }
         }
 
         s = xs_str_cat(s, "</div>\n");
