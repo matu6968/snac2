@@ -1697,137 +1697,137 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
         /* c contains sanitized HTML */
         s = xs_str_cat(s, c);
+    }
 
-        if (strcmp(type, "Question") == 0) { /** question content **/
-            xs_list *oo = xs_dict_get(msg, "oneOf");
-            xs_list *ao = xs_dict_get(msg, "anyOf");
-            xs_list *p;
-            xs_dict *v;
-            int closed = 0;
+    if (strcmp(type, "Question") == 0) { /** question content **/
+        xs_list *oo = xs_dict_get(msg, "oneOf");
+        xs_list *ao = xs_dict_get(msg, "anyOf");
+        xs_list *p;
+        xs_dict *v;
+        int closed = 0;
 
-            xs_html *poll = xs_html_tag("div", NULL);
+        xs_html *poll = xs_html_tag("div", NULL);
 
-            if (xs_dict_get(msg, "closed"))
-                closed = 2;
-            else
-            if (user && xs_startswith(id, user->actor))
-                closed = 1; /* we questioned; closed for us */
-            else
-            if (user && was_question_voted(user, id))
-                closed = 1; /* we already voted; closed for us */
+        if (xs_dict_get(msg, "closed"))
+            closed = 2;
+        else
+        if (user && xs_startswith(id, user->actor))
+            closed = 1; /* we questioned; closed for us */
+        else
+        if (user && was_question_voted(user, id))
+            closed = 1; /* we already voted; closed for us */
 
-            /* get the appropriate list of options */
-            p = oo != NULL ? oo : ao;
+        /* get the appropriate list of options */
+        p = oo != NULL ? oo : ao;
 
-            if (closed || user == NULL) {
-                /* closed poll */
-                xs_html *poll_result = xs_html_tag("table",
-                    xs_html_attr("class", "snac-poll-result"));
+        if (closed || user == NULL) {
+            /* closed poll */
+            xs_html *poll_result = xs_html_tag("table",
+                xs_html_attr("class", "snac-poll-result"));
 
-                while (xs_list_iter(&p, &v)) {
-                    char *name       = xs_dict_get(v, "name");
-                    xs_dict *replies = xs_dict_get(v, "replies");
+            while (xs_list_iter(&p, &v)) {
+                char *name       = xs_dict_get(v, "name");
+                xs_dict *replies = xs_dict_get(v, "replies");
 
-                    if (name && replies) {
-                        char *ti = (char *)xs_number_str(xs_dict_get(replies, "totalItems"));
+                if (name && replies) {
+                    char *ti = (char *)xs_number_str(xs_dict_get(replies, "totalItems"));
 
-                        xs_html_add(poll_result,
-                            xs_html_tag("tr",
-                                xs_html_tag("td",
-                                    xs_html_text(name),
-                                    xs_html_text(":")),
-                                xs_html_tag("td",
-                                    xs_html_text(ti))));
-                    }
-                }
-
-                xs_html_add(poll,
-                    poll_result);
-            }
-            else {
-                /* poll still active */
-                xs *vote_action = xs_fmt("%s/admin/vote", user->actor);
-                xs_html *form;
-                xs_html *poll_form = xs_html_tag("div",
-                    xs_html_attr("class", "snac-poll-form"),
-                    form = xs_html_tag("form",
-                        xs_html_attr("autocomplete", "off"),
-                        xs_html_attr("method", "post"),
-                        xs_html_attr("action", vote_action),
-                        xs_html_sctag("input",
-                            xs_html_attr("type", "hidden"),
-                            xs_html_attr("name", "actor"),
-                            xs_html_attr("value", actor)),
-                        xs_html_sctag("input",
-                            xs_html_attr("type", "hidden"),
-                            xs_html_attr("name", "irt"),
-                            xs_html_attr("value", id))));
-
-                while (xs_list_iter(&p, &v)) {
-                    char *name = xs_dict_get(v, "name");
-                    xs_dict *replies = xs_dict_get(v, "replies");
-
-                    if (name) {
-                        char *ti = (char *)xs_number_str(xs_dict_get(replies, "totalItems"));
-
-                        xs_html_add(form,
-                            xs_html_sctag("input",
-                                xs_html_attr("type", !xs_is_null(oo) ? "radio" : "checkbox"),
-                                xs_html_attr("id", name),
-                                xs_html_attr("value", name),
-                                xs_html_attr("name", "question")),
-                            xs_html_text(" "),
-                            xs_html_tag("span",
-                                xs_html_attr("title", ti),
-                                xs_html_text(name)),
-                            xs_html_sctag("br", NULL));
-                    }
-                }
-
-                xs_html_add(form,
-                    xs_html_tag("p", NULL),
-                    xs_html_sctag("input",
-                        xs_html_attr("type", "submit"),
-                        xs_html_attr("class", "button"),
-                        xs_html_attr("value", L("Vote"))));
-
-                xs_html_add(poll,
-                    poll_form);
-            }
-
-            /* if it's *really* closed, say it */
-            if (closed == 2) {
-                xs_html_add(poll,
-                    xs_html_tag("p",
-                        xs_html_text(L("Closed"))));
-            }
-            else {
-                /* show when the poll closes */
-                char *end_time = xs_dict_get(msg, "endTime");
-                if (!xs_is_null(end_time)) {
-                    time_t t0 = time(NULL);
-                    time_t t1 = xs_parse_iso_date(end_time, 0);
-
-                    if (t1 > 0 && t1 > t0) {
-                        time_t diff_time = t1 - t0;
-                        xs *tf = xs_str_time_diff(diff_time);
-                        char *p = tf;
-
-                        /* skip leading zeros */
-                        for (; *p == '0' || *p == ':'; p++);
-
-                        xs_html_add(poll,
-                            xs_html_tag("p",
-                                xs_html_text(L("Closes in")),
-                                xs_html_text(" "),
-                                xs_html_text(p)));
-                    }
+                    xs_html_add(poll_result,
+                        xs_html_tag("tr",
+                            xs_html_tag("td",
+                                xs_html_text(name),
+                                xs_html_text(":")),
+                            xs_html_tag("td",
+                                xs_html_text(ti))));
                 }
             }
 
-            xs *s1 = xs_html_render(poll);
-            s = xs_str_cat(s, s1);
+            xs_html_add(poll,
+                poll_result);
         }
+        else {
+            /* poll still active */
+            xs *vote_action = xs_fmt("%s/admin/vote", user->actor);
+            xs_html *form;
+            xs_html *poll_form = xs_html_tag("div",
+                xs_html_attr("class", "snac-poll-form"),
+                form = xs_html_tag("form",
+                    xs_html_attr("autocomplete", "off"),
+                    xs_html_attr("method", "post"),
+                    xs_html_attr("action", vote_action),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "hidden"),
+                        xs_html_attr("name", "actor"),
+                        xs_html_attr("value", actor)),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "hidden"),
+                        xs_html_attr("name", "irt"),
+                        xs_html_attr("value", id))));
+
+            while (xs_list_iter(&p, &v)) {
+                char *name = xs_dict_get(v, "name");
+                xs_dict *replies = xs_dict_get(v, "replies");
+
+                if (name) {
+                    char *ti = (char *)xs_number_str(xs_dict_get(replies, "totalItems"));
+
+                    xs_html_add(form,
+                        xs_html_sctag("input",
+                            xs_html_attr("type", !xs_is_null(oo) ? "radio" : "checkbox"),
+                            xs_html_attr("id", name),
+                            xs_html_attr("value", name),
+                            xs_html_attr("name", "question")),
+                        xs_html_text(" "),
+                        xs_html_tag("span",
+                            xs_html_attr("title", ti),
+                            xs_html_text(name)),
+                        xs_html_sctag("br", NULL));
+                }
+            }
+
+            xs_html_add(form,
+                xs_html_tag("p", NULL),
+                xs_html_sctag("input",
+                    xs_html_attr("type", "submit"),
+                    xs_html_attr("class", "button"),
+                    xs_html_attr("value", L("Vote"))));
+
+            xs_html_add(poll,
+                poll_form);
+        }
+
+        /* if it's *really* closed, say it */
+        if (closed == 2) {
+            xs_html_add(poll,
+                xs_html_tag("p",
+                    xs_html_text(L("Closed"))));
+        }
+        else {
+            /* show when the poll closes */
+            char *end_time = xs_dict_get(msg, "endTime");
+            if (!xs_is_null(end_time)) {
+                time_t t0 = time(NULL);
+                time_t t1 = xs_parse_iso_date(end_time, 0);
+
+                if (t1 > 0 && t1 > t0) {
+                    time_t diff_time = t1 - t0;
+                    xs *tf = xs_str_time_diff(diff_time);
+                    char *p = tf;
+
+                    /* skip leading zeros */
+                    for (; *p == '0' || *p == ':'; p++);
+
+                    xs_html_add(poll,
+                        xs_html_tag("p",
+                            xs_html_text(L("Closes in")),
+                            xs_html_text(" "),
+                            xs_html_text(p)));
+                }
+            }
+        }
+
+        xs *s1 = xs_html_render(poll);
+        s = xs_str_cat(s, s1);
     }
 
     s = xs_str_cat(s, "\n");
@@ -1955,11 +1955,17 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
     }
 
     /* has this message an audience (i.e., comes from a channel or community)? */
-    const char *audience = xs_dict_get(msg, "audience");
+    char *audience = xs_dict_get(msg, "audience");
     if (strcmp(type, "Page") == 0 && !xs_is_null(audience)) {
-        xs *es1 = encode_html(audience);
-        xs *s1 = xs_fmt("<p>(<a href=\"%s\" title=\"%s\">%s</a>)</p>\n",
-            audience, L("Source channel or community"), es1);
+        xs_html *au_tag = xs_html_tag("p",
+            xs_html_text("("),
+            xs_html_tag("a",
+                xs_html_attr("href", audience),
+                xs_html_attr("title", L("Source channel or community")),
+                xs_html_text(audience)),
+            xs_html_text(")"));
+
+        xs *s1 = xs_html_render(au_tag);
         s = xs_str_cat(s, s1);
     }
 
