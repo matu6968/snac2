@@ -1512,54 +1512,77 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
 
             if (closed || user == NULL) {
                 /* closed poll */
-                c = xs_str_cat(c, "<table class=\"snac-poll-result\">\n");
+                xs_html *poll_result = xs_html_tag("table",
+                    xs_html_attr("class", "snac-poll-result"));
 
                 while (xs_list_iter(&p, &v)) {
-                    const char *name       = xs_dict_get(v, "name");
-                    const xs_dict *replies = xs_dict_get(v, "replies");
+                    char *name       = xs_dict_get(v, "name");
+                    xs_dict *replies = xs_dict_get(v, "replies");
 
                     if (name && replies) {
-                        int nr = xs_number_get(xs_dict_get(replies, "totalItems"));
-                        xs *es1 = encode_html(name);
-                        xs *l = xs_fmt("<tr><td>%s:</td><td>%d</td></tr>\n", es1, nr);
+                        char *ti = (char *)xs_number_str(xs_dict_get(replies, "totalItems"));
 
-                        c = xs_str_cat(c, l);
+                        xs_html_add(poll_result,
+                            xs_html_tag("tr",
+                                xs_html_tag("td",
+                                    xs_html_text(name),
+                                    xs_html_text(":")),
+                                xs_html_tag("td",
+                                    xs_html_text(ti))));
                     }
                 }
 
-                c = xs_str_cat(c, "</table>\n");
+                xs *s1 = xs_html_render(poll_result);
+                c = xs_str_cat(c, s1);
             }
             else {
                 /* poll still active */
-                xs *s1 = xs_fmt("<div class=\"snac-poll-form\">\n"
-                                "<form autocomplete=\"off\" "
-                                "method=\"post\" action=\"%s/admin/vote\">\n"
-                                "<input type=\"hidden\" name=\"actor\" value= \"%s\">\n"
-                                "<input type=\"hidden\" name=\"irt\" value=\"%s\">\n",
-                    user->actor, actor, id);
+                xs *vote_action = xs_fmt("%s/admin/vote", user->actor);
+                xs_html *form;
+                xs_html *poll = xs_html_tag("div",
+                    xs_html_attr("class", "snac-poll-form"),
+                    form = xs_html_tag("form",
+                        xs_html_attr("autocomplete", "off"),
+                        xs_html_attr("method", "post"),
+                        xs_html_attr("action", vote_action),
+                        xs_html_sctag("input",
+                            xs_html_attr("type", "hidden"),
+                            xs_html_attr("name", "actor"),
+                            xs_html_attr("value", actor)),
+                        xs_html_sctag("input",
+                            xs_html_attr("type", "hidden"),
+                            xs_html_attr("name", "irt"),
+                            xs_html_attr("value", id))));
 
                 while (xs_list_iter(&p, &v)) {
-                    const char *name = xs_dict_get(v, "name");
-                    const xs_dict *replies = xs_dict_get(v, "replies");
+                    char *name = xs_dict_get(v, "name");
+                    xs_dict *replies = xs_dict_get(v, "replies");
 
                     if (name) {
-                        int nr = xs_number_get(xs_dict_get(replies, "totalItems"));
-                        xs *es1 = encode_html(name);
-                        xs *opt = xs_fmt("<input type=\"%s\""
-                                    " id=\"%s\" value=\"%s\""
-                                    " name=\"question\"> <span title=\"%d\">%s</span><br>\n",
-                                    !xs_is_null(oo) ? "radio" : "checkbox",
-                                    es1, es1, nr, es1);
+                        char *ti = (char *)xs_number_str(xs_dict_get(replies, "totalItems"));
 
-                        s1 = xs_str_cat(s1, opt);
+                        xs_html_add(form,
+                            xs_html_sctag("input",
+                                xs_html_attr("type", !xs_is_null(oo) ? "radio" : "checkbox"),
+                                xs_html_attr("id", name),
+                                xs_html_attr("value", name),
+                                xs_html_attr("name", "question")),
+                            xs_html_text(" "),
+                            xs_html_tag("span",
+                                xs_html_attr("title", ti),
+                                xs_html_text(name)),
+                            xs_html_sctag("br", NULL));
                     }
                 }
 
-                xs *s2 = xs_fmt("<p><input type=\"submit\" "
-                                "class=\"button\" value=\"%s\">\n</form>\n</div>\n\n", L("Vote"));
+                xs_html_add(form,
+                    xs_html_tag("p", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "submit"),
+                        xs_html_attr("class", "button"),
+                        xs_html_attr("value", L("Vote"))));
 
-                s1 = xs_str_cat(s1, s2);
-
+                xs *s1 = xs_html_render(poll);
                 c = xs_str_cat(c, s1);
             }
 
