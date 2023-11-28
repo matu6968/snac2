@@ -745,29 +745,33 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
 
     /* user info */
     {
-        s = xs_str_cat(s, "<div class=\"h-card snac-top-user\">\n");
+        xs_html *top_user = xs_html_tag("div",
+            xs_html_attr("class", "h-card snac-top-user"));
 
         if (local) {
-            const char *header = xs_dict_get(snac->config, "header");
+            char *header = xs_dict_get(snac->config, "header");
             if (header && *header) {
-                xs *h = encode_html(header);
-                xs *s1 = xs_fmt("<div class=\"snac-top-user-banner\" style=\"clear: both\">"
-                    "<br><img src=\"%s\"/></div>\n", h);
-                s = xs_str_cat(s, s1);
+                xs_html_add(top_user,
+                    xs_html_tag("div",
+                        xs_html_attr("class", "snac-top-user-banner"),
+                        xs_html_attr("style", "clear: both"),
+                        xs_html_sctag("br", NULL),
+                        xs_html_sctag("img",
+                            xs_html_attr("src", header))));
             }
         }
 
-        const char *_tmpl =
-            "<p class=\"p-name snac-top-user-name\">%s</p>\n"
-            "<p class=\"snac-top-user-id\">@%s@%s</p>\n";
+        xs *handle = xs_fmt("@%s@%s",
+            xs_dict_get(snac->config, "uid"),
+            xs_dict_get(srv_config, "host"));
 
-        xs *es1 = encode_html(xs_dict_get(snac->config, "name"));
-        xs *es2 = encode_html(xs_dict_get(snac->config, "uid"));
-        xs *es3 = encode_html(xs_dict_get(srv_config, "host"));
-
-        xs *s1 = xs_fmt(_tmpl, es1, es2, es3);
-
-        s = xs_str_cat(s, s1);
+        xs_html_add(top_user,
+            xs_html_tag("p",
+                xs_html_attr("class", "p-name snac-top-user-name"),
+                xs_html_text(xs_dict_get(snac->config, "name"))),
+            xs_html_tag("p",
+                xs_html_attr("class", "snac-top-user-id"),
+                xs_html_text(handle)));
 
         if (local) {
             xs *es1  = encode_html(xs_dict_get(snac->config, "bio"));
@@ -779,10 +783,8 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
                 xs_html_attr("class", "p-note snac-top-user-bio"),
                 xs_html_raw(bio2)); /* already sanitized */
 
-            {
-                xs *s1 = xs_html_render(top_user_bio);
-                s = xs_str_cat(s, s1);
-            }
+            xs_html_add(top_user,
+                top_user_bio);
 
             xs_dict *metadata = xs_dict_get(snac->config, "metadata");
             if (xs_type(metadata) == XSTYPE_DICT) {
@@ -814,14 +816,15 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
                         xs_html_sctag("br", NULL));
                 }
 
-                {
-                    xs *s1 = xs_html_render(snac_metadata);
-                    s = xs_str_cat(s, s1);
-                }
+                xs_html_add(top_user,
+                    snac_metadata);
             }
         }
 
-        s = xs_str_cat(s, "</div>\n");
+        {
+            xs *s1 = xs_html_render(top_user);
+            s = xs_str_cat(s, s1);
+        }
     }
 
     return s;
