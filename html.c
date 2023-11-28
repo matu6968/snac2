@@ -1436,7 +1436,6 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
     char *id    = xs_dict_get(msg, "id");
     char *type  = xs_dict_get(msg, "type");
     char *actor;
-    int sensitive = 0;
     char *v;
     xs *boosts = NULL;
 
@@ -1486,18 +1485,21 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
         && !valid_status(actor_get(actor, NULL)))
         return NULL;
 
-    xs_str *s = xs_str_new("<div>\n");
+    /** html_entry top tag **/
+    xs_html *entry_top = xs_html_tag("div", NULL);
 
     {
-        xs *s1 = xs_fmt("<a name=\"%s_entry\"></a>\n", md5);
-
-        s = xs_str_cat(s, s1);
+        xs *s1 = xs_fmt("%s_entry", md5);
+        xs_html_add(entry_top,
+            xs_html_tag("a",
+                xs_html_attr("name", s1)));
     }
 
-    if (level == 0)
-        s = xs_str_cat(s, "<div class=\"snac-post\">\n"); /** **/
-    else
-        s = xs_str_cat(s, "<div class=\"snac-child\">\n"); /** **/
+    xs_html *entry = xs_html_tag("div",
+        xs_html_attr("class", level == 0 ? "snac-post" : "snac-child"));
+
+    xs_html_add(entry_top,
+        entry);
 
     /** post header **/
 
@@ -1506,6 +1508,9 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
         xs_html_attr("class", "snac-post-header"),
         score = xs_html_tag("div",
             xs_html_attr("class", "snac-score")));
+
+    xs_html_add(entry,
+        post_header);
 
     if (user && is_pinned(user, id)) {
         /* add a pin emoji */
@@ -1600,46 +1605,47 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
     xs_html_add(post_header,
         html_msg_icon(msg));
 
-    {
-        xs *s1 = xs_html_render(post_header);
-        s = xs_str_cat(s, s1);
-    }
-
     /** post content **/
 
-    s = xs_str_cat(s, "\n<div class=\"e-content snac-content\">\n"); /** **/
+    xs_html *snac_content_wrap = xs_html_tag("div",
+        xs_html_attr("class", "e-content snac-content"));
+
+    xs_html_add(entry,
+        snac_content_wrap);
 
     if (!xs_is_null(v = xs_dict_get(msg, "name"))) {
-        xs *es1 = encode_html(v);
-        xs *s1  = xs_fmt("<h3 class=\"snac-entry-title\">%s</h3>\n", es1);
-        s = xs_str_cat(s, s1);
+        xs_html_add(snac_content_wrap,
+            xs_html_tag("h3",
+                xs_html_attr("class", "snac-entry-title"),
+                xs_html_text(v)));
     }
+
+    xs_html *snac_content = NULL;
 
     /* is it sensitive? */
     if (user && xs_type(xs_dict_get(msg, "sensitive")) == XSTYPE_TRUE) {
         if (xs_is_null(v = xs_dict_get(msg, "summary")) || *v == '\0')
             v = "...";
+
         /* only show it when not in the public timeline and the config setting is "open" */
         char *cw = xs_dict_get(user->config, "cw");
         if (xs_is_null(cw) || local)
             cw = "";
-        xs *es1 = encode_html(v);
-        xs *s1 = xs_fmt("<details %s><summary>%s [%s]</summary>\n", cw, es1, L("SENSITIVE CONTENT"));
-        s = xs_str_cat(s, s1);
-        sensitive = 1;
-    }
 
-#if 0
-    {
-        xs *md5 = xs_md5_hex(id, strlen(id));
-        xs *s1  = xs_fmt("<p><code>%s</code></p>\n", md5);
-        s = xs_str_cat(s, s1);
+        snac_content = xs_html_tag("details",
+            xs_html_attr(cw, NULL),
+            xs_html_tag("summary",
+                xs_html_text(v),
+                xs_html_text(L("[SENSITIVE CONTENT]"))));
     }
-#endif
+    else
+        snac_content = xs_html_tag("div", NULL);
+
+    xs_html_add(snac_content_wrap,
+        snac_content);
 
     {
         /** build the content string **/
-
         char *content = xs_dict_get(msg, "content");
 
         xs *c = sanitize(xs_is_null(content) ? "" : content);
@@ -1695,7 +1701,8 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
         }
 
         /* c contains sanitized HTML */
-        s = xs_str_cat(s, c);
+        xs_html_add(snac_content,
+            xs_html_raw(c));
     }
 
     if (strcmp(type, "Question") == 0) { /** question content **/
@@ -1825,11 +1832,9 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
             }
         }
 
-        xs *s1 = xs_html_render(poll);
-        s = xs_str_cat(s, s1);
+        xs_html_add(snac_content_wrap,
+            poll);
     }
-
-    s = xs_str_cat(s, "\n");
 
     /* add the attachments */
     v = xs_dict_get(msg, "attachment");
@@ -1857,6 +1862,9 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
         /* make custom css for attachments easier */
         xs_html *content_attachments = xs_html_tag("div",
             xs_html_attr("class", "snac-content-attachments"));
+
+        xs_html_add(snac_content_wrap,
+            content_attachments);
 
         xs_list *p = attach;
 
@@ -1946,11 +1954,6 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
                             xs_html_text(url))));
             }
         }
-
-        {
-            xs *s1 = xs_html_render(content_attachments);
-            s = xs_str_cat(s, s1);
-        }
     }
 
     /* has this message an audience (i.e., comes from a channel or community)? */
@@ -1964,21 +1967,15 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
                 xs_html_text(audience)),
             xs_html_text(")"));
 
-        xs *s1 = xs_html_render(au_tag);
-        s = xs_str_cat(s, s1);
+        xs_html_add(snac_content_wrap,
+            au_tag);
     }
-
-    if (sensitive)
-        s = xs_str_cat(s, "</details><p>\n");
-
-    s = xs_str_cat(s, "</div>\n");
 
     /** controls **/
 
     if (!local && user) {
-        xs_html *h = html_entry_controls(user, msg, md5);
-        xs *s1 = xs_html_render(h);
-        s = xs_str_cat(s, s1);
+        xs_html_add(entry,
+            html_entry_controls(user, msg, md5));
     }
 
     /** children **/
@@ -1991,6 +1988,9 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
                 xs_html_attr("open", NULL),
                 xs_html_tag("summary",
                     xs_html_text("...")));
+
+            xs_html_add(entry,
+                ch_details);
 
             xs_html *ch_container = xs_html_tag("div",
                 xs_html_attr("class", level < 4 ? "snac-children" : "snac-children-too-deep"));
@@ -2033,15 +2033,10 @@ xs_str *html_entry(snac *user, xs_dict *msg, int local,
 
                 left--;
             }
-
-            xs *s1 = xs_html_render(ch_details);
-            s = xs_str_cat(s, s1);
         }
     }
 
-    s = xs_str_cat(s, "</div>\n</div>\n");
-
-    return s;
+    return xs_html_render(entry_top);
 }
 
 
