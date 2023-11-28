@@ -774,34 +774,50 @@ xs_str *html_user_header(snac *snac, xs_str *s, int local)
             xs *bio1 = not_really_markdown(es1, NULL);
             xs *tags = xs_list_new();
             xs *bio2 = process_tags(snac, bio1, &tags);
-            xs *s1   = xs_fmt("<div class=\"p-note snac-top-user-bio\">%s</div>\n", bio2);
 
-            s = xs_str_cat(s, s1);
+            xs_html *top_user_bio = xs_html_tag("div",
+                xs_html_attr("class", "p-note snac-top-user-bio"),
+                xs_html_raw(bio2)); /* already sanitized */
+
+            {
+                xs *s1 = xs_html_render(top_user_bio);
+                s = xs_str_cat(s, s1);
+            }
 
             xs_dict *metadata = xs_dict_get(snac->config, "metadata");
             if (xs_type(metadata) == XSTYPE_DICT) {
                 xs_str *k;
                 xs_str *v;
 
-                s = xs_str_cat(s, "<br><div class=\"snac-metadata\">\n");
+                xs_html *snac_metadata = xs_html_tag("div",
+                    xs_html_attr("class", "snac-metadata"));
 
                 while (xs_dict_iter(&metadata, &k, &v)) {
-                    xs *k2 = encode_html(k);
-                    xs *v2 = encode_html(v);
-                    xs *v3 = NULL;
+                    xs_html *value;
 
                     if (xs_startswith(v, "https:/" "/"))
-                        v3 = xs_fmt("<a href=\"%s\">%s</a>", v2, v2);
+                        value = xs_html_tag("a",
+                            xs_html_attr("href", v),
+                            xs_html_text(v));
                     else
-                        v3 = xs_dup(v2);
+                        value = xs_html_text(v);
 
-                    xs *s1 = xs_fmt("<span class=\"snac-property-name\">%s</span>:<br>"
-                            "<span class=\"snac-property-value\">%s</span><br>\n", k2, v3);
-
-                    s = xs_str_cat(s, s1);
+                    xs_html_add(snac_metadata,
+                        xs_html_tag("span",
+                            xs_html_attr("class", "snac-property-name"),
+                            xs_html_text(k)),
+                        xs_html_text(":"),
+                        xs_html_sctag("br", NULL),
+                        xs_html_tag("span",
+                            xs_html_attr("class", "snac-property-value"),
+                            value),
+                        xs_html_sctag("br", NULL));
                 }
 
-                s = xs_str_cat(s, "</div>\n");
+                {
+                    xs *s1 = xs_html_render(snac_metadata);
+                    s = xs_str_cat(s, s1);
+                }
             }
         }
 
