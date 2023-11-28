@@ -2274,35 +2274,19 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
 }
 
 
-xs_str *html_people(snac *snac)
+xs_str *html_people(snac *user)
 {
-    xs_str *s = xs_str_new(NULL);
-    xs *wing = following_list(snac);
-    xs *wers = follower_list(snac);
+    xs *wing = following_list(user);
+    xs *wers = follower_list(user);
 
-    s = html_user_header(snac, s, 0);
+    xs_html *html = xs_html_tag("html",
+        html_user_head(user),
+        xs_html_add(html_user_body(user, 0),
+            html_people_list(user, wing, L("People you follow"), "i"),
+            html_people_list(user, wers, L("People that follow you"), "e"),
+            html_footer()));
 
-    {
-        xs_html *h = html_people_list(snac, wing, L("People you follow"), "i");
-        xs *s1 = xs_html_render(h);
-        s = xs_str_cat(s, s1);
-    }
-
-    {
-        xs_html *h = html_people_list(snac, wers, L("People that follow you"), "e");
-        xs *s1 = xs_html_render(h);
-        s = xs_str_cat(s, s1);
-    }
-
-    {
-        xs_html *h = html_footer();
-        xs *s1 = xs_html_render(h);
-        s = xs_str_cat(s, s1);
-    }
-
-    s = xs_str_cat(s, "</body>\n</html>\n");
-
-    return s;
+    return xs_html_render_s(html, "<!DOCTYPE html>\n");
 }
 
 
