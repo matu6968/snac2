@@ -1988,25 +1988,27 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
         int left     = xs_list_len(children);
 
         if (left) {
-            char *p, *cmd5;
-            int older_open = 0;
-            xs *ss = xs_str_new(NULL);
-            int n_children = 0;
+            xs_html *ch_details = xs_html_tag("details",
+                xs_html_attr("open", NULL),
+                xs_html_tag("summary",
+                    xs_html_text("...")));
 
-            ss = xs_str_cat(ss, "<details open><summary>...</summary><p>\n");
+            xs_html *ch_container = xs_html_tag("div",
+                xs_html_attr("class", level < 4 ? "snac-children" : "snac-children-too-deep"));
 
-            if (level < 4)
-                ss = xs_str_cat(ss, "<div class=\"snac-children\">\n");
-            else
-                ss = xs_str_cat(ss, "<div>\n");
+            xs_html_add(ch_details,
+                ch_container);
 
+            xs_html *ch_older = NULL;
             if (left > 3) {
-                xs *s1 = xs_fmt("<details><summary>%s</summary>\n", L("Older..."));
-                ss = xs_str_cat(ss, s1);
-                older_open = 1;
+                xs_html_add(ch_container,
+                    ch_older = xs_html_tag("details",
+                        xs_html_tag("summary",
+                            xs_html_text(L("Older...")))));
             }
 
-            p = children;
+            xs_list *p = children;
+            char *cmd5;
             while (xs_list_iter(&p, &cmd5)) {
                 xs *chd = NULL;
 
@@ -2015,14 +2017,16 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                 else
                     object_get_by_md5(cmd5, &chd);
 
-                if (older_open && left <= 3) {
-                    ss = xs_str_cat(ss, "</details>\n");
-                    older_open = 0;
-                }
-
                 if (chd != NULL && xs_is_null(xs_dict_get(chd, "name"))) {
-                    ss = html_entry(user, ss, chd, local, level + 1, cmd5, hide_children);
-                    n_children++;
+                    xs *s1 = xs_str_new(NULL);
+                    s1 = html_entry(user, s1, chd, local, level + 1, cmd5, hide_children);
+
+                    if (left > 3)
+                        xs_html_add(ch_older,
+                            xs_html_raw(s1));
+                    else
+                        xs_html_add(ch_container,
+                            xs_html_raw(s1));
                 }
                 else
                     srv_debug(2, xs_fmt("cannot read child %s", cmd5));
@@ -2030,14 +2034,8 @@ xs_str *html_entry(snac *user, xs_str *os, const xs_dict *msg, int local,
                 left--;
             }
 
-            if (older_open)
-                ss = xs_str_cat(ss, "</details>\n");
-
-            ss = xs_str_cat(ss, "</div>\n");
-            ss = xs_str_cat(ss, "</details>\n");
-
-            if (n_children)
-                s = xs_str_cat(s, ss);
+            xs *s1 = xs_html_render(ch_details);
+            s = xs_str_cat(s, s1);
         }
     }
 
