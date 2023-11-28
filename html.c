@@ -434,7 +434,7 @@ xs_html *html_instance_head(void)
 }
 
 
-xs_html *html_instance_body(char *tag)
+static xs_html *html_instance_body(char *tag)
 {
     char *host  = xs_dict_get(srv_config, "host");
     char *sdesc = xs_dict_get(srv_config, "short_description");
@@ -655,8 +655,168 @@ xs_html *html_user_head(snac *user)
 }
 
 
-xs_str *html_user_header(snac *snac, xs_str *s, int local)
-/* creates the HTML header */
+static xs_html *html_user_body(snac *user, int local)
+{
+    xs_html *body = xs_html_tag("body", NULL);
+
+    /* top nav */
+    xs_html *top_nav = xs_html_tag("nav",
+        xs_html_attr("class", "snac-top-nav"));
+
+    xs *avatar = xs_dup(xs_dict_get(user->config, "avatar"));
+
+    if (avatar == NULL || *avatar == '\0') {
+        xs_free(avatar);
+        avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
+    }
+
+    xs_html_add(top_nav,
+        xs_html_sctag("img",
+            xs_html_attr("src", avatar),
+            xs_html_attr("class", "snac-avatar"),
+            xs_html_attr("alt", "")));
+
+    if (local) {
+        xs *rss_url = xs_fmt("%s.rss", user->actor);
+        xs *admin_url = xs_fmt("%s/admin", user->actor);
+
+        xs_html_add(top_nav,
+            xs_html_tag("a",
+                xs_html_attr("href", rss_url),
+                xs_html_text(L("RSS"))),
+            xs_html_text(" - "),
+            xs_html_tag("a",
+                xs_html_attr("href", admin_url),
+                xs_html_attr("rel", "nofollow"),
+                xs_html_text(L("private"))));
+    }
+    else {
+        xs *n_list = notify_list(user, 1);
+        int n_len  = xs_list_len(n_list);
+        xs *n_str  = NULL;
+        xs_html *notify_count = NULL;
+
+        /* show the number of new notifications, if there are any */
+        if (n_len) {
+            xs *n_len_str = xs_fmt(" %d ", n_len);
+            notify_count = xs_html_tag("sup",
+                xs_html_attr("style", "background-color: red; color: white;"),
+                xs_html_text(n_len_str));
+        }
+        else
+            notify_count = xs_html_text("");
+
+        xs *admin_url = xs_fmt("%s/admin", user->actor);
+        xs *notify_url = xs_fmt("%s/notifications", user->actor);
+        xs *people_url = xs_fmt("%s/people", user->actor);
+        xs_html_add(top_nav,
+            xs_html_tag("a",
+                xs_html_attr("href", user->actor),
+                xs_html_text(L("public"))),
+            xs_html_text(" - "),
+            xs_html_tag("a",
+                xs_html_attr("href", admin_url),
+                xs_html_text(L("private"))),
+            xs_html_text(" - "),
+            xs_html_tag("a",
+                xs_html_attr("href", notify_url),
+                xs_html_text(L("notifications"))),
+            notify_count,
+            xs_html_text(" - "),
+            xs_html_tag("a",
+                xs_html_attr("href", people_url),
+                xs_html_text(L("people"))));
+    }
+
+    xs_html_add(body,
+        top_nav);
+
+    /* user info */
+    xs_html *top_user = xs_html_tag("div",
+        xs_html_attr("class", "h-card snac-top-user"));
+
+    if (local) {
+        char *header = xs_dict_get(user->config, "header");
+        if (header && *header) {
+            xs_html_add(top_user,
+                xs_html_tag("div",
+                    xs_html_attr("class", "snac-top-user-banner"),
+                    xs_html_attr("style", "clear: both"),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("img",
+                        xs_html_attr("src", header))));
+        }
+    }
+
+    xs *handle = xs_fmt("@%s@%s",
+        xs_dict_get(user->config, "uid"),
+        xs_dict_get(srv_config, "host"));
+
+    xs_html_add(top_user,
+        xs_html_tag("p",
+            xs_html_attr("class", "p-name snac-top-user-name"),
+            xs_html_text(xs_dict_get(user->config, "name"))),
+        xs_html_tag("p",
+            xs_html_attr("class", "snac-top-user-id"),
+            xs_html_text(handle)));
+
+    if (local) {
+        xs *es1  = encode_html(xs_dict_get(user->config, "bio"));
+        xs *bio1 = not_really_markdown(es1, NULL);
+        xs *tags = xs_list_new();
+        xs *bio2 = process_tags(user, bio1, &tags);
+
+        xs_html *top_user_bio = xs_html_tag("div",
+            xs_html_attr("class", "p-note snac-top-user-bio"),
+            xs_html_raw(bio2)); /* already sanitized */
+
+        xs_html_add(top_user,
+            top_user_bio);
+
+        xs_dict *metadata = xs_dict_get(user->config, "metadata");
+        if (xs_type(metadata) == XSTYPE_DICT) {
+            xs_str *k;
+            xs_str *v;
+
+            xs_html *snac_metadata = xs_html_tag("div",
+                xs_html_attr("class", "snac-metadata"));
+
+            while (xs_dict_iter(&metadata, &k, &v)) {
+                xs_html *value;
+
+                if (xs_startswith(v, "https:/" "/"))
+                    value = xs_html_tag("a",
+                        xs_html_attr("href", v),
+                        xs_html_text(v));
+                else
+                    value = xs_html_text(v);
+
+                xs_html_add(snac_metadata,
+                    xs_html_tag("span",
+                        xs_html_attr("class", "snac-property-name"),
+                        xs_html_text(k)),
+                    xs_html_text(":"),
+                    xs_html_sctag("br", NULL),
+                    xs_html_tag("span",
+                        xs_html_attr("class", "snac-property-value"),
+                        value),
+                    xs_html_sctag("br", NULL));
+            }
+
+            xs_html_add(top_user,
+                snac_metadata);
+        }
+    }
+
+    xs_html_add(body,
+        top_user);
+
+    return body;
+}
+
+
+static xs_str *html_user_header(snac *snac, xs_str *s, int local)
+/* TO BE REPLACED BY html_user_body() */
 {
     xs_html *head = html_user_head(snac);
 
