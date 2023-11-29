@@ -2456,7 +2456,7 @@ xs_str *html_notifications(snac *user)
 
     if (noti_new == NULL && noti_seen == NULL)
         xs_html_add(body,
-            xs_html_tag("hd",
+            xs_html_tag("h2",
                 xs_html_attr("class", "snac-header"),
                 xs_html_text(L("None"))));
 
