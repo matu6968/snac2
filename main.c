@@ -209,19 +209,6 @@ int main(int argc, char *argv[])
         srv_free();
 #endif
 
-        {
-            xs_html *note = html_note(&snac, "Note...",
-                "DIV_ID", "FORM_ID",
-                "TEXTAREA_PLACEHOLDER", "TEXTAREA_CONTENT",
-                "EDIT_ID", "ACTOR_ID",
-                xs_stock_false, "CW_TEXT",
-                xs_stock_false, "REDIR",
-                "IN_REPLY_TO", 1);
-
-            xs *s1 = xs_html_render(note);
-            printf("\n%s\n", s1);
-        }
-
         xs *idx  = xs_fmt("%s/private.idx", snac.basedir);
         xs *list = index_list_desc(idx, 0, 256);
         xs *tl   = timeline_top_level(&snac, list);

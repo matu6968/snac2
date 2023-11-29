@@ -2059,24 +2059,39 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
                       int skip, int show, int show_more, char *tag)
 /* returns the HTML for the timeline */
 {
-    xs_str *s = xs_str_new(NULL);
     xs_list *p = (xs_list *)list;
     char *v;
     double t = ftime();
 
-    if (user)
-        s = html_user_header(user, s, local);
-    else
-        s = html_instance_header(s, tag);
+    xs_html *head;
+    xs_html *body;
 
-    if (user && !local) {
-        xs_html *h = html_top_controls(user);
-        xs *s1 = xs_html_render(h);
-        s = xs_str_cat(s, s1);
+    if (user) {
+        head = html_user_head(user);
+        body = html_user_body(user, local);
+    }
+    else {
+        head = html_instance_head();
+        body = html_instance_body(tag);
     }
 
-    s = xs_str_cat(s, "<a name=\"snac-posts\"></a>\n");
-    s = xs_str_cat(s, "<div class=\"snac-posts\">\n");
+    xs_html *html = xs_html_tag("html",
+        head,
+        body);
+
+    if (user && !local)
+        xs_html_add(body,
+            html_top_controls(user));
+
+    xs_html_add(body,
+        xs_html_tag("a",
+            xs_html_attr("name", "snac-posts")));
+
+    xs_html *posts = xs_html_tag("div",
+        xs_html_attr("class", "snac-posts"));
+
+    xs_html_add(body,
+        posts);
 
     while (xs_list_iter(&p, &v)) {
         xs *msg = NULL;
@@ -2111,19 +2126,13 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
 
         xs_html *entry = html_entry(user, msg, local, 0, v, user ? 0 : 1);
 
-        if (entry != NULL) {
-            xs *s1 = xs_html_render(entry);
-            s = xs_str_cat(s, s1);
-        }
+        if (entry != NULL)
+            xs_html_add(posts,
+                entry);
     }
 
-    s = xs_str_cat(s, "</div>\n");
-
     if (list && user && local) {
-        if (xs_type(xs_dict_get(srv_config, "disable_history")) == XSTYPE_TRUE) {
-            s = xs_str_cat(s, "<!-- history disabled -->\n");
-        }
-        else {
+        if (xs_type(xs_dict_get(srv_config, "disable_history")) != XSTYPE_TRUE) {
             xs_html *ul = xs_html_tag("ul", NULL);
 
             xs_html *history = xs_html_tag("div",
@@ -2148,14 +2157,15 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
                             xs_html_text(fn))));
             }
 
-            xs *s1 = xs_html_render(history);
-            s = xs_str_cat(s, s1);
+            xs_html_add(body,
+                history);
         }
     }
 
     {
-        xs *s1 = xs_fmt("<!-- %lf seconds -->\n", ftime() - t);
-        s = xs_str_cat(s, s1);
+        xs *s1 = xs_fmt("\n<!-- %lf seconds -->\n", ftime() - t);
+        xs_html_add(body,
+            xs_html_raw(s1));
     }
 
     if (show_more) {
@@ -2183,19 +2193,14 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
                 xs_html_attr("name", "snac-more"),
                 xs_html_text(L("More..."))));
 
-        xs *s1 = xs_html_render(more_links);
-        s = xs_str_cat(s, s1);
+        xs_html_add(body,
+            more_links);
     }
 
-    {
-        xs_html *h = html_footer();
-        xs *s1 = xs_html_render(h);
-        s = xs_str_cat(s, s1);
-    }
+    xs_html_add(body,
+        html_footer());
 
-    s = xs_str_cat(s, "</body>\n</html>\n");
-
-    return s;
+    return xs_html_render_s(html, "<!DOCTYPE html>\n");
 }
 
 
