@@ -2331,85 +2331,60 @@ xs_str *html_people(snac *user)
 }
 
 
-xs_str *html_notifications(snac *snac)
+xs_str *html_notifications(snac *user)
 {
-    xs_str *s  = xs_str_new(NULL);
-    xs *n_list = notify_list(snac, 0);
-    xs *n_time = notify_check_time(snac, 0);
+    xs *n_list = notify_list(user, 0);
+    xs *n_time = notify_check_time(user, 0);
+
+    xs_html *body = html_user_body(user, 0);
+
+    xs_html *html = xs_html_tag("html",
+        html_user_head(user),
+        body);
+
+    xs *clear_all_action = xs_fmt("%s/admin/clear-notifications", user->actor);
+
+    xs_html_add(body,
+        xs_html_tag("form",
+            xs_html_attr("autocomplete", "off"),
+            xs_html_attr("method",       "post"),
+            xs_html_attr("action",       clear_all_action),
+            xs_html_attr("id",           "clear"),
+            xs_html_sctag("input",
+                xs_html_attr("type",     "submit"),
+                xs_html_attr("class",    "snac-btn-like"),
+                xs_html_attr("value",    L("Clear all")))));
+
+    xs_html *noti_new = NULL;
+    xs_html *noti_seen = NULL;
+
     xs_list *p = n_list;
     xs_str *v;
-    enum { NHDR_NONE, NHDR_NEW, NHDR_OLD } stage = NHDR_NONE;
-
-    s = html_user_header(snac, s, 0);
-
-    xs *clear_all_action = xs_fmt("%s/admin/clear-notifications", snac->actor);
-    xs_html *clear_all_form = xs_html_tag("form",
-        xs_html_attr("autocomplete", "off"),
-        xs_html_attr("method",       "post"),
-        xs_html_attr("action",       clear_all_action),
-        xs_html_attr("id",           "clear"),
-        xs_html_sctag("input",
-            xs_html_attr("type",     "submit"),
-            xs_html_attr("class",    "snac-btn-like"),
-            xs_html_attr("value",    L("Clear all"))));
-
-    {
-        xs *s1 = xs_html_render(clear_all_form);
-        s = xs_str_cat(s, s1);
-    }
-
     while (xs_list_iter(&p, &v)) {
-        xs *noti = notify_get(snac, v);
+        xs *noti = notify_get(user, v);
 
         if (noti == NULL)
             continue;
 
         xs *obj = NULL;
-        const char *type  = xs_dict_get(noti, "type");
-        const char *utype = xs_dict_get(noti, "utype");
-        const char *id    = xs_dict_get(noti, "objid");
+        char *type  = xs_dict_get(noti, "type");
+        char *utype = xs_dict_get(noti, "utype");
+        char *id    = xs_dict_get(noti, "objid");
 
         if (xs_is_null(id) || !valid_status(object_get(id, &obj)))
             continue;
 
-        if (is_hidden(snac, id))
+        if (is_hidden(user, id))
             continue;
 
-        const char *actor_id = xs_dict_get(noti, "actor");
+        char *actor_id = xs_dict_get(noti, "actor");
         xs *actor = NULL;
 
         if (!valid_status(actor_get(actor_id, &actor)))
             continue;
 
         xs *a_name = actor_name(actor);
-
-        if (strcmp(v, n_time) > 0) {
-            /* unseen notification */
-            if (stage == NHDR_NONE) {
-                xs *s1 = xs_fmt("<h2 class=\"snac-header\">%s</h2>\n", L("New"));
-                s = xs_str_cat(s, s1);
-
-                s = xs_str_cat(s, "<div class=\"snac-posts\">\n");
-
-                stage = NHDR_NEW;
-            }
-        }
-        else {
-            /* already seen notification */
-            if (stage != NHDR_OLD) {
-                if (stage == NHDR_NEW)
-                    s = xs_str_cat(s, "</div>\n");
-
-                xs *s1 = xs_fmt("<h2 class=\"snac-header\">%s</h2>\n", L("Already seen"));
-                s = xs_str_cat(s, s1);
-
-                s = xs_str_cat(s, "<div class=\"snac-posts\">\n");
-
-                stage = NHDR_OLD;
-            }
-        }
-
-        const char *label = type;
+        char *label = type;
 
         if (strcmp(type, "Create") == 0)
             label = L("Mention");
@@ -2420,56 +2395,81 @@ xs_str *html_notifications(snac *snac)
         if (strcmp(type, "Undo") == 0 && strcmp(utype, "Follow") == 0)
             label = L("Unfollow");
 
-        xs *es1 = encode_html(label);
-        xs *s1 = xs_fmt("<div class=\"snac-post-with-desc\">\n"
-                        "<p><b>%s by <a href=\"%s\">%s</a></b>:</p>\n",
-            es1, actor_id, a_name);
-        s = xs_str_cat(s, s1);
+        xs_html *entry = xs_html_tag("div",
+            xs_html_attr("class", "snac-post-with-desc"),
+            xs_html_tag("p",
+                xs_html_tag("b",
+                    xs_html_text(label),
+                    xs_html_text(" by "),
+                    xs_html_tag("a",
+                        xs_html_attr("href", actor_id),
+                        xs_html_raw(a_name))))); /* a_name is already sanitized */
 
         if (strcmp(type, "Follow") == 0 || strcmp(utype, "Follow") == 0) {
-            xs_html *div = xs_html_tag("div",
-                xs_html_attr("class", "snac-post"),
-                html_actor_icon(actor, NULL, NULL, NULL, 0));
-
-            xs *s1 = xs_html_render(div);
-            s = xs_str_cat(s, s1);
+            xs_html_add(entry,
+                xs_html_tag("div",
+                    xs_html_attr("class", "snac-post"),
+                    html_actor_icon(actor, NULL, NULL, NULL, 0)));
         }
         else {
             xs *md5 = xs_md5_hex(id, strlen(id));
 
-            xs_html *entry = html_entry(snac, obj, 0, 0, md5, 1);
+            xs_html *h = html_entry(user, obj, 0, 0, md5, 1);
 
-            if (entry != NULL) {
-                xs *s1 = xs_html_render(entry);
-                s = xs_str_cat(s, s1);
+            if (h != NULL) {
+                xs_html_add(entry,
+                    h);
             }
         }
 
-        s = xs_str_cat(s, "</div>\n");
+        if (strcmp(v, n_time) > 0) {
+            /* unseen notification */
+            if (noti_new == NULL) {
+                noti_new = xs_html_tag("div",
+                    xs_html_tag("h2",
+                        xs_html_attr("class", "snac-header"),
+                        xs_html_text(L("New"))));
+
+                xs_html_add(body,
+                    noti_new);
+            }
+
+            xs_html_add(noti_new,
+                entry);
+        }
+        else {
+            /* already seen notification */
+            if (noti_seen == NULL) {
+                noti_seen = xs_html_tag("div",
+                    xs_html_tag("h2",
+                        xs_html_attr("class", "snac-header"),
+                        xs_html_text(L("Already seen"))));
+
+                xs_html_add(body,
+                    noti_seen);
+            }
+
+            xs_html_add(noti_seen,
+                entry);
+        }
     }
 
-    if (stage == NHDR_NONE) {
-        xs *s1 = xs_fmt("<h2 class=\"snac-header\">%s</h2>\n", L("None"));
-        s = xs_str_cat(s, s1);
-    }
-    else
-        s = xs_str_cat(s, "</div>\n");
+    if (noti_new == NULL && noti_seen == NULL)
+        xs_html_add(body,
+            xs_html_tag("hd",
+                xs_html_attr("class", "snac-header"),
+                xs_html_text(L("None"))));
 
-    {
-        xs_html *h = html_footer();
-        xs *s1 = xs_html_render(h);
-        s = xs_str_cat(s, s1);
-    }
-
-    s = xs_str_cat(s, "</body>\n</html>\n");
+    xs_html_add(body,
+        html_footer());
 
     /* set the check time to now */
-    xs *dummy = notify_check_time(snac, 1);
+    xs *dummy = notify_check_time(user, 1);
     dummy = xs_free(dummy);
 
-    timeline_touch(snac);
+    timeline_touch(user);
 
-    return s;
+    return xs_html_render_s(html, "<!DOCTYPE html>\n");
 }
 
 
