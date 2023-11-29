@@ -1198,7 +1198,6 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
     char *type  = xs_dict_get(msg, "type");
     char *actor;
     char *v;
-    xs *boosts = NULL;
 
     /* do not show non-public messages in the public timeline */
     if ((local || !user) && !is_msg_public(msg))
@@ -1307,8 +1306,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
             xs_html_raw(s1));
     }
 
-    if (boosts == NULL)
-        boosts = object_announces(id);
+    xs *boosts = object_announces(id);
 
     if (xs_list_len(boosts)) {
         /* if somebody boosted this, show as origin */
