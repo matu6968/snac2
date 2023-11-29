@@ -2,7 +2,7 @@
 
 ## 2.44
 
-All code that generates HTML is being refactored. THIS IS A WORK IN PROGRESS.
+I've refactored all HTML code because it was somewhat of a mess; now it's much more maintainable (at least for me). I think I haven't broken anything.
 
 Fixed crash in a special case of malformed query.
 
