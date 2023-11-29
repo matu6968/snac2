@@ -545,47 +545,37 @@ xs_html *html_user_head(snac *user)
 
     if (avatar == NULL || *avatar == '\0') {
         xs_free(avatar);
-        avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
+        avatar = xs_fmt("%s/susie.png", srv_baseurl);
     }
 
-    {
-        xs *s_bio = xs_dup(xs_dict_get(user->config, "bio"));
-        int n;
+    xs *s_bio = xs_dup(xs_dict_get(user->config, "bio"));
+    int n;
 
-        /* shorten the bio */
-        for (n = 0; s_bio[n] && s_bio[n] != '&' && s_bio[n] != '.' &&
-                    s_bio[n] != '\r' && s_bio[n] != '\n' && n < 128; n++);
-        s_bio[n] = '\0';
+    /* shorten the bio */
+    for (n = 0; s_bio[n] && s_bio[n] != '&' && s_bio[n] != '.' &&
+                s_bio[n] != '\r' && s_bio[n] != '\n' && n < 128; n++);
+    s_bio[n] = '\0';
 
-        xs *s_avatar = xs_dup(avatar);
-
-        /* don't inline an empty avatar: create a real link */
-        if (xs_startswith(s_avatar, "data:")) {
-            xs_free(s_avatar);
-            s_avatar = xs_fmt("%s/susie.png", srv_baseurl);
-        }
-
-        /* og properties */
-        xs_html_add(head,
-            xs_html_sctag("meta",
-                xs_html_attr("property", "og:site_name"),
-                xs_html_attr("content", xs_dict_get(srv_config, "host"))),
-            xs_html_sctag("meta",
-                xs_html_attr("property", "og:title"),
-                xs_html_attr("content", title)),
-            xs_html_sctag("meta",
-                xs_html_attr("property", "og:description"),
-                xs_html_attr("content", s_bio)),
-            xs_html_sctag("meta",
-                xs_html_attr("property", "og:image"),
-                xs_html_attr("content", s_avatar)),
-            xs_html_sctag("meta",
-                xs_html_attr("property", "og:width"),
-                xs_html_attr("content", "300")),
-            xs_html_sctag("meta",
-                xs_html_attr("property", "og:height"),
-                xs_html_attr("content", "300")));
-    }
+    /* og properties */
+    xs_html_add(head,
+        xs_html_sctag("meta",
+            xs_html_attr("property", "og:site_name"),
+            xs_html_attr("content", xs_dict_get(srv_config, "host"))),
+        xs_html_sctag("meta",
+            xs_html_attr("property", "og:title"),
+            xs_html_attr("content", title)),
+        xs_html_sctag("meta",
+            xs_html_attr("property", "og:description"),
+            xs_html_attr("content", s_bio)),
+        xs_html_sctag("meta",
+            xs_html_attr("property", "og:image"),
+            xs_html_attr("content", avatar)),
+        xs_html_sctag("meta",
+            xs_html_attr("property", "og:width"),
+            xs_html_attr("content", "300")),
+        xs_html_sctag("meta",
+            xs_html_attr("property", "og:height"),
+            xs_html_attr("content", "300")));
 
     /* RSS link */
     xs *rss_url = xs_fmt("%s.rss", user->actor);
