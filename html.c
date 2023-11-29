@@ -2172,15 +2172,18 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
             m = xs_fmt("%s?%s", t, ss);
         }
 
-        xs *s1 = xs_fmt(
-            "<p>"
-            "<a href=\"%s\" name=\"snac-more\">%s</a> - "
-            "<a href=\"%s\" name=\"snac-more\">%s</a>"
-            "</p>\n",
-            t, L("Back to top"),
-            m, L("More...")
-        );
+        xs_html *more_links = xs_html_tag("p",
+            xs_html_tag("a",
+                xs_html_attr("href", t),
+                xs_html_attr("name", "snac-more"),
+                xs_html_text(L("Back to top"))),
+            xs_html_text(" - "),
+            xs_html_tag("a",
+                xs_html_attr("href", m),
+                xs_html_attr("name", "snac-more"),
+                xs_html_text(L("More..."))));
 
+        xs *s1 = xs_html_render(more_links);
         s = xs_str_cat(s, s1);
     }
 
