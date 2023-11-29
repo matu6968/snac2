@@ -41,37 +41,24 @@ int login(snac *snac, const xs_dict *headers)
 }
 
 
-xs_str *actor_name(xs_dict *actor)
-/* gets the actor name */
+xs_str *replace_shortnames(xs_str *s, xs_list *tag)
+/* replaces all the :shortnames: with the emojis in tag */
 {
-    xs_list *p;
-    char *v;
-    xs_str *name;
-
-    if (xs_is_null((v = xs_dict_get(actor, "name"))) || *v == '\0') {
-        if (xs_is_null(v = xs_dict_get(actor, "preferredUsername")) || *v == '\0') {
-            v = "anonymous";
-        }
-    }
-
-    name = encode_html(v);
-
-    /* replace the :shortnames: */
-    if (!xs_is_null(p = xs_dict_get(actor, "tag"))) {
-        xs *tag = NULL;
-        if (xs_type(p) == XSTYPE_DICT) {
+    if (!xs_is_null(tag)) {
+        xs *tag_list = NULL;
+        if (xs_type(tag) == XSTYPE_DICT) {
             /* not a list */
-            tag = xs_list_new();
-            tag = xs_list_append(tag, p);
+            tag_list = xs_list_new();
+            tag_list = xs_list_append(tag_list, tag);
         } else {
             /* is a list */
-            tag = xs_dup(p);
+            tag_list = xs_dup(tag);
         }
 
-        xs_list *tags = tag;
+        xs_list *p = tag_list;
+        char *v;
 
-        /* iterate the tags */
-        while (xs_list_iter(&tags, &v)) {
+        while (xs_list_iter(&p, &v)) {
             char *t = xs_dict_get(v, "type");
 
             if (t && strcmp(t, "Emoji") == 0) {
@@ -80,16 +67,34 @@ xs_str *actor_name(xs_dict *actor)
 
                 if (n && i) {
                     char *u = xs_dict_get(i, "url");
-                    xs *img = xs_fmt("<img loading=\"lazy\" src=\"%s\" "
-                        "style=\"height: 1em; vertical-align: middle;\"/>", u);
+                    xs_html *img = xs_html_sctag("img",
+                        xs_html_attr("loading", "lazy"),
+                        xs_html_attr("src", u),
+                        xs_html_attr("style", "height: 1em; vertical-align: middle;"));
 
-                    name = xs_replace_i(name, n, img);
+                    xs *s1 = xs_html_render(img);
+                    s = xs_replace_i(s, n, s1);
                 }
             }
         }
     }
 
-    return name;
+    return s;
+}
+
+
+xs_str *actor_name(xs_dict *actor)
+/* gets the actor name */
+{
+    char *v;
+
+    if (xs_is_null((v = xs_dict_get(actor, "name"))) || *v == '\0') {
+        if (xs_is_null(v = xs_dict_get(actor, "preferredUsername")) || *v == '\0') {
+            v = "anonymous";
+        }
+    }
+
+    return replace_shortnames(xs_html_encode(v), xs_dict_get(actor, "tag"));
 }
 
 
@@ -1413,7 +1418,6 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
         char *content = xs_dict_get(msg, "content");
 
         xs *c = sanitize(xs_is_null(content) ? "" : content);
-        char *p, *v;
 
         /* do some tweaks to the content */
         c = xs_replace_i(c, "\r", "");
@@ -1429,40 +1433,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
         }
 
         /* replace the :shortnames: */
-        if (!xs_is_null(p = xs_dict_get(msg, "tag"))) {
-            xs *tag = NULL;
-            if (xs_type(p) == XSTYPE_DICT) {
-                /* not a list */
-                tag = xs_list_new();
-                tag = xs_list_append(tag, p);
-            }
-            else
-            if (xs_type(p) == XSTYPE_LIST)
-                tag = xs_dup(p);
-            else
-                tag = xs_list_new();
-
-            xs_list *tags = tag;
-
-            /* iterate the tags */
-            while (xs_list_iter(&tags, &v)) {
-                char *t = xs_dict_get(v, "type");
-
-                if (t && strcmp(t, "Emoji") == 0) {
-                    char *n = xs_dict_get(v, "name");
-                    char *i = xs_dict_get(v, "icon");
-
-                    if (n && i) {
-                        char *u = xs_dict_get(i, "url");
-                        xs *img = xs_fmt("<img loading=\"lazy\" src=\"%s\" "
-                                        "style=\"height: 2em; vertical-align: middle;\" "
-                                        "title=\"%s\"/>", u, n);
-
-                        c = xs_replace_i(c, n, img);
-                    }
-                }
-            }
-        }
+        c = replace_shortnames(c, xs_dict_get(msg, "tag"));
 
         /* c contains sanitized HTML */
         xs_html_add(snac_content,
