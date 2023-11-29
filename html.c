@@ -2124,28 +2124,32 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
             s = xs_str_cat(s, "<!-- history disabled -->\n");
         }
         else {
-            xs *s1 = xs_fmt(
-                "<div class=\"snac-history\">\n"
-                "<p class=\"snac-history-title\">%s</p><ul>\n",
-                L("History")
-            );
+            xs_html *ul = xs_html_tag("ul", NULL);
 
-            s = xs_str_cat(s, s1);
+            xs_html *history = xs_html_tag("div",
+                xs_html_attr("class", "snac-history"),
+                xs_html_tag("p",
+                    xs_html_attr("class", "snac-history-title"),
+                    xs_html_text(L("History"))),
+                    ul);
 
             xs *list = history_list(user);
-            char *p, *v;
+            xs_list *p = list;
+            char *v;
 
-            p = list;
             while (xs_list_iter(&p, &v)) {
-                xs *fn = xs_replace(v, ".html", "");
-                xs *s1 = xs_fmt(
-                        "<li><a href=\"%s/h/%s\">%s</a></li>\n",
-                        user->actor, v, fn);
+                xs *fn  = xs_replace(v, ".html", "");
+                xs *url = xs_fmt("%s/h/%s", user->actor, v);
 
-                s = xs_str_cat(s, s1);
+                xs_html_add(ul,
+                    xs_html_tag("li",
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_text(fn))));
             }
 
-            s = xs_str_cat(s, "</ul></div>\n");
+            xs *s1 = xs_html_render(history);
+            s = xs_str_cat(s, s1);
         }
     }
 
