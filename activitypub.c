@@ -95,8 +95,14 @@ int activitypub_request(snac *snac, const char *url, xs_dict **data)
             status = 400;
         else
         if (xs_str_in(ctype, "application/activity+json") != -1 ||
-            xs_str_in(ctype, "application/ld+json") != -1)
-            *data = xs_json_loads(payload);
+            xs_str_in(ctype, "application/ld+json") != -1) {
+
+            /* if there is no payload, fail */
+            if (xs_is_null(payload))
+                status = 400;
+            else
+                *data = xs_json_loads(payload);
+        }
         else
             status = 500;
     }
