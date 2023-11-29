@@ -41,7 +41,7 @@ int login(snac *snac, const xs_dict *headers)
 }
 
 
-xs_str *replace_shortnames(xs_str *s, xs_list *tag)
+xs_str *replace_shortnames(xs_str *s, xs_list *tag, int ems)
 /* replaces all the :shortnames: with the emojis in tag */
 {
     if (!xs_is_null(tag)) {
@@ -54,6 +54,8 @@ xs_str *replace_shortnames(xs_str *s, xs_list *tag)
             /* is a list */
             tag_list = xs_dup(tag);
         }
+
+        xs *style = xs_fmt("height: %dem; vertical-align: middle;", ems);
 
         xs_list *p = tag_list;
         char *v;
@@ -71,7 +73,7 @@ xs_str *replace_shortnames(xs_str *s, xs_list *tag)
                         xs_html_attr("loading", "lazy"),
                         xs_html_attr("src", u),
                         xs_html_attr("title", n),
-                        xs_html_attr("style", "height: 1em; vertical-align: middle;"));
+                        xs_html_attr("style", style));
 
                     xs *s1 = xs_html_render(img);
                     s = xs_replace_i(s, n, s1);
@@ -95,7 +97,7 @@ xs_str *actor_name(xs_dict *actor)
         }
     }
 
-    return replace_shortnames(xs_html_encode(v), xs_dict_get(actor, "tag"));
+    return replace_shortnames(xs_html_encode(v), xs_dict_get(actor, "tag"), 1);
 }
 
 
@@ -1422,7 +1424,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
         }
 
         /* replace the :shortnames: */
-        c = replace_shortnames(c, xs_dict_get(msg, "tag"));
+        c = replace_shortnames(c, xs_dict_get(msg, "tag"), 2);
 
         /* c contains sanitized HTML */
         xs_html_add(snac_content,
