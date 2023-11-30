@@ -1396,7 +1396,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
             xs_html_attr(cw, NULL),
             xs_html_tag("summary",
                 xs_html_text(v),
-                xs_html_text(L("[SENSITIVE CONTENT]"))));
+                xs_html_text(L(" [SENSITIVE CONTENT]"))));
     }
     else
         snac_content = xs_html_tag("div", NULL);
