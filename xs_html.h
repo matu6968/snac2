@@ -203,60 +203,49 @@ xs_html *_xs_html_container(xs_html *var[])
 void xs_html_render_f(xs_html *h, FILE *f)
 /* renders the tag and its subtags into a file */
 {
-    xs_html *st;
+    if (h == NULL)
+        return;
 
     switch (h->type) {
     case XS_HTML_TAG:
+        fprintf(f, "<%s", h->content);
+
+        /* attributes */
+        xs_html_render_f(h->f_attr, f);
+
+        fprintf(f, ">");
+
+        /* sub-tags */
+        xs_html_render_f(h->f_tag, f);
+
+        fprintf(f, "</%s>", h->content);
+        break;
+
     case XS_HTML_SCTAG:
         fprintf(f, "<%s", h->content);
 
-        /* render the attributes */
-        st = h->f_attr;
-        while (st) {
-            xs_html *nst = st->next;
-            xs_html_render_f(st, f);
-            st = nst;
-        }
+        /* attributes */
+        xs_html_render_f(h->f_attr, f);
 
-        if (h->type == XS_HTML_SCTAG) {
-            /* self-closing tags should not have subtags */
-            fprintf(f, "/>");
-        }
-        else {
-            fprintf(f, ">");
-
-            /* render the subtags */
-            st = h->f_tag;
-            while (st) {
-                xs_html *nst = st->next;
-                xs_html_render_f(st, f);
-                st = nst;
-            }
-
-            fprintf(f, "</%s>", h->content);
-        }
-
+        fprintf(f, "/>");
         break;
 
     case XS_HTML_CONTAINER:
-        /* render the subtags and nothing more */
-        st = h->f_tag;
-        while (st) {
-            xs_html *nst = st->next;
-            xs_html_render_f(st, f);
-            st = nst;
-        }
-
+        /* sub-tags */
+        xs_html_render_f(h->f_tag, f);
         break;
 
     case XS_HTML_ATTR:
-        fprintf(f, " %s", h->content);
-        break;
+        fprintf(f, " ");
+        /* fallthrough */
 
     case XS_HTML_TEXT:
         fprintf(f, "%s", h->content);
         break;
     }
+
+    /* follow the chain */
+    xs_html_render_f(h->next, f);
 
     xs_free(h->content);
     xs_free(h);
