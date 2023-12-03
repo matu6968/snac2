@@ -21,6 +21,9 @@ xs_html *_xs_html_tag(char *tag, xs_html *var[]);
 xs_html *_xs_html_sctag(char *tag, xs_html *var[]);
 #define xs_html_sctag(tag, ...) _xs_html_sctag(tag, (xs_html *[]) { __VA_ARGS__, NULL })
 
+xs_html *_xs_html_container(xs_html *var[]);
+#define xs_html_container(...) _xs_html_container((xs_html *[]) { __VA_ARGS__, NULL })
+
 void xs_html_render_f(xs_html *h, FILE *f);
 xs_str *xs_html_render_s(xs_html *tag, char *prefix);
 #define xs_html_render(tag) xs_html_render_s(tag, NULL)
@@ -31,6 +34,7 @@ xs_str *xs_html_render_s(xs_html *tag, char *prefix);
 typedef enum {
     XS_HTML_TAG,
     XS_HTML_SCTAG,
+    XS_HTML_CONTAINER,
     XS_HTML_ATTR,
     XS_HTML_TEXT
 } xs_html_type;
@@ -75,9 +79,7 @@ xs_str *xs_html_encode(char *str)
 
         /* insert the escaped char */
         char tmp[8];
-        snprintf(tmp, sizeof(tmp), "&#%d;", *q);
-
-        z = strlen(tmp);
+        z = snprintf(tmp, sizeof(tmp), "&#%d;", *q);
         s = xs_insert_m(s, o, tmp, z);
         o += z;
 
@@ -192,6 +194,12 @@ xs_html *_xs_html_sctag(char *tag, xs_html *var[])
 }
 
 
+xs_html *_xs_html_container(xs_html *var[])
+{
+    return _xs_html_tag_t(XS_HTML_CONTAINER, NULL, var);
+}
+
+
 void xs_html_render_f(xs_html *h, FILE *f)
 /* renders the tag and its subtags into a file */
 {
@@ -200,8 +208,7 @@ void xs_html_render_f(xs_html *h, FILE *f)
     switch (h->type) {
     case XS_HTML_TAG:
     case XS_HTML_SCTAG:
-        if (h->content)
-            fprintf(f, "<%s", h->content);
+        fprintf(f, "<%s", h->content);
 
         /* render the attributes */
         st = h->f_attr;
@@ -213,12 +220,10 @@ void xs_html_render_f(xs_html *h, FILE *f)
 
         if (h->type == XS_HTML_SCTAG) {
             /* self-closing tags should not have subtags */
-            if (h->content)
-                fprintf(f, "/>");
+            fprintf(f, "/>");
         }
         else {
-            if (h->content)
-                fprintf(f, ">");
+            fprintf(f, ">");
 
             /* render the subtags */
             st = h->f_tag;
@@ -228,8 +233,18 @@ void xs_html_render_f(xs_html *h, FILE *f)
                 st = nst;
             }
 
-            if (h->content)
-                fprintf(f, "</%s>", h->content);
+            fprintf(f, "</%s>", h->content);
+        }
+
+        break;
+
+    case XS_HTML_CONTAINER:
+        /* render the subtags and nothing more */
+        st = h->f_tag;
+        while (st) {
+            xs_html *nst = st->next;
+            xs_html_render_f(st, f);
+            st = nst;
         }
 
         break;

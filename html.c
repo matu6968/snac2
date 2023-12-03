@@ -1000,7 +1000,7 @@ static xs_html *html_button(char *clss, char *label, char *hint)
     xs *c = xs_fmt("snac-btn-%s", clss);
 
     /* use an NULL tag to separate non-css-classed buttons from one another */
-    return xs_html_tag(NULL,
+    return xs_html_container(
         xs_html_sctag("input",
             xs_html_attr("type",    "submit"),
             xs_html_attr("name",    "action"),
