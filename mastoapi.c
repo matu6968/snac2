@@ -1104,6 +1104,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 acct = xs_dict_set(acct, "fields", fields);
             }
 
+            acct = xs_dict_append(acct, "followers_count", xs_stock_0);
+            acct = xs_dict_append(acct, "following_count", xs_stock_0);
+            acct = xs_dict_append(acct, "statuses_count", xs_stock_0);
+
             *body  = xs_json_dumps(acct, 4);
             *ctype = "application/json";
             status = 200;
