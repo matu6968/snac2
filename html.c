@@ -999,12 +999,15 @@ static xs_html *html_button(char *clss, char *label, char *hint)
 {
     xs *c = xs_fmt("snac-btn-%s", clss);
 
-    return xs_html_sctag("input",
-        xs_html_attr("type",    "submit"),
-        xs_html_attr("name",    "action"),
-        xs_html_attr("class",   c),
-        xs_html_attr("value",   label),
-        xs_html_attr("title",   hint));
+    /* use an NULL tag to separate non-css-classed buttons from one another */
+    return xs_html_tag(NULL,
+        xs_html_sctag("input",
+            xs_html_attr("type",    "submit"),
+            xs_html_attr("name",    "action"),
+            xs_html_attr("class",   c),
+            xs_html_attr("value",   label),
+            xs_html_attr("title",   hint)),
+        xs_html_text("\n"));
 }
 
 

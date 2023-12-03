@@ -168,8 +168,11 @@ static xs_html *_xs_html_tag_t(xs_html_type type, char *tag, xs_html *var[])
 {
     xs_html *a = XS_HTML_NEW();
 
-    a->type    = type;
-    a->content = xs_dup(tag);
+    a->type = type;
+
+    /* a tag can be NULL, to be a kind of 'wrapper' */
+    if (tag)
+        a->content = xs_dup(tag);
 
     _xs_html_add(a, var);
 
@@ -197,7 +200,8 @@ void xs_html_render_f(xs_html *h, FILE *f)
     switch (h->type) {
     case XS_HTML_TAG:
     case XS_HTML_SCTAG:
-        fprintf(f, "<%s", h->content);
+        if (h->content)
+            fprintf(f, "<%s", h->content);
 
         /* render the attributes */
         st = h->f_attr;
@@ -209,10 +213,12 @@ void xs_html_render_f(xs_html *h, FILE *f)
 
         if (h->type == XS_HTML_SCTAG) {
             /* self-closing tags should not have subtags */
-            fprintf(f, "/>\n");
+            if (h->content)
+                fprintf(f, "/>");
         }
         else {
-            fprintf(f, ">");
+            if (h->content)
+                fprintf(f, ">");
 
             /* render the subtags */
             st = h->f_tag;
@@ -222,7 +228,8 @@ void xs_html_render_f(xs_html *h, FILE *f)
                 st = nst;
             }
 
-            fprintf(f, "</%s>", h->content);
+            if (h->content)
+                fprintf(f, "</%s>", h->content);
         }
 
         break;
