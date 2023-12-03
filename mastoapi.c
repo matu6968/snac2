@@ -597,7 +597,28 @@ xs_dict *mastoapi_account(const xs_dict *actor)
     acct = xs_dict_append(acct, "following_count", xs_stock_0);
     acct = xs_dict_append(acct, "statuses_count", xs_stock_0);
 
-    acct = xs_dict_append(acct, "fields", xs_stock_list);
+    xs *fields = xs_list_new();
+    p = xs_dict_get(actor, "attachment");
+    xs_dict *v;
+
+    while (xs_list_iter(&p, &v)) {
+        char *type  = xs_dict_get(v, "type");
+        char *name  = xs_dict_get(v, "name");
+        char *value = xs_dict_get(v, "value");
+
+        if (!xs_is_null(type) && !xs_is_null(name) &&
+            !xs_is_null(value) && strcmp(type, "PropertyValue") == 0) {
+            xs *d = xs_dict_new();
+
+            d = xs_dict_append(d, "name", name);
+            d = xs_dict_append(d, "value", value);
+            d = xs_dict_append(d, "verified_at", xs_stock_null);
+
+            fields = xs_list_append(fields, d);
+        }
+    }
+
+    acct = xs_dict_append(acct, "fields", fields);
 
     return acct;
 }
