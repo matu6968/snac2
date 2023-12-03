@@ -1443,6 +1443,9 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
 
         xs_html *poll = xs_html_tag("div", NULL);
 
+        if (local)
+            closed = 1; /* non-identified page; show as closed */
+        else
         if (xs_dict_get(msg, "closed"))
             closed = 2;
         else
