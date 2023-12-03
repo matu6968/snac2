@@ -592,7 +592,24 @@ xs_dict *mastoapi_account(const xs_dict *actor)
         acct = xs_dict_append(acct, "emojis", eml);
     }
 
+    acct = xs_dict_append(acct, "locked", xs_stock_false);
+    acct = xs_dict_append(acct, "followers_count", xs_stock_0);
+    acct = xs_dict_append(acct, "following_count", xs_stock_0);
+    acct = xs_dict_append(acct, "statuses_count", xs_stock_0);
+
+    acct = xs_dict_append(acct, "fields", xs_stock_list);
+
     return acct;
+}
+
+
+xs_str *mastoapi_date(char *date)
+/* converts an ISO 8601 date to whatever format Mastodon uses */
+{
+    xs_str *s = xs_crop_i(xs_dup(date), 0, 19);
+    s = xs_str_cat(s, ".000Z");
+
+    return s;
 }
 
 
@@ -607,7 +624,8 @@ xs_dict *mastoapi_poll(snac *snac, const xs_dict *msg)
     xs *options = xs_list_new();
 
     poll = xs_dict_append(poll, "id", mid);
-    poll = xs_dict_append(poll, "expires_at", xs_dict_get(msg, "endTime"));
+    xs *fd = mastoapi_date(xs_dict_get(msg, "endTime"));
+    poll = xs_dict_append(poll, "expires_at", fd);
     poll = xs_dict_append(poll, "expired",
             xs_dict_get(msg, "closed") != NULL ? xs_stock_true : xs_stock_false);
 
@@ -673,8 +691,10 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     st = xs_dict_append(st, "id",           mid);
     st = xs_dict_append(st, "uri",          id);
     st = xs_dict_append(st, "url",          id);
-    st = xs_dict_append(st, "created_at",   xs_dict_get(msg, "published"));
     st = xs_dict_append(st, "account",      acct);
+
+    xs *fd = mastoapi_date(xs_dict_get(msg, "published"));
+    st = xs_dict_append(st, "created_at", fd);
 
     {
         const char *content = xs_dict_get(msg, "content");
@@ -928,10 +948,15 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     st = xs_dict_append(st, "text", tmp);
 
     tmp = xs_dict_get(msg, "updated");
+    xs *fd2 = NULL;
     if (xs_is_null(tmp))
         tmp = xs_stock_null;
+    else {
+        fd2 = mastoapi_date(tmp);
+        tmp = fd2;
+    }
 
-    st = xs_dict_append(st, "edited_at", tmp);
+    st = xs_dict_append(st, "edited_at", fd2);
 
     if (strcmp(type, "Question") == 0) {
         xs *poll = mastoapi_poll(snac, msg);
