@@ -1424,11 +1424,15 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 if (!xs_match(type, "Note|Question|Page|Article"))
                     continue;
 
-                const char *from;
+                const char *from = NULL;
                 if (strcmp(type, "Page") == 0)
                     from = xs_dict_get(msg, "audience");
-                else
+
+                if (from == NULL)
                     from = xs_dict_get(msg, "attributedTo");
+
+                if (from == NULL)
+                    continue;
 
                 /* is this message from a person we don't follow? */
                 if (strcmp(from, snac1.actor) && !following_check(&snac1, from)) {
