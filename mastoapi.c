@@ -279,8 +279,14 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
                     xs *code = random_str();
 
                     xs_free(*body);
-                    *body = xs_fmt("%s?code=%s", redir, code);
-                    status = 303;
+
+                    if (strcmp(redir, "urn:ietf:wg:oauth:2.0:oob") == 0) {
+                        *body = xs_dup(code);
+                    }
+                    else {
+                        *body = xs_fmt("%s?code=%s", redir, code);
+                        status = 303;
+                    }
 
                     /* if there is a state, add it */
                     if (!xs_is_null(state) && *state) {
