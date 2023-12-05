@@ -6,7 +6,7 @@ I've refactored all HTML code because it was somewhat of a mess; now it's much m
 
 Fixed crash in a special case of malformed query.
 
-Mastodon API: some tweaks for better integration with more clients.
+Mastodon API: some tweaks for better integration with more clients, and fixed a crash when processing boosts from kbin.
 
 ## 2.43
 
