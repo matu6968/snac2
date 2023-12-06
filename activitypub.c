@@ -1008,6 +1008,15 @@ xs_dict *msg_actor(snac *snac)
         msg = xs_dict_set(msg, "attachment", attach);
     }
 
+#ifdef SHARED_INBOX
+    {
+        xs *d = xs_dict_new();
+        xs *si = xs_fmt("%s/shared-inbox", srv_baseurl);
+        d = xs_dict_append(d, "sharedInbox", si);
+        msg = xs_dict_set(msg, "endpoints", d);
+    }
+#endif
+
     return msg;
 }
 
@@ -2025,6 +2034,39 @@ void process_queue_item(xs_dict *q_item)
         srv_log(xs_dup("purge end"));
     }
     else
+    if (strcmp(type, "input") == 0) {
+        /* redistribute the input message to all users */
+        char *ntid = xs_dict_get(q_item, "ntid");
+        xs *tmpfn  = xs_fmt("%s/tmp/%s.json", srv_basedir, ntid);
+        FILE *f;
+
+        if ((f = fopen(tmpfn, "w")) != NULL) {
+            xs_json_dump(q_item, 4, f);
+            fclose(f);
+        }
+
+        xs *users = user_list();
+        xs_list *p = users;
+        char *v;
+
+        while (xs_list_iter(&p, &v)) {
+            snac user;
+
+            if (user_open(&user, v)) {
+                xs *fn = xs_fmt("%s/queue/%s.json", user.basedir, ntid);
+
+                srv_debug(1, xs_fmt("enqueue_input (from shared inbox) %s", fn));
+
+                if (link(tmpfn, fn) < 0)
+                    srv_log(xs_fmt("link(%s, %s) error", tmpfn, fn));
+
+                user_free(&user);
+            }
+        }
+
+        unlink(tmpfn);
+    }
+    else
         srv_log(xs_fmt("unexpected q_item type '%s'", type));
 }
 
@@ -2196,6 +2238,11 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
 
     /* get the user and path */
     xs *l = xs_split_n(q_path, "/", 2);
+
+    if (xs_list_len(l) == 2 && strcmp(xs_list_get(l, 1), "shared-inbox") == 0) {
+        enqueue_shared_input(msg, req, 0);
+        return 202;
+    }
 
     if (xs_list_len(l) != 3 || strcmp(xs_list_get(l, 2), "inbox") != 0) {
         /* strange q_path */

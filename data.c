@@ -99,6 +99,9 @@ int srv_open(char *basedir, int auto_upgrade)
     xs *ibdir = xs_fmt("%s/inbox", srv_basedir);
     mkdirx(ibdir);
 
+    xs *tmpdir = xs_fmt("%s/tmp", srv_basedir);
+    mkdirx(tmpdir);
+
 #ifdef __OpenBSD__
     char *v = xs_dict_get(srv_config, "disable_openbsd_security");
 
@@ -1586,8 +1589,11 @@ void tag_index(const char *id, const xs_dict *obj)
             char *name = xs_dict_get(v, "name");
 
             if (!xs_is_null(type) && !xs_is_null(name) && strcmp(type, "Hashtag") == 0) {
-                if (*name == '#')
+                while (*name == '#' || *name == '@')
                     name++;
+
+                if (*name == '\0')
+                    continue;
 
                 name = xs_tolower_i(name);
 
@@ -2120,6 +2126,21 @@ void enqueue_input(snac *snac, const xs_dict *msg, const xs_dict *req, int retri
     qmsg = _enqueue_put(fn, qmsg);
 
     snac_debug(snac, 1, xs_fmt("enqueue_input %s", fn));
+}
+
+
+void enqueue_shared_input(const xs_dict *msg, const xs_dict *req, int retries)
+/* enqueues an input message from the shared input */
+{
+    xs *qmsg   = _new_qmsg("input", msg, retries);
+    char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
+
+    qmsg = xs_dict_append(qmsg, "req", req);
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    srv_debug(1, xs_fmt("enqueue_shared_input %s", fn));
 }
 
 

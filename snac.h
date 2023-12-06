@@ -181,6 +181,7 @@ int instance_block(const char *instance);
 int instance_unblock(const char *instance);
 
 void enqueue_input(snac *snac, const xs_dict *msg, const xs_dict *req, int retries);
+void enqueue_shared_input(const xs_dict *msg, const xs_dict *req, int retries);
 void enqueue_output_raw(const char *keyid, const char *seckey,
                         xs_dict *msg, xs_str *inbox, int retries, int p_status);
 void enqueue_output(snac *snac, xs_dict *msg, xs_str *inbox, int retries, int p_status);
