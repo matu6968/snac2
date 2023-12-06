@@ -133,10 +133,13 @@ xs_html *html_actor_icon(xs_dict *actor, const char *date,
 
 
     if (!xs_is_null(url)) {
+        xs *md5 = xs_md5_hex(url, strlen(url));
+
         xs_html_add(actor_icon,
             xs_html_text(" "),
             xs_html_tag("a",
                 xs_html_attr("href", (char *)url),
+                xs_html_attr("title", md5),
                 xs_html_text("»")));
     }
 
