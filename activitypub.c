@@ -465,8 +465,8 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
             return 0;
     }
 
-    /* if it's not a Create, allow */
-    if (strcmp(type, "Create") != 0)
+    /* if it's not a Create or Update, allow */
+    if (!xs_match(type, "Create|Update"))
         return 1;
 
     xs_dict *msg = xs_dict_get(c_msg, "object");
@@ -2055,7 +2055,7 @@ void process_queue_item(xs_dict *q_item)
             if (user_open(&user, v)) {
                 xs *fn = xs_fmt("%s/queue/%s.json", user.basedir, ntid);
 
-                srv_debug(1, xs_fmt("enqueue_input (from shared inbox) %s", fn));
+                snac_debug(&user, 1, xs_fmt("enqueue_input (from shared inbox) %s", fn));
 
                 if (link(tmpfn, fn) < 0)
                     srv_log(xs_fmt("link(%s, %s) error", tmpfn, fn));
