@@ -1008,14 +1008,13 @@ xs_dict *msg_actor(snac *snac)
         msg = xs_dict_set(msg, "attachment", attach);
     }
 
-#ifdef SHARED_INBOX
-    {
+    /* use shared inboxes? */
+    if (xs_type(xs_dict_get(srv_config, "shared_inboxes")) == XSTYPE_TRUE) {
         xs *d = xs_dict_new();
         xs *si = xs_fmt("%s/shared-inbox", srv_baseurl);
         d = xs_dict_append(d, "sharedInbox", si);
         msg = xs_dict_set(msg, "endpoints", d);
     }
-#endif
 
     return msg;
 }
