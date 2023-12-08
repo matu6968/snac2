@@ -2537,6 +2537,14 @@ void purge_server(void)
             tag_gc += index_gc(v2);
             xs *bak = xs_fmt("%s.bak", v2);
             unlink(bak);
+
+            if (index_len(v2) == 0) {
+                /* there are no longer any entry with this tag;
+                   purge it completely */
+                unlink(v2);
+                xs *dottag = xs_replace(v2, ".idx", ".tag");
+                unlink(dottag);
+            }
         }
     }
 
