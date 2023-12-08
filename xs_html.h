@@ -42,10 +42,8 @@ typedef enum {
 struct xs_html {
     xs_html_type type;
     xs_str *content;
-    xs_html *f_attr;
-    xs_html *l_attr;
-    xs_html *f_tag;
-    xs_html *l_tag;
+    xs_html *attrs;
+    xs_html *tags;
     xs_html *next;
 };
 
@@ -140,25 +138,14 @@ xs_html *_xs_html_add(xs_html *tag, xs_html *var[])
     while (*var) {
         xs_html *data = *var++;
 
-        xs_html **first;
-        xs_html **last;
-
         if (data->type == XS_HTML_ATTR) {
-            first = &tag->f_attr;
-            last  = &tag->l_attr;
+            data->next = tag->attrs;
+            tag->attrs = data;
         }
         else {
-            first = &tag->f_tag;
-            last  = &tag->l_tag;
+            data->next = tag->tags;
+            tag->tags = data;
         }
-
-        if (*first == NULL)
-            *first = data;
-
-        if (*last != NULL)
-            (*last)->next = data;
-
-        *last = data;
     }
 
     return tag;
@@ -206,17 +193,20 @@ void xs_html_render_f(xs_html *h, FILE *f)
     if (h == NULL)
         return;
 
+    /* follow the chain */
+    xs_html_render_f(h->next, f);
+
     switch (h->type) {
     case XS_HTML_TAG:
         fprintf(f, "<%s", h->content);
 
         /* attributes */
-        xs_html_render_f(h->f_attr, f);
+        xs_html_render_f(h->attrs, f);
 
         fprintf(f, ">");
 
         /* sub-tags */
-        xs_html_render_f(h->f_tag, f);
+        xs_html_render_f(h->tags, f);
 
         fprintf(f, "</%s>", h->content);
         break;
@@ -225,14 +215,14 @@ void xs_html_render_f(xs_html *h, FILE *f)
         fprintf(f, "<%s", h->content);
 
         /* attributes */
-        xs_html_render_f(h->f_attr, f);
+        xs_html_render_f(h->attrs, f);
 
         fprintf(f, "/>");
         break;
 
     case XS_HTML_CONTAINER:
         /* sub-tags */
-        xs_html_render_f(h->f_tag, f);
+        xs_html_render_f(h->tags, f);
         break;
 
     case XS_HTML_ATTR:
@@ -243,9 +233,6 @@ void xs_html_render_f(xs_html *h, FILE *f)
         fprintf(f, "%s", h->content);
         break;
     }
-
-    /* follow the chain */
-    xs_html_render_f(h->next, f);
 
     xs_free(h->content);
     xs_free(h);
