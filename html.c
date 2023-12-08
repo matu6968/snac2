@@ -1388,9 +1388,11 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
 
     xs_html *snac_content = NULL;
 
+    v = xs_dict_get(msg, "summary");
+
     /* is it sensitive? */
     if (user && xs_type(xs_dict_get(msg, "sensitive")) == XSTYPE_TRUE) {
-        if (xs_is_null(v = xs_dict_get(msg, "summary")) || *v == '\0')
+        if (xs_is_null(v) || *v == '\0')
             v = "...";
 
         /* only show it when not in the public timeline and the config setting is "open" */
@@ -1404,8 +1406,16 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
                 xs_html_text(v),
                 xs_html_text(L(" [SENSITIVE CONTENT]"))));
     }
-    else
+    else {
+        /* print the summary as a header (sites like e.g. Friendica can contain one) */
+        if (!xs_is_null(v) && *v)
+            xs_html_add(snac_content_wrap,
+                xs_html_tag("h3",
+                    xs_html_attr("class", "snac-entry-title"),
+                    xs_html_text(v)));
+
         snac_content = xs_html_tag("div", NULL);
+    }
 
     xs_html_add(snac_content_wrap,
         snac_content);
