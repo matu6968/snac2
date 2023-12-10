@@ -1475,7 +1475,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     int do_notify = 0;
 
     if (xs_is_null(actor) || *actor == '\0') {
-        snac_debug(snac, 0, xs_fmt("malformed message (bad actor)"));
+        srv_debug(0, xs_fmt("malformed message (bad actor)"));
         return -1;
     }
 
@@ -1485,7 +1485,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
 
     /* reject uninteresting messages right now */
     if (strcmp(type, "Add") == 0) {
-        snac_debug(snac, 0, xs_fmt("Ignored message of type '%s'", type));
+        srv_debug(0, xs_fmt("Ignored message of type '%s'", type));
         return -1;
     }
 
@@ -1496,6 +1496,38 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         utype = xs_dict_get(object, "type");
     else
         utype = "(null)";
+
+    /* bring the actor */
+    a_status = actor_request(snac, actor, &actor_o);
+
+    /* do not retry permanent failures */
+    if (a_status == 404 || a_status == 410 || a_status < 0) {
+        srv_debug(1, xs_fmt("dropping message due to actor error %s %d", actor, a_status));
+
+        return -1;
+    }
+
+    if (!valid_status(a_status)) {
+        /* other actor download errors may need a retry */
+        srv_debug(1, xs_fmt("error requesting actor %s %d -- retry later", actor, a_status));
+
+        return 0;
+    }
+
+    /* check the signature */
+    xs *sig_err = NULL;
+
+    if (!check_signature(snac, req, &sig_err)) {
+        srv_log(xs_fmt("bad signature %s (%s)", actor, sig_err));
+
+        srv_archive_error("check_signature", sig_err, req, msg);
+
+        return -1;
+    }
+
+    /* if no user is set, no further checks can be done */
+    if (snac == NULL)
+        return 1;
 
     /* reject messages that are not for this user */
     if (!is_msg_for_me(snac, msg)) {
@@ -1512,36 +1544,6 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
 
             return 1;
         }
-    }
-
-    /* bring the actor */
-    a_status = actor_request(snac, actor, &actor_o);
-
-    /* do not retry permanent failures */
-    if (a_status == 404 || a_status == 410 || a_status < 0) {
-        snac_debug(snac, 1,
-            xs_fmt("dropping message due to actor error %s %d", actor, a_status));
-
-        return -1;
-    }
-
-    if (!valid_status(a_status)) {
-        /* other actor download errors may need a retry */
-        snac_debug(snac, 1,
-            xs_fmt("error requesting actor %s %d -- retry later", actor, a_status));
-
-        return 0;
-    }
-
-    /* check the signature */
-    xs *sig_err = NULL;
-
-    if (!check_signature(snac, req, &sig_err)) {
-        snac_log(snac, xs_fmt("bad signature %s (%s)", actor, sig_err));
-
-        srv_archive_error("check_signature", sig_err, req, msg);
-
-        return -1;
     }
 
     if (strcmp(type, "Follow") == 0) { /** **/
