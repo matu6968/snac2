@@ -173,7 +173,7 @@ int check_signature(snac *user, xs_dict *req, xs_str **err)
 
     xs *actor = NULL;
 
-    if (!valid_status(actor_request(user, keyId, &actor))) {
+    if (!valid_status(actor_request(keyId, &actor))) {
         *err = xs_fmt("unknown actor %s", keyId);
         return 0;
     }
