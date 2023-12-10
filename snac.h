@@ -212,7 +212,7 @@ xs_dict *http_signed_request(snac *snac, const char *method, const char *url,
                             const char *body, int b_size,
                             int *status, xs_str **payload, int *p_size,
                             int timeout);
-int check_signature(snac *snac, xs_dict *req, xs_str **err);
+int check_signature(xs_dict *req, xs_str **err);
 
 void httpd(void);
 
@@ -249,7 +249,7 @@ int send_to_inbox_raw(const char *keyid, const char *seckey,
                   xs_val **payload, int *p_size, int timeout);
 int send_to_inbox(snac *snac, const xs_str *inbox, const xs_dict *msg,
                   xs_val **payload, int *p_size, int timeout);
-xs_str *get_actor_inbox(snac *snac, const char *actor);
+xs_str *get_actor_inbox(const char *actor);
 int send_to_actor(snac *snac, const char *actor, const xs_dict *msg,
                   xs_val **payload, int *p_size, int timeout);
 int is_msg_public(const xs_dict *msg);

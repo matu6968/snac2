@@ -323,7 +323,7 @@ int send_to_inbox(snac *snac, const xs_str *inbox, const xs_dict *msg,
 }
 
 
-xs_str *get_actor_inbox(snac *snac, const char *actor)
+xs_str *get_actor_inbox(const char *actor)
 /* gets an actor's inbox */
 {
     xs *data = NULL;
@@ -348,7 +348,7 @@ int send_to_actor(snac *snac, const char *actor, const xs_dict *msg,
 /* sends a message to an actor */
 {
     int status = 400;
-    xs *inbox = get_actor_inbox(snac, actor);
+    xs *inbox = get_actor_inbox(actor);
 
     if (!xs_is_null(inbox))
         status = send_to_inbox(snac, inbox, msg, payload, p_size, timeout);
@@ -1518,7 +1518,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     /* check the signature */
     xs *sig_err = NULL;
 
-    if (!check_signature(snac, req, &sig_err)) {
+    if (!check_signature(req, &sig_err)) {
         srv_log(xs_fmt("bad signature %s (%s)", actor, sig_err));
 
         srv_archive_error("check_signature", sig_err, req, msg);
@@ -1818,7 +1818,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         /* iterate the recipients */
         p = rcpts;
         while (xs_list_iter(&p, &actor)) {
-            xs *inbox = get_actor_inbox(snac, actor);
+            xs *inbox = get_actor_inbox(actor);
 
             if (inbox != NULL) {
                 /* add to the set and, if it's not there, send message */
