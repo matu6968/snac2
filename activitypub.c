@@ -60,18 +60,22 @@ const char *default_avatar_base64(void)
 }
 
 
-int activitypub_request(snac *snac, const char *url, xs_dict **data)
+int activitypub_request(snac *user, const char *url, xs_dict **data)
 /* request an object */
 {
-    int status;
+    int status = 0;
     xs *response = NULL;
     xs *payload = NULL;
     int p_size;
     char *ctype;
 
-    /* get from the net */
-    response = http_signed_request(snac, "GET", url,
-        NULL, NULL, 0, &status, &payload, &p_size, 0);
+    *data = NULL;
+
+    if (user != NULL) {
+        /* get from the net */
+        response = http_signed_request(user, "GET", url,
+            NULL, NULL, 0, &status, &payload, &p_size, 0);
+    }
 
     if (status == 0 || (status >= 500 && status <= 599)) {
         /* I found an instance running Misskey that returned
@@ -107,14 +111,11 @@ int activitypub_request(snac *snac, const char *url, xs_dict **data)
             status = 500;
     }
 
-    if (!valid_status(status))
-        *data = NULL;
-
     return status;
 }
 
 
-int actor_request(snac *snac, const char *actor, xs_dict **data)
+int actor_request(snac *user, const char *actor, xs_dict **data)
 /* request an actor */
 {
     int status, status2;
@@ -128,7 +129,7 @@ int actor_request(snac *snac, const char *actor, xs_dict **data)
 
     if (status != 200) {
         /* actor data non-existent or stale: get from the net */
-        status2 = activitypub_request(snac, actor, &payload);
+        status2 = activitypub_request(user, actor, &payload);
 
         if (valid_status(status2)) {
             /* renew data */
