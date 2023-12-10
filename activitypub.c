@@ -2035,8 +2035,9 @@ void process_queue_item(xs_dict *q_item)
     else
     if (strcmp(type, "input") == 0) {
         /* redistribute the input message to all users */
-        char *ntid = xs_dict_get(q_item, "ntid");
-        xs *tmpfn  = xs_fmt("%s/tmp/%s.json", srv_basedir, ntid);
+        char *ntid   = xs_dict_get(q_item, "ntid");
+        xs *tmpfn    = xs_fmt("%s/tmp/%s.json", srv_basedir, ntid);
+        xs_dict *msg = xs_dict_get(q_item, "message");
         FILE *f;
 
         if ((f = fopen(tmpfn, "w")) != NULL) {
@@ -2052,12 +2053,14 @@ void process_queue_item(xs_dict *q_item)
             snac user;
 
             if (user_open(&user, v)) {
-                xs *fn = xs_fmt("%s/queue/%s.json", user.basedir, ntid);
+                if (is_msg_for_me(&user, msg)) {
+                    xs *fn = xs_fmt("%s/queue/%s.json", user.basedir, ntid);
 
-                snac_debug(&user, 1, xs_fmt("enqueue_input (from shared inbox) %s", fn));
+                    snac_debug(&user, 1, xs_fmt("enqueue_input (from shared inbox) %s", fn));
 
-                if (link(tmpfn, fn) < 0)
-                    srv_log(xs_fmt("link(%s, %s) error", tmpfn, fn));
+                    if (link(tmpfn, fn) < 0)
+                        srv_log(xs_fmt("link(%s, %s) error", tmpfn, fn));
+                }
 
                 user_free(&user);
             }
