@@ -1468,12 +1468,16 @@ int update_question(snac *user, const char *id)
 int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
 /* processes an ActivityPub message from the input queue */
 {
-    /* actor and type exist, were checked previously */
     char *actor  = xs_dict_get(msg, "actor");
     char *type   = xs_dict_get(msg, "type");
     xs *actor_o = NULL;
     int a_status;
     int do_notify = 0;
+
+    if (xs_is_null(actor) || *actor == '\0') {
+        snac_debug(snac, 0, xs_fmt("malformed message (bad actor)"));
+        return -1;
+    }
 
     /* question votes may not have a type */
     if (xs_is_null(type))
@@ -1482,12 +1486,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     /* reject uninteresting messages right now */
     if (strcmp(type, "Add") == 0) {
         snac_debug(snac, 0, xs_fmt("Ignored message of type '%s'", type));
-        return 1;
-    }
-
-    if (xs_is_null(actor)) {
-        snac_debug(snac, 0, xs_fmt("malformed message"));
-        return 1;
+        return -1;
     }
 
     char *object, *utype;
@@ -1523,7 +1522,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         snac_debug(snac, 1,
             xs_fmt("dropping message due to actor error %s %d", actor, a_status));
 
-        return 1;
+        return -1;
     }
 
     if (!valid_status(a_status)) {
@@ -1542,7 +1541,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
 
         srv_archive_error("check_signature", sig_err, req, msg);
 
-        return 1;
+        return -1;
     }
 
     if (strcmp(type, "Follow") == 0) { /** **/
