@@ -27,7 +27,7 @@ int usage(void)
     printf("follow {basedir} {uid} {actor}      Follows an actor\n");
     printf("unfollow {basedir} {uid} {actor}    Unfollows an actor\n");
     printf("request {basedir} {uid} {url}       Requests an object\n");
-    printf("actor {basedir} {uid} {url}         Requests an actor\n");
+    printf("actor {basedir} [{uid}] {url}       Requests an actor\n");
     printf("note {basedir} {uid} {'text'}       Sends a note to followers\n");
     printf("resetpwd {basedir} {uid}            Resets the password of a user\n");
     printf("ping {basedir} {uid} {actor}        Pings an actor\n");
@@ -175,6 +175,22 @@ int main(int argc, char *argv[])
             printf("actor: %s\n", actor);
         if (uid != NULL)
             printf("uid: %s\n", uid);
+
+        return 0;
+    }
+
+    if (argi == argc && strcmp(cmd, "actor") == 0) { /** **/
+        /* query an actor without user (non-signed) */
+        xs *actor = NULL;
+        int status;
+
+        status = actor_request(NULL, user, &actor);
+
+        printf("status: %d\n", status);
+        if (valid_status(status)) {
+            xs_json_dump(actor, 4, stdout);
+            printf("\n");
+        }
 
         return 0;
     }
