@@ -649,10 +649,14 @@ int _object_add(const char *id, const xs_dict *obj, int ow)
     xs *fn     = _object_fn(id);
     FILE *f;
 
-    if (!ow && mtime(fn) > 0.0) {
-        /* object already here */
-        srv_debug(1, xs_fmt("object_add object already here %s", id));
-        return 204; /* No content */
+    if (mtime(fn) > 0.0) {
+        if (!ow) {
+            /* object already here */
+            srv_debug(1, xs_fmt("object_add object already here %s", id));
+            return 204; /* No content */
+        }
+        else
+            status = 200;
     }
 
     if ((f = fopen(fn, "w")) != NULL) {

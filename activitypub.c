@@ -118,7 +118,7 @@ int activitypub_request(snac *user, const char *url, xs_dict **data)
 int actor_request(const char *actor, xs_dict **data)
 /* request an actor */
 {
-    int status, status2;
+    int status;
     xs *payload = NULL;
 
     if (data)
@@ -129,9 +129,9 @@ int actor_request(const char *actor, xs_dict **data)
 
     if (status != 200) {
         /* actor data non-existent or stale: get from the net */
-        status2 = activitypub_request(NULL, actor, &payload);
+        status = activitypub_request(NULL, actor, &payload);
 
-        if (valid_status(status2)) {
+        if (valid_status(status)) {
             /* renew data */
             status = actor_add(actor, payload);
 
@@ -141,7 +141,7 @@ int actor_request(const char *actor, xs_dict **data)
             }
         }
         else
-            srv_debug(0, xs_fmt("actor_request error %d", status2));
+            srv_debug(0, xs_fmt("actor_request error %s %d", actor, status));
     }
 
     /* collect the (presumed) shared inbox in this actor */
