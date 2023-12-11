@@ -1511,6 +1511,12 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     }
 
     if (!valid_status(a_status)) {
+        /* do not retry 'Delete' messages */
+        if (strcmp(type, "Delete") == 0) {
+            srv_debug(1, xs_fmt("dropping 'Delete' message due to actor error", actor, a_status));
+            return -1;
+        }
+
         /* other actor download errors may need a retry */
         srv_debug(1, xs_fmt("error requesting actor %s %d -- retry later", actor, a_status));
 
