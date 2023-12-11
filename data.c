@@ -2284,7 +2284,7 @@ void enqueue_request_replies(snac *user, const char *id)
 
     qmsg = _enqueue_put(fn, qmsg);
 
-    snac_debug(user, 1, xs_fmt("enqueue_request_replies %s", id));
+    snac_debug(user, 2, xs_fmt("enqueue_request_replies %s", id));
 }
 
 

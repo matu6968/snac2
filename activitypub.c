@@ -2052,6 +2052,7 @@ void process_queue_item(xs_dict *q_item)
         xs *users = user_list();
         xs_list *p = users;
         char *v;
+        int cnt = 0;
 
         while (xs_list_iter(&p, &v)) {
             snac user;
@@ -2064,6 +2065,8 @@ void process_queue_item(xs_dict *q_item)
 
                     if (link(tmpfn, fn) < 0)
                         srv_log(xs_fmt("link(%s, %s) error", tmpfn, fn));
+
+                    cnt++;
                 }
 
                 user_free(&user);
@@ -2071,6 +2074,9 @@ void process_queue_item(xs_dict *q_item)
         }
 
         unlink(tmpfn);
+
+        if (cnt == 0)
+            srv_debug(1, xs_fmt("no valid recipients for %s", tmpfn));
     }
     else
         srv_log(xs_fmt("unexpected q_item type '%s'", type));
