@@ -140,6 +140,8 @@ int actor_request(const char *actor, xs_dict **data)
                 payload = NULL;
             }
         }
+        else
+            srv_debug(0, xs_fmt("actor_request error %d", status2));
     }
 
     /* collect the (presumed) shared inbox in this actor */
