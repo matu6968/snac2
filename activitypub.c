@@ -1470,9 +1470,11 @@ int update_question(snac *user, const char *id)
 
 int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
 /* processes an ActivityPub message from the input queue */
+/* return values: -1, fatal error; 0, transient error, retry;
+   1, processed and done; 2, propagate to users (only when no user is set) */
 {
-    char *actor  = xs_dict_get(msg, "actor");
-    char *type   = xs_dict_get(msg, "type");
+    char *actor = xs_dict_get(msg, "actor");
+    char *type  = xs_dict_get(msg, "type");
     xs *actor_o = NULL;
     int a_status;
     int do_notify = 0;
@@ -1500,13 +1502,21 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     else
         utype = "(null)";
 
+    /* special case for Delete messages */
+    if (strcmp(type, "Delete") == 0) {
+        /* if the actor is not here, do not even try */
+        if (!object_here(actor)) {
+            srv_debug(0, xs_fmt("dropped 'Delete' message from unknown actor '%s'", actor));
+            return -1;
+        }
+    }
+
     /* bring the actor */
     a_status = actor_request(actor, &actor_o);
 
     /* do not retry permanent failures */
     if (a_status == 404 || a_status == 410 || a_status < 0) {
         srv_debug(1, xs_fmt("dropping message due to actor error %s %d", actor, a_status));
-
         return -1;
     }
 
@@ -1519,7 +1529,6 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
 
         /* other actor download errors may need a retry */
         srv_debug(1, xs_fmt("error requesting actor %s %d -- retry later", actor, a_status));
-
         return 0;
     }
 
@@ -1530,13 +1539,12 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         srv_log(xs_fmt("bad signature %s (%s)", actor, sig_err));
 
         srv_archive_error("check_signature", sig_err, req, msg);
-
         return -1;
     }
 
-    /* if no user is set, no further checks can be done */
+    /* if no user is set, no further checks can be done; propagate */
     if (snac == NULL)
-        return 1;
+        return 2;
 
     /* reject messages that are not for this user */
     if (!is_msg_for_me(snac, msg)) {
