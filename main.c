@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
         xs *actor = NULL;
         int status;
 
-        status = actor_request(user, &actor);
+        status = actor_request(NULL, user, &actor);
 
         printf("status: %d\n", status);
         if (valid_status(status)) {
@@ -334,7 +334,7 @@ int main(int argc, char *argv[])
     if (strcmp(cmd, "ping") == 0) { /** **/
         xs *actor_o = NULL;
 
-        if (valid_status(actor_request(url, &actor_o))) {
+        if (valid_status(actor_request(&snac, url, &actor_o))) {
             xs *msg = msg_ping(&snac, url);
 
             enqueue_output_by_actor(&snac, msg, url, 0);
@@ -409,7 +409,7 @@ int main(int argc, char *argv[])
         int status;
         xs *data = NULL;
 
-        status = actor_request(url, &data);
+        status = actor_request(&snac, url, &data);
 
         printf("status: %d\n", status);
 

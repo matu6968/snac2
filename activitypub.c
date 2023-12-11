@@ -115,7 +115,7 @@ int activitypub_request(snac *user, const char *url, xs_dict **data)
 }
 
 
-int actor_request(const char *actor, xs_dict **data)
+int actor_request(snac *user, const char *actor, xs_dict **data)
 /* request an actor */
 {
     int status, status2;
@@ -129,7 +129,7 @@ int actor_request(const char *actor, xs_dict **data)
 
     if (status != 200) {
         /* actor data non-existent or stale: get from the net */
-        status2 = activitypub_request(NULL, actor, &payload);
+        status2 = activitypub_request(user, actor, &payload);
 
         if (valid_status(status2)) {
             /* renew data */
@@ -207,7 +207,7 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
 
                     /* request (and drop) the actor for this entry */
                     if (!xs_is_null(actor))
-                        actor_request(actor, NULL);
+                        actor_request(snac, actor, NULL);
 
                     /* does it have an ancestor? */
                     char *in_reply_to = xs_dict_get(object, "inReplyTo");
@@ -331,7 +331,7 @@ xs_str *get_actor_inbox(const char *actor)
     xs *data = NULL;
     char *v = NULL;
 
-    if (valid_status(actor_request(actor, &data))) {
+    if (valid_status(actor_request(NULL, actor, &data))) {
         /* try first endpoints/sharedInbox */
         if ((v = xs_dict_get(data, "endpoints")))
             v = xs_dict_get(v, "sharedInbox");
@@ -1095,7 +1095,7 @@ xs_dict *msg_follow(snac *snac, const char *q)
     }
 
     /* request the actor */
-    status = actor_request(actor, &actor_o);
+    status = actor_request(snac, actor, &actor_o);
 
     if (valid_status(status)) {
         /* check if the actor is an alias */
@@ -1501,7 +1501,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         utype = "(null)";
 
     /* bring the actor */
-    a_status = actor_request(actor, &actor_o);
+    a_status = actor_request(snac, actor, &actor_o);
 
     /* do not retry permanent failures */
     if (a_status == 404 || a_status == 410 || a_status < 0) {
@@ -1520,7 +1520,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     /* check the signature */
     xs *sig_err = NULL;
 
-    if (!check_signature(req, &sig_err)) {
+    if (!check_signature(snac, req, &sig_err)) {
         srv_log(xs_fmt("bad signature %s (%s)", actor, sig_err));
 
         srv_archive_error("check_signature", sig_err, req, msg);
@@ -1683,7 +1683,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
                     /* bring the actor */
                     xs *who_o = NULL;
 
-                    if (valid_status(actor_request(who, &who_o))) {
+                    if (valid_status(actor_request(snac, who, &who_o))) {
                         timeline_admire(snac, object, actor, 0);
                         snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
                         do_notify = 1;
