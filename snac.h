@@ -212,7 +212,7 @@ xs_dict *http_signed_request(snac *snac, const char *method, const char *url,
                             const char *body, int b_size,
                             int *status, xs_str **payload, int *p_size,
                             int timeout);
-int check_signature(snac *user, xs_dict *req, xs_str **err);
+int check_signature(xs_dict *req, xs_str **err);
 
 void httpd(void);
 
@@ -242,7 +242,7 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
                       const xs_list *opts, int multiple, int end_secs);
 
 int activitypub_request(snac *snac, const char *url, xs_dict **data);
-int actor_request(snac *user, const char *actor, xs_dict **data);
+int actor_request(const char *actor, xs_dict **data);
 void timeline_request_replies(snac *user, const char *id);
 int send_to_inbox_raw(const char *keyid, const char *seckey,
                   const xs_str *inbox, const xs_dict *msg,

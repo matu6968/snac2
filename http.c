@@ -120,7 +120,7 @@ xs_dict *http_signed_request(snac *snac, const char *method, const char *url,
 }
 
 
-int check_signature(snac *user, xs_dict *req, xs_str **err)
+int check_signature(xs_dict *req, xs_str **err)
 /* check the signature */
 {
     char *sig_hdr = xs_dict_get(req, "signature");
@@ -173,7 +173,7 @@ int check_signature(snac *user, xs_dict *req, xs_str **err)
 
     xs *actor = NULL;
 
-    if (!valid_status(actor_request(user, keyId, &actor))) {
+    if (!valid_status(actor_request(keyId, &actor))) {
         *err = xs_fmt("unknown actor %s", keyId);
         return 0;
     }
