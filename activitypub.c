@@ -190,7 +190,7 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
                 if (xs_is_null(type))
                     type = "(null)";
 
-                srv_debug(1, xs_fmt("timeline_request type %s '%s'", nid, type));
+                srv_debug(2, xs_fmt("timeline_request type %s '%s'", nid, type));
 
                 if (strcmp(type, "Create") == 0) {
                     /* some software like lemmy nest Announce + Create + Note */
@@ -1506,7 +1506,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     if (strcmp(type, "Delete") == 0) {
         /* if the actor is not here, do not even try */
         if (!object_here(actor)) {
-            srv_debug(0, xs_fmt("dropped 'Delete' message from unknown actor '%s'", actor));
+            srv_debug(1, xs_fmt("dropped 'Delete' message from unknown actor '%s'", actor));
             return -1;
         }
     }
@@ -1709,7 +1709,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
                     snac_log(snac, xs_fmt("ignored 'Announce' about muted actor %s", who));
             }
             else
-                snac_debug(snac, 1, xs_fmt("error requesting 'Announce' object %s", object));
+                snac_debug(snac, 2, xs_fmt("error requesting 'Announce' object %s", object));
         }
     }
     else
