@@ -464,8 +464,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
             return 2;
 
         /* if it's by someone we don't follow, reject */
-        if (!following_check(snac, xs_dict_get(c_msg, "actor")))
-            return 0;
+        return following_check(snac, xs_dict_get(c_msg, "actor"));
     }
 
     /* if it's an Undo, it must be from someone we follow */
@@ -474,8 +473,9 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     }
 
     /* if it's not a Create or Update, allow */
-    if (!xs_match(type, "Create|Update"))
+    if (!xs_match(type, "Create|Update")) {
         return 1;
+    }
 
     xs_dict *msg = xs_dict_get(c_msg, "object");
     xs *rcpts = recipient_list(snac, msg, 0);
