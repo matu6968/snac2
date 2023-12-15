@@ -141,7 +141,7 @@ int actor_request(const char *actor, xs_dict **data)
             }
         }
         else
-            srv_debug(0, xs_fmt("actor_request error %s %d", actor, status));
+            srv_debug(1, xs_fmt("actor_request error %s %d", actor, status));
     }
 
     /* collect the (presumed) shared inbox in this actor */
@@ -1703,7 +1703,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
                         do_notify = 1;
                     }
                     else
-                        snac_log(snac, xs_fmt("dropped 'Announce' on actor request error %s", who));
+                        snac_debug(snac, 1, xs_fmt("dropped 'Announce' on actor request error %s", who));
                 }
                 else
                     snac_log(snac, xs_fmt("ignored 'Announce' about muted actor %s", who));
