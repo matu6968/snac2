@@ -1588,6 +1588,9 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     }
     else
     if (strcmp(type, "Undo") == 0) { /** **/
+        if (xs_type(object) != XSTYPE_DICT)
+            utype = "Follow";
+
         if (strcmp(utype, "Follow") == 0) { /** **/
             if (valid_status(follower_del(snac, actor))) {
                 snac_log(snac, xs_fmt("no longer following us %s", actor));
