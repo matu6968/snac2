@@ -2,6 +2,8 @@
 
 ## 2.44
 
+Shared inboxes are now supported (talk more about this).
+
 I've refactored all HTML code because it was somewhat of a mess; now it's much more maintainable (at least for me). I think I haven't broken anything.
 
 Fixed crash in a special case of malformed query.
