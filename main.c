@@ -210,6 +210,13 @@ int main(int argc, char *argv[])
         return deluser(&snac);
     }
 
+    if (strcmp(cmd, "update") == 0) { /** **/
+        xs *a_msg = msg_actor(&snac);
+        xs *u_msg = msg_update(&snac, a_msg);
+        enqueue_message(&snac, u_msg);
+        return 0;
+    }
+
     if (strcmp(cmd, "queue") == 0) { /** **/
         process_user_queue(&snac);
         return 0;
