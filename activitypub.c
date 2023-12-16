@@ -1514,6 +1514,22 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
             srv_debug(1, xs_fmt("dropped 'Delete' message from unknown actor '%s'", actor));
             return -1;
         }
+
+        /* discard crap */
+        if (xs_is_null(object)) {
+            srv_log(xs_fmt("dropped 'Delete' message with invalid object from actor '%s'", actor));
+            return -1;
+        }
+
+        /* also discard if the object to be deleted is not here */
+        char *obj_id = object;
+        if (xs_type(obj_id) == XSTYPE_DICT)
+            obj_id = xs_dict_get(obj_id, "id");
+
+        if (object_here(obj_id)) {
+            srv_debug(1, xs_fmt("dropped 'Delete' message from unknown object '%s'", obj_id));
+            return -1;
+        }
     }
 
     /* bring the actor */
