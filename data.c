@@ -2224,7 +2224,7 @@ void enqueue_telegram(const xs_str *msg, const char *bot, const char *chat_id)
 
     qmsg = _enqueue_put(fn, qmsg);
 
-    srv_debug(1, xs_fmt("enqueue_email %s %s", bot, chat_id));
+    srv_debug(1, xs_fmt("enqueue_telegram %s %s", bot, chat_id));
 }
 
 
