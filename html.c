@@ -431,7 +431,7 @@ xs_html *html_instance_head(void)
 
             xs_html_add(head,
                 xs_html_tag("style",
-                    xs_html_text(css)));
+                    xs_html_raw(css)));
         }
     }
 
@@ -535,7 +535,7 @@ xs_html *html_user_head(snac *user)
         if (css != NULL) {
             xs_html_add(head,
                 xs_html_tag("style",
-                    xs_html_text(css)));
+                    xs_html_raw(css)));
         }
     }
 
