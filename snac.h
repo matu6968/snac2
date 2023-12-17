@@ -64,6 +64,7 @@ void srv_archive(const char *direction, const char *url, xs_dict *req,
                  const char *body, int b_size);
 void srv_archive_error(const char *prefix, const xs_str *err,
                        const xs_dict *req, const xs_val *data);
+void srv_archive_qitem(xs_dict *q_item);
 
 double mtime_nl(const char *fn, int *n_link);
 #define mtime(fn) mtime_nl(fn, NULL)

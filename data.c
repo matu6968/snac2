@@ -2752,3 +2752,17 @@ void srv_archive_error(const char *prefix, const xs_str *err,
         fclose(f);
     }
 }
+
+
+void srv_archive_qitem(xs_dict *q_item)
+/* archives a q_item in the error folder */
+{
+    xs *ntid = tid(0);
+    xs *fn   = xs_fmt("%s/error/%s_qitem", srv_basedir, ntid);
+    FILE *f;
+
+    if ((f = fopen(fn, "w")) != NULL) {
+        xs_json_dump(q_item, 4, f);
+        fclose(f);
+    }
+}
