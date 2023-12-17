@@ -467,13 +467,13 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         return following_check(snac, xs_dict_get(c_msg, "actor"));
     }
 
-    /* if it's an Undo, it must be from someone we follow */
-    if (strcmp(type, "Undo") == 0) {
+    /* if it's an Undo or an Update, it must be from someone we follow */
+    if (xs_match(type, "Undo|Update")) {
         return following_check(snac, xs_dict_get(c_msg, "actor"));
     }
 
-    /* if it's not a Create or Update, allow */
-    if (!xs_match(type, "Create|Update")) {
+    /* if it's not a Create, allow as is */
+    if (!xs_match(type, "Create")) {
         return 1;
     }
 
