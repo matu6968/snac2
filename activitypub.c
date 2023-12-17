@@ -514,10 +514,8 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         else
         if (actor_followers && strcmp(v, actor_followers) == 0) {
             /* if this message is for this actor's followers, are we one of them? */
-            if (following_check(snac, actor)) {
-                snac_debug(snac, 0, xs_fmt("---> non-public msg for followers"));
+            if (following_check(snac, actor))
                 return 6;
-            }
         }
     }
 
@@ -541,8 +539,6 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
                 return 4;
         }
     }
-
-    snac_debug(snac, 0, xs_fmt("is_msg_for_me() final"));
 
     return 0;
 }
