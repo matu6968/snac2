@@ -447,7 +447,8 @@ int is_msg_public(const xs_dict *msg)
 int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 /* checks if this message is for me */
 {
-    const char *type = xs_dict_get(c_msg, "type");
+    const char *type  = xs_dict_get(c_msg, "type");
+    const char *actor = xs_dict_get(c_msg, "actor");
 
     if (xs_match(type, "Like|Announce")) {
         const char *object = xs_dict_get(c_msg, "object");
@@ -464,18 +465,22 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
             return 2;
 
         /* if it's by someone we don't follow, reject */
-        return following_check(snac, xs_dict_get(c_msg, "actor"));
+        return following_check(snac, actor);
     }
 
     /* if it's an Undo or an Update, it must be from someone we follow */
     if (xs_match(type, "Undo|Update")) {
-        return following_check(snac, xs_dict_get(c_msg, "actor"));
+        return following_check(snac, actor);
     }
 
     /* if it's not a Create, allow as is */
     if (!xs_match(type, "Create")) {
         return 1;
     }
+
+    /* if we follow the Creator of this post, allow */
+    if (following_check(snac, actor))
+        return 1;
 
     xs_dict *msg = xs_dict_get(c_msg, "object");
     xs *rcpts = recipient_list(snac, msg, 0);
