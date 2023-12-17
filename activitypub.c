@@ -478,8 +478,10 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         return 1;
     }
 
-    /* if we follow the actor of this post, allow */
-    if (following_check(snac, actor))
+    int pub_msg = is_msg_public(c_msg);
+
+    /* if this message is public and we follow the actor of this post, allow */
+    if (pub_msg && following_check(snac, actor))
         return 1;
 
     xs_dict *msg = xs_dict_get(c_msg, "object");
@@ -493,14 +495,14 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
             return 2;
 
         /* for someone we follow? (probably cc'ed) accept */
-        if (following_check(snac, v))
+        if (pub_msg && following_check(snac, v))
             return 5;
     }
 
     /* accept if it's by someone we follow */
     char *atto = xs_dict_get(msg, "attributedTo");
 
-    if (!xs_is_null(atto) && following_check(snac, atto))
+    if (pub_msg && !xs_is_null(atto) && following_check(snac, atto))
         return 3;
 
     /* is this message a reply to another? */
@@ -513,10 +515,12 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
             atto = xs_dict_get(r_msg, "attributedTo");
 
             /* accept if the replied message is from someone we follow */
-            if (!xs_is_null(atto) && following_check(snac, atto))
+            if (pub_msg && !xs_is_null(atto) && following_check(snac, atto))
                 return 4;
         }
     }
+
+    snac_debug(snac, 0, xs_fmt("is_msg_for_me() final"));
 
     return 0;
 }
