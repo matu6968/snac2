@@ -1944,7 +1944,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     if (valid_status(webfinger_request(q, &actor, &user))) {
                         xs *actor_o = NULL;
 
-                        if (valid_status(actor_request(actor, &actor_o))) {
+                        if (valid_status(actor_request(&snac1, actor, &actor_o))) {
                             xs *acct = mastoapi_account(actor_o);
 
                             acl = xs_list_append(acl, acct);
