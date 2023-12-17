@@ -1526,7 +1526,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         if (xs_type(obj_id) == XSTYPE_DICT)
             obj_id = xs_dict_get(obj_id, "id");
 
-        if (object_here(obj_id)) {
+        if (!object_here(obj_id)) {
             srv_debug(1, xs_fmt("dropped 'Delete' message from unknown object '%s'", obj_id));
             return -1;
         }
@@ -1778,8 +1778,10 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         if (xs_type(object) == XSTYPE_DICT)
             object = xs_dict_get(object, "id");
 
-        if (valid_status(timeline_del(snac, object)))
+        if (object_here(object)) {
+            timeline_del(snac, object);
             snac_debug(snac, 1, xs_fmt("new 'Delete' %s %s", actor, object));
+        }
         else
             snac_debug(snac, 1, xs_fmt("ignored 'Delete' for unknown object %s", object));
     }
