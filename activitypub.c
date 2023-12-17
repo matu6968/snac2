@@ -489,14 +489,36 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     xs_list *p = rcpts;
     xs_str *v;
 
+    xs *actor_followers = NULL;
+
+    if (!pub_msg) {
+        /* not a public message; get the actor and its followers list */
+        xs *actor_obj = NULL;
+
+        if (valid_status(object_get(actor, &actor_obj))) {
+            if ((v = xs_dict_get(actor_obj, "followers")))
+                actor_followers = xs_dup(v);
+        }
+    }
+
     while(xs_list_iter(&p, &v)) {
         /* explicitly for me? accept */
         if (strcmp(v, snac->actor) == 0)
             return 2;
 
-        /* for someone we follow? (probably cc'ed) accept */
-        if (pub_msg && following_check(snac, v))
-            return 5;
+        if (pub_msg) {
+            /* a public message for someone we follow? (probably cc'ed) accept */
+            if (following_check(snac, v))
+                return 5;
+        }
+        else
+        if (actor_followers && strcmp(v, actor_followers) == 0) {
+            /* if this message is for this actor's followers, are we one of them? */
+            if (following_check(snac, actor)) {
+                snac_debug(snac, 0, xs_fmt("---> non-public msg for followers"));
+                return 6;
+            }
+        }
     }
 
     /* accept if it's by someone we follow */
