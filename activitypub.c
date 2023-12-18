@@ -2323,6 +2323,12 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
         return 400;
     }
 
+    if (xs_is_null(payload)) {
+        *body  = xs_str_new("no payload");
+        *ctype = "text/plain";
+        return 400;
+    }
+
     if (xs_str_in(i_ctype, "application/activity+json") == -1 &&
         xs_str_in(i_ctype, "application/ld+json") == -1)
         return 0;

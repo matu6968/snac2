@@ -382,7 +382,7 @@ void httpd_connection(FILE *f)
     srv_archive("RECV", NULL, req, payload, p_size, status, headers, body, b_size);
 
     /* JSON validation check */
-    if (strcmp(ctype, "application/json") == 0) {
+    if (!xs_is_null(body) && strcmp(ctype, "application/json") == 0) {
         xs *j = xs_json_loads(body);
 
         if (j == NULL) {
