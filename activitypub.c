@@ -468,8 +468,13 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         return following_check(snac, actor);
     }
 
-    /* if it's an Undo, it must be from someone we follow */
+    /* if it's an Undo + Follow, it must be from someone we follow */
     if (xs_match(type, "Undo")) {
+        return following_check(snac, actor);
+    }
+
+    /* if it's an Accept + Follow, it must be for a Follow we created */
+    if (xs_match(type, "Accept")) {
         return following_check(snac, actor);
     }
 
