@@ -468,9 +468,9 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         return following_check(snac, actor);
     }
 
-    /* if it's an Undo + Follow, it must be from someone that follows us */
+    /* if it's an Undo, it must be from someone related to us */
     if (xs_match(type, "Undo")) {
-        return follower_check(snac, actor);
+        return follower_check(snac, actor) || following_check(snac, actor);
     }
 
     /* if it's an Accept + Follow, it must be for a Follow we created */
