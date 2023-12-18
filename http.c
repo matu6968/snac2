@@ -171,10 +171,15 @@ int check_signature(xs_dict *req, xs_str **err)
     if ((p = strchr(keyId, '#')) != NULL)
         *p = '\0';
 
-    xs *actor = NULL;
+    /* also strip cgi variables */
+    if ((p = strchr(keyId, '?')) != NULL)
+        *p = '\0';
 
-    if (!valid_status(actor_request(NULL, keyId, &actor))) {
-        *err = xs_fmt("unknown actor %s", keyId);
+    xs *actor = NULL;
+    int status;
+
+    if (!valid_status((status = actor_request(NULL, keyId, &actor)))) {
+        *err = xs_fmt("actor request error %s %d", keyId, status);
         return 0;
     }
 
