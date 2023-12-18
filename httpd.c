@@ -245,8 +245,13 @@ void httpd_connection(FILE *f)
         return;
     }
 
-    method = xs_dict_get(req, "method");
-    q_path = xs_dup(xs_dict_get(req, "path"));
+    if (!(method = xs_dict_get(req, "method")) || !(p = xs_dict_get(req, "path"))) {
+        /* missing needed headers; discard */
+        fclose(f);
+        return;
+    }
+
+    q_path = xs_dup(p);
 
     /* crop the q_path from leading / and the prefix */
     if (xs_endswith(q_path, "/"))
