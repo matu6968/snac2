@@ -1842,6 +1842,10 @@ void lastlog_write(snac *snac, const char *source)
 void inbox_add(const char *inbox)
 /* collects a shared inbox */
 {
+    /* don't collect ourselves */
+    if (xs_startswith(inbox, srv_baseurl))
+        return;
+
     xs *md5 = xs_md5_hex(inbox, strlen(inbox));
     xs *fn  = xs_fmt("%s/inbox/%s", srv_basedir, md5);
     FILE *f;
