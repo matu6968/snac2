@@ -1581,7 +1581,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
             }
         }
 
-        xs_html_add(snac_content_wrap,
+        xs_html_add(snac_content,
             poll);
     }
 
@@ -1612,7 +1612,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
         xs_html *content_attachments = xs_html_tag("div",
             xs_html_attr("class", "snac-content-attachments"));
 
-        xs_html_add(snac_content_wrap,
+        xs_html_add(snac_content,
             content_attachments);
 
         xs_list *p = attach;
