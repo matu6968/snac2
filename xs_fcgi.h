@@ -336,21 +336,23 @@ void xs_fcgi_response(FILE *f, int status, xs_dict *headers, xs_str *body, int b
     int offset = 0;
 
     while (offset < size) {
-        int sz = size - offset;
+        size_t sz = size - offset;
         if (sz > 0xffff)
             sz = 0xffff;
 
         hdr.content_len = htons(sz);
 
-        fwrite(&hdr, sizeof(hdr), 1, f);
-        fwrite(out + offset, 1, sz, f);
+        /* write or fail */
+        if (!fwrite(&hdr, sizeof(hdr), 1, f) || fwrite(out + offset, 1, sz, f) != sz)
+            return;
 
         offset += sz;
     }
 
     /* final STDOUT packet with 0 size */
     hdr.content_len = 0;
-    fwrite(&hdr, sizeof(hdr), 1, f);
+    if (!fwrite(&hdr, sizeof(hdr), 1, f))
+        return;
 
     /* complete the connection */
     ereq.app_status      = 0;
@@ -359,8 +361,8 @@ void xs_fcgi_response(FILE *f, int status, xs_dict *headers, xs_str *body, int b
     hdr.type        = FCGI_END_REQUEST;
     hdr.content_len = htons(sizeof(ereq));
 
-    fwrite(&hdr, sizeof(hdr), 1, f);
-    fwrite(&ereq, sizeof(ereq), 1, f);
+    if (fwrite(&hdr, sizeof(hdr), 1, f))
+        fwrite(&ereq, sizeof(ereq), 1, f);
 }
 
 
