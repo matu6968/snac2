@@ -1438,10 +1438,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
 
         c = xs_replace_i(c, "<br><br>", "<p>");
 
-        if (!xs_startswith(c, "<p>")) {
-            xs *s1 = c;
-            c = xs_fmt("<p>%s</p>", s1);
-        }
+        c = xs_str_cat(c, "<p>");
 
         /* replace the :shortnames: */
         c = replace_shortnames(c, xs_dict_get(msg, "tag"), 2);
