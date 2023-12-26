@@ -30,6 +30,8 @@ int use_fcgi = 0;
 
 int srv_running = 0;
 
+time_t srv_start_time = 0;
+
 /* nodeinfo 2.0 template */
 const char *nodeinfo_2_0_template = ""
     "{\"version\":\"2.0\","
@@ -208,6 +210,15 @@ int server_get_handler(xs_dict *req, const char *q_path,
         *ctype = "text/plain";
         *body  = xs_str_new("User-agent: *\n"
                             "Disallow: /\n");
+    }
+    else
+    if (strcmp(q_path, "/status.txt") == 0) {
+        status = 200;
+        *ctype = "text/plain";
+        *body  = xs_str_new("UP\n");
+
+        xs *uptime = xs_str_time_diff(time(NULL) - srv_start_time);
+        srv_log(xs_fmt("status: uptime: %s", uptime));
     }
 
     if (status != 0)
@@ -591,9 +602,10 @@ void httpd(void)
     pthread_t threads[MAX_THREADS] = {0};
     int n_threads = 0;
     int n;
-    time_t start_time = time(NULL);
     char sem_name[24];
     sem_t anon_job_sem;
+
+    srv_start_time = time(NULL);
 
     use_fcgi = xs_type(xs_dict_get(srv_config, "fastcgi")) == XSTYPE_TRUE;
 
@@ -697,7 +709,7 @@ void httpd(void)
     sem_close(job_sem);
     sem_unlink(sem_name);
 
-    xs *uptime = xs_str_time_diff(time(NULL) - start_time);
+    xs *uptime = xs_str_time_diff(time(NULL) - srv_start_time);
 
     srv_log(xs_fmt("httpd%s stop %s:%s (run time: %s)", use_fcgi ? " (FastCGI)" : "",
                 address, port, uptime));
