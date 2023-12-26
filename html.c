@@ -634,7 +634,6 @@ static xs_html *html_user_body(snac *user, int local)
     else {
         xs *n_list = notify_list(user, 1);
         int n_len  = xs_list_len(n_list);
-        xs *n_str  = NULL;
         xs_html *notify_count = NULL;
 
         /* show the number of new notifications, if there are any */
@@ -1342,11 +1341,13 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
             xs *name = actor_name(actor_r);
 
             if (!xs_is_null(name)) {
+                xs *href = xs_fmt("%s/people#%s", user->actor, p);
+
                 xs_html_add(post_header,
                     xs_html_tag("div",
                         xs_html_attr("class", "snac-origin"),
                         xs_html_tag("a",
-                            xs_html_attr("href", xs_dict_get(actor_r, "id")),
+                            xs_html_attr("href", href),
                             xs_html_raw(name)), /* already sanitized */
                             xs_html_text(" "),
                             xs_html_text(L("boosted"))));
@@ -1974,6 +1975,8 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
         if (valid_status(actor_get(actor_id, &actor))) {
             xs_html *snac_post = xs_html_tag("div",
                 xs_html_attr("class", "snac-post"),
+                xs_html_tag("a",
+                    xs_html_attr("name", md5)),
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post-header"),
                     html_actor_icon(actor, xs_dict_get(actor, "published"), NULL, NULL, 0)));
