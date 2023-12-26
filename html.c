@@ -1343,7 +1343,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
             if (!xs_is_null(name)) {
                 xs *href = NULL;
 
-                if (user != NULL)
+                if (!local && user != NULL)
                     href = xs_fmt("%s/people#%s", user->actor, p);
                 else
                     href = xs_dup(xs_dict_get(actor_r, "id"));
