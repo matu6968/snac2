@@ -32,6 +32,18 @@ int srv_running = 0;
 
 time_t srv_start_time = 0;
 
+/** job control **/
+
+/* mutex to access the lists of jobs */
+static pthread_mutex_t job_mutex;
+
+/* semaphre to trigger job processing */
+static sem_t *job_sem;
+
+/* fifo of jobs */
+xs_list *job_fifo = NULL;
+
+
 /* nodeinfo 2.0 template */
 const char *nodeinfo_2_0_template = ""
     "{\"version\":\"2.0\","
@@ -219,6 +231,11 @@ int server_get_handler(xs_dict *req, const char *q_path,
 
         xs *uptime = xs_str_time_diff(time(NULL) - srv_start_time);
         srv_log(xs_fmt("status: uptime: %s", uptime));
+
+        pthread_mutex_lock(&job_mutex);
+        int l = xs_list_len(job_fifo);
+        pthread_mutex_unlock(&job_mutex);
+        srv_log(xs_fmt("status: job_fifo len: %d", l));
     }
 
     if (status != 0)
@@ -415,18 +432,6 @@ void term_handler(int s)
 
     longjmp(on_break, 1);
 }
-
-
-/** job control **/
-
-/* mutex to access the lists of jobs */
-static pthread_mutex_t job_mutex;
-
-/* semaphre to trigger job processing */
-static sem_t *job_sem;
-
-/* fifo of jobs */
-xs_list *job_fifo = NULL;
 
 
 int job_fifo_ready(void)
