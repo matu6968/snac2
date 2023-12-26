@@ -1341,7 +1341,12 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
             xs *name = actor_name(actor_r);
 
             if (!xs_is_null(name)) {
-                xs *href = xs_fmt("%s/people#%s", user->actor, p);
+                xs *href = NULL;
+
+                if (user != NULL)
+                    href = xs_fmt("%s/people#%s", user->actor, p);
+                else
+                    href = xs_dup(xs_dict_get(actor_r, "id"));
 
                 xs_html_add(post_header,
                     xs_html_tag("div",
