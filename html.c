@@ -101,7 +101,7 @@ xs_str *actor_name(xs_dict *actor)
 }
 
 
-xs_html *html_actor_icon(xs_dict *actor, const char *date,
+xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
                         const char *udate, const char *url, int priv)
 {
     xs_html *actor_icon = xs_html_tag("p", NULL);
@@ -120,6 +120,21 @@ xs_html *html_actor_icon(xs_dict *actor, const char *date,
     if (avatar == NULL)
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
 
+    char *actor_id = xs_dict_get(actor, "id");
+    xs *href = NULL;
+
+    if (user) {
+        /* if this actor is a follower or being followed, create an
+           anchored link to the people page instead of the actor url */
+        if (follower_check(user, actor_id) || following_check(user, actor_id)) {
+            xs *md5 = xs_md5_hex(actor_id, strlen(actor_id));
+            href = xs_fmt("%s/people#%s", user->actor, md5);
+        }
+    }
+
+    if (href == NULL)
+        href = xs_dup(actor_id);
+
     xs_html_add(actor_icon,
         xs_html_sctag("img",
             xs_html_attr("loading", "lazy"),
@@ -127,7 +142,7 @@ xs_html *html_actor_icon(xs_dict *actor, const char *date,
             xs_html_attr("src",     avatar),
             xs_html_attr("alt",     "")),
         xs_html_tag("a",
-            xs_html_attr("href",    xs_dict_get(actor, "id")),
+            xs_html_attr("href",    href),
             xs_html_attr("class",   "p-author h-card snac-author"),
             xs_html_raw(name))); /* name is already html-escaped */
 
@@ -212,7 +227,7 @@ xs_html *html_actor_icon(xs_dict *actor, const char *date,
 }
 
 
-xs_html *html_msg_icon(const xs_dict *msg)
+xs_html *html_msg_icon(snac *user, const xs_dict *msg)
 {
     char *actor_id;
     xs *actor = NULL;
@@ -236,7 +251,7 @@ xs_html *html_msg_icon(const xs_dict *msg)
         date  = xs_dict_get(msg, "published");
         udate = xs_dict_get(msg, "updated");
 
-        actor_icon = html_actor_icon(actor, date, udate, url, priv);
+        actor_icon = html_actor_icon(user, actor, date, udate, url, priv);
     }
 
     return actor_icon;
@@ -1231,7 +1246,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-origin"),
                     xs_html_text(L("follows you"))),
-                html_msg_icon(msg)));
+                html_msg_icon(local ? NULL : user, msg)));
     }
     else
     if (!xs_match(type, "Note|Question|Page|Article")) {
@@ -1379,7 +1394,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
     }
 
     xs_html_add(post_header,
-        html_msg_icon(msg));
+        html_msg_icon(local ? NULL : user, msg));
 
     /** post content **/
 
@@ -1984,7 +1999,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
                     xs_html_attr("name", md5)),
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post-header"),
-                    html_actor_icon(actor, xs_dict_get(actor, "published"), NULL, NULL, 0)));
+                    html_actor_icon(NULL, actor, xs_dict_get(actor, "published"), NULL, NULL, 0)));
 
             /* content (user bio) */
             char *c = xs_dict_get(actor, "summary");
@@ -2179,7 +2194,7 @@ xs_str *html_notifications(snac *user)
             xs_html_add(entry,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post"),
-                    html_actor_icon(actor, NULL, NULL, NULL, 0)));
+                    html_actor_icon(user, actor, NULL, NULL, NULL, 0)));
         }
         else {
             xs *md5 = xs_md5_hex(id, strlen(id));
