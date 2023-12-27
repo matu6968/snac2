@@ -5,7 +5,6 @@
 #define _XS_UNICODE_H
 
  int _xs_utf8_enc(char buf[4], unsigned int cpoint);
- xs_str *xs_utf8_enc(xs_str *str, unsigned int cpoint);
  unsigned int xs_utf8_dec(char **str);
  int xs_unicode_width(unsigned int cpoint);
  int xs_is_surrogate(unsigned int cpoint);
@@ -21,13 +20,20 @@
  int xs_unicode_nfc(unsigned int base, unsigned int diac, unsigned int *cpoint);
  int xs_unicode_is_alpha(unsigned int cpoint);
 
+#ifdef _XS_H
+ xs_str *xs_utf8_enc(xs_str *str, unsigned int cpoint);
+#endif
+
 #ifdef XS_IMPLEMENTATION
 
+#ifndef countof
+#define countof(a) (sizeof((a)) / sizeof((*a)))
+#endif
 
 int _xs_utf8_enc(char buf[4], unsigned int cpoint)
 /* encodes an Unicode codepoint to utf-8 into buf and returns the size in bytes */
 {
-    unsigned char *p = (unsigned char *)buf;
+    char *p = buf;
 
     if (cpoint < 0x80) /* 1 byte char */
         *p++ = cpoint & 0xff;
@@ -48,27 +54,16 @@ int _xs_utf8_enc(char buf[4], unsigned int cpoint)
         *p++ = 0x80 | (cpoint & 0x3f);
     }
 
-    return p - (unsigned char *)buf;
-}
-
-
-xs_str *xs_utf8_enc(xs_str *str, unsigned int cpoint)
-/* encodes an Unicode codepoint to utf-8 into str */
-{
-    char tmp[4];
-
-    int c = _xs_utf8_enc(tmp, cpoint);
-
-    return xs_append_m(str, tmp, c);
+    return p - buf;
 }
 
 
 unsigned int xs_utf8_dec(char **str)
 /* decodes an utf-8 char inside str and updates the pointer */
 {
-    unsigned char *p = (unsigned char *)*str;
+    char *p = *str;
     unsigned int cpoint = 0;
-    int c = *p++;
+    unsigned char c = *p++;
     int cb = 0;
 
     if ((c & 0x80) == 0) { /* 1 byte char */
@@ -91,30 +86,19 @@ unsigned int xs_utf8_dec(char **str)
     }
 
     /* process the continuation bytes */
-    while (cb--) {
-        if ((*p & 0xc0) == 0x80)
-            cpoint |= (*p++ & 0x3f) << (cb * 6);
-        else {
-            cpoint = 0xfffd;
-            break;
-        }
-    }
+    while (cb > 0 && *p && (*p & 0xc0) == 0x80)
+        cpoint |= (*p++ & 0x3f) << (--cb * 6);
 
-    *str = (char *)p;
+    /* incomplete or broken? */
+    if (cb)
+        cpoint = 0xfffd;
+
+    *str = p;
     return cpoint;
 }
 
 
-static int int_range_cmp(const void *p1, const void *p2)
-{
-    const unsigned int *a = p1;
-    const unsigned int *b = p2;
-
-    return *a < b[0] ? -1 : *a > b[1] ? 1 : 0;
-}
-
-
-/* intentionally dead simple */
+/** Unicode character width: intentionally dead simple **/
 
 static unsigned int xs_unicode_width_table[] = {
     0x300,      0x36f,      0,      /* diacritics */
@@ -132,12 +116,23 @@ static unsigned int xs_unicode_width_table[] = {
 int xs_unicode_width(unsigned int cpoint)
 /* returns the width in columns of a Unicode codepoint (somewhat simplified) */
 {
-    unsigned int *r = bsearch(&cpoint, xs_unicode_width_table,
-                        sizeof(xs_unicode_width_table) / (sizeof(unsigned int) * 3),
-                        sizeof(unsigned int) * 3,
-                        int_range_cmp);
+    int b = 0;
+    int t = countof(xs_unicode_width_table) / 3 - 1;
 
-    return r ? r[2] : 1;
+    while (t >= b) {
+        int n = (b + t) / 2;
+        unsigned int *p = &xs_unicode_width_table[n * 3];
+
+        if (cpoint < p[0])
+            t = n - 1;
+        else
+        if (cpoint > p[1])
+            b = n + 1;
+        else
+            return p[2];
+    }
+
+    return 1;
 }
 
 
@@ -167,53 +162,62 @@ unsigned int xs_surrogate_enc(unsigned int cpoint)
 }
 
 
+#ifdef _XS_H
+
+xs_str *xs_utf8_enc(xs_str *str, unsigned int cpoint)
+/* encodes an Unicode codepoint to utf-8 into str */
+{
+    char tmp[4];
+
+    int c = _xs_utf8_enc(tmp, cpoint);
+
+    return xs_append_m(str, tmp, c);
+}
+
+#endif /* _XS_H */
+
+
 #ifdef _XS_UNICODE_TBL_H
 
 /* include xs_unicode_tbl.h before this one to use these functions */
 
-static int int_cmp(const void *p1, const void *p2)
-{
-    const unsigned int *a = p1;
-    const unsigned int *b = p2;
-
-    return *a < *b ? -1 : *a > *b ? 1 : 0;
-}
-
-
 unsigned int *_xs_unicode_upper_search(unsigned int cpoint)
 /* searches for an uppercase codepoint in the case fold table */
 {
-    return bsearch(&cpoint, xs_unicode_case_fold_table,
-        sizeof(xs_unicode_case_fold_table) / (sizeof(unsigned int) * 2),
-        sizeof(unsigned int) * 2,
-        int_cmp);
-}
+    int b = 0;
+    int t = countof(xs_unicode_case_fold_table) / 2 + 1;
 
+    while (t >= b) {
+        int n = (b + t) / 2;
+        unsigned int *p = &xs_unicode_case_fold_table[n * 2];
 
-unsigned int *_xs_unicode_lower_search(unsigned int cpoint)
-/* searches for a lowercase codepoint in the case fold table */
-{
-    unsigned int *p = xs_unicode_case_fold_table + 1;
-    unsigned int *e = xs_unicode_case_fold_table +
-            sizeof(xs_unicode_case_fold_table) / sizeof(unsigned int);
-
-    while (p < e) {
-        if (cpoint == *p)
+        if (cpoint < p[0])
+            t = n - 1;
+        else
+        if (cpoint > p[0])
+            b = n + 1;
+        else
             return p;
-
-        p += 2;
     }
 
     return NULL;
 }
 
 
-unsigned int xs_unicode_to_upper(unsigned int cpoint)
-/* returns the cpoint to uppercase */
+unsigned int *_xs_unicode_lower_search(unsigned int cpoint)
+/* searches for a lowercase codepoint in the case fold table */
 {
-    unsigned int *p = _xs_unicode_lower_search(cpoint);
+    unsigned int *p = xs_unicode_case_fold_table;
+    unsigned int *e = p + countof(xs_unicode_case_fold_table);
 
-    return p == NULL ? cpoint : p[-1];
+    while (p < e) {
+        if (cpoint == p[1])
+            return p;
+
+        p += 2;
+    }
+
+    return NULL;
 }
 
 
@@ -226,20 +230,40 @@ unsigned int xs_unicode_to_lower(unsigned int cpoint)
 }
 
 
+unsigned int xs_unicode_to_upper(unsigned int cpoint)
+/* returns the cpoint to uppercase */
+{
+    unsigned int *p = _xs_unicode_lower_search(cpoint);
+
+    return p == NULL ? cpoint : p[0];
+}
+
+
 int xs_unicode_nfd(unsigned int cpoint, unsigned int *base, unsigned int *diac)
 /* applies unicode Normalization Form D */
 {
-    unsigned int *r = bsearch(&cpoint, xs_unicode_nfd_table,
-                        sizeof(xs_unicode_nfd_table) / (sizeof(unsigned int) * 3),
-                        sizeof(unsigned int) * 3,
-                        int_cmp);
+    int b = 0;
+    int t = countof(xs_unicode_nfd_table) / 3 - 1;
 
-    if (r != NULL) {
-        *base = r[1];
-        *diac = r[2];
+    while (t >= b) {
+        int n = (b + t) / 2;
+        unsigned int *p = &xs_unicode_nfd_table[n * 3];
+
+        int c = cpoint - p[0];
+
+        if (c < 0)
+            t = n - 1;
+        else
+        if (c > 0)
+            b = n + 1;
+        else {
+            *base = p[1];
+            *diac = p[2];
+            return 1;
+        }
     }
 
-    return !!r;
+    return 0;
 }
 
 
@@ -247,8 +271,7 @@ int xs_unicode_nfc(unsigned int base, unsigned int diac, unsigned int *cpoint)
 /* applies unicode Normalization Form C */
 {
     unsigned int *p = xs_unicode_nfd_table;
-    unsigned int *e = xs_unicode_nfd_table +
-        sizeof(xs_unicode_nfd_table) / sizeof(unsigned int);
+    unsigned int *e = p + countof(xs_unicode_nfd_table);
 
     while (p < e) {
         if (p[1] == base && p[2] == diac) {
@@ -266,12 +289,23 @@ int xs_unicode_nfc(unsigned int base, unsigned int diac, unsigned int *cpoint)
 int xs_unicode_is_alpha(unsigned int cpoint)
 /* checks if a codepoint is an alpha (i.e. a letter) */
 {
-    unsigned int *r = bsearch(&cpoint, xs_unicode_alpha_table,
-                        sizeof(xs_unicode_alpha_table) / (sizeof(unsigned int) * 2),
-                        sizeof(unsigned int) * 2,
-                        int_range_cmp);
+    int b = 0;
+    int t = countof(xs_unicode_alpha_table) / 2 - 1;
 
-    return !!r;
+    while (t >= b) {
+        int n = (b + t) / 2;
+        unsigned int *p = &xs_unicode_alpha_table[n * 2];
+
+        if (cpoint < p[0])
+            t = n - 1;
+        else
+        if (cpoint > p[1])
+            b = n + 1;
+        else
+            return 1;
+    }
+
+    return 0;
 }
 
 

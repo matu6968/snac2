@@ -7,8 +7,12 @@
 int xs_socket_timeout(int s, double rto, double sto);
 int xs_socket_server(const char *addr, const char *serv);
 FILE *xs_socket_accept(int rs);
-xs_str *xs_socket_peername(int s);
+int _xs_socket_peername(int s, char *buf, int buf_size);
 int xs_socket_connect(const char *addr, const char *serv);
+
+#ifdef _XS_H
+xs_str *xs_socket_peername(int s);
+#endif
 
 
 #ifdef XS_IMPLEMENTATION
@@ -17,6 +21,9 @@ int xs_socket_connect(const char *addr, const char *serv);
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 
 int xs_socket_timeout(int s, double rto, double sto)
@@ -100,34 +107,28 @@ FILE *xs_socket_accept(int rs)
 }
 
 
-xs_str *xs_socket_peername(int s)
-/* returns the remote address as a string */
+int _xs_socket_peername(int s, char *buf, int buf_size)
+/* fill the buffer with the socket peername */
 {
-    xs_str *ip = NULL;
     struct sockaddr_storage addr;
     socklen_t slen = sizeof(addr);
+    const char *p = NULL;
 
     if (getpeername(s, (struct sockaddr *)&addr, &slen) != -1) {
-        char buf[1024];
-        const char *p = NULL;
-
         if (addr.ss_family == AF_INET) {
             struct sockaddr_in *sa = (struct sockaddr_in *)&addr;
 
-            p = inet_ntop(AF_INET, &sa->sin_addr, buf, sizeof(buf));
+            p = inet_ntop(AF_INET, &sa->sin_addr, buf, buf_size);
         }
         else
         if (addr.ss_family == AF_INET6) {
             struct sockaddr_in6 *sa = (struct sockaddr_in6 *)&addr;
 
-            p = inet_ntop(AF_INET6, &sa->sin6_addr, buf, sizeof(buf));
+            p = inet_ntop(AF_INET6, &sa->sin6_addr, buf, buf_size);
         }
-
-        if (p != NULL)
-            ip = xs_str_new(p);
     }
 
-    return ip;
+    return p != NULL;
 }
 
 
@@ -194,6 +195,22 @@ int xs_socket_connect(const char *addr, const char *serv)
     return d;
 }
 
+
+#ifdef _XS_H
+
+xs_str *xs_socket_peername(int s)
+/* returns the remote address as a string */
+{
+    char buf[2028];
+    xs_str *p = NULL;
+
+    if (_xs_socket_peername(s, buf, sizeof(buf)))
+        p = xs_str_new(buf);
+
+    return p;
+}
+
+#endif /* _XS_H */
 
 #endif /* XS_IMPLEMENTATION */
 
