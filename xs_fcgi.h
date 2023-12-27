@@ -324,15 +324,16 @@ void xs_fcgi_response(FILE *f, int status, xs_dict *headers, xs_str *body, int b
     int size = strlen(out);
 
     /* add the body */
-    if (body != NULL && b_size > 0)
+    if (body != NULL && b_size > 0) {
         out = xs_append_m(out, body, b_size);
+        size += b_size;
+    }
 
     /* now send all the STDOUT in packets */
     hdr.version = FCGI_VERSION_1;
     hdr.type    = FCGI_STDOUT;
     hdr.id      = fcgi_id;
 
-    size += b_size;
     int offset = 0;
 
     while (offset < size) {
