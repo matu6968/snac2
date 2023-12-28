@@ -1624,6 +1624,13 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
 
     if (strcmp(type, "Follow") == 0) { /** **/
         if (!follower_check(snac, actor)) {
+            /* ensure the actor object is here */
+            if (!object_here(actor)) {
+                xs *actor_obj = NULL;
+                actor_request(snac, actor, &actor_obj);
+                object_add(actor, actor_obj);
+            }
+
             xs *f_msg = xs_dup(msg);
             xs *reply = msg_accept(snac, f_msg, actor);
 
