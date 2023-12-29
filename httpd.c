@@ -62,14 +62,14 @@ xs_str *nodeinfo_2_0(void)
     int n_uhyear = 0;
     int n_posts  = 0;
     xs *users = user_list();
-    xs_list *p;
+    xs_list *p = users;
     char *v;
+    double now = (double)time(NULL);
 
-    p = users;
     while (xs_list_iter(&p, &v)) {
         /* build the full path name to the last usage log */
         xs *llfn = xs_fmt("%s/user/%s/lastlog.txt", srv_basedir, v);
-        double llsecs = (double)time(NULL) - mtime(llfn);
+        double llsecs = now - mtime(llfn);
 
         if (llsecs < 60 * 60 * 24 * 30 * 6) {
             n_uhyear++;
@@ -81,7 +81,7 @@ xs_str *nodeinfo_2_0(void)
         n_utotal++;
 
         /* build the file to each user public.idx */
-        xs *pidxfn = xs_fmt("%s/user/%s/private.idx", srv_basedir, v);
+        xs *pidxfn = xs_fmt("%s/user/%s/public.idx", srv_basedir, v);
         n_posts += index_len(pidxfn);
     }
 
