@@ -199,6 +199,10 @@ will use the FastCGI interface to communicate with the upper level
 http server, that must be configured accordingly.
 .It Ic disable_history
 If set to true, history monthly snapshots are not served nor their links shown.
+.It Ic shared_inboxes
+This boolean value selects if shared inboxes are announced or not. Enabling
+shared inboxes helps (somewhat) in optimizing incoming traffic for instances
+with a large number of users.
 .El
 .Pp
 You must restart the server to make effective these changes.
