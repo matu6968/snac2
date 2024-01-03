@@ -12,6 +12,10 @@ Mastodon API: some tweaks for better integration with more clients, and fixed a 
 
 Fixed crash in the FastCGI code (thanks to Yonle for helping me debug this).
 
+Added apache2 configuration information (contributed by Víctor Moral).
+
+Added FreeBSD usage information and examples (contributed by draga79).
+
 ## 2.43
 
 Tags in posts are now indexed and searching by tag is possible. It's still not very useful, but at least new user posts contain links that return real search-by-tag results. Also, no "re-indexing" of the previously stored data is done (only new local and remote posts will be searchable by tag).
