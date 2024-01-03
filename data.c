@@ -150,12 +150,12 @@ void user_free(snac *snac)
 }
 
 
-int user_open(snac *snac, const char *uid)
+int user_open(snac *user, const char *uid)
 /* opens a user */
 {
     int ret = 0;
 
-    memset(snac, '\0', sizeof(struct _snac));
+    *user = (snac){0};
 
     if (validate_uid(uid)) {
         xs *cfg_file = NULL;
@@ -174,52 +174,52 @@ int user_open(snac *snac, const char *uid)
                 xs *v2 = xs_tolower_i(xs_dup(v));
 
                 if (strcmp(lcuid, v2) == 0) {
-                    snac->uid = xs_dup(v);
+                    user->uid = xs_dup(v);
                     break;
                 }
             }
         }
         else
-            snac->uid = xs_str_new(uid);
+            user->uid = xs_str_new(uid);
 
-        if (snac->uid == NULL)
+        if (user->uid == NULL)
             return ret;
 
-        snac->basedir = xs_fmt("%s/user/%s", srv_basedir, snac->uid);
+        user->basedir = xs_fmt("%s/user/%s", srv_basedir, user->uid);
 
-        cfg_file = xs_fmt("%s/user.json", snac->basedir);
+        cfg_file = xs_fmt("%s/user.json", user->basedir);
 
         if ((f = fopen(cfg_file, "r")) != NULL) {
             /* read full config file */
-            snac->config = xs_json_load(f);
+            user->config = xs_json_load(f);
             fclose(f);
 
-            if (snac->config != NULL) {
-                xs *key_file = xs_fmt("%s/key.json", snac->basedir);
+            if (user->config != NULL) {
+                xs *key_file = xs_fmt("%s/key.json", user->basedir);
 
                 if ((f = fopen(key_file, "r")) != NULL) {
-                    snac->key = xs_json_load(f);
+                    user->key = xs_json_load(f);
                     fclose(f);
 
-                    if (snac->key != NULL) {
-                        snac->actor = xs_fmt("%s/%s", srv_baseurl, snac->uid);
-                        snac->md5   = xs_md5_hex(snac->actor, strlen(snac->actor));
+                    if (user->key != NULL) {
+                        user->actor = xs_fmt("%s/%s", srv_baseurl, user->uid);
+                        user->md5   = xs_md5_hex(user->actor, strlen(user->actor));
 
                         /* everything is ok right now */
                         ret = 1;
 
                         /* does it have a configuration override? */
-                        xs *cfg_file_o = xs_fmt("%s/user_o.json", snac->basedir);
+                        xs *cfg_file_o = xs_fmt("%s/user_o.json", user->basedir);
                         if ((f = fopen(cfg_file_o, "r")) != NULL) {
-                            snac->config_o = xs_json_load(f);
+                            user->config_o = xs_json_load(f);
                             fclose(f);
 
-                            if (snac->config_o == NULL)
+                            if (user->config_o == NULL)
                                 srv_log(xs_fmt("error parsing '%s'", cfg_file_o));
                         }
 
-                        if (snac->config_o == NULL)
-                            snac->config_o = xs_dict_new();
+                        if (user->config_o == NULL)
+                            user->config_o = xs_dict_new();
                     }
                     else
                         srv_log(xs_fmt("error parsing '%s'", key_file));
@@ -237,7 +237,7 @@ int user_open(snac *snac, const char *uid)
         srv_debug(1, xs_fmt("invalid user '%s'", uid));
 
     if (!ret)
-        user_free(snac);
+        user_free(user);
 
     return ret;
 }

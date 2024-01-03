@@ -31,7 +31,7 @@ void srv_log(xs_str *str);
 #define srv_debug(level, str) do { if (dbglevel >= (level)) \
     { srv_log((str)); } } while (0)
 
-typedef struct _snac {
+typedef struct {
     xs_str *uid;        /* uid */
     xs_str *basedir;    /* user base directory */
     xs_dict *config;    /* user configuration */
@@ -40,6 +40,14 @@ typedef struct _snac {
     xs_str *actor;      /* actor url */
     xs_str *md5;        /* actor url md5 */
 } snac;
+
+typedef struct {
+    int srv_running;        /* server running on/off */
+    int use_fcgi;           /* FastCGI use on/off */
+    time_t srv_start_time;  /* start time */
+    int job_fifo_size;      /* job fifo size */
+    int n_threads;          /* number of configured threads */
+} srv_stat;
 
 void snac_log(snac *user, xs_str *str);
 #define snac_debug(user, level, str) do { if (dbglevel >= (level)) \

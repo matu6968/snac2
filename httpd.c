@@ -26,11 +26,10 @@
 #include <poll.h>
 #endif
 
-int use_fcgi = 0;
+/** server stat **/
 
-int srv_running = 0;
-
-time_t srv_start_time = 0;
+srv_stat s_stat = {0};
+srv_stat *p_stat = NULL;
 
 /** job control **/
 
@@ -229,13 +228,9 @@ int server_get_handler(xs_dict *req, const char *q_path,
         *ctype = "text/plain";
         *body  = xs_str_new("UP\n");
 
-        xs *uptime = xs_str_time_diff(time(NULL) - srv_start_time);
+        xs *uptime = xs_str_time_diff(time(NULL) - p_stat->srv_start_time);
         srv_log(xs_fmt("status: uptime: %s", uptime));
-
-        pthread_mutex_lock(&job_mutex);
-        int l = xs_list_len(job_fifo);
-        pthread_mutex_unlock(&job_mutex);
-        srv_log(xs_fmt("status: job_fifo len: %d", l));
+        srv_log(xs_fmt("status: job_fifo len: %d", p_stat->job_fifo_size));
     }
 
     if (status != 0)
@@ -262,7 +257,7 @@ void httpd_connection(FILE *f)
     char *p;
     int fcgi_id;
 
-    if (use_fcgi)
+    if (p_stat->use_fcgi)
         req = xs_fcgi_request(f, &payload, &p_size, &fcgi_id);
     else
         req = xs_httpd_request(f, &payload, &p_size);
@@ -400,7 +395,7 @@ void httpd_connection(FILE *f)
     headers = xs_dict_append(headers, "access-control-allow-origin", "*");
     headers = xs_dict_append(headers, "access-control-allow-headers", "*");
 
-    if (use_fcgi)
+    if (p_stat->use_fcgi)
         xs_fcgi_response(f, status, headers, body, b_size, fcgi_id);
     else
         xs_httpd_response(f, status, headers, body, b_size);
@@ -454,6 +449,8 @@ void job_post(const xs_val *job, int urgent)
                 job_fifo = xs_list_insert(job_fifo, 0, job);
             else
                 job_fifo = xs_list_append(job_fifo, job);
+
+            p_stat->job_fifo_size++;
         }
 
         /* unlock the mutex */
@@ -475,8 +472,11 @@ void job_wait(xs_val **job)
         pthread_mutex_lock(&job_mutex);
 
         /* dequeue */
-        if (job_fifo != NULL)
+        if (job_fifo != NULL) {
             job_fifo = xs_list_shift(job_fifo, job);
+
+            p_stat->job_fifo_size--;
+        }
 
         /* unlock the mutex */
         pthread_mutex_unlock(&job_mutex);
@@ -541,7 +541,7 @@ static void *background_thread(void *arg)
 
     srv_log(xs_fmt("background thread started"));
 
-    while (srv_running) {
+    while (p_stat->srv_running) {
         time_t t;
         int cnt = 0;
 
@@ -605,14 +605,18 @@ void httpd(void)
     const char *port;
     int rs;
     pthread_t threads[MAX_THREADS] = {0};
-    int n_threads = 0;
     int n;
-    char sem_name[24];
+    xs *sem_name = NULL;
     sem_t anon_job_sem;
 
-    srv_start_time = time(NULL);
+    /* setup the server stat structure */
+    {
+        p_stat = &s_stat;
+    }
 
-    use_fcgi = xs_type(xs_dict_get(srv_config, "fastcgi")) == XSTYPE_TRUE;
+    p_stat->srv_start_time = time(NULL);
+
+    p_stat->use_fcgi = xs_type(xs_dict_get(srv_config, "fastcgi")) == XSTYPE_TRUE;
 
     address = xs_dict_get(srv_config, "address");
     port    = xs_number_str(xs_dict_get(srv_config, "port"));
@@ -622,13 +626,13 @@ void httpd(void)
         return;
     }
 
-    srv_running = 1;
+    p_stat->srv_running = 1;
 
     signal(SIGPIPE, SIG_IGN);
     signal(SIGTERM, term_handler);
     signal(SIGINT,  term_handler);
 
-    srv_log(xs_fmt("httpd%s start %s:%s %s", use_fcgi ? " (FastCGI)" : "",
+    srv_log(xs_fmt("httpd%s start %s:%s %s", p_stat->use_fcgi ? " (FastCGI)" : "",
                     address, port, USER_AGENT));
 
     /* show the number of usable file descriptors */
@@ -639,7 +643,7 @@ void httpd(void)
 
     /* initialize the job control engine */
     pthread_mutex_init(&job_mutex, NULL);
-    snprintf(sem_name, sizeof(sem_name), "/job_%d", getpid());
+    sem_name = xs_fmt("/job_%d", getpid());
     job_sem = sem_open(sem_name, O_CREAT, 0644, 0);
 
     if (job_sem == NULL) {
@@ -659,29 +663,29 @@ void httpd(void)
     pthread_mutex_init(&sleep_mutex, NULL);
     pthread_cond_init(&sleep_cond, NULL);
 
-    n_threads = xs_number_get(xs_dict_get(srv_config, "num_threads"));
+    p_stat->n_threads = xs_number_get(xs_dict_get(srv_config, "num_threads"));
 
 #ifdef _SC_NPROCESSORS_ONLN
-    if (n_threads == 0) {
+    if (p_stat->n_threads == 0) {
         /* get number of CPUs on the machine */
-        n_threads = sysconf(_SC_NPROCESSORS_ONLN);
+        p_stat->n_threads = sysconf(_SC_NPROCESSORS_ONLN);
     }
 #endif
 
-    if (n_threads < 4)
-        n_threads = 4;
+    if (p_stat->n_threads < 4)
+        p_stat->n_threads = 4;
 
-    if (n_threads > MAX_THREADS)
-        n_threads = MAX_THREADS;
+    if (p_stat->n_threads > MAX_THREADS)
+        p_stat->n_threads = MAX_THREADS;
 
-    srv_debug(0, xs_fmt("using %d threads", n_threads));
+    srv_debug(0, xs_fmt("using %d threads", p_stat->n_threads));
 
     /* thread #0 is the background thread */
     pthread_create(&threads[0], NULL, background_thread, NULL);
 
     /* the rest of threads are for job processing */
     char *ptr = (char *) 0x1;
-    for (n = 1; n < n_threads; n++)
+    for (n = 1; n < p_stat->n_threads; n++)
         pthread_create(&threads[n], NULL, job_thread, ptr++);
 
     if (setjmp(on_break) == 0) {
@@ -697,14 +701,14 @@ void httpd(void)
         }
     }
 
-    srv_running = 0;
+    p_stat->srv_running = 0;
 
     /* send as many empty jobs as working threads */
-    for (n = 1; n < n_threads; n++)
+    for (n = 1; n < p_stat->n_threads; n++)
         job_post(NULL, 0);
 
     /* wait for all the threads to exit */
-    for (n = 0; n < n_threads; n++)
+    for (n = 0; n < p_stat->n_threads; n++)
         pthread_join(threads[n], NULL);
 
     pthread_mutex_lock(&job_mutex);
@@ -714,8 +718,9 @@ void httpd(void)
     sem_close(job_sem);
     sem_unlink(sem_name);
 
-    xs *uptime = xs_str_time_diff(time(NULL) - srv_start_time);
+    xs *uptime = xs_str_time_diff(time(NULL) - p_stat->srv_start_time);
 
-    srv_log(xs_fmt("httpd%s stop %s:%s (run time: %s)", use_fcgi ? " (FastCGI)" : "",
+    srv_log(xs_fmt("httpd%s stop %s:%s (run time: %s)",
+                p_stat->use_fcgi ? " (FastCGI)" : "",
                 address, port, uptime));
 }
