@@ -40,6 +40,12 @@ On OpenBSD you just need to install `curl`:
 pkg_add curl
 ```
 
+On FreeBSD, to install `curl` just type:
+
+```sh
+pkg install curl
+```
+
 The source code is available [here](https://comam.es/what-is-snac).
 
 Run `make` and then `make install` as root.
