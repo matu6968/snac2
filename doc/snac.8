@@ -363,6 +363,8 @@ snac httpd /home/snacusr/fedidata
 Edit the nginx configuration and add the following snippet to the
 example.com server section:
 .Bd -literal -offset indent
+# nginx configuration example
+
 # main web access point
 location /fedi {
     proxy_pass http://localhost:8001;
@@ -401,6 +403,42 @@ credentials defined for this user. Search people, start following
 them, engage in arid discussions and generally enjoy the frustrating
 experience of Social Media.
 .Pp
+This is an example of a similar configuration for the Apache2 web server:
+.Bd -literal -offset indent
+# apache2 configuration example
+
+ProxyPreserveHost On
+
+# Main web access point
+<Location /social>
+    ProxyPass http://127.0.0.1:8001/social
+</Location>
+
+# WebFinger
+<Location /.well-known/webfinger>
+    ProxyPass http://127.0.0.1:8001/.well-known/webfinger
+</Location>
+
+# NodeInfo (optional)
+<Location /.well-known/nodeinfo>
+    ProxyPass http://127.0.0.1:8001/.well-known/nodeinfo
+</Location>
+
+# Mastodon API (entry points)
+<Location /api/v1/>
+    ProxyPass http://127.0.0.1:8001/api/v1/
+</Location>
+
+<Location /api/v2/>
+    ProxyPass http://127.0.0.1:8001/api/v2/
+</Location>
+
+# Mastodon API (OAuth support)
+<Location /oauth>
+    ProxyPass http://127.0.0.1:8001/oauth
+</Location>
+.Ed
+.Pp
 Since version 2.43,
 .Nm
 supports communicating from / to the front end http server using the FastCGI
@@ -422,6 +460,8 @@ under OpenBSD's native httpd, given that it's natively implemented there
 and you no longer need to configure the complicated relayd server. This is
 an example:
 .Bd -literal -offset indent
+# OpenBSD httpd configuration example
+
 # other server configuration
 [...]
 
