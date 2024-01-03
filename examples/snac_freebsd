@@ -1,0 +1,19 @@
+# PROVIDE: snac
+# REQUIRE: DAEMON
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="snac"
+rcvar=snac_enable
+
+load_rc_config $name
+
+: ${snac_enable:=NO}
+: ${snac_user:="snac"}
+: ${snac_args:="httpd SNAC_DATA_PATH"}
+
+command="/usr/local/bin/snac"
+command_args="${snac_args} > /var/log/snac.log 2>&1 &"
+
+run_rc_command "$1"
