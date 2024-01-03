@@ -223,6 +223,19 @@ int check_signature(xs_dict *req, xs_str **err)
             if (strcmp(v, "(expires)") == 0) {
                 ss = xs_fmt("%s: %s", v, expires);
             }
+            else
+            if (strcmp(v, "host") == 0) {
+                hc = xs_dict_get(req, "host");
+
+                /* if there is no host header or some garbage like
+                   address:host has arrived here due to misconfiguration,
+                   signature verify will totally fail, so let's Leroy Jenkins
+                   with the global server hostname instead */
+                if (hc == NULL || xs_str_in(hc, ":") != -1)
+                    hc = xs_dict_get(srv_config, "host");
+
+                ss = xs_fmt("host: %s", hc);
+            }
             else {
                 /* add the header */
                 if ((hc = xs_dict_get(req, v)) == NULL) {
