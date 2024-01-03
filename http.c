@@ -140,25 +140,32 @@ int check_signature(xs_dict *req, xs_str **err)
     {
         /* extract the values */
         xs *l = xs_split(sig_hdr, ",");
-        xs_list *p;
+        xs_list *p = l;
         xs_val *v;
 
-        p = l;
         while (xs_list_iter(&p, &v)) {
-            if (xs_startswith(v, "keyId"))
-                keyId = xs_crop_i(xs_dup(v), 7, -1);
+            xs *kv = xs_split_n(v, "=", 1);
+
+            if (xs_list_len(kv) != 2)
+                continue;
+
+            xs *k1 = xs_strip_i(xs_dup(xs_list_get(kv, 0)));
+            xs *v1 = xs_strip_chars_i(xs_dup(xs_list_get(kv, 1)), " \"");
+
+            if (!strcmp(k1, "keyId"))
+                keyId = xs_dup(v1);
             else
-            if (xs_startswith(v, "headers"))
-                headers = xs_crop_i(xs_dup(v), 9, -1);
+            if (!strcmp(k1, "headers"))
+                headers = xs_dup(v1);
             else
-            if (xs_startswith(v, "signature"))
-                signature = xs_crop_i(xs_dup(v), 11, -1);
+            if (!strcmp(k1, "signature"))
+                signature = xs_dup(v1);
             else
-            if (xs_startswith(v, "created"))
-                created = xs_crop_i(xs_dup(v), 9, -1);
+            if (!strcmp(k1, "created"))
+                created = xs_dup(v1);
             else
-            if (xs_startswith(v, "expires"))
-                expires = xs_crop_i(xs_dup(v), 9, -1);
+            if (!strcmp(k1, "expires"))
+                expires = xs_dup(v1);
         }
     }
 
