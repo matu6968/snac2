@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2023 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_hex.h"
