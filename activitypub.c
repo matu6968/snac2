@@ -1982,10 +1982,8 @@ int process_user_queue(snac *snac)
     while (xs_list_iter(&p, &fn)) {
         xs *q_item = dequeue(fn);
 
-        if (q_item == NULL) {
-            snac_log(snac, xs_fmt("process_user_queue q_item error"));
+        if (q_item == NULL)
             continue;
-        }
 
         process_user_queue_item(snac, q_item);
         cnt++;

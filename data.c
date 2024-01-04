@@ -2399,8 +2399,7 @@ xs_dict *dequeue(const char *fn)
 {
     xs_dict *obj = queue_get(fn);
 
-    if (obj != NULL)
-        unlink(fn);
+    unlink(fn);
 
     return obj;
 }
