@@ -1982,8 +1982,12 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
         xs_html_tag("h2",
             xs_html_attr("class", "snac-header"),
             xs_html_text(header)),
-        snac_posts = xs_html_tag("div",
-            xs_html_attr("class", "snac-posts")));
+        snac_posts = xs_html_tag("details",
+                xs_html_attr("open", NULL),
+                xs_html_tag("summary",
+                    xs_html_text("...")),
+                xs_html_tag("div",
+                xs_html_attr("class", "snac-posts"))));
 
     xs_list *p = list;
     char *actor_id;
