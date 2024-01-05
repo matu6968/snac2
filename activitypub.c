@@ -1670,8 +1670,10 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     }
     else
     if (strcmp(type, "Create") == 0) { /** **/
-        if (is_muted(snac, actor))
+        if (is_muted(snac, actor)) {
             snac_log(snac, xs_fmt("ignored 'Create' + '%s' from muted actor %s", utype, actor));
+            return 1;
+        }
 
         if (strcmp(utype, "Note") == 0) { /** **/
             char *id          = xs_dict_get(object, "id");
@@ -1751,6 +1753,9 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         if (xs_type(object) == XSTYPE_DICT)
             object = xs_dict_get(object, "id");
 
+        if (is_muted(snac, actor) && !xs_startswith(object, snac->actor))
+            snac_log(snac, xs_fmt("dropped 'Announce' from muted actor %s", actor));
+        else
         if (is_limited(snac, actor) && !xs_startswith(object, snac->actor))
             snac_log(snac, xs_fmt("dropped 'Announce' from limited actor %s", actor));
         else {
