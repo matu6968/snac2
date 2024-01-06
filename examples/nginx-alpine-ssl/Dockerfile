@@ -3,6 +3,7 @@ RUN apk add nginx
 RUN mkdir -p /run/nginx
 ADD default.conf /etc/nginx/http.d/default.conf
 ADD *.key /etc/ssl/private/
+ADD *.pem /etc/ssl/private/
 ADD *.crt /etc/ssl/certs/
 WORKDIR /var/www/localhost/htdocs
 COPY entrypoint.sh /usr/local/bin
