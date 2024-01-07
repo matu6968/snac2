@@ -19,9 +19,9 @@ typedef enum {
     XSTYPE_NULL   = 0x18,       /* Special NULL value */
     XSTYPE_TRUE   = 0x06,       /* Boolean */
     XSTYPE_FALSE  = 0x15,       /* Boolean */
-    XSTYPE_LIST   = 0x1d,       /* Sequence of LITEMs up to EOM (with 24bit size) */
+    XSTYPE_LIST   = 0x1d,       /* Sequence of LITEMs up to EOM (with size) */
     XSTYPE_LITEM  = 0x1f,       /* Element of a list (any type) */
-    XSTYPE_DICT   = 0x1c,       /* Sequence of DITEMs up to EOM (with 24bit size) */
+    XSTYPE_DICT   = 0x1c,       /* Sequence of DITEMs up to EOM (with size) */
     XSTYPE_DITEM  = 0x1e,       /* Element of a dict (STRING key + any type) */
     XSTYPE_EOM    = 0x19,       /* End of Multiple (LIST or DICT) */
     XSTYPE_DATA   = 0x10        /* A block of anonymous data */
@@ -35,6 +35,9 @@ typedef char xs_list;
 typedef char xs_dict;
 typedef char xs_number;
 typedef char xs_data;
+
+/* size in bytes of the type size */
+#define _XS_TYPE_SIZE 4
 
 /* auto-destroyable strings */
 #define xs __attribute__ ((__cleanup__ (_xs_destroy))) xs_val
@@ -149,8 +152,8 @@ xs_val xs_stock_true[]  = { XSTYPE_TRUE };
 xs_val xs_stock_false[] = { XSTYPE_FALSE };
 xs_val xs_stock_0[]     = { XSTYPE_NUMBER, '0', '\0' };
 xs_val xs_stock_1[]     = { XSTYPE_NUMBER, '1', '\0' };
-xs_val xs_stock_list[]  = { XSTYPE_LIST, 0, 0, 5, XSTYPE_EOM };
-xs_val xs_stock_dict[]  = { XSTYPE_DICT, 0, 0, 5, XSTYPE_EOM };
+xs_val xs_stock_list[]  = { XSTYPE_LIST, 0, 0, 0, 1 + _XS_TYPE_SIZE + 1, XSTYPE_EOM };
+xs_val xs_stock_dict[]  = { XSTYPE_DICT, 0, 0, 0, 1 + _XS_TYPE_SIZE + 1, XSTYPE_EOM };
 
 void *_xs_realloc(void *ptr, size_t size, const char *file, int line, const char *func)
 {
@@ -266,23 +269,24 @@ xstype xs_type(const xs_val *data)
 }
 
 
-void _xs_put_24b(xs_val *ptr, int i)
-/* writes i as a 24 bit value */
+void _xs_put_size(xs_val *ptr, int i)
+/* must match _XS_TYPE_SIZE */
 {
     unsigned char *p = (unsigned char *)ptr;
 
-    p[0] = (i >> 16) & 0xff;
-    p[1] = (i >> 8) & 0xff;
-    p[2] = i & 0xff;
+    p[0] = (i >> 24) & 0x7f;
+    p[1] = (i >> 16) & 0xff;
+    p[2] = (i >> 8) & 0xff;
+    p[3] = i & 0xff;
 }
 
 
-int _xs_get_24b(const xs_val *ptr)
-/* reads a 24 bit value */
+int _xs_get_size(const xs_val *ptr)
+/* must match _XS_TYPE_SIZE */
 {
     unsigned char *p = (unsigned char *)ptr;
 
-    return (p[0] << 16) | (p[1] << 8) | p[2];
+    return (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
 }
 
 
@@ -303,7 +307,7 @@ int xs_size(const xs_val *data)
     case XSTYPE_LIST:
     case XSTYPE_DICT:
     case XSTYPE_DATA:
-        len = _xs_get_24b(data + 1);
+        len = _xs_get_size(data + 1);
 
         break;
 
@@ -376,7 +380,7 @@ xs_val *xs_expand(xs_val *data, int offset, int size)
     if (xs_type(data) == XSTYPE_LIST ||
         xs_type(data) == XSTYPE_DICT ||
         xs_type(data) == XSTYPE_DATA)
-        _xs_put_24b(data + 1, sz);
+        _xs_put_size(data + 1, sz);
 
     return data;
 }
@@ -401,7 +405,7 @@ xs_val *xs_collapse(xs_val *data, int offset, int size)
     if (xs_type(data) == XSTYPE_LIST ||
         xs_type(data) == XSTYPE_DICT ||
         xs_type(data) == XSTYPE_DATA)
-        _xs_put_24b(data + 1, sz);
+        _xs_put_size(data + 1, sz);
 
     return xs_realloc(data, _xs_blk_size(sz));
 }
@@ -671,7 +675,7 @@ int xs_list_iter(xs_list **list, xs_val **value)
 
     /* skip the start of the list */
     if (xs_type(p) == XSTYPE_LIST)
-        p += 4;
+        p += 1 + _XS_TYPE_SIZE;
 
     /* an element? */
     if (xs_type(p) == XSTYPE_LITEM) {
@@ -923,7 +927,8 @@ xs_list *xs_list_cat(xs_list *l1, const xs_list *l2)
     XS_ASSERT_TYPE(l2, XSTYPE_LIST);
 
     /* inserts at the end of l1 the content of l2 (skipping header and footer) */
-    return xs_insert_m(l1, xs_size(l1) - 1, l2 + 4, xs_size(l2) - 5);
+    return xs_insert_m(l1, xs_size(l1) - 1,
+        l2 + 1 + _XS_TYPE_SIZE, xs_size(l2) - (1 + _XS_TYPE_SIZE + 1));
 }
 
 
@@ -986,7 +991,7 @@ int xs_dict_iter(xs_dict **dict, xs_str **key, xs_val **value)
 
     /* skip the start of the list */
     if (xs_type(p) == XSTYPE_DICT)
-        p += 4;
+        p += 1 + _XS_TYPE_SIZE;
 
     /* an element? */
     if (xs_type(p) == XSTYPE_DITEM) {
@@ -1145,15 +1150,15 @@ xs_data *xs_data_new(const void *data, int size)
 {
     xs_data *v;
 
-    /* add the overhead (data type + 24bit size) */
-    int total_size = size + 4;
+    /* add the overhead (data type + size) */
+    int total_size = size + 1 + _XS_TYPE_SIZE;
 
     v = xs_realloc(NULL, _xs_blk_size(total_size));
     v[0] = XSTYPE_DATA;
 
-    _xs_put_24b(v + 1, total_size);
+    _xs_put_size(v + 1, total_size);
 
-    memcpy(&v[4], data, size);
+    memcpy(&v[1 + _XS_TYPE_SIZE], data, size);
 
     return v;
 }
@@ -1162,14 +1167,14 @@ xs_data *xs_data_new(const void *data, int size)
 int xs_data_size(const xs_data *value)
 /* returns the size of the data stored inside value */
 {
-    return _xs_get_24b(value + 1) - 4;
+    return _xs_get_size(value + 1) - (1 + _XS_TYPE_SIZE);
 }
 
 
 void xs_data_get(void *data, const xs_data *value)
 /* copies the raw data stored inside value into data */
 {
-    memcpy(data, &value[4], xs_data_size(value));
+    memcpy(data, &value[1 + _XS_TYPE_SIZE], xs_data_size(value));
 }
 
 
