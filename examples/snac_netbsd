@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# PROVIDE: snac
+# REQUIRE: DAEMON
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="snac"
+rcvar=${name}
+command="/usr/pkg/bin/snac"
+command_args="httpd /PATH/TO/SNACDATA"
+snac_log="/var/log/snac.log"
+pidfile="/var/run/${name}/${name}.pid"
+start_precmd="snac_precmd"
+run_as_user="SNACUSER"
+
+snac_precmd() {
+    # Ensure log file exists and is writable by SNACUSER
+    touch ${snac_log}
+    chown ${run_as_user} ${snac_log}
+    chmod 640 ${snac_log}
+
+    # Ensure the run directory exists
+    if [ ! -d /var/run/${name} ]; then
+        mkdir -p /var/run/${name}
+        chown ${run_as_user} /var/run/${name}
+    fi
+
+    command="/bin/sh -c 'cd /var/run/${name}; exec ${command} ${command_args} >${snac_log} 2>&1 & echo \$! >${pidfile}'"
+}
+
+load_rc_config $name
+run_rc_command "$1"
