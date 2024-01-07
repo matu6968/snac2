@@ -2,6 +2,8 @@
 
 ## 2.44
 
+Fixed a nasty bug that caused the in-memory output queue to be corrupted under heavy traffic loads (this is important).
+
 Shared inboxes are now supported. This is not a user visible feature (hopefully, they will not feel any change), but it will significantly improve traffic for snac instances with many users and will open room for new features that are only feasible with these kind of input channels.
 
 I've refactored all HTML code because it was somewhat of a mess; now it's much more maintainable (at least for me). I think I haven't broken anything.
