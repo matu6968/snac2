@@ -451,14 +451,17 @@ void job_post(const xs_val *job, int urgent)
                 job_fifo = xs_list_append(job_fifo, job);
 
             p_stat->job_fifo_size++;
+
+            srv_debug(2, xs_fmt(
+                "job_fifo sizes: %d %08x", p_stat->job_fifo_size, xs_size(job_fifo)));
         }
 
         /* unlock the mutex */
         pthread_mutex_unlock(&job_mutex);
-    }
 
-    /* ask for someone to attend it */
-    sem_post(job_sem);
+        /* ask for someone to attend it */
+        sem_post(job_sem);
+    }
 }
 
 
@@ -502,9 +505,12 @@ static void *job_thread(void *arg)
 
         srv_debug(2, xs_fmt("job thread %d wake up", pid));
 
-        if (job == NULL)
-            break;
+        if (job == NULL) /* corrupted message? */
+            continue;
 
+        if (xs_type(job) == XSTYPE_FALSE) /* special message: exit */
+            break;
+        else
         if (xs_type(job) == XSTYPE_DATA) {
             /* it's a socket */
             FILE *f = NULL;
@@ -703,9 +709,9 @@ void httpd(void)
 
     p_stat->srv_running = 0;
 
-    /* send as many empty jobs as working threads */
+    /* send as many exit jobs as working threads */
     for (n = 1; n < p_stat->n_threads; n++)
-        job_post(NULL, 0);
+        job_post(xs_stock_false, 0);
 
     /* wait for all the threads to exit */
     for (n = 0; n < p_stat->n_threads; n++)
