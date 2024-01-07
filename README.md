@@ -46,9 +46,17 @@ On FreeBSD, to install `curl` just type:
 pkg install curl
 ```
 
+On NetBSD, to install `curl` just type:
+
+```sh
+pkgin install curl
+```
+
 The source code is available [here](https://comam.es/what-is-snac).
 
-Run `make` and then `make install` as root.
+Run `make` and then `make install` as root. 
+
+If you're compiling on NetBSD, you should use the specific provided Makefile and run `make -f Makefile.NetBSD` and then `make -f Makefile.NetBSD install` as root.
 
 From version 2.27, `snac` includes support for the Mastodon API; if you are not interested on it, you can compile it out by running
 
