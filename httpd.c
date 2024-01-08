@@ -529,7 +529,7 @@ static void *job_thread(void *arg)
         }
         else {
             /* it's a q_item */
-            p_state->th_state[pid] = THST_OUT;
+            p_state->th_state[pid] = THST_QUEUE;
 
             process_queue_item(job);
         }
@@ -562,7 +562,7 @@ static void *background_thread(void *arg)
         time_t t;
         int cnt = 0;
 
-        p_state->th_state[0] = THST_IN;
+        p_state->th_state[0] = THST_QUEUE;
 
         {
             xs *list = user_list();

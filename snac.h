@@ -51,7 +51,7 @@ typedef struct {
     time_t srv_start_time;  /* start time */
     int job_fifo_size;      /* job fifo size */
     int n_threads;          /* number of configured threads */
-    enum { THST_WAIT, THST_IN, THST_OUT, THST_STOP } th_state[MAX_THREADS];
+    enum { THST_WAIT, THST_IN, THST_QUEUE, THST_STOP } th_state[MAX_THREADS];
 } srv_state;
 
 void snac_log(snac *user, xs_str *str);
