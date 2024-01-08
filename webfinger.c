@@ -46,6 +46,13 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
     headers = xs_dict_append(headers, "accept",     "application/json");
     headers = xs_dict_append(headers, "user-agent", USER_AGENT);
 
+    xs *obj = NULL;
+
+    /* is it cached? */
+    if (valid_status(status = object_get(qs, &obj))) {
+        /* nothing more to do */
+    }
+    else
     /* is it a query about one of us? */
     if (strcmp(host, xs_dict_get(srv_config, "host")) == 0) {
         /* route internally */
@@ -68,9 +75,12 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
             http_signed_request(snac, "GET", url, headers, NULL, 0, &status, &payload, &p_size, 0);
     }
 
-    if (valid_status(status)) {
-        xs *obj = xs_json_loads(payload);
+    if (obj == NULL && valid_status(status) && payload) {
+        obj = xs_json_loads(payload);
+        object_add(qs, obj);
+    }
 
+    if (obj) {
         if (user != NULL) {
             char *subject = xs_dict_get(obj, "subject");
 
