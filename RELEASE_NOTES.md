@@ -2,7 +2,7 @@
 
 ## 2.44
 
-Fixed a nasty bug that caused the in-memory output queue to be corrupted under heavy traffic loads (this is important).
+Fixed a nasty bug that caused the in-memory output queue to be corrupted under heavy traffic loads. This is a good reason to upgrade (thanks to Víctor Moral and Stefano Marinelli for helping me in fixing this).
 
 Shared inboxes are now supported. This is not a user visible feature (hopefully, they will not feel any change), but it will significantly improve traffic for snac instances with many users and will open room for new features that are only feasible with these kind of input channels.
 
