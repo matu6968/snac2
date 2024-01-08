@@ -457,6 +457,9 @@ void job_post(const xs_val *job, int urgent)
 
         p_state->job_fifo_size++;
 
+        if (p_state->job_fifo_size > p_state->top_job_fifo_size)
+            p_state->top_job_fifo_size = p_state->job_fifo_size;
+
         /* unlock the mutex */
         pthread_mutex_unlock(&job_mutex);
 

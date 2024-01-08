@@ -50,6 +50,7 @@ typedef struct {
     int use_fcgi;           /* FastCGI use on/off */
     time_t srv_start_time;  /* start time */
     int job_fifo_size;      /* job fifo size */
+    int top_job_fifo_size;  /* maximum job fifo size seen */
     int n_threads;          /* number of configured threads */
     enum { THST_WAIT, THST_IN, THST_QUEUE, THST_STOP } th_state[MAX_THREADS];
 } srv_state;
