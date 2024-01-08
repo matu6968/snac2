@@ -28,8 +28,8 @@
 
 /** server stat **/
 
-srv_stat s_stat = {0};
-srv_stat *p_stat = NULL;
+srv_state s_state = {0};
+srv_state *p_state = NULL;
 
 
 /** job control **/
@@ -48,6 +48,13 @@ typedef struct job_fifo_item {
 static job_fifo_item *job_fifo_first = NULL;
 static job_fifo_item *job_fifo_last  = NULL;
 
+
+/** other global data **/
+
+static jmp_buf on_break;
+
+
+/** code **/
 
 /* nodeinfo 2.0 template */
 const char *nodeinfo_2_0_template = ""
@@ -234,9 +241,9 @@ int server_get_handler(xs_dict *req, const char *q_path,
         *ctype = "text/plain";
         *body  = xs_str_new("UP\n");
 
-        xs *uptime = xs_str_time_diff(time(NULL) - p_stat->srv_start_time);
+        xs *uptime = xs_str_time_diff(time(NULL) - p_state->srv_start_time);
         srv_log(xs_fmt("status: uptime: %s", uptime));
-        srv_log(xs_fmt("status: job_fifo len: %d", p_stat->job_fifo_size));
+        srv_log(xs_fmt("status: job_fifo len: %d", p_state->job_fifo_size));
     }
 
     if (status != 0)
@@ -263,7 +270,7 @@ void httpd_connection(FILE *f)
     char *p;
     int fcgi_id;
 
-    if (p_stat->use_fcgi)
+    if (p_state->use_fcgi)
         req = xs_fcgi_request(f, &payload, &p_size, &fcgi_id);
     else
         req = xs_httpd_request(f, &payload, &p_size);
@@ -401,7 +408,7 @@ void httpd_connection(FILE *f)
     headers = xs_dict_append(headers, "access-control-allow-origin", "*");
     headers = xs_dict_append(headers, "access-control-allow-headers", "*");
 
-    if (p_stat->use_fcgi)
+    if (p_state->use_fcgi)
         xs_fcgi_response(f, status, headers, body, b_size, fcgi_id);
     else
         xs_httpd_response(f, status, headers, body, b_size);
@@ -448,7 +455,7 @@ void job_post(const xs_val *job, int urgent)
             job_fifo_last = i;
         }
 
-        p_stat->job_fifo_size++;
+        p_state->job_fifo_size++;
 
         /* unlock the mutex */
         pthread_mutex_unlock(&job_mutex);
@@ -480,7 +487,7 @@ void job_wait(xs_val **job)
             *job = i->job;
             xs_free(i);
 
-            p_stat->job_fifo_size--;
+            p_state->job_fifo_size--;
         }
 
         /* unlock the mutex */
@@ -488,10 +495,6 @@ void job_wait(xs_val **job)
     }
 }
 
-
-#ifndef MAX_THREADS
-#define MAX_THREADS 256
-#endif
 
 static void *job_thread(void *arg)
 /* job thread */
@@ -549,7 +552,7 @@ static void *background_thread(void *arg)
 
     srv_log(xs_fmt("background thread started"));
 
-    while (p_stat->srv_running) {
+    while (p_state->srv_running) {
         time_t t;
         int cnt = 0;
 
@@ -606,8 +609,6 @@ static void *background_thread(void *arg)
 }
 
 
-static jmp_buf on_break;
-
 void term_handler(int s)
 {
     (void)s;
@@ -629,12 +630,12 @@ void httpd(void)
 
     /* setup the server stat structure */
     {
-        p_stat = &s_stat;
+        p_state = &s_state;
     }
 
-    p_stat->srv_start_time = time(NULL);
+    p_state->srv_start_time = time(NULL);
 
-    p_stat->use_fcgi = xs_type(xs_dict_get(srv_config, "fastcgi")) == XSTYPE_TRUE;
+    p_state->use_fcgi = xs_type(xs_dict_get(srv_config, "fastcgi")) == XSTYPE_TRUE;
 
     address = xs_dict_get(srv_config, "address");
     port    = xs_number_str(xs_dict_get(srv_config, "port"));
@@ -644,13 +645,13 @@ void httpd(void)
         return;
     }
 
-    p_stat->srv_running = 1;
+    p_state->srv_running = 1;
 
     signal(SIGPIPE, SIG_IGN);
     signal(SIGTERM, term_handler);
     signal(SIGINT,  term_handler);
 
-    srv_log(xs_fmt("httpd%s start %s:%s %s", p_stat->use_fcgi ? " (FastCGI)" : "",
+    srv_log(xs_fmt("httpd%s start %s:%s %s", p_state->use_fcgi ? " (FastCGI)" : "",
                     address, port, USER_AGENT));
 
     /* show the number of usable file descriptors */
@@ -679,29 +680,29 @@ void httpd(void)
     pthread_mutex_init(&sleep_mutex, NULL);
     pthread_cond_init(&sleep_cond, NULL);
 
-    p_stat->n_threads = xs_number_get(xs_dict_get(srv_config, "num_threads"));
+    p_state->n_threads = xs_number_get(xs_dict_get(srv_config, "num_threads"));
 
 #ifdef _SC_NPROCESSORS_ONLN
-    if (p_stat->n_threads == 0) {
+    if (p_state->n_threads == 0) {
         /* get number of CPUs on the machine */
-        p_stat->n_threads = sysconf(_SC_NPROCESSORS_ONLN);
+        p_state->n_threads = sysconf(_SC_NPROCESSORS_ONLN);
     }
 #endif
 
-    if (p_stat->n_threads < 4)
-        p_stat->n_threads = 4;
+    if (p_state->n_threads < 4)
+        p_state->n_threads = 4;
 
-    if (p_stat->n_threads > MAX_THREADS)
-        p_stat->n_threads = MAX_THREADS;
+    if (p_state->n_threads > MAX_THREADS)
+        p_state->n_threads = MAX_THREADS;
 
-    srv_debug(0, xs_fmt("using %d threads", p_stat->n_threads));
+    srv_debug(0, xs_fmt("using %d threads", p_state->n_threads));
 
     /* thread #0 is the background thread */
     pthread_create(&threads[0], NULL, background_thread, NULL);
 
     /* the rest of threads are for job processing */
     char *ptr = (char *) 0x1;
-    for (n = 1; n < p_stat->n_threads; n++)
+    for (n = 1; n < p_state->n_threads; n++)
         pthread_create(&threads[n], NULL, job_thread, ptr++);
 
     if (setjmp(on_break) == 0) {
@@ -717,22 +718,22 @@ void httpd(void)
         }
     }
 
-    p_stat->srv_running = 0;
+    p_state->srv_running = 0;
 
     /* send as many exit jobs as working threads */
-    for (n = 1; n < p_stat->n_threads; n++)
+    for (n = 1; n < p_state->n_threads; n++)
         job_post(xs_stock_false, 0);
 
     /* wait for all the threads to exit */
-    for (n = 0; n < p_stat->n_threads; n++)
+    for (n = 0; n < p_state->n_threads; n++)
         pthread_join(threads[n], NULL);
 
     sem_close(job_sem);
     sem_unlink(sem_name);
 
-    xs *uptime = xs_str_time_diff(time(NULL) - p_stat->srv_start_time);
+    xs *uptime = xs_str_time_diff(time(NULL) - p_state->srv_start_time);
 
     srv_log(xs_fmt("httpd%s stop %s:%s (run time: %s)",
-                p_stat->use_fcgi ? " (FastCGI)" : "",
+                p_state->use_fcgi ? " (FastCGI)" : "",
                 address, port, uptime));
 }

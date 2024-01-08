@@ -12,6 +12,10 @@
 
 #define ISO_DATE_SPEC "%Y-%m-%dT%H:%M:%SZ"
 
+#ifndef MAX_THREADS
+#define MAX_THREADS 256
+#endif
+
 extern double disk_layout;
 extern xs_str *srv_basedir;
 extern xs_dict *srv_config;
@@ -47,7 +51,7 @@ typedef struct {
     time_t srv_start_time;  /* start time */
     int job_fifo_size;      /* job fifo size */
     int n_threads;          /* number of configured threads */
-} srv_stat;
+} srv_state;
 
 void snac_log(snac *user, xs_str *str);
 #define snac_debug(user, level, str) do { if (dbglevel >= (level)) \
