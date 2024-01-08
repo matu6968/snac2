@@ -506,9 +506,9 @@ static void *job_thread(void *arg)
     for (;;) {
         xs *job = NULL;
 
-        job_wait(&job);
+        p_state->th_state[pid] = THST_WAIT;
 
-        srv_debug(2, xs_fmt("job thread %d wake up", pid));
+        job_wait(&job);
 
         if (job == NULL) /* corrupted message? */
             continue;
@@ -520,6 +520,8 @@ static void *job_thread(void *arg)
             /* it's a socket */
             FILE *f = NULL;
 
+            p_state->th_state[pid] = THST_IN;
+
             xs_data_get(&f, job);
 
             if (f != NULL)
@@ -527,9 +529,13 @@ static void *job_thread(void *arg)
         }
         else {
             /* it's a q_item */
+            p_state->th_state[pid] = THST_OUT;
+
             process_queue_item(job);
         }
     }
+
+    p_state->th_state[pid] = THST_STOP;
 
     srv_debug(1, xs_fmt("job thread %d stopped", pid));
 
@@ -555,6 +561,8 @@ static void *background_thread(void *arg)
     while (p_state->srv_running) {
         time_t t;
         int cnt = 0;
+
+        p_state->th_state[0] = THST_IN;
 
         {
             xs *list = user_list();
@@ -588,6 +596,8 @@ static void *background_thread(void *arg)
         if (cnt == 0) {
             /* sleep 3 seconds */
 
+            p_state->th_state[0] = THST_WAIT;
+
 #ifdef USE_POLL_FOR_SLEEP
             poll(NULL, 0, 3 * 1000);
 #else
@@ -602,6 +612,8 @@ static void *background_thread(void *arg)
 #endif
         }
     }
+
+    p_state->th_state[0] = THST_STOP;
 
     srv_log(xs_fmt("background thread stopped"));
 
