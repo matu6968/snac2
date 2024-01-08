@@ -2168,7 +2168,7 @@ void enqueue_output_raw(const char *keyid, const char *seckey,
     qmsg = xs_dict_append(qmsg, "seckey", seckey);
 
     /* if it's to be sent right now, bypass the disk queue and post the job */
-    if (retries == 0 && job_fifo_ready())
+    if (retries == 0)
         job_post(qmsg, 0);
     else {
         qmsg = _enqueue_put(fn, qmsg);
