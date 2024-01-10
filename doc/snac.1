@@ -210,6 +210,28 @@ incoming activities with identifiers from that instance will be immediately
 blocked without further inspection.
 .It Cm unblock Ar basedir Ar instance_url
 Unblocks a previously blocked instance.
+.It Cm state Ar basedir
+Dumps the current state of the server and its threads. For example:
+.Bd -literal -offset indent
+server: comam.es (snac/2.45-dev)
+uptime: 0:03:09:52
+job fifo size (cur): 45
+job fifo size (peak): 1532
+thread #0 state: input
+thread #1 state: input
+thread #2 state: waiting
+thread #3 state: waiting
+thread #4 state: output
+thread #5 state: output
+thread #6 state: output
+thread #7 state: waiting
+.Ed
+.Pp
+The job fifo size values show the current and peak sizes of the
+in-memory job queue. The thread state can be: waiting (idle waiting
+for a job to be assigned), input or output (processing I/O packets)
+or stopped (not running, only to be seen while starting or stopping
+the server).
 .El
 .Ss Migrating an account from Mastodon
 See 
