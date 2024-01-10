@@ -1941,7 +1941,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     char *actor = NULL;
                     char *user  = NULL;
 
-                    if (valid_status(webfinger_request(q, &actor, &user))) {
+                    if (valid_status(webfinger_request(q, &actor, &user) && actor)) {
                         xs *actor_o = NULL;
 
                         if (valid_status(actor_request(&snac1, actor, &actor_o))) {

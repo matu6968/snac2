@@ -616,7 +616,7 @@ xs_str *process_tags(snac *snac, const char *content, xs_list **tag)
 
                 status = webfinger_request(wuid, &actor, &uid);
 
-                if (valid_status(status)) {
+                if (valid_status(status) && actor && uid) {
                     xs *d = xs_dict_new();
                     xs *n = xs_fmt("@%s", uid);
 
@@ -1207,7 +1207,8 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
             xs *t_href = NULL;
             xs *t_name = NULL;
 
-            if (!xs_is_null(a) && valid_status(webfinger_request(a, &t_href, &t_name))) {
+            if (!xs_is_null(a) && valid_status(webfinger_request(a, &t_href, &t_name)
+                && t_href && t_name)) {
                 xs *t = xs_dict_new();
 
                 t = xs_dict_append(t, "type", "Mention");
