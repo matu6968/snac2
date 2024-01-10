@@ -235,16 +235,6 @@ int server_get_handler(xs_dict *req, const char *q_path,
         *body  = xs_str_new("User-agent: *\n"
                             "Disallow: /\n");
     }
-    else
-    if (strcmp(q_path, "/status.txt") == 0) {
-        status = 200;
-        *ctype = "text/plain";
-        *body  = xs_str_new("UP\n");
-
-        xs *uptime = xs_str_time_diff(time(NULL) - p_state->srv_start_time);
-        srv_log(xs_fmt("status: uptime: %s", uptime));
-        srv_log(xs_fmt("status: job_fifo len: %d", p_state->job_fifo_size));
-    }
 
     if (status != 0)
         srv_debug(1, xs_fmt("server_get_handler serving '%s' %d", q_path, status));
@@ -457,8 +447,8 @@ void job_post(const xs_val *job, int urgent)
 
         p_state->job_fifo_size++;
 
-        if (p_state->job_fifo_size > p_state->top_job_fifo_size)
-            p_state->top_job_fifo_size = p_state->job_fifo_size;
+        if (p_state->job_fifo_size > p_state->peak_job_fifo_size)
+            p_state->peak_job_fifo_size = p_state->job_fifo_size;
 
         /* unlock the mutex */
         pthread_mutex_unlock(&job_mutex);
