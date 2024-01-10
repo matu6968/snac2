@@ -1946,6 +1946,8 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
             return;
 
         if (!process_input_message(snac, msg, req)) {
+            srv_archive_error("input", "process_input_message", req, msg);
+
             if (retries > queue_retry_max)
                 snac_log(snac, xs_fmt("input giving up"));
             else {
