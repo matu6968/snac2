@@ -48,8 +48,10 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
 
     xs *obj = NULL;
 
+    xs *cached_qs = xs_fmt("webfinger:%s", qs);
+
     /* is it cached? */
-    if (valid_status(status = object_get(qs, &obj))) {
+    if (valid_status(status = object_get(cached_qs, &obj))) {
         /* nothing more to do */
     }
     else
@@ -77,7 +79,7 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
 
     if (obj == NULL && valid_status(status) && payload) {
         obj = xs_json_loads(payload);
-        object_add(qs, obj);
+        object_add(cached_qs, obj);
     }
 
     if (obj) {

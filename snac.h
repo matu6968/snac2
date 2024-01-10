@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
 
-#define VERSION "2.44"
+#define VERSION "2.45-dev"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -46,13 +46,14 @@ typedef struct {
 } snac;
 
 typedef struct {
+    int s_size;             /* struct size (for double checking) */
     int srv_running;        /* server running on/off */
     int use_fcgi;           /* FastCGI use on/off */
     time_t srv_start_time;  /* start time */
     int job_fifo_size;      /* job fifo size */
     int peak_job_fifo_size; /* maximum job fifo size seen */
     int n_threads;          /* number of configured threads */
-    enum { THST_WAIT, THST_IN, THST_QUEUE, THST_STOP } th_state[MAX_THREADS];
+    enum { THST_STOP, THST_WAIT, THST_IN, THST_QUEUE } th_state[MAX_THREADS];
 } srv_state;
 
 void snac_log(snac *user, xs_str *str);
@@ -229,6 +230,7 @@ xs_dict *http_signed_request(snac *snac, const char *method, const char *url,
                             int timeout);
 int check_signature(xs_dict *req, xs_str **err);
 
+srv_state *srv_state_op(xs_str **fname, int op);
 void httpd(void);
 
 int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **user);
