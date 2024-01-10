@@ -2,6 +2,8 @@
 
 ## 2.45
 
+New command-line option `state`, that dumps some information about the running server and the state of each thread.
+
 Fixed a minor collision in webfinger caching.
 
 ## 2.44
