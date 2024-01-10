@@ -16,7 +16,7 @@ Fixed crash in the FastCGI code (thanks to Yonle for helping me debug this).
 
 Added apache2 configuration information (contributed by Víctor Moral).
 
-Added FreeBSD usage information and examples (contributed by draga79).
+Added FreeBSD and NetBSD setup information and examples (contributed by draga79).
 
 ## 2.43
 
