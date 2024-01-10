@@ -22,13 +22,13 @@
 
 #include <sys/resource.h> // for getrlimit()
 
+#include <sys/mman.h>
+
 #ifdef USE_POLL_FOR_SLEEP
 #include <poll.h>
 #endif
 
-/** server stat **/
-
-srv_state s_state = {0};
+/** server state **/
 srv_state *p_state = NULL;
 
 
@@ -622,6 +622,74 @@ void term_handler(int s)
 }
 
 
+srv_state *srv_state_op(xs_str **fname, int op)
+/* opens or deletes the shared memory object */
+{
+    int fd;
+    srv_state *ss = NULL;
+
+    if (*fname == NULL)
+        *fname = xs_fmt("/%s_snac_state", xs_dict_get(srv_config, "host"));
+
+    switch (op) {
+    case 0: /* open for writing */
+        if ((fd = shm_open(*fname, O_CREAT | O_RDWR, 0666)) != -1) {
+            ftruncate(fd, sizeof(*ss));
+
+            if ((ss = mmap(0, sizeof(*ss), PROT_READ | PROT_WRITE,
+                 MAP_SHARED, fd, 0)) == MAP_FAILED)
+                ss = NULL;
+
+            close(fd);
+        }
+
+        if (ss == NULL) {
+            /* shared memory error: just create a plain structure */
+            srv_log(xs_fmt("warning: shm object error (%s)", strerror(errno)));
+            ss = malloc(sizeof(*ss));
+        }
+
+        /* init structure */
+        *ss = (srv_state){0};
+        ss->s_size = sizeof(*ss);
+
+        break;
+
+    case 1: /* open for reading */
+        if ((fd = shm_open(*fname, O_RDONLY, 0666)) != -1) {
+            if ((ss = mmap(0, sizeof(*ss), PROT_READ, MAP_SHARED, fd, 0)) == MAP_FAILED)
+                ss = NULL;
+
+            close(fd);
+        }
+
+        if (ss == NULL) {
+            /* shared memory error */
+            srv_log(xs_fmt("error: shm object error (%s) server not running?", strerror(errno)));
+        }
+        else
+        if (ss->s_size != sizeof(*ss)) {
+            srv_log(xs_fmt("error: struct size mismatch (%d != %d)",
+                ss->s_size, sizeof(*ss)));
+
+            munmap(ss, sizeof(*ss));
+
+            ss = NULL;
+        }
+
+        break;
+
+    case 2: /* unlink */
+        if (*fname)
+            shm_unlink(*fname);
+
+        break;
+    }
+
+    return ss;
+}
+
+
 void httpd(void)
 /* starts the server */
 {
@@ -631,12 +699,11 @@ void httpd(void)
     pthread_t threads[MAX_THREADS] = {0};
     int n;
     xs *sem_name = NULL;
+    xs *shm_name = NULL;
     sem_t anon_job_sem;
 
     /* setup the server stat structure */
-    {
-        p_state = &s_state;
-    }
+    p_state = srv_state_op(&shm_name, 0);
 
     p_state->srv_start_time = time(NULL);
 
@@ -735,6 +802,8 @@ void httpd(void)
 
     sem_close(job_sem);
     sem_unlink(sem_name);
+
+    srv_state_op(&shm_name, 2);
 
     xs *uptime = xs_str_time_diff(time(NULL) - p_state->srv_start_time);
 

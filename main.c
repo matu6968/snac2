@@ -4,6 +4,7 @@
 #include "xs.h"
 #include "xs_io.h"
 #include "xs_json.h"
+#include "xs_time.h"
 
 #include "snac.h"
 
@@ -22,6 +23,7 @@ int usage(void)
     printf("deluser {basedir} {uid}             Deletes a user\n");
     printf("httpd {basedir}                     Starts the HTTPD daemon\n");
     printf("purge {basedir}                     Purges old data\n");
+    printf("state {basedir}                     Prints server state\n");
     printf("webfinger {basedir} {actor}         Queries about an actor (@user@host or actor url)\n");
     printf("queue {basedir} {uid}               Processes a user queue\n");
     printf("follow {basedir} {uid} {actor}      Follows an actor\n");
@@ -135,6 +137,29 @@ int main(int argc, char *argv[])
 
     if (strcmp(cmd, "purge") == 0) { /** **/
         purge_all();
+        return 0;
+    }
+
+    if (strcmp(cmd, "state") == 0) { /** **/
+        xs *shm_name = NULL;
+        srv_state *p_state = srv_state_op(&shm_name, 1);
+
+        if (p_state == NULL)
+            return 1;
+
+        srv_state ss = *p_state;
+        int n;
+
+        printf("server: %s (%s)\n", xs_dict_get(srv_config, "host"), USER_AGENT);
+        xs *uptime = xs_str_time_diff(time(NULL) - ss.srv_start_time);
+        printf("uptime: %s\n", uptime);
+        printf("job fifo size (cur): %d\n", ss.job_fifo_size);
+        printf("job fifo size (peak): %d\n", ss.peak_job_fifo_size);
+        char *th_states[] = { "stopped", "waiting", "input", "output" };
+
+        for (n = 0; n < ss.n_threads; n++)
+            printf("thread #%d state: %s\n", n, th_states[ss.th_state[n]]);
+
         return 0;
     }
 
