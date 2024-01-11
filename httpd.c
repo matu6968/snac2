@@ -344,6 +344,14 @@ void httpd_connection(FILE *f)
     if (strcmp(method, "OPTIONS") == 0) {
         status = 200;
     }
+    else
+    if (strcmp(method, "DELETE") == 0) {
+#ifndef NO_MASTODON_API
+        if (status == 0)
+            status = mastoapi_delete_handler(req, q_path,
+                    &body, &b_size, &ctype);
+#endif
+    }
 
     /* unattended? it's an error */
     if (status == 0) {

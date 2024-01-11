@@ -1118,9 +1118,14 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             acct = xs_dict_append(acct, "acct",         xs_dict_get(snac1.config, "uid"));
             acct = xs_dict_append(acct, "display_name", xs_dict_get(snac1.config, "name"));
             acct = xs_dict_append(acct, "created_at",   xs_dict_get(snac1.config, "published"));
+            acct = xs_dict_append(acct, "last_status_at", xs_dict_get(snac1.config, "published"));
             acct = xs_dict_append(acct, "note",         xs_dict_get(snac1.config, "bio"));
             acct = xs_dict_append(acct, "url",          snac1.actor);
             acct = xs_dict_append(acct, "header",       "");
+            acct = xs_dict_append(acct, "header_static", "");
+            acct = xs_dict_append(acct, "locked",       xs_stock_false);
+            // FIXME: check value of "type" to set this correctly?
+            acct = xs_dict_append(acct, "bot",          xs_stock_false);
 
             xs *src = xs_json_loads("{\"privacy\":\"public\","
                     "\"sensitive\":false,\"fields\":[],\"note\":\"\"}");
@@ -2476,6 +2481,22 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
         user_free(&snac);
 
     return status;
+}
+
+
+int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
+                             char **body, int *b_size, char **ctype) {
+
+    if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
+        return 0;
+
+    srv_debug(1, xs_fmt("mastoapi_delete_handler %s", q_path));
+    xs *cmd = xs_replace_n(q_path, "/api", "", 1);
+    if (xs_startswith(cmd, "/v1/push/subscription") || xs_startswith(cmd, "/v2/push/subscription")) { /** **/
+        // pretend we deleted it, since it doesn't exist anyway
+        return 200;
+    }
+    return 0;
 }
 
 
