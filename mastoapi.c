@@ -706,6 +706,10 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     const char *type = xs_dict_get(msg, "type");
     const char *id   = xs_dict_get(msg, "id");
 
+    /* fail if it's not a valid actor */
+    if (xs_is_null(type) || xs_is_null(id))
+        return NULL;
+
     xs *acct = mastoapi_account(actor);
 
     xs *idx = NULL;
