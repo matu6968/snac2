@@ -494,7 +494,6 @@ xs_str *mastoapi_id(const xs_dict *msg)
 xs_dict *mastoapi_account(const xs_dict *actor)
 /* converts an ActivityPub actor to a Mastodon account */
 {
-    xs_dict *acct     = xs_dict_new();
     const char *prefu = xs_dict_get(actor, "preferredUsername");
 
     const char *display_name = xs_dict_get(actor, "name");
@@ -503,7 +502,12 @@ xs_dict *mastoapi_account(const xs_dict *actor)
 
     const char *id  = xs_dict_get(actor, "id");
     const char *pub = xs_dict_get(actor, "published");
-    xs *acct_md5 = xs_md5_hex(id, strlen(id));
+
+    if (xs_is_null(id))
+        return NULL;
+
+    xs_dict *acct = xs_dict_new();
+    xs *acct_md5  = xs_md5_hex(id, strlen(id));
     acct = xs_dict_append(acct, "id",           acct_md5);
     acct = xs_dict_append(acct, "username",     prefu);
     acct = xs_dict_append(acct, "display_name", display_name);
@@ -711,6 +715,8 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
         return NULL;
 
     xs *acct = mastoapi_account(actor);
+    if (acct == NULL)
+        return NULL;
 
     xs *idx = NULL;
     xs *ixc = NULL;
