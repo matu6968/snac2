@@ -1118,9 +1118,14 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             acct = xs_dict_append(acct, "acct",         xs_dict_get(snac1.config, "uid"));
             acct = xs_dict_append(acct, "display_name", xs_dict_get(snac1.config, "name"));
             acct = xs_dict_append(acct, "created_at",   xs_dict_get(snac1.config, "published"));
+            acct = xs_dict_append(acct, "last_status_at", xs_dict_get(snac1.config, "published"));
             acct = xs_dict_append(acct, "note",         xs_dict_get(snac1.config, "bio"));
             acct = xs_dict_append(acct, "url",          snac1.actor);
             acct = xs_dict_append(acct, "header",       "");
+            acct = xs_dict_append(acct, "header_static", "");
+            acct = xs_dict_append(acct, "locked",       xs_stock_false);
+            // FIXME: check value of "type" to set this correctly?
+            acct = xs_dict_append(acct, "bot",          xs_stock_false);
 
             xs *src = xs_json_loads("{\"privacy\":\"public\","
                     "\"sensitive\":false,\"fields\":[],\"note\":\"\"}");
