@@ -1273,8 +1273,8 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
         if (xs_type(v) == XSTYPE_DICT) {
             char *t;
 
-            if ((t = xs_dict_get(v, "type")) != NULL && strcmp(t, "Mention") == 0) {
-                if ((t = xs_dict_get(v, "href")) != NULL)
+            if (!xs_is_null(t = xs_dict_get(v, "type")) && strcmp(t, "Mention") == 0) {
+                if (!xs_is_null(t = xs_dict_get(v, "href")))
                     cc = xs_list_append(cc, t);
             }
         }
