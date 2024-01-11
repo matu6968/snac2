@@ -1594,8 +1594,14 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
             return -1;
         }
 
-        /* other actor download errors may need a retry */
-        srv_debug(1, xs_fmt("error requesting actor %s %d -- retry later", actor, a_status));
+        /* other actor download errors */
+
+        /* the actor may require a signed request; propagate if no user is set */
+        if (snac == NULL)
+            return 2;
+
+        /* may need a retry */
+        srv_debug(0, xs_fmt("error requesting actor %s %d -- retry later", actor, a_status));
         return 0;
     }
 
