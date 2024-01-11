@@ -111,6 +111,7 @@ int srv_open(char *basedir, int auto_upgrade)
     else {
         srv_debug(1, xs_fmt("Calling unveil()"));
         unveil(basedir,                "rwc");
+        unveil("/tmp",                 "rwc");
         unveil("/usr/sbin/sendmail",   "x");
         unveil("/etc/resolv.conf",     "r");
         unveil("/etc/hosts",           "r");
