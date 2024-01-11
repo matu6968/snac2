@@ -1204,18 +1204,25 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
                 to = xs_list_append(to, a);
 
             /* add this author to the tag list as a mention */
-            xs *t_href = NULL;
-            xs *t_name = NULL;
+            if (!xs_is_null(a)) {
+                xs *l = xs_split(a, "/");
+                xs *actor_o = NULL;
 
-            if (!xs_is_null(a) && valid_status(webfinger_request(a, &t_href, &t_name)
-                && t_href && t_name)) {
-                xs *t = xs_dict_new();
+                if (xs_list_len(l) > 3 && valid_status(object_get(a, &actor_o))) {
+                    char *uname = xs_dict_get(actor_o, "preferredUsername");
 
-                t = xs_dict_append(t, "type", "Mention");
-                t = xs_dict_append(t, "href", t_href);
-                t = xs_dict_append(t, "name", t_name);
+                    if (!xs_is_null(uname) && *uname) {
+                        xs *handle = xs_fmt("@%s@%s", uname, xs_list_get(l, 2));
 
-                tag = xs_list_append(tag, t);
+                        xs *t = xs_dict_new();
+
+                        t = xs_dict_append(t, "type", "Mention");
+                        t = xs_dict_append(t, "href", a);
+                        t = xs_dict_append(t, "name", handle);
+
+                        tag = xs_list_append(tag, t);
+                    }
+                }
             }
 
             /* get the context, if there is one */
