@@ -2484,6 +2484,22 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 }
 
 
+int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
+                             char **body, int *b_size, char **ctype) {
+
+    if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
+        return 0;
+
+    srv_debug(1, xs_fmt("mastoapi_delete_handler %s", q_path));
+    xs *cmd = xs_replace_n(q_path, "/api", "", 1);
+    if (xs_startswith(cmd, "/v1/push/subscription") || xs_startswith(cmd, "/v2/push/subscription")) { /** **/
+        // pretend we deleted it, since it doesn't exist anyway
+        return 200;
+    }
+    return 0;
+}
+
+
 int mastoapi_put_handler(const xs_dict *req, const char *q_path,
                           const char *payload, int p_size,
                           char **body, int *b_size, char **ctype)
