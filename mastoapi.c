@@ -1124,8 +1124,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             acct = xs_dict_append(acct, "header",       "");
             acct = xs_dict_append(acct, "header_static", "");
             acct = xs_dict_append(acct, "locked",       xs_stock_false);
-            // FIXME: check value of "type" to set this correctly?
-            acct = xs_dict_append(acct, "bot",          xs_stock_false);
+            acct = xs_dict_append(acct, "bot",          xs_dict_get(snac1.config, "bot"));
 
             xs *src = xs_json_loads("{\"privacy\":\"public\","
                     "\"sensitive\":false,\"fields\":[],\"note\":\"\"}");
