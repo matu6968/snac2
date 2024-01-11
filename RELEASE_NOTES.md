@@ -2,9 +2,9 @@
 
 ## 2.45
 
-New command-line option `state`, that dumps some information about the running server and the state of each thread.
+Fixed a collision in webfinger caching. This may affect federation with some software, so I recommend an upgrade.
 
-Fixed a minor collision in webfinger caching.
+New command-line option `state`, that dumps some information about the running server and the state of each thread.
 
 Mastodon API: added some fixes for integration with the Mona iOS app (contributed by jamesoff).
 
