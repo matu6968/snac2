@@ -2486,6 +2486,11 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
                              char **body, int *b_size, char **ctype) {
 
+    (void)req;
+    (void)body;
+    (void)b_size;
+    (void)ctype;
+
     if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
         return 0;
 
