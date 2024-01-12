@@ -853,6 +853,14 @@ xs_html *html_top_controls(snac *snac)
     if (xs_is_null(telegram_chat_id))
         telegram_chat_id = "";
 
+    char *ntfy_server = xs_dict_get(snac->config, "ntfy_server");
+    if (xs_is_null(ntfy_server))
+        ntfy_server = "";
+
+    char *ntfy_token = xs_dict_get(snac->config, "ntfy_token");
+    if (xs_is_null(ntfy_token))
+        ntfy_token = "";
+
     char *purge_days = xs_dict_get(snac->config, "purge_days");
     if (!xs_is_null(purge_days) && xs_type(purge_days) == XSTYPE_NUMBER)
         purge_days = (char *)xs_number_str(purge_days);
@@ -946,6 +954,20 @@ xs_html *html_top_controls(snac *snac)
                         xs_html_attr("name", "telegram_chat_id"),
                         xs_html_attr("value", telegram_chat_id),
                         xs_html_attr("placeholder", "Chat id"))),
+                xs_html_tag("p",
+                    xs_html_text(L("ntfy notifications (ntfy server and token):")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "text"),
+                        xs_html_attr("name", "ntfy_server"),
+                        xs_html_attr("value", ntfy_server),
+                        xs_html_attr("placeholder", "ntfy server - full URL (example: https://ntfy.sh/YourTopic)")),
+                    xs_html_text(" "),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "text"),
+                        xs_html_attr("name", "ntfy_token"),
+                        xs_html_attr("value", ntfy_token),
+                        xs_html_attr("placeholder", "ntfy token - if needed"))),
                 xs_html_tag("p",
                     xs_html_text(L("Maximum days to keep posts (0: server settings):")),
                     xs_html_sctag("br", NULL),
@@ -2890,6 +2912,10 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "telegram_bot", v);
         if ((v = xs_dict_get(p_vars, "telegram_chat_id")) != NULL)
             snac.config = xs_dict_set(snac.config, "telegram_chat_id", v);
+        if ((v = xs_dict_get(p_vars, "ntfy_server")) != NULL)
+            snac.config = xs_dict_set(snac.config, "ntfy_server", v);
+        if ((v = xs_dict_get(p_vars, "ntfy_token")) != NULL)
+            snac.config = xs_dict_set(snac.config, "ntfy_token", v);
         if ((v = xs_dict_get(p_vars, "purge_days")) != NULL) {
             xs *days    = xs_number_new(atof(v));
             snac.config = xs_dict_set(snac.config, "purge_days", days);

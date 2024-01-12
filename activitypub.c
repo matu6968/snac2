@@ -800,8 +800,23 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
         objid = actor;
 
     notify_add(snac, type, utype, actor, objid != NULL ? objid : id);
-}
 
+    /* ntfy */
+    char *ntfy_server = xs_dict_get(snac->config, "ntfy_server");
+    char *ntfy_token  = xs_dict_get(snac->config, "ntfy_token");
+
+    if (!xs_is_null(ntfy_server) && *ntfy_server)
+        enqueue_ntfy(body, ntfy_server, ntfy_token);
+
+    /* finally, store it in the notification folder */
+    if (strcmp(type, "Follow") == 0)
+        objid = id;
+    else
+    if (strcmp(utype, "Follow") == 0)
+        objid = actor;
+
+    notify_add(snac, type, utype, actor, objid != NULL ? objid : id);
+}
 
 /** messages **/
 
@@ -2131,6 +2146,30 @@ void process_queue_item(xs_dict *q_item)
         rsp = xs_free(rsp);
 
         srv_debug(0, xs_fmt("telegram post %d", status));
+    }
+    else
+    if (strcmp(type, "ntfy") == 0) {
+        /* send this via ntfy */
+        char *ntfy_server   = xs_dict_get(q_item, "ntfy_server");
+        char *msg   = xs_dict_get(q_item, "message");
+        char *ntfy_token   = xs_dict_get(q_item, "ntfy_token");
+        int status  = 0;
+
+        xs *url  = xs_fmt("%s", ntfy_server);
+        xs *body = xs_fmt("%s", msg);
+
+        xs *headers = xs_dict_new();
+        headers = xs_dict_append(headers, "content-type", "text/plain");
+        // Append the Authorization header only if ntfy_token is not NULL
+         if (ntfy_token != NULL) {
+             headers = xs_dict_append(headers, "Authorization", xs_fmt("Bearer %s", ntfy_token));
+             }
+
+        xs *rsp = xs_http_request("POST", url, headers,
+                                   body, strlen(body), &status, NULL, NULL, 0);
+        rsp = xs_free(rsp);
+
+        srv_debug(0, xs_fmt("ntfy post %d", status));
     }
     else
     if (strcmp(type, "purge") == 0) {

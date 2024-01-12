@@ -2232,6 +2232,21 @@ void enqueue_telegram(const xs_str *msg, const char *bot, const char *chat_id)
     srv_debug(1, xs_fmt("enqueue_telegram %s %s", bot, chat_id));
 }
 
+void enqueue_ntfy(const xs_str *msg, const char *ntfy_server, const char *ntfy_token)
+/* enqueues a message to be sent via ntfy */
+{
+    xs *qmsg   = _new_qmsg("ntfy", msg, 0);
+    char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
+
+    qmsg = xs_dict_append(qmsg, "ntfy_server", ntfy_server);
+    qmsg = xs_dict_append(qmsg, "ntfy_token",  ntfy_token);
+
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    srv_debug(1, xs_fmt("enqueue_ntfy %s %s", ntfy_server, ntfy_token));
+}
 
 void enqueue_message(snac *snac, const xs_dict *msg)
 /* enqueues an output message */
