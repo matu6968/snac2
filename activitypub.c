@@ -805,7 +805,7 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
     char *ntfy_server = xs_dict_get(snac->config, "ntfy_server");
     char *ntfy_token  = xs_dict_get(snac->config, "ntfy_token");
 
-    if (!xs_is_null(ntfy_server) && *ntfy_server )
+    if (!xs_is_null(ntfy_server) && *ntfy_server)
         enqueue_ntfy(body, ntfy_server, ntfy_token);
 
     /* finally, store it in the notification folder */
@@ -2156,7 +2156,6 @@ void process_queue_item(xs_dict *q_item)
         int status  = 0;
 
         xs *url  = xs_fmt("%s", ntfy_server);
-        //xs *body = xs_fmt("\"text\":\"%s\"}", msg);
         xs *body = xs_fmt("%s", msg);
 
         xs *headers = xs_dict_new();
