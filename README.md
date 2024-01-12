@@ -58,10 +58,17 @@ Run `make` and then `make install` as root.
 
 If you're compiling on NetBSD, you should use the specific provided Makefile and run `make -f Makefile.NetBSD` and then `make -f Makefile.NetBSD install` as root.
 
+
 From version 2.27, `snac` includes support for the Mastodon API; if you are not interested on it, you can compile it out by running
 
 ```sh
 make CFLAGS=-DNO_MASTODON_API
+```
+
+If your compilation process complains about undefined references of `shm_open()` and `shm_unlink()` (it happens, for example, on 20.04.6 LTS), you need to tell `make` to add the `rt` library to the final linking command as follows:
+
+```sh
+make LDFLAGS=-lrt
 ```
 
 See the administrator manual on how to proceed from here.
