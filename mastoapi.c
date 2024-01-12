@@ -494,17 +494,17 @@ xs_str *mastoapi_id(const xs_dict *msg)
 xs_dict *mastoapi_account(const xs_dict *actor)
 /* converts an ActivityPub actor to a Mastodon account */
 {
+    const char *id  = xs_dict_get(actor, "id");
+    const char *pub = xs_dict_get(actor, "published");
+
+    if (xs_type(id) != XSTYPE_STRING)
+        return NULL;
+
     const char *prefu = xs_dict_get(actor, "preferredUsername");
 
     const char *display_name = xs_dict_get(actor, "name");
     if (xs_is_null(display_name) || *display_name == '\0')
         display_name = prefu;
-
-    const char *id  = xs_dict_get(actor, "id");
-    const char *pub = xs_dict_get(actor, "published");
-
-    if (xs_is_null(id))
-        return NULL;
 
     xs_dict *acct = xs_dict_new();
     xs *acct_md5  = xs_md5_hex(id, strlen(id));
