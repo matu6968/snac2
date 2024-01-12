@@ -8,6 +8,8 @@ New command-line option `state`, that dumps some information about the running s
 
 Mastodon API: added some fixes for integration with the Mona iOS app (contributed by jamesoff).
 
+Added support for ntfy notifications, both using a self-hosted server or the official ntfy.sh. (contributed by Stefano Marinelli)
+
 ## 2.44
 
 Fixed a nasty bug that caused the in-memory output queue to be corrupted under heavy traffic loads. This is a good reason to upgrade (thanks to Víctor Moral and Stefano Marinelli for helping me in fixing this).
