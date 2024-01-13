@@ -799,8 +799,6 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
     if (strcmp(utype, "Follow") == 0)
         objid = actor;
 
-    notify_add(snac, type, utype, actor, objid != NULL ? objid : id);
-
     /* ntfy */
     char *ntfy_server = xs_dict_get(snac->config, "ntfy_server");
     char *ntfy_token  = xs_dict_get(snac->config, "ntfy_token");
