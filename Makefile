@@ -6,7 +6,7 @@ all: snac
 
 snac: snac.o main.o data.o http.o httpd.o webfinger.o \
     activitypub.o html.o utils.o format.o upgrade.o mastoapi.o
-	$(CC) $(CFLAGS) -L/usr/local/lib *.o -lcurl -lcrypto -pthread $(LDFLAGS) -o $@
+	$(CC) $(CFLAGS) -L/usr/local/lib *.o -lcurl -lcrypto $(LDFLAGS) -pthread -o $@
 
 .c.o:
 	$(CC) $(CFLAGS) $(CPPFLAGS) -I/usr/local/include -c $<

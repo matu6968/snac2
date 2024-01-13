@@ -65,7 +65,7 @@ From version 2.27, `snac` includes support for the Mastodon API; if you are not 
 make CFLAGS=-DNO_MASTODON_API
 ```
 
-If your compilation process complains about undefined references of `shm_open()` and `shm_unlink()` (it happens, for example, on 20.04.6 LTS), you need to tell `make` to add the `rt` library to the final linking command as follows:
+If your compilation process complains about undefined references to `shm_open()` and `shm_unlink()` (it happens, for example, on Ubuntu 20.04.6 LTS), run it as:
 
 ```sh
 make LDFLAGS=-lrt
