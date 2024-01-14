@@ -1206,6 +1206,19 @@ int following_add(snac *snac, const char *actor, const xs_dict *msg)
     int ret = 201; /* created */
     xs *fn = _following_fn(snac, actor);
     FILE *f;
+    xs *p_object = NULL;
+
+    if (valid_status(following_get(snac, actor, &p_object))) {
+        /* object already exists; if it's of type Accept,
+           the actor is already being followed and confirmed,
+           so do nothing */
+        char *type = xs_dict_get(p_object, "type");
+
+        if (!xs_is_null(type) && strcmp(type, "Accept") == 0) {
+            snac_debug(snac, 1, xs_fmt("following_add actor already confirmed %s", actor));
+            return 200;
+        }
+    }
 
     if ((f = fopen(fn, "w")) != NULL) {
         xs_json_dump(msg, 4, f);
