@@ -1553,7 +1553,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         type = "Note";
 
     /* reject uninteresting messages right now */
-    if (strcmp(type, "Add") == 0) {
+    if (xs_match(type, "Add|View")) {
         srv_debug(0, xs_fmt("Ignored message of type '%s'", type));
         return -1;
     }
@@ -1822,17 +1822,17 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
             snac_log(snac, xs_fmt("updated actor %s", actor));
         }
         else
-        if (xs_match(utype, "Note|Page|Article")) { /** **/
+        if (xs_match(utype, "Note|Page|Article|Video")) { /** **/
             const char *id = xs_dict_get(object, "id");
 
             if (object_here(id)) {
                 object_add_ow(id, object);
                 timeline_touch(snac);
 
-                snac_log(snac, xs_fmt("updated post %s", id));
+                snac_log(snac, xs_fmt("updated '%s' %s", utype, id));
             }
             else
-                snac_log(snac, xs_fmt("dropped update for unknown post %s", id));
+                snac_log(snac, xs_fmt("dropped update for unknown '%s' %s", utype, id));
         }
         else
         if (strcmp(utype, "Question") == 0) { /** **/
@@ -1847,8 +1847,11 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
             if (closed != NULL)
                 do_notify = 1;
         }
-        else
+        else {
+            srv_archive_error("unsupported_update", "unsupported_update", req, msg);
+
             snac_log(snac, xs_fmt("ignored 'Update' for object type '%s'", utype));
+        }
     }
     else
     if (strcmp(type, "Delete") == 0) { /** **/
@@ -1874,8 +1877,11 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
 
         enqueue_output_by_actor(snac, rsp, actor, 0);
     }
-    else
+    else {
+        srv_archive_error("unsupported_type", "unsupported_type", req, msg);
+
         snac_debug(snac, 1, xs_fmt("process_input_message type '%s' ignored", type));
+    }
 
     if (do_notify) {
         notify(snac, type, utype, actor, msg);
