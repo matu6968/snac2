@@ -56,6 +56,8 @@ typedef struct {
     enum { THST_STOP, THST_WAIT, THST_IN, THST_QUEUE } th_state[MAX_THREADS];
 } srv_state;
 
+extern srv_state *p_state;
+
 void snac_log(snac *user, xs_str *str);
 #define snac_debug(user, level, str) do { if (dbglevel >= (level)) \
     { snac_log((user), (str)); } } while (0)

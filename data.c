@@ -1508,6 +1508,13 @@ int actor_get(const char *actor, xs_dict **data)
         return status;
     }
 
+    /* if the object is corrupted, discard it */
+    if (xs_is_null(xs_dict_get(d, "id")) || xs_is_null(xs_dict_get(d, "type"))) {
+        srv_debug(1, xs_fmt("corrupted actor object %s", actor));
+        d = xs_free(d);
+        return 404;
+    }
+
     if (data)
         *data = d;
     else
@@ -2169,7 +2176,7 @@ void enqueue_output_raw(const char *keyid, const char *seckey,
     qmsg = xs_dict_append(qmsg, "seckey", seckey);
 
     /* if it's to be sent right now, bypass the disk queue and post the job */
-    if (retries == 0)
+    if (retries == 0 && p_state != NULL)
         job_post(qmsg, 0);
     else {
         qmsg = _enqueue_put(fn, qmsg);
