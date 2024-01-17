@@ -16,6 +16,8 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
+Integrate "Ability to federate with hidden networks" PR https://codeberg.org/grunfink/snac2/pulls/93
+
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
 
 Add a list of hashtags to drop.
