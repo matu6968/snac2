@@ -6,7 +6,7 @@ Fixed a collision in webfinger caching. This may affect federation with some sof
 
 Fixed crashes in some command-line options.
 
-New command-line option `state`, that dumps some information about the running server and the state of each thread.
+New command-line option `state`, that dumps some information about the running server and the state of each thread (note: this feature uses shared memory blocks and you may need an argument to the `make` call in older Linux distributions; please see the `README` file for details).
 
 Mastodon API: added some fixes for integration with the Mona iOS app (contributed by jamesoff).
 
