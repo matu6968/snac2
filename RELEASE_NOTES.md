@@ -8,9 +8,11 @@ Fixed crashes in some command-line options.
 
 New command-line option `state`, that dumps some information about the running server and the state of each thread (note: this feature uses shared memory blocks and you may need an argument to the `make` call in older Linux distributions; please see the `README` file for details).
 
+Fixed a bug that may leave an inconsistent state for a followed actor in a special case of repeated messages.
+
 Mastodon API: added some fixes for integration with the Mona iOS app (contributed by jamesoff).
 
-Added support for ntfy notifications, both using a self-hosted server or the official ntfy.sh. (contributed by Stefano Marinelli)
+Added support for ntfy notifications, both using a self-hosted server or the official ntfy.sh (contributed by Stefano Marinelli).
 
 ## 2.44
 
