@@ -230,7 +230,7 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
                         type = "(null)";
                 }
 
-                if (xs_match(type, "Note|Page|Article")) {
+                if (xs_match(type, "Note|Page|Article|Video")) {
                     const char *actor = get_atto(object);
 
                     /* request (and drop) the actor for this entry */
