@@ -2345,7 +2345,8 @@ int was_question_voted(snac *user, const char *id)
         xs *obj = NULL;
 
         if (valid_status(object_get_by_md5(md5, &obj))) {
-            if (strcmp(xs_dict_get(obj, "attributedTo"), user->actor) == 0 &&
+            char *atto = get_atto(obj);
+            if (atto && strcmp(atto, user->actor) == 0 &&
                 !xs_is_null(xs_dict_get(obj, "name"))) {
                 voted = 1;
                 break;

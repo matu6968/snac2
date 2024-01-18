@@ -245,6 +245,8 @@ const char *default_avatar_base64(void);
 
 xs_str *process_tags(snac *snac, const char *content, xs_list **tag);
 
+char *get_atto(const xs_dict *msg);
+
 xs_dict *msg_admiration(snac *snac, char *object, char *type);
 xs_dict *msg_create(snac *snac, const xs_dict *object);
 xs_dict *msg_follow(snac *snac, const char *actor);

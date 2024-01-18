@@ -156,6 +156,34 @@ int actor_request(snac *user, const char *actor, xs_dict **data)
 }
 
 
+char *get_atto(const xs_dict *msg)
+/* gets the attributedTo field (an actor) */
+{
+    char *actor = xs_dict_get(msg, "attributedTo");
+
+    /* if the actor is a list of objects (like on Peertube videos), pick the Person */
+    if (xs_type(actor) == XSTYPE_LIST) {
+        xs_list *p = actor;
+        xs_dict *v;
+        actor = NULL;
+
+        while (actor == NULL && xs_list_iter(&p, &v)) {
+            if (xs_type(v) == XSTYPE_DICT) {
+                char *type = xs_dict_get(v, "type");
+                if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Person") == 0) {
+                    actor = xs_dict_get(v, "id");
+
+                    if (xs_type(actor) != XSTYPE_STRING)
+                        actor = NULL;
+                }
+            }
+        }
+    }
+
+    return actor;
+}
+
+
 int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
 /* ensures that an entry and its ancestors are in the timeline */
 {
@@ -203,7 +231,7 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
                 }
 
                 if (xs_match(type, "Note|Page|Article")) {
-                    const char *actor = xs_dict_get(object, "attributedTo");
+                    const char *actor = get_atto(object);
 
                     /* request (and drop) the actor for this entry */
                     if (!xs_is_null(actor))
@@ -531,7 +559,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     }
 
     /* accept if it's by someone we follow */
-    char *atto = xs_dict_get(msg, "attributedTo");
+    char *atto = get_atto(msg);
 
     if (pub_msg && !xs_is_null(atto) && following_check(snac, atto))
         return 3;
@@ -543,7 +571,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 
         /* try to get the replied message */
         if (valid_status(object_get(irt, &r_msg))) {
-            atto = xs_dict_get(r_msg, "attributedTo");
+            atto = get_atto(r_msg);
 
             /* accept if the replied message is from someone we follow */
             if (pub_msg && !xs_is_null(atto) && following_check(snac, atto))
@@ -958,7 +986,7 @@ xs_dict *msg_admiration(snac *snac, char *object, char *type)
         if (is_msg_public(a_msg))
             rcpts = xs_list_append(rcpts, public_address);
 
-        rcpts = xs_list_append(rcpts, xs_dict_get(a_msg, "attributedTo"));
+        rcpts = xs_list_append(rcpts, get_atto(a_msg));
 
         msg = xs_dict_append(msg, "to", rcpts);
     }
@@ -1085,7 +1113,7 @@ xs_dict *msg_create(snac *snac, const xs_dict *object)
     xs_dict *msg = msg_base(snac, "Create", "@wrapper", snac->actor, NULL, object);
     xs_val *v;
 
-    if ((v = xs_dict_get(object, "attributedTo")))
+    if ((v = get_atto(object)))
         msg = xs_dict_append(msg, "attributedTo", v);
 
     if ((v = xs_dict_get(object, "cc")))
@@ -1213,7 +1241,7 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
             /* add this author as recipient */
             char *a, *v;
 
-            if ((a = xs_dict_get(p_msg, "attributedTo")) && xs_list_in(to, a) == -1)
+            if ((a = get_atto(p_msg)) && xs_list_in(to, a) == -1)
                 to = xs_list_append(to, a);
 
             /* add this author to the tag list as a mention */
@@ -1447,7 +1475,7 @@ int update_question(snac *user, const char *id)
             continue;
 
         const char *name = xs_dict_get(obj, "name");
-        const char *atto = xs_dict_get(obj, "attributedTo");
+        const char *atto = get_atto(obj);
 
         if (name && atto) {
             /* get the current count */
@@ -1799,7 +1827,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
             timeline_request(snac, &object, &wrk, 0);
 
             if (valid_status(object_get(object, &a_msg))) {
-                const char *who = xs_dict_get(a_msg, "attributedTo");
+                const char *who = get_atto(a_msg);
 
                 if (who && !is_muted(snac, who)) {
                     /* bring the actor */

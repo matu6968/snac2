@@ -701,7 +701,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 /* converts an ActivityPub note to a Mastodon status */
 {
     xs *actor = NULL;
-    actor_get(xs_dict_get(msg, "attributedTo"), &actor);
+    actor_get(get_atto(msg), &actor);
 
     /* if the author is not here, discard */
     if (actor == NULL)
@@ -967,7 +967,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
             st = xs_dict_set(st, "in_reply_to_id", irt_mid);
 
             char *at = NULL;
-            if (!xs_is_null(at = xs_dict_get(irto, "attributedTo"))) {
+            if (!xs_is_null(at = get_atto(irto))) {
                 xs *at_md5 = xs_md5_hex(at, strlen(at));
                 st = xs_dict_set(st, "in_reply_to_account_id", at_md5);
             }
@@ -1443,7 +1443,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     from = xs_dict_get(msg, "audience");
 
                 if (from == NULL)
-                    from = xs_dict_get(msg, "attributedTo");
+                    from = get_atto(msg);
 
                 if (from == NULL)
                     continue;
@@ -1525,7 +1525,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             /* discard private users */
             {
-                const char *atto = xs_dict_get(msg, "attributedTo");
+                const char *atto = get_atto(msg);
                 xs *l = xs_split(atto, "/");
                 const char *uid = xs_list_get(l, -1);
                 snac p_user;
@@ -1825,7 +1825,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                 if (valid_status(object_get_by_md5(id, &msg))) {
                     if (op == NULL) {
-                        if (!is_muted(&snac1, xs_dict_get(msg, "attributedTo"))) {
+                        if (!is_muted(&snac1, get_atto(msg))) {
                             /* return the status itself */
                             out = mastoapi_status(&snac1, msg);
                         }
@@ -2435,7 +2435,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
                 if (valid_status(timeline_get_by_md5(&snac, mid, &msg))) {
                     const char *id   = xs_dict_get(msg, "id");
-                    const char *atto = xs_dict_get(msg, "attributedTo");
+                    const char *atto = get_atto(msg);
 
                     xs_list *opts = xs_dict_get(msg, "oneOf");
                     if (opts == NULL)

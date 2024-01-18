@@ -1275,34 +1275,9 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
     if (strcmp(type, "Note") == 0 && !xs_is_null(xs_dict_get(msg, "name")))
         return NULL;
 
-    /* bring the main actor */
-    if ((actor = xs_dict_get(msg, "attributedTo")) == NULL)
+    /* get the attributedTo */
+    if ((actor = get_atto(msg)) == NULL)
         return NULL;
-
-    /* if the actor is a list (like on Peertube videos), pick the Person */
-    if (xs_type(actor) == XSTYPE_LIST) {
-        char *e_actor = NULL;
-        xs_list *p = actor;
-
-        while (xs_list_iter(&p, &v)) {
-            if (xs_type(v) == XSTYPE_DICT) {
-                char *type = xs_dict_get(v, "type");
-                if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Person") == 0) {
-                    e_actor = xs_dict_get(v, "id");
-
-                    if (xs_type(e_actor) == XSTYPE_STRING)
-                        break;
-                    else
-                        e_actor = NULL;
-                }
-            }
-        }
-
-        if (e_actor != NULL)
-            actor = e_actor;
-        else
-            return NULL;
-    }
 
     /* ignore muted morons immediately */
     if (user && is_muted(user, actor))
@@ -1979,7 +1954,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
 
         /* if it's an instance page, discard private users */
         if (user == NULL && xs_startswith(xs_dict_get(msg, "id"), srv_baseurl)) {
-            const char *atto = xs_dict_get(msg, "attributedTo");
+            const char *atto = get_atto(msg);
             xs *l = xs_split(atto, "/");
             const char *uid = xs_list_get(l, -1);
             snac user;
