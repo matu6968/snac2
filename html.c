@@ -1774,8 +1774,6 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
         xs_list *p = v;
         char *url = NULL;
 
-        xs_debug();
-
         while (url == NULL && xs_list_iter(&p, &v)) {
             if (xs_type(v) == XSTYPE_DICT) {
                 char *type  = xs_dict_get(v, "type");
