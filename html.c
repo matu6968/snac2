@@ -1100,10 +1100,9 @@ xs_str *build_mentions(snac *snac, const xs_dict *msg)
 }
 
 
-xs_html *html_entry_controls(snac *snac, const xs_dict *msg, const char *md5)
+xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const char *md5)
 {
     char *id    = xs_dict_get(msg, "id");
-    char *actor = xs_dict_get(msg, "attributedTo");
     char *group = xs_dict_get(msg, "audience");
 
     xs *likes   = object_likes(id);
@@ -1848,7 +1847,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
 
     if (!local && user) {
         xs_html_add(entry,
-            html_entry_controls(user, msg, md5));
+            html_entry_controls(user, actor, msg, md5));
     }
 
     /** children **/
