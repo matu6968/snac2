@@ -1481,6 +1481,14 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
         /* replace the :shortnames: */
         c = replace_shortnames(c, xs_dict_get(msg, "tag"), 2);
 
+        /* Peertube videos content is in markdown */
+        char *mtype = xs_dict_get(msg, "mediaType");
+        if (xs_type(mtype) == XSTYPE_STRING && strcmp(mtype, "text/markdown") == 0) {
+            /* a full conversion could be better */
+            c = xs_replace_i(c, "\r", "");
+            c = xs_replace_i(c, "\n", "<br>");
+        }
+
         /* c contains sanitized HTML */
         xs_html_add(snac_content,
             xs_html_raw(c));
