@@ -20,6 +20,8 @@ Integrate "Ability to federate with hidden networks" PR https://codeberg.org/gru
 
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
 
+Add more CSS classes according to https://comam.es/snac/grunfink/p/1705598619.090050
+
 Add a list of hashtags to drop.
 
 Add domain/subdomain flexibility according to https://codeberg.org/grunfink/snac2/issues/3
