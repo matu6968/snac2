@@ -1733,6 +1733,13 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
                 snac_log(snac, xs_fmt("new 'Question' %s %s", actor, id));
         }
         else
+        if (strcmp(utype, "Video") == 0) { /** **/
+            char *id = xs_dict_get(object, "id");
+
+            if (timeline_add(snac, id, object))
+                snac_log(snac, xs_fmt("new 'Video' %s %s", actor, id));
+        }
+        else
             snac_debug(snac, 1, xs_fmt("ignored 'Create' for object type '%s'", utype));
     }
     else

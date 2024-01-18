@@ -227,14 +227,10 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
 }
 
 
-xs_html *html_msg_icon(snac *user, const xs_dict *msg)
+xs_html *html_msg_icon(snac *user, char *actor_id, const xs_dict *msg)
 {
-    char *actor_id;
     xs *actor = NULL;
     xs_html *actor_icon = NULL;
-
-    if ((actor_id = xs_dict_get(msg, "attributedTo")) == NULL)
-        actor_id = xs_dict_get(msg, "actor");
 
     if (actor_id && valid_status(actor_get(actor_id, &actor))) {
         char *date  = NULL;
@@ -243,7 +239,7 @@ xs_html *html_msg_icon(snac *user, const xs_dict *msg)
         int priv    = 0;
         const char *type = xs_dict_get(msg, "type");
 
-        if (xs_match(type, "Note|Question|Page|Article"))
+        if (xs_match(type, "Note|Question|Page|Article|Video"))
             url = xs_dict_get(msg, "id");
 
         priv = !is_msg_public(msg);
@@ -1268,10 +1264,10 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-origin"),
                     xs_html_text(L("follows you"))),
-                html_msg_icon(local ? NULL : user, msg)));
+                html_msg_icon(local ? NULL : user, xs_dict_get(msg, "actor"), msg)));
     }
     else
-    if (!xs_match(type, "Note|Question|Page|Article")) {
+    if (!xs_match(type, "Note|Question|Page|Article|Video")) {
         /* skip oddities */
         return NULL;
     }
@@ -1283,6 +1279,31 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
     /* bring the main actor */
     if ((actor = xs_dict_get(msg, "attributedTo")) == NULL)
         return NULL;
+
+    /* if the actor is a list (like on Peertube videos), pick the Person */
+    if (xs_type(actor) == XSTYPE_LIST) {
+        char *e_actor = NULL;
+        xs_list *p = actor;
+
+        while (xs_list_iter(&p, &v)) {
+            if (xs_type(v) == XSTYPE_DICT) {
+                char *type = xs_dict_get(v, "type");
+                if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Person") == 0) {
+                    e_actor = xs_dict_get(v, "id");
+
+                    if (xs_type(e_actor) == XSTYPE_STRING)
+                        break;
+                    else
+                        e_actor = NULL;
+                }
+            }
+        }
+
+        if (e_actor != NULL)
+            actor = e_actor;
+        else
+            return NULL;
+    }
 
     /* ignore muted morons immediately */
     if (user && is_muted(user, actor))
@@ -1416,7 +1437,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
     }
 
     xs_html_add(post_header,
-        html_msg_icon(local ? NULL : user, msg));
+        html_msg_icon(local ? NULL : user, actor, msg));
 
     /** post content **/
 
@@ -1625,7 +1646,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
             poll);
     }
 
-    /* add the attachments */
+    /** attachments **/
     v = xs_dict_get(msg, "attachment");
 
     if (!xs_is_null(v)) { /** attachments **/
@@ -1744,6 +1765,67 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
                             xs_html_text(": "),
                             xs_html_text(url))));
             }
+        }
+    }
+
+    /** urls (attachments from Peertube) **/
+    v = xs_dict_get(msg, "url");
+
+    if (xs_type(v) == XSTYPE_LIST) {
+        xs_list *p = v;
+        char *url = NULL;
+
+        xs_debug();
+
+        while (url == NULL && xs_list_iter(&p, &v)) {
+            if (xs_type(v) == XSTYPE_DICT) {
+                char *type  = xs_dict_get(v, "type");
+
+                if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Link") == 0) {
+                    char *mtype  = xs_dict_get(v, "mediaType");
+                    xs_list *tag = xs_dict_get(v, "tag");
+
+                    if (xs_type(mtype) == XSTYPE_STRING &&
+                        strcmp(mtype, "application/x-mpegURL") == 0 &&
+                        xs_type(tag) == XSTYPE_LIST) {
+                        /* now iterate the tag list, looking for a video URL */
+                        xs_dict *d;
+
+                        while (url == NULL && xs_list_iter(&tag, &d)) {
+                            if (xs_type(d) == XSTYPE_DICT) {
+                                if (xs_type(mtype = xs_dict_get(d, "mediaType")) == XSTYPE_STRING &&
+                                    xs_startswith(mtype, "video/")) {
+
+                                    /* this is probably it */
+                                    if (xs_type(url = xs_dict_get(d, "href")) != XSTYPE_STRING)
+                                        url = NULL;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (url != NULL) {
+            xs_html *content_attachments = xs_html_tag("div",
+                xs_html_attr("class", "snac-content-attachments"));
+
+            xs_html_add(snac_content,
+                content_attachments);
+
+            xs_html_add(content_attachments,
+                xs_html_tag("video",
+                    xs_html_attr("preload", "none"),
+                    xs_html_attr("style", "width: 100%"),
+                    xs_html_attr("class", "snac-embedded-video"),
+                    xs_html_attr("controls", NULL),
+                    xs_html_attr("src", url),
+                    xs_html_text(L("Video")),
+                    xs_html_text(": "),
+                    xs_html_tag("a",
+                        xs_html_attr("href", url),
+                        xs_html_text("---"))));
         }
     }
 
