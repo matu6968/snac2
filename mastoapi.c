@@ -993,7 +993,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
         tmp = fd2;
     }
 
-    st = xs_dict_append(st, "edited_at", fd2);
+    st = xs_dict_append(st, "edited_at", tmp);
 
     if (strcmp(type, "Question") == 0) {
         xs *poll = mastoapi_poll(snac, msg);
