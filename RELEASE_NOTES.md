@@ -1,5 +1,11 @@
 # Release Notes
 
+## 2.46
+
+Added support for Peertube videos.
+
+Mastodon API: Fixed an error related to the edit date of a post.
+
 ## 2.45
 
 Fixed a collision in webfinger caching. This may affect federation with some software, so I recommend an upgrade.
