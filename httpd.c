@@ -710,13 +710,6 @@ void httpd(void)
     xs *shm_name = NULL;
     sem_t anon_job_sem;
 
-    /* setup the server stat structure */
-    p_state = srv_state_op(&shm_name, 0);
-
-    p_state->srv_start_time = time(NULL);
-
-    p_state->use_fcgi = xs_type(xs_dict_get(srv_config, "fastcgi")) == XSTYPE_TRUE;
-
     address = xs_dict_get(srv_config, "address");
     port    = xs_number_str(xs_dict_get(srv_config, "port"));
 
@@ -724,6 +717,13 @@ void httpd(void)
         srv_log(xs_fmt("cannot bind socket to %s:%s", address, port));
         return;
     }
+
+    /* setup the server stat structure */
+    p_state = srv_state_op(&shm_name, 0);
+
+    p_state->srv_start_time = time(NULL);
+
+    p_state->use_fcgi = xs_type(xs_dict_get(srv_config, "fastcgi")) == XSTYPE_TRUE;
 
     p_state->srv_running = 1;
 
