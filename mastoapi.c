@@ -1902,6 +1902,16 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                             }
                         }
                     }
+                    else
+                    if (strcmp(op, "source") == 0) { /** **/
+                        out = xs_dict_new();
+
+                        /* get the mastoapi status id */
+                        out = xs_dict_append(out, "id", xs_list_get(l, 3));
+
+                        out = xs_dict_append(out, "text", xs_dict_get(msg, "sourceContent"));
+                        out = xs_dict_append(out, "spoiler_text", xs_dict_get(msg, "summary"));
+                    }
                 }
                 else
                     srv_debug(1, xs_fmt("mastoapi status: bad id %s", id));
