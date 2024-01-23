@@ -4,7 +4,7 @@
 
 Added support for Peertube videos.
 
-Mastodon API: Fixed an error related to the edit date of a post.
+Mastodon API: Fixed an error related to the edit date of a post, added support for editing posts.
 
 ## 2.45
 
