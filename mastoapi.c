@@ -2534,8 +2534,6 @@ int mastoapi_put_handler(const xs_dict *req, const char *q_path,
     if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
         return 0;
 
-    srv_debug(1, xs_fmt("mastoapi_post_handler %s", q_path));
-
     int status    = 404;
     xs *args      = NULL;
     char *i_ctype = xs_dict_get(req, "content-type");
@@ -2583,10 +2581,56 @@ int mastoapi_put_handler(const xs_dict *req, const char *q_path,
         else
             status = 401;
     }
+    else
+    if (xs_startswith(cmd, "/v1/statuses")) {
+        if (logged_in) {
+            xs *l = xs_split(cmd, "/");
+            const char *mid = xs_list_get(l, 3);
+
+            if (!xs_is_null(mid)) {
+                const char *md5 = MID_TO_MD5(mid);
+                xs *rsp = NULL;
+                xs *msg = NULL;
+
+                if (valid_status(timeline_get_by_md5(&snac, md5, &msg))) {
+                    const char *content = xs_dict_get(args, "status");
+                    xs *atls = xs_list_new();
+                    const char *f_content = not_really_markdown(content, &atls);
+
+                    /* replace fields with new content */
+                    msg = xs_dict_set(msg, "sourceContent", content);
+                    msg = xs_dict_set(msg, "content", f_content);
+
+                    xs *updated = xs_str_utctime(0, ISO_DATE_SPEC);
+                    msg = xs_dict_set(msg, "updated", updated);
+
+                    /* overwrite object, not updating the indexes */
+                    object_add_ow(xs_dict_get(msg, "id"), msg);
+
+                    /* update message */
+                    xs *c_msg = msg_update(&snac, msg);
+
+                    enqueue_message(&snac, c_msg);
+
+                    rsp = mastoapi_status(&snac, msg);
+                }
+
+                if (rsp != NULL) {
+                    *body  = xs_json_dumps(rsp, 4);
+                    *ctype = "application/json";
+                    status = 200;
+                }
+            }
+        }
+        else
+            status = 401;
+    }
 
     /* user cleanup */
     if (logged_in)
         user_free(&snac);
+
+    srv_debug(1, xs_fmt("mastoapi_put_handler %s %d", q_path, status));
 
     return status;
 }
