@@ -102,7 +102,7 @@ xs_str *actor_name(xs_dict *actor)
 
 
 xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
-                        const char *udate, const char *url, int priv)
+                        const char *udate, const char *url, int priv, int in_people)
 {
     xs_html *actor_icon = xs_html_tag("p", NULL);
 
@@ -128,7 +128,9 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
     if (user) {
         fwer = follower_check(user, actor_id);
         fwing = following_check(user, actor_id);
+    }
 
+    if (user && !in_people) {
         /* if this actor is a follower or being followed, create an
            anchored link to the people page instead of the actor url */
         if (fwer || fwing) {
@@ -259,7 +261,7 @@ xs_html *html_msg_icon(snac *user, char *actor_id, const xs_dict *msg)
         date  = xs_dict_get(msg, "published");
         udate = xs_dict_get(msg, "updated");
 
-        actor_icon = html_actor_icon(user, actor, date, udate, url, priv);
+        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0);
     }
 
     return actor_icon;
@@ -2099,7 +2101,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
                     xs_html_attr("name", md5)),
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post-header"),
-                    html_actor_icon(NULL, actor, xs_dict_get(actor, "published"), NULL, NULL, 0)));
+                    html_actor_icon(snac, actor, xs_dict_get(actor, "published"), NULL, NULL, 0, 1)));
 
             /* content (user bio) */
             char *c = xs_dict_get(actor, "summary");
@@ -2294,7 +2296,7 @@ xs_str *html_notifications(snac *user)
             xs_html_add(entry,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post"),
-                    html_actor_icon(user, actor, NULL, NULL, NULL, 0)));
+                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0)));
         }
         else {
             xs *md5 = xs_md5_hex(id, strlen(id));
