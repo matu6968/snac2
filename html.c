@@ -1643,28 +1643,9 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
     }
 
     /** attachments **/
-    v = xs_dict_get(msg, "attachment");
+    xs *attach = get_attachments(msg);
 
-    if (!xs_is_null(v)) { /** attachments **/
-        xs *attach = NULL;
-
-        /* ensure it's a list */
-        if (xs_type(v) == XSTYPE_DICT) {
-            attach = xs_list_new();
-            attach = xs_list_append(attach, v);
-        }
-        else
-        if (xs_type(v) == XSTYPE_LIST)
-            attach = xs_dup(v);
-        else
-            attach = xs_list_new();
-
-        /* does the message have an image? */
-        if (xs_type(v = xs_dict_get(msg, "image")) == XSTYPE_DICT) {
-            /* add it to the attachment list */
-            attach = xs_list_append(attach, v);
-        }
-
+    {
         /* make custom css for attachments easier */
         xs_html *content_attachments = xs_html_tag("div",
             xs_html_attr("class", "snac-content-attachments"));
@@ -1675,151 +1656,68 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
         xs_list *p = attach;
 
         while (xs_list_iter(&p, &v)) {
-            char *t = xs_dict_get(v, "mediaType");
-
-            if (xs_is_null(t))
-                t = xs_dict_get(v, "type");
-
-            if (xs_is_null(t))
-                continue;
-
-            char *url = xs_dict_get(v, "url");
-            if (xs_is_null(url))
-                url = xs_dict_get(v, "href");
-            if (xs_is_null(url))
-                continue;
-
-            /* infer MIME type from non-specific attachments */
-            if (xs_list_len(attach) < 2 && xs_match(t, "Link|Document")) {
-                char *mt = (char *)xs_mime_by_ext(url);
-
-                if (xs_match(mt, "image/*|audio/*|video/*")) /* */
-                    t = mt;
-            }
-
+            char *type = xs_dict_get(v, "type");
+            char *href = xs_dict_get(v, "href");
             char *name = xs_dict_get(v, "name");
-            if (xs_is_null(name))
-                name = xs_dict_get(msg, "name");
-            if (xs_is_null(name))
-                name = L("No description");
 
-            if (xs_startswith(t, "image/") || strcmp(t, "Image") == 0) {
+            if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0) {
                 xs_html_add(content_attachments,
                     xs_html_tag("a",
-                        xs_html_attr("href", url),
+                        xs_html_attr("href", href),
                         xs_html_attr("target", "_blank"),
                         xs_html_sctag("img",
                             xs_html_attr("loading", "lazy"),
-                            xs_html_attr("src", url),
+                            xs_html_attr("src", href),
                             xs_html_attr("alt", name),
                             xs_html_attr("title", name))));
             }
             else
-            if (xs_startswith(t, "video/")) {
+            if (xs_startswith(type, "video/")) {
                 xs_html_add(content_attachments,
                     xs_html_tag("video",
                         xs_html_attr("preload", "none"),
                         xs_html_attr("style", "width: 100%"),
                         xs_html_attr("class", "snac-embedded-video"),
                         xs_html_attr("controls", NULL),
-                        xs_html_attr("src", url),
+                        xs_html_attr("src", href),
                         xs_html_text(L("Video")),
                         xs_html_text(": "),
                         xs_html_tag("a",
-                            xs_html_attr("href", url),
+                            xs_html_attr("href", href),
                             xs_html_text(name))));
             }
             else
-            if (xs_startswith(t, "audio/")) {
+            if (xs_startswith(type, "audio/")) {
                 xs_html_add(content_attachments,
                     xs_html_tag("audio",
                         xs_html_attr("preload", "none"),
                         xs_html_attr("style", "width: 100%"),
                         xs_html_attr("class", "snac-embedded-audio"),
                         xs_html_attr("controls", NULL),
-                        xs_html_attr("src", url),
+                        xs_html_attr("src", href),
                         xs_html_text(L("Audio")),
                         xs_html_text(": "),
                         xs_html_tag("a",
-                            xs_html_attr("href", url),
+                            xs_html_attr("href", href),
                             xs_html_text(name))));
             }
             else
-            if (strcmp(t, "Link") == 0) {
+            if (strcmp(type, "Link") == 0) {
                 xs_html_add(content_attachments,
                     xs_html_tag("p",
                         xs_html_tag("a",
-                            xs_html_attr("href", url),
-                            xs_html_text(url))));
+                            xs_html_attr("href", href),
+                            xs_html_text(href))));
             }
             else {
                 xs_html_add(content_attachments,
                     xs_html_tag("p",
                         xs_html_tag("a",
-                            xs_html_attr("href", url),
+                            xs_html_attr("href", href),
                             xs_html_text(L("Attachment")),
                             xs_html_text(": "),
-                            xs_html_text(url))));
+                            xs_html_text(href))));
             }
-        }
-    }
-
-    /** urls (attachments from Peertube) **/
-    v = xs_dict_get(msg, "url");
-
-    if (xs_type(v) == XSTYPE_LIST) {
-        xs_list *p = v;
-        char *url = NULL;
-
-        while (url == NULL && xs_list_iter(&p, &v)) {
-            if (xs_type(v) == XSTYPE_DICT) {
-                char *type  = xs_dict_get(v, "type");
-
-                if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Link") == 0) {
-                    char *mtype  = xs_dict_get(v, "mediaType");
-                    xs_list *tag = xs_dict_get(v, "tag");
-
-                    if (xs_type(mtype) == XSTYPE_STRING &&
-                        strcmp(mtype, "application/x-mpegURL") == 0 &&
-                        xs_type(tag) == XSTYPE_LIST) {
-                        /* now iterate the tag list, looking for a video URL */
-                        xs_dict *d;
-
-                        while (url == NULL && xs_list_iter(&tag, &d)) {
-                            if (xs_type(d) == XSTYPE_DICT) {
-                                if (xs_type(mtype = xs_dict_get(d, "mediaType")) == XSTYPE_STRING &&
-                                    xs_startswith(mtype, "video/")) {
-
-                                    /* this is probably it */
-                                    if (xs_type(url = xs_dict_get(d, "href")) != XSTYPE_STRING)
-                                        url = NULL;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (url != NULL) {
-            xs_html *content_attachments = xs_html_tag("div",
-                xs_html_attr("class", "snac-content-attachments"));
-
-            xs_html_add(snac_content,
-                content_attachments);
-
-            xs_html_add(content_attachments,
-                xs_html_tag("video",
-                    xs_html_attr("preload", "none"),
-                    xs_html_attr("style", "width: 100%"),
-                    xs_html_attr("class", "snac-embedded-video"),
-                    xs_html_attr("controls", NULL),
-                    xs_html_attr("src", url),
-                    xs_html_text(L("Video")),
-                    xs_html_text(": "),
-                    xs_html_tag("a",
-                        xs_html_attr("href", url),
-                        xs_html_text("---"))));
         }
     }
 

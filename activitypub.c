@@ -191,7 +191,7 @@ xs_list *get_attachments(const xs_dict *msg)
     xs_list *p;
 
     /* try first the attachments list */
-    if (!xs_is_null(p = xs_dict_get(msg, "attachments"))) {
+    if (!xs_is_null(p = xs_dict_get(msg, "attachment"))) {
         xs *attach = NULL;
         xs_val *v;
 
@@ -262,7 +262,7 @@ xs_list *get_attachments(const xs_dict *msg)
             if (xs_type(v) == XSTYPE_DICT) {
                 char *mtype = xs_dict_get(v, "type");
 
-                if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Link") == 0) {
+                if (xs_type(mtype) == XSTYPE_STRING && strcmp(mtype, "Link") == 0) {
                     mtype = xs_dict_get(v, "mediaType");
                     xs_list *tag = xs_dict_get(v, "tag");
 
