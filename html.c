@@ -108,6 +108,8 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
 
     xs *avatar = NULL;
     char *v;
+    int fwing = 0;
+    int fwer = 0;
 
     xs *name = actor_name(actor);
 
@@ -124,9 +126,12 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
     xs *href = NULL;
 
     if (user) {
+        fwer = follower_check(user, actor_id);
+        fwing = following_check(user, actor_id);
+
         /* if this actor is a follower or being followed, create an
            anchored link to the people page instead of the actor url */
-        if (follower_check(user, actor_id) || following_check(user, actor_id)) {
+        if (fwer || fwing) {
             xs *md5 = xs_md5_hex(actor_id, strlen(actor_id));
             href = xs_fmt("%s/people#%s", user->actor, md5);
         }
@@ -146,6 +151,21 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             xs_html_attr("class",   "p-author h-card snac-author"),
             xs_html_raw(name))); /* name is already html-escaped */
 
+    if (strcmp(xs_dict_get(actor, "type"), "Service") == 0) {
+        xs_html_add(actor_icon,
+            xs_html_text(" "),
+            xs_html_tag("span",
+                xs_html_attr("title", "bot"),
+                xs_html_raw("&#129302;")));
+    }
+
+    if (fwing && fwer) {
+        xs_html_add(actor_icon,
+            xs_html_text(" "),
+            xs_html_tag("span",
+                xs_html_attr("title", "mutual relation"),
+                xs_html_raw("&#129309;")));
+    }
 
     if (!xs_is_null(url)) {
         xs *md5 = xs_md5_hex(url, strlen(url));
@@ -164,14 +184,6 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             xs_html_tag("span",
                 xs_html_attr("title", "private"),
                 xs_html_raw("&#128274;")));
-    }
-
-    if (strcmp(xs_dict_get(actor, "type"), "Service") == 0) {
-        xs_html_add(actor_icon,
-            xs_html_text(" "),
-            xs_html_tag("span",
-                xs_html_attr("title", "bot"),
-                xs_html_raw("&#129302;")));
     }
 
     if (xs_is_null(date)) {
