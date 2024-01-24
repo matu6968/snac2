@@ -100,6 +100,8 @@ This will:
 
 [A light, lean theme (by Ворон)](https://codeberg.org/voron/snac-style).
 
+[A terminal-like theme (by Tetra)](https://codeberg.org/ERROR404NULLNOTFOUND/snac-terminal-theme).
+
 ## License
 
 See the LICENSE file for details.
