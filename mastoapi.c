@@ -768,72 +768,38 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     st = xs_dict_append(st, "spoiler_text", tmp);
 
     /* create the list of attachments */
-    xs *matt = xs_list_new();
-    xs_list *att = xs_dict_get(msg, "attachment");
-    xs_str *aobj;
-    xs *attr_list = NULL;
+    xs *attach = get_attachments(msg);
 
-    if (xs_type(att) == XSTYPE_DICT) {
-        attr_list = xs_list_new();
-        attr_list = xs_list_append(attr_list, att);
-    }
-    else
-    if (xs_type(att) == XSTYPE_LIST)
-        attr_list = xs_dup(att);
-    else
-        attr_list = xs_list_new();
+    {
+        xs_list *p = attach;
+        xs_dict *v;
 
-    /* if it has an image, add it as an attachment */
-    xs_dict *image = xs_dict_get(msg, "image");
-    if (!xs_is_null(image))
-        attr_list = xs_list_append(attr_list, image);
+        xs *matt = xs_list_new();
 
-    att = attr_list;
-    while (xs_list_iter(&att, &aobj)) {
-        const char *mtype = xs_dict_get(aobj, "mediaType");
-        if (xs_is_null(mtype))
-            mtype = xs_dict_get(aobj, "type");
+        while (xs_list_iter(&p, &v)) {
+            char *type = xs_dict_get(v, "type");
+            char *href = xs_dict_get(v, "href");
+            char *name = xs_dict_get(v, "name");
 
-        const char *url = xs_dict_get(aobj, "url");
-        if (xs_is_null(url))
-            url = xs_dict_get(aobj, "href");
-        if (xs_is_null(url))
-            continue;
-
-        /* if it's a plain Link, check if it can be "rewritten" */
-        if (xs_list_len(attr_list) < 2 && strcmp(mtype, "Link") == 0) {
-            const char *mt = xs_mime_by_ext(url);
-
-            if (xs_startswith(mt, "image/") ||
-                xs_startswith(mt, "audio/") ||
-                xs_startswith(mt, "video/"))
-                mtype = mt;
-        }
-
-        if (!xs_is_null(mtype)) {
-            if (xs_startswith(mtype, "image/") || xs_startswith(mtype, "video/") ||
-                strcmp(mtype, "Image") == 0 || strcmp(mtype, "Document") == 0) {
+            if (xs_match(type, "image/*|video/*|Image|Video")) { /* */
                 xs *matteid = xs_fmt("%s_%d", id, xs_list_len(matt));
-                xs *matte   = xs_dict_new();
 
-                matte = xs_dict_append(matte, "id",          matteid);
-                matte = xs_dict_append(matte, "type",        *mtype == 'v' ? "video" : "image");
-                matte = xs_dict_append(matte, "url",         url);
-                matte = xs_dict_append(matte, "preview_url", url);
-                matte = xs_dict_append(matte, "remote_url",  url);
+                xs *d = xs_dict_new();
 
-                const char *name = xs_dict_get(aobj, "name");
-                if (xs_is_null(name))
-                    name = "";
+                d = xs_dict_append(d, "id",          matteid);
+                d = xs_dict_append(d, "url",         href);
+                d = xs_dict_append(d, "preview_url", href);
+                d = xs_dict_append(d, "remote_url",  href);
+                d = xs_dict_append(d, "description", name);
 
-                matte = xs_dict_append(matte, "description", name);
+                d = xs_dict_append(d, "type", (*type == 'v' || *type == 'V') ? "video" : "image");
 
-                matt = xs_list_append(matt, matte);
+                matt = xs_list_append(matt, d);
             }
         }
-    }
 
-    st = xs_dict_append(st, "media_attachments", matt);
+        st = xs_dict_append(st, "media_attachments", matt);
+    }
 
     {
         xs *ml  = xs_list_new();
