@@ -1991,13 +1991,15 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
 
         /* if it's public, send to the collected inboxes */
         if (is_msg_public(msg)) {
-            xs *shibx = inbox_list();
-            xs_str *inbox;
+            if (xs_type(xs_dict_get(srv_config, "disable_inbox_collection")) != XSTYPE_TRUE) {
+                xs *shibx = inbox_list();
+                xs_str *inbox;
 
-            p = shibx;
-            while (xs_list_iter(&p, &inbox)) {
-                if (xs_set_add(&inboxes, inbox) == 1)
-                    enqueue_output(snac, msg, inbox, 0, 0);
+                p = shibx;
+                while (xs_list_iter(&p, &inbox)) {
+                    if (xs_set_add(&inboxes, inbox) == 1)
+                        enqueue_output(snac, msg, inbox, 0, 0);
+                }
             }
         }
 
