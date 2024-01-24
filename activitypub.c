@@ -184,6 +184,127 @@ char *get_atto(const xs_dict *msg)
 }
 
 
+xs_list *get_attachments(const xs_dict *msg)
+/* unify the garbage fire that are the attachments */
+{
+    xs_list *l = xs_list_new();
+    xs_list *p;
+
+    /* try first the attachments list */
+    if (!xs_is_null(p = xs_dict_get(msg, "attachments"))) {
+        xs *attach = NULL;
+        xs_val *v;
+
+        /* ensure it's a list */
+        if (xs_type(p) == XSTYPE_DICT) {
+            attach = xs_list_new();
+            attach = xs_list_append(attach, v);
+        }
+        else
+            attach = xs_dup(p);
+
+        if (xs_type(attach) == XSTYPE_LIST) {
+            /* does the message have an image? */
+            if (xs_type(v = xs_dict_get(msg, "image")) == XSTYPE_DICT) {
+                /* add it to the attachment list */
+                attach = xs_list_append(attach, v);
+            }
+        }
+
+        /* now iterate the list */
+        p = attach;
+        while (xs_list_iter(&p, &v)) {
+            char *type = xs_dict_get(v, "mediaType");
+            if (xs_is_null(type))
+                type = xs_dict_get(v, "type");
+
+            if (xs_is_null(type))
+                continue;
+
+            char *href = xs_dict_get(v, "url");
+            if (xs_is_null(href))
+                href = xs_dict_get(v, "href");
+            if (xs_is_null(href))
+                continue;
+
+            /* infer MIME type from non-specific attachments */
+            if (xs_list_len(attach) < 2 && xs_match(type, "Link|Document")) {
+                char *mt = (char *)xs_mime_by_ext(href);
+
+                if (xs_match(mt, "image/*|audio/*|video/*")) /* */
+                    type = mt;
+            }
+
+            char *name = xs_dict_get(v, "name");
+            if (xs_is_null(name))
+                name = xs_dict_get(msg, "name");
+            if (xs_is_null(name))
+                name = L("No description");
+
+            xs *d = xs_dict_new();
+            d = xs_dict_append(d, "type", type);
+            d = xs_dict_append(d, "href", href);
+            d = xs_dict_append(d, "name", name);
+
+            l = xs_list_append(l, d);
+        }
+    }
+
+    /** urls (attachments from Peertube) **/
+    p = xs_dict_get(msg, "url");
+
+    if (xs_type(p) == XSTYPE_LIST) {
+        char *href = NULL;
+        char *type = NULL;
+        xs_val *v;
+
+        while (href == NULL && xs_list_iter(&p, &v)) {
+            if (xs_type(v) == XSTYPE_DICT) {
+                char *mtype = xs_dict_get(v, "type");
+
+                if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Link") == 0) {
+                    mtype = xs_dict_get(v, "mediaType");
+                    xs_list *tag = xs_dict_get(v, "tag");
+
+                    if (xs_type(mtype) == XSTYPE_STRING &&
+                        strcmp(mtype, "application/x-mpegURL") == 0 &&
+                        xs_type(tag) == XSTYPE_LIST) {
+                        /* now iterate the tag list, looking for a video URL */
+                        xs_dict *d;
+
+                        while (href == NULL && xs_list_iter(&tag, &d)) {
+                            if (xs_type(d) == XSTYPE_DICT) {
+                                if (xs_type(mtype = xs_dict_get(d, "mediaType")) == XSTYPE_STRING &&
+                                    xs_startswith(mtype, "video/")) {
+                                    char *h = xs_dict_get(d, "href");
+
+                                    /* this is probably it */
+                                    if (xs_type(h) == XSTYPE_STRING) {
+                                        href = h;
+                                        type = mtype;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (href && type) {
+            xs *d = xs_dict_new();
+            d = xs_dict_append(d, "href", href);
+            d = xs_dict_append(d, "type", type);
+            d = xs_dict_append(d, "name", "---");
+
+            l = xs_list_append(l, d);
+        }
+    }
+
+    return l;
+}
+
+
 int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
 /* ensures that an entry and its ancestors are in the timeline */
 {
