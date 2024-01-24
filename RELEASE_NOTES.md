@@ -4,7 +4,9 @@
 
 Added support for Peertube videos.
 
-Mastodon API: Fixed an error related to the edit date of a post, added support for editing posts.
+Mastodon API: Added support for editing posts, fixed an error related to the edit date of a post.
+
+Added a handshake emoji next to a user name if it's a mutual relation (follower and followed), because friendship is bliss.
 
 ## 2.45
 
