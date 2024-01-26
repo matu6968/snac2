@@ -235,6 +235,14 @@ int server_get_handler(xs_dict *req, const char *q_path,
         *body  = xs_str_new("User-agent: *\n"
                             "Disallow: /\n");
     }
+    else
+    if (strcmp(q_path, "/.well-known/host-meta") == 0) {
+        status = 200;
+        *ctype = "application/xrd+xml";
+        *body  = xs_str_new("<XRD>"
+                "<Link rel=\"lrdd\" type=\"application/xrd+xml\" template=\"%s/.well-known/webfinger?resource={uri}\"/>"
+                "</XRD>");
+    }
 
     if (status != 0)
         srv_debug(1, xs_fmt("server_get_handler serving '%s' %d", q_path, status));
