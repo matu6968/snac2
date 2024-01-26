@@ -240,8 +240,10 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
     char *i_ctype = xs_dict_get(req, "content-type");
     xs *args      = NULL;
 
-    if (i_ctype && xs_startswith(i_ctype, "application/json"))
-        args = xs_json_loads(payload);
+    if (i_ctype && xs_startswith(i_ctype, "application/json")) {
+        if (!xs_is_null(payload))
+            args = xs_json_loads(payload);
+    }
     else
     if (i_ctype && xs_startswith(i_ctype, "application/x-www-form-urlencoded") && payload) {
         xs *upl = xs_url_dec(payload);
@@ -249,6 +251,9 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
     }
     else
         args = xs_dup(xs_dict_get(req, "p_vars"));
+
+    if (args == NULL)
+        return 400;
 
     xs *cmd = xs_replace_n(q_path, "/oauth", "", 1);
 
@@ -1981,8 +1986,10 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     xs *args      = NULL;
     char *i_ctype = xs_dict_get(req, "content-type");
 
-    if (i_ctype && xs_startswith(i_ctype, "application/json"))
-        args = xs_json_loads(payload);
+    if (i_ctype && xs_startswith(i_ctype, "application/json")) {
+        if (!xs_is_null(payload))
+            args = xs_json_loads(payload);
+    }
     else
         args = xs_dup(xs_dict_get(req, "p_vars"));
 
@@ -2504,8 +2511,10 @@ int mastoapi_put_handler(const xs_dict *req, const char *q_path,
     xs *args      = NULL;
     char *i_ctype = xs_dict_get(req, "content-type");
 
-    if (i_ctype && xs_startswith(i_ctype, "application/json"))
-        args = xs_json_loads(payload);
+    if (i_ctype && xs_startswith(i_ctype, "application/json")) {
+        if (!xs_is_null(payload))
+            args = xs_json_loads(payload);
+    }
     else
         args = xs_dup(xs_dict_get(req, "p_vars"));
 
