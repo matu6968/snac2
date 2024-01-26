@@ -8,6 +8,8 @@ Mastodon API: Added support for editing posts, fixed an error related to the edi
 
 Added a handshake emoji next to a user name if it's a mutual relation (follower and followed), because friendship is bliss.
 
+Tweaked some retry timeout values for better behaviour in larger instances (thanks to me@mysmallinstance.homelinux.org for their help).
+
 ## 2.45
 
 Fixed a collision in webfinger caching. This may affect federation with some software, so I recommend an upgrade.
