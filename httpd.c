@@ -223,6 +223,14 @@ int server_get_handler(xs_dict *req, const char *q_path,
             srv_baseurl);
     }
     else
+    if (strcmp(q_path, "/.well-known/host-meta") == 0) {
+        status = 200;
+        *ctype = "application/xrd+xml";
+        *body  = xs_str_new("<XRD>"
+                "<Link rel=\"lrdd\" type=\"application/xrd+xml\" template=\"%s/.well-known/webfinger?resource={uri}\"/>"
+                "</XRD>");
+    }
+    else
     if (strcmp(q_path, "/nodeinfo_2_0") == 0) {
         status = 200;
         *ctype = "application/json; charset=utf-8";
