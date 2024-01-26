@@ -2220,7 +2220,7 @@ void process_queue_item(xs_dict *q_item)
 
         /* deliver (if previous error status was a timeout, try now longer) */
         status = send_to_inbox_raw(keyid, seckey, inbox, msg,
-                    &payload, &p_size, p_status == 599 ? 20 : 3);
+                    &payload, &p_size, p_status == 599 ? 8 : 6);
 
         if (payload) {
             if (p_size > 64) {
