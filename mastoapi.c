@@ -1414,6 +1414,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 const char *type = xs_dict_get(msg, "type");
                 if (!xs_match(type, "Note|Question|Page|Article"))
                     continue;
+
                 const char *from = NULL;
                 if (strcmp(type, "Page") == 0)
                     from = xs_dict_get(msg, "audience");
