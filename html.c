@@ -427,7 +427,9 @@ static xs_html *html_base_head(void)
             xs_html_attr("name", "generator"),
             xs_html_attr("content", USER_AGENT)));
 
-    /* add server CSS */
+    /* add server CSS and favicon */
+    xs *f;
+    f = xs_fmt("%s/favicon.ico", srv_baseurl);
     xs_list *p = xs_dict_get(srv_config, "cssurls");
     char *v;
     while (xs_list_iter(&p, &v)) {
@@ -437,6 +439,12 @@ static xs_html *html_base_head(void)
                 xs_html_attr("type", "text/css"),
                 xs_html_attr("href", v)));
     }
+
+    xs_html_add(head,
+        xs_html_sctag("link",
+            xs_html_attr("rel",  "icon"),
+            xs_html_attr("type", "image/x-icon"),
+            xs_html_attr("href", f)));
 
     return head;
 }
