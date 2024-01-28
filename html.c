@@ -438,12 +438,13 @@ static xs_html *html_base_head(void)
                 xs_html_attr("rel",  "stylesheet"),
                 xs_html_attr("type", "text/css"),
                 xs_html_attr("href", v)));
-        xs_html_add(head,
-            xs_html_sctag("link",
-                xs_html_attr("rel",  "icon"),
-                xs_html_attr("type", "image/x-icon"),
-                xs_html_attr("href", f)));
     }
+
+    xs_html_add(head,
+        xs_html_sctag("link",
+            xs_html_attr("rel",  "icon"),
+            xs_html_attr("type", "image/x-icon"),
+            xs_html_attr("href", f)));
 
     return head;
 }
