@@ -2008,10 +2008,10 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     else if (i_ctype && xs_startswith(i_ctype, "application/x-www-form-urlencoded"))
     {
 	// Some apps send form data instead of json so we should cater for those
-	if (!xs_is_null(payload)) {
+        if (!xs_is_null(payload)) {
             xs *upl = xs_url_dec(payload);
             args    = xs_url_vars(upl);
-	}
+        }
     }
     else
         args = xs_dup(xs_dict_get(req, "p_vars"));
