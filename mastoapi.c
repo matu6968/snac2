@@ -359,6 +359,12 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
             }
         }
 
+	/* no code? 
+	   I'm not sure of the impacts of this right now, but Subway Tooter does not
+	   provide a code so one must be generated */
+	if (xs_is_null(code)){
+            code = random_str();
+	}
         if (gtype && code && cid && csec && ruri) {
             xs *app = app_get(cid);
 
@@ -1408,7 +1414,6 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 const char *type = xs_dict_get(msg, "type");
                 if (!xs_match(type, "Note|Question|Page|Article"))
                     continue;
-
                 const char *from = NULL;
                 if (strcmp(type, "Page") == 0)
                     from = xs_dict_get(msg, "audience");
@@ -1617,6 +1622,15 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     else
     if (strcmp(cmd, "/v1/filters") == 0) { /** **/
         /* snac will never have filters */
+        *body  = xs_dup("[]");
+        *ctype = "application/json";
+        status = 200;
+    }
+    else
+    if (strcmp(cmd, "/v2/filters") == 0) { /** **/
+        /* snac will never have filters 
+	 * but still, without a v2 endpoint a short delay is introduced
+	 * in some apps */
         *body  = xs_dup("[]");
         *ctype = "application/json";
         status = 200;
@@ -1989,6 +2003,14 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     if (i_ctype && xs_startswith(i_ctype, "application/json")) {
         if (!xs_is_null(payload))
             args = xs_json_loads(payload);
+    }
+    else if (i_ctype && xs_startswith(i_ctype, "application/x-www-form-urlencoded"))
+    {
+	// Some apps send form data instead of json so we should cater for those
+	if (!xs_is_null(payload)) {
+            xs *upl = xs_url_dec(payload);
+            args    = xs_url_vars(upl);
+	}
     }
     else
         args = xs_dup(xs_dict_get(req, "p_vars"));
