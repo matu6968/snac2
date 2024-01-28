@@ -363,7 +363,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
 	   I'm not sure of the impacts of this right now, but Subway Tooter does not
 	   provide a code so one must be generated */
 	if (xs_is_null(code)){
-            code = random_str();
+		code = random_str();
 	}
         if (gtype && code && cid && csec && ruri) {
             xs *app = app_get(cid);
