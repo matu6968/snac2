@@ -22,6 +22,10 @@ Integrate "Added handling for International Domain Names" PR https://codeberg.or
 
 Add more CSS classes according to https://comam.es/snac/grunfink/p/1705598619.090050
 
+Add support for /share?text=tt&website=url (whatever it is).
+
+Add support for /authorize_interaction (whatever it is).
+
 Add a list of hashtags to drop.
 
 Add domain/subdomain flexibility according to https://codeberg.org/grunfink/snac2/issues/3
