@@ -396,6 +396,11 @@ location /.well-known/nodeinfo {
     proxy_pass http://localhost:8001;
     proxy_set_header Host $http_host;
 }
+# optional (needed by some Mastodon API clients)
+location /.well-known/host-meta {
+    proxy_pass http://localhost:8001;
+    proxy_set_header Host $http_host;
+}
 .Ed
 .Pp
 Restart the nginx daemon and connect to
@@ -421,11 +426,6 @@ ProxyPreserveHost On
     ProxyPass http://127.0.0.1:8001/.well-known/webfinger
 </Location>
 
-# NodeInfo (optional)
-<Location /.well-known/nodeinfo>
-    ProxyPass http://127.0.0.1:8001/.well-known/nodeinfo
-</Location>
-
 # Mastodon API (entry points)
 <Location /api/v1/>
     ProxyPass http://127.0.0.1:8001/api/v1/
@@ -438,6 +438,16 @@ ProxyPreserveHost On
 # Mastodon API (OAuth support)
 <Location /oauth>
     ProxyPass http://127.0.0.1:8001/oauth
+</Location>
+
+# NodeInfo (optional)
+<Location /.well-known/nodeinfo>
+    ProxyPass http://127.0.0.1:8001/.well-known/nodeinfo
+</Location>
+
+# host-meta (optional, needed for some Mastodon API clients)
+<Location /.well-known/host-meta>
+    ProxyPass http://127.0.0.1:8001/.well-known/host-meta
 </Location>
 .Ed
 .Pp
@@ -488,6 +498,10 @@ location "/api/v2/*" {
 }
 
 location "/.well-known/nodeinfo" {
+    fastcgi socket tcp "127.0.0.1" 8001
+}
+
+location "/.well-known/host-meta" {
     fastcgi socket tcp "127.0.0.1" 8001
 }
 .Ed
