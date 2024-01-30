@@ -226,9 +226,10 @@ int server_get_handler(xs_dict *req, const char *q_path,
     if (strcmp(q_path, "/.well-known/host-meta") == 0) {
         status = 200;
         *ctype = "application/xrd+xml";
-        *body  = xs_str_new("<XRD>"
-                "<Link rel=\"lrdd\" type=\"application/xrd+xml\" template=\"%s/.well-known/webfinger?resource={uri}\"/>"
-                "</XRD>");
+        *body  = xs_fmt("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                "<XRD>"
+                "<Link rel=\"lrdd\" type=\"application/xrd+xml\" template=\"https://%s/.well-known/webfinger?resource={uri}\"/>"
+                "</XRD>", xs_dict_get(srv_config, "host"));
     }
     else
     if (strcmp(q_path, "/nodeinfo_2_0") == 0) {
