@@ -2163,6 +2163,7 @@ xs_str *html_notifications(snac *user)
         char *type  = xs_dict_get(noti, "type");
         char *utype = xs_dict_get(noti, "utype");
         char *id    = xs_dict_get(noti, "objid");
+        char *date  = xs_dict_get(noti, "date");
 
         if (xs_is_null(id) || !valid_status(object_get(id, &obj)))
             continue;
@@ -2188,6 +2189,8 @@ xs_str *html_notifications(snac *user)
         if (strcmp(type, "Undo") == 0 && strcmp(utype, "Follow") == 0)
             label = L("Unfollow");
 
+        xs *s_date = xs_crop_i(xs_dup(date), 0, 10);
+
         xs_html *entry = xs_html_tag("div",
             xs_html_attr("class", "snac-post-with-desc"),
             xs_html_tag("p",
@@ -2196,7 +2199,12 @@ xs_str *html_notifications(snac *user)
                     xs_html_text(" by "),
                     xs_html_tag("a",
                         xs_html_attr("href", actor_id),
-                        xs_html_raw(a_name))))); /* a_name is already sanitized */
+                        xs_html_raw(a_name))), /* a_name is already sanitized */
+                xs_html_text(" "),
+                xs_html_tag("time",
+                    xs_html_attr("class", "dt-published snac-pubdate"),
+                    xs_html_attr("title", date),
+                    xs_html_text(s_date))));
 
         if (strcmp(type, "Follow") == 0 || strcmp(utype, "Follow") == 0) {
             xs_html_add(entry,
