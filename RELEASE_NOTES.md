@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.47
+
+The *New Post...* option now includes an optional field to set the URL of an ActivityPub post to be a reply to.
+
 ## 2.46
 
 Added support for Peertube videos.
