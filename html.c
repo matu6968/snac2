@@ -344,6 +344,14 @@ xs_html *html_note(snac *user, char *summary,
                 xs_html_attr("type",  "hidden"),
                 xs_html_attr("name",  "in_reply_to"),
                 xs_html_attr("value", in_reply_to)));
+    else
+        xs_html_add(form,
+            xs_html_tag("p", NULL),
+            xs_html_text(L("Reply to (URL): ")),
+            xs_html_sctag("input",
+                xs_html_attr("type",     "text"),
+                xs_html_attr("name",     "in_reply_to"),
+                xs_html_attr("placeholder", "Optional URL to reply to")));
 
     if (edit_id)
         xs_html_add(form,
