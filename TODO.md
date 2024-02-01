@@ -20,6 +20,8 @@ Integrate "Ability to federate with hidden networks" see https://codeberg.org/gr
 
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
 
+Change HTML metadata information to the post info instead of user info, see https://codeberg.org/grunfink/snac2/issues/116
+
 Add more CSS classes according to https://comam.es/snac/grunfink/p/1705598619.090050
 
 Add support for /share?text=tt&website=url (whatever it is).
