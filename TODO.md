@@ -6,7 +6,7 @@ Unfollowing lemmy groups gets rejected with an http status of 400.
 
 Unfollowing guppe groups seems to work (http status of 200), but messages continue to arrive as if it didn't.
 
-Fix `timeline_request_replies()` issues (more info there).
+Fix duplicate mentions, see https://codeberg.org/grunfink/snac2/issues/115
 
 Post edits should preserve the image and the image description somewhat.
 
