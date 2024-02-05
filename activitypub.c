@@ -823,6 +823,10 @@ xs_str *process_tags(snac *snac, const char *content, xs_list **tag)
 void notify(snac *snac, const char *type, const char *utype, const char *actor, const xs_dict *msg)
 /* notifies the user of relevant events */
 {
+    /* skip our own notifications */
+    if (strcmp(snac->actor, actor) == 0)
+        return;
+
     const char *id = xs_dict_get(msg, "id");
 
     if (strcmp(type, "Create") == 0) {
