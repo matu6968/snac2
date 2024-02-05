@@ -2379,7 +2379,13 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             status = 401;
         }
         else {
-            if (cache && history_mtime(&snac, "timeline.html_") > timeline_mtime(&snac)) {
+            double t = history_mtime(&snac, "timeline.html_");
+
+            /* if enabled by admin, return a cached page if its timestamp is:
+               a) newer than the timeline timestamp
+               b) newer than the start time of the server
+            */
+            if (cache && t > timeline_mtime(&snac) && t > p_state->srv_start_time) {
                 snac_debug(&snac, 1, xs_fmt("serving cached timeline"));
 
                 status = history_get(&snac, "timeline.html_", body, b_size,
