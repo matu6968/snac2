@@ -4,6 +4,10 @@
 
 The *New Post...* option now includes an optional field to set the URL of an ActivityPub post to be a reply to.
 
+Fixed spurious notifications from the same user.
+
+Fixed repeated mentions in the reply text field.
+
 ## 2.46
 
 Added support for Peertube videos.
