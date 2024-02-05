@@ -2,6 +2,8 @@
 
 ## 2.47
 
+Added pagination to the notification page.
+
 The *New Post...* option now includes an optional field to set the URL of an ActivityPub post to be a reply to.
 
 Fixed spurious notifications from the same user.
