@@ -188,7 +188,7 @@ void notify_add(snac *snac, const char *type, const char *utype,
                 const char *actor, const char *objid);
 xs_dict *notify_get(snac *snac, const char *id);
 int notify_new_num(snac *snac);
-xs_list *notify_list(snac *snac);
+xs_list *notify_list(snac *snac, int skip, int show);
 void notify_clear(snac *snac);
 
 void inbox_add(const char *inbox);

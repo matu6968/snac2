@@ -2084,7 +2084,7 @@ xs_dict *notify_get(snac *snac, const char *id)
 }
 
 
-xs_list *notify_list(snac *snac)
+xs_list *notify_list(snac *snac, int skip, int show)
 /* returns a list of notification ids */
 {
     xs *idx = xs_fmt("%s/notify.idx", snac->basedir);
@@ -2115,7 +2115,7 @@ xs_list *notify_list(snac *snac)
         pthread_mutex_unlock(&data_mutex);
     }
 
-    return index_list_desc(idx, 0, 64);
+    return index_list_desc(idx, skip, show);
 }
 
 
@@ -2123,7 +2123,7 @@ int notify_new_num(snac *snac)
 /* counts the number of new notifications */
 {
     xs *t = notify_check_time(snac, 0);
-    xs *lst = notify_list(snac);
+    xs *lst = notify_list(snac, 0, XS_ALL);
     int cnt = 0;
 
     xs_list *p = lst;

@@ -2135,9 +2135,9 @@ xs_str *html_people(snac *user)
 }
 
 
-xs_str *html_notifications(snac *user)
+xs_str *html_notifications(snac *user, int skip, int show)
 {
-    xs *n_list = notify_list(user);
+    xs *n_list = notify_list(user, skip, show);
     xs *n_time = notify_check_time(user, 0);
 
     xs_html *body = html_user_body(user, 0);
@@ -2428,7 +2428,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             status = 401;
         }
         else {
-            *body   = html_notifications(&snac);
+            *body   = html_notifications(&snac, skip, show);
             *b_size = strlen(*body);
             status  = 200;
         }

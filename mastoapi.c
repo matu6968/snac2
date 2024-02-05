@@ -1542,7 +1542,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     else
     if (strcmp(cmd, "/v1/notifications") == 0) { /** **/
         if (logged_in) {
-            xs *l      = notify_list(&snac1);
+            xs *l      = notify_list(&snac1, 0, 64);
             xs *out    = xs_list_new();
             xs_list *p = l;
             xs_dict *v;
