@@ -1111,12 +1111,16 @@ xs_str *build_mentions(snac *snac, const xs_dict *msg)
 
                 if (xs_list_len(l2) >= 3) {
                     xs *s1 = xs_fmt("%s@%s ", name, xs_list_get(l2, 2));
-                    s = xs_str_cat(s, s1);
+
+                    if (xs_str_in(s, s1) == -1)
+                        s = xs_str_cat(s, s1);
                 }
             }
             else {
-                s = xs_str_cat(s, name);
-                s = xs_str_cat(s, " ");
+                if (xs_str_in(s, name) == -1) {
+                    s = xs_str_cat(s, name);
+                    s = xs_str_cat(s, " ");
+                }
             }
         }
     }
