@@ -2272,6 +2272,19 @@ xs_str *html_notifications(snac *user, int skip, int show)
                 xs_html_attr("class", "snac-header"),
                 xs_html_text(L("None"))));
 
+    /* add the navigation footer */
+    xs *next_p = notify_list(user, skip + show, 1);
+    if (xs_list_len(next_p)) {
+        xs *url = xs_fmt("%s/notifications?skip=%d&show=%d",
+            user->actor, skip + show, show);
+
+        xs_html_add(body,
+            xs_html_tag("p",
+                xs_html_tag("a",
+                    xs_html_attr("href", url),
+                    xs_html_text(L("More...")))));
+    }
+
     xs_html_add(body,
         html_footer());
 
