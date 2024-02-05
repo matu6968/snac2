@@ -2045,13 +2045,33 @@ void notify_add(snac *snac, const char *type, const char *utype,
         xs_json_dump(noti, 4, f);
         fclose(f);
     }
+
+    /* add it to the index if it already exists */
+    xs *idx = xs_fmt("%s/notify.idx", snac->basedir);
+
+    if (mtime(idx) != 0.0) {
+        pthread_mutex_lock(&data_mutex);
+
+        if ((f = fopen(idx, "a")) != NULL) {
+            fprintf(f, "%-32s\n", ntid);
+            fclose(f);
+        }
+
+        pthread_mutex_unlock(&data_mutex);
+    }
 }
 
 
 xs_dict *notify_get(snac *snac, const char *id)
 /* gets a notification */
 {
-    xs *fn = xs_fmt("%s/notify/%s.json", snac->basedir, id);
+    /* base file */
+    xs *fn = xs_fmt("%s/notify/%s", snac->basedir, id);
+
+    /* strip spaces and add extension */
+    fn = xs_strip_i(fn);
+    fn = xs_str_cat(fn, ".json");
+
     FILE *f;
     xs_dict *out = NULL;
 
@@ -2064,19 +2084,53 @@ xs_dict *notify_get(snac *snac, const char *id)
 }
 
 
+xs_list *notify_list(snac *snac)
+/* returns a list of notification ids */
+{
+    xs *idx = xs_fmt("%s/notify.idx", snac->basedir);
+
+    if (mtime(idx) == 0.0) {
+        /* create the index from scratch */
+        FILE *f;
+
+        pthread_mutex_lock(&data_mutex);
+
+        if ((f = fopen(idx, "w")) != NULL) {
+            xs *spec = xs_fmt("%s/notify/" "*.json", snac->basedir);
+            xs *lst  = xs_glob(spec, 1, 0);
+            xs_list *p = lst;
+            char *v;
+
+            while (xs_list_iter(&p, &v)) {
+                char *p = strrchr(v, '.');
+                if (p) {
+                    *p = '\0';
+                    fprintf(f, "%-32s\n", v);
+                }
+            }
+
+            fclose(f);
+        }
+
+        pthread_mutex_unlock(&data_mutex);
+    }
+
+    return index_list_desc(idx, 0, 64);
+}
+
+
 int notify_new_num(snac *snac)
 /* counts the number of new notifications */
 {
     xs *t = notify_check_time(snac, 0);
-    xs *spec = xs_fmt("%s/notify/" "*.json", snac->basedir);
-    xs *lst = xs_glob(spec, 1, 1);
+    xs *lst = notify_list(snac);
     int cnt = 0;
 
     xs_list *p = lst;
     xs_str *v;
 
     while (xs_list_iter(&p, &v)) {
-        xs *id = xs_replace(v, ".json", "");
+        xs *id = xs_strip_i(xs_dup(v));
 
         /* old? count no more */
         if (strcmp(id, t) < 0)
@@ -2086,25 +2140,6 @@ int notify_new_num(snac *snac)
     }
 
     return cnt;
-}
-
-
-xs_list *notify_list(snac *snac)
-/* returns a list of notification ids, optionally only the new ones */
-{
-    xs *spec     = xs_fmt("%s/notify/" "*.json", snac->basedir);
-    xs *lst      = xs_glob(spec, 1, 1);
-    xs_list *out = xs_list_new();
-    xs_list *p   = lst;
-    xs_str *v;
-
-    while (xs_list_iter(&p, &v)) {
-        xs *id = xs_replace(v, ".json", "");
-
-        out = xs_list_append(out, id);
-    }
-
-    return out;
 }
 
 
@@ -2118,6 +2153,14 @@ void notify_clear(snac *snac)
 
     while (xs_list_iter(&p, &v))
         unlink(v);
+
+    xs *idx = xs_fmt("%s/notify.idx", snac->basedir);
+
+    if (mtime(idx) != 0.0) {
+        pthread_mutex_lock(&data_mutex);
+        truncate(idx, 0);
+        pthread_mutex_unlock(&data_mutex);
+    }
 }
 
 
