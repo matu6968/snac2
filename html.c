@@ -673,8 +673,7 @@ static xs_html *html_user_body(snac *user, int local)
                 xs_html_text(L("private"))));
     }
     else {
-        xs *n_list = notify_list(user, 1);
-        int n_len  = xs_list_len(n_list);
+        int n_len = notify_new_num(user);
         xs_html *notify_count = NULL;
 
         /* show the number of new notifications, if there are any */
@@ -2138,7 +2137,7 @@ xs_str *html_people(snac *user)
 
 xs_str *html_notifications(snac *user)
 {
-    xs *n_list = notify_list(user, 0);
+    xs *n_list = notify_list(user);
     xs *n_time = notify_check_time(user, 0);
 
     xs_html *body = html_user_body(user, 0);

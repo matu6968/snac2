@@ -2064,15 +2064,34 @@ xs_dict *notify_get(snac *snac, const char *id)
 }
 
 
-xs_list *notify_list(snac *snac, int new_only)
+int notify_new_num(snac *snac)
+/* counts the number of new notifications */
+{
+    xs *t = notify_check_time(snac, 0);
+    xs *spec = xs_fmt("%s/notify/" "*.json", snac->basedir);
+    xs *lst = xs_glob(spec, 1, 1);
+    int cnt = 0;
+
+    xs_list *p = lst;
+    xs_str *v;
+
+    while (xs_list_iter(&p, &v)) {
+        xs *id = xs_replace(v, ".json", "");
+
+        /* old? count no more */
+        if (strcmp(id, t) < 0)
+            break;
+
+        cnt++;
+    }
+
+    return cnt;
+}
+
+
+xs_list *notify_list(snac *snac)
 /* returns a list of notification ids, optionally only the new ones */
 {
-    xs *t = NULL;
-
-    /* if only new ones are requested, get the last time */
-    if (new_only)
-        t = notify_check_time(snac, 0);
-
     xs *spec     = xs_fmt("%s/notify/" "*.json", snac->basedir);
     xs *lst      = xs_glob(spec, 1, 1);
     xs_list *out = xs_list_new();
@@ -2081,10 +2100,6 @@ xs_list *notify_list(snac *snac, int new_only)
 
     while (xs_list_iter(&p, &v)) {
         xs *id = xs_replace(v, ".json", "");
-
-        /* old? */
-        if (t != NULL && strcmp(id, t) < 0)
-            continue;
 
         out = xs_list_append(out, id);
     }

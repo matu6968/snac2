@@ -187,7 +187,8 @@ xs_str *notify_check_time(snac *snac, int reset);
 void notify_add(snac *snac, const char *type, const char *utype,
                 const char *actor, const char *objid);
 xs_dict *notify_get(snac *snac, const char *id);
-xs_list *notify_list(snac *snac, int new_only);
+int notify_new_num(snac *snac);
+xs_list *notify_list(snac *snac);
 void notify_clear(snac *snac);
 
 void inbox_add(const char *inbox);
