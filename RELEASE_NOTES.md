@@ -10,6 +10,8 @@ Fixed spurious notifications from the same user.
 
 Fixed repeated mentions in the reply text field.
 
+One-post only pages include the post content instead of the user bio in their metadata (improving post previews from other software).
+
 ## 2.46
 
 Added support for Peertube videos.
