@@ -552,7 +552,7 @@ static xs_html *html_instance_body(char *tag)
 }
 
 
-xs_html *html_user_head(snac *user)
+xs_html *html_user_head(snac *user, char *desc)
 {
     xs_html *head = html_base_head();
 
@@ -595,13 +595,13 @@ xs_html *html_user_head(snac *user)
         avatar = xs_fmt("%s/susie.png", srv_baseurl);
     }
 
-    xs *s_bio = xs_dup(xs_dict_get(user->config, "bio"));
-    int n;
+    /* create a description field */
+    xs *s_desc = NULL;
 
-    /* shorten the bio */
-    for (n = 0; s_bio[n] && s_bio[n] != '&' && s_bio[n] != '.' &&
-                s_bio[n] != '\r' && s_bio[n] != '\n' && n < 128; n++);
-    s_bio[n] = '\0';
+    if (desc == NULL)
+        s_desc = xs_dup(xs_dict_get(user->config, "bio"));
+    else
+        s_desc = xs_dup(desc);
 
     /* og properties */
     xs_html_add(head,
@@ -613,7 +613,7 @@ xs_html *html_user_head(snac *user)
             xs_html_attr("content", title)),
         xs_html_sctag("meta",
             xs_html_attr("property", "og:description"),
-            xs_html_attr("content", s_bio)),
+            xs_html_attr("content", s_desc)),
         xs_html_sctag("meta",
             xs_html_attr("property", "og:image"),
             xs_html_attr("content", avatar)),
@@ -1849,11 +1849,21 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
     char *v;
     double t = ftime();
 
+    char *desc = NULL;
+
+#if 0
+    if (xs_list_len(list) == 1) {
+        /* only one element? pick the description from the source */
+        xs_dict *d = xs_list_get(list, 0);
+        desc = xs_dict_get(d, "sourceContent");
+    }
+#endif
+
     xs_html *head;
     xs_html *body;
 
     if (user) {
-        head = html_user_head(user);
+        head = html_user_head(user, desc);
         body = html_user_body(user, local);
     }
     else {
@@ -2125,7 +2135,7 @@ xs_str *html_people(snac *user)
     xs *wers = follower_list(user);
 
     xs_html *html = xs_html_tag("html",
-        html_user_head(user),
+        html_user_head(user, NULL),
         xs_html_add(html_user_body(user, 0),
             html_people_list(user, wing, L("People you follow"), "i"),
             html_people_list(user, wers, L("People that follow you"), "e"),
@@ -2143,7 +2153,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
     xs_html *body = html_user_body(user, 0);
 
     xs_html *html = xs_html_tag("html",
-        html_user_head(user),
+        html_user_head(user, NULL),
         body);
 
     xs *clear_all_action = xs_fmt("%s/admin/clear-notifications", user->actor);
