@@ -597,11 +597,20 @@ xs_html *html_user_head(snac *user, char *desc)
 
     /* create a description field */
     xs *s_desc = NULL;
+    int n;
 
     if (desc == NULL)
         s_desc = xs_dup(xs_dict_get(user->config, "bio"));
     else
         s_desc = xs_dup(desc);
+
+    /* shorten desc to a reasonable size */
+    for (n = 0; s_desc[n]; n++) {
+        if (n > 256 && (s_desc[n] == ' ' || s_desc[n] == '\n'))
+            break;
+    }
+
+    s_desc[n] = '\0';
 
     /* og properties */
     xs_html_add(head,
@@ -1849,15 +1858,16 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
     char *v;
     double t = ftime();
 
-    char *desc = NULL;
+    xs *desc = NULL;
 
-#if 0
     if (xs_list_len(list) == 1) {
         /* only one element? pick the description from the source */
-        xs_dict *d = xs_list_get(list, 0);
-        desc = xs_dict_get(d, "sourceContent");
+        char *id = xs_list_get(list, 0);
+        xs *d = NULL;
+        object_get_by_md5(id, &d);
+        if (d && (v = xs_dict_get(d, "sourceContent")) != NULL)
+            desc = xs_dup(v);
     }
-#endif
 
     xs_html *head;
     xs_html *body;
