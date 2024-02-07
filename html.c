@@ -606,7 +606,7 @@ xs_html *html_user_head(snac *user, char *desc)
 
     /* shorten desc to a reasonable size */
     for (n = 0; s_desc[n]; n++) {
-        if (n > 256 && (s_desc[n] == ' ' || s_desc[n] == '\n'))
+        if (n > 512 && (s_desc[n] == ' ' || s_desc[n] == '\n'))
             break;
     }
 
