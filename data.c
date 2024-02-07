@@ -1533,6 +1533,7 @@ int actor_get(const char *actor, xs_dict **data)
     else
         d = xs_free(d);
 
+#ifdef STALE_ACTORS
     xs *fn = _object_fn(actor);
     double max_time;
 
@@ -1547,6 +1548,7 @@ int actor_get(const char *actor, xs_dict **data)
 
         status = 205; /* "205: Reset Content" "110: Response Is Stale" */
     }
+#endif /* STALE_ACTORS */
 
     return status;
 }
