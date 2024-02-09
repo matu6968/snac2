@@ -1533,6 +1533,47 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         status = 200;
     }
     else
+    if (xs_startswith(cmd, "/v1/timelines/tag/")) { /** **/
+        const char *limit_s = xs_dict_get(args, "limit");
+        int limit = 0;
+        int cnt   = 0;
+
+        if (!xs_is_null(limit_s))
+            limit = atoi(limit_s);
+
+        if (limit == 0)
+            limit = 20;
+
+        /* get the tag */
+        xs *l = xs_split(cmd, "/");
+        char *tag = xs_list_get(l, -1);
+
+        xs *timeline = tag_search(tag, 0, limit);
+        xs *out      = xs_list_new();
+        xs_list *p   = timeline;
+        xs_str *md5;
+
+        while (xs_list_iter(&p, &md5) && cnt < limit) {
+            xs *msg = NULL;
+
+            /* get the entry */
+            if (!valid_status(object_get_by_md5(md5, &msg)))
+                continue;
+
+            /* convert the Note into a Mastodon status */
+            xs *st = mastoapi_status(NULL, msg);
+
+            if (st != NULL) {
+                out = xs_list_append(out, st);
+                cnt++;
+            }
+        }
+
+        *body  = xs_json_dumps(out, 4);
+        *ctype = "application/json";
+        status = 200;
+    }
+    else
     if (strcmp(cmd, "/v1/conversations") == 0) { /** **/
         /* TBD */
         *body  = xs_dup("[]");
