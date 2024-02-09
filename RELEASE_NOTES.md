@@ -12,6 +12,8 @@ Fixed repeated mentions in the reply text field.
 
 One-post only pages include the post content instead of the user bio in their metadata (improving post previews from other software).
 
+Mastodon API: Added support for timelines by tag.
+
 ## 2.46
 
 Added support for Peertube videos.
