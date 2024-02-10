@@ -593,6 +593,30 @@ int is_msg_public(const xs_dict *msg)
 }
 
 
+int is_msg_from_private_user(const xs_dict *msg)
+/* checks if a message is from a local, private user */
+{
+    int ret = 0;
+
+    /* is this message from a local user? */
+    if (xs_startswith(xs_dict_get(msg, "id"), srv_baseurl)) {
+        const char *atto = get_atto(msg);
+        xs *l = xs_split(atto, "/");
+        const char *uid = xs_list_get(l, -1);
+        snac user;
+
+        if (uid && user_open(&user, uid)) {
+            if (xs_type(xs_dict_get(user.config, "private")) == XSTYPE_TRUE)
+                ret = 1;
+
+            user_free(&user);
+        }
+    }
+
+    return ret;
+}
+
+
 int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 /* checks if this message is for me */
 {

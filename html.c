@@ -1911,24 +1911,9 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
         if (!valid_status(status))
             continue;
 
-        /* if it's an instance page, discard private users */
-        if (user == NULL && xs_startswith(xs_dict_get(msg, "id"), srv_baseurl)) {
-            const char *atto = get_atto(msg);
-            xs *l = xs_split(atto, "/");
-            const char *uid = xs_list_get(l, -1);
-            snac user;
-            int skip = 1;
-
-            if (uid && user_open(&user, uid)) {
-                if (xs_type(xs_dict_get(user.config, "private")) != XSTYPE_TRUE)
-                    skip = 0;
-
-                user_free(&user);
-            }
-
-            if (skip)
-                continue;
-        }
+        /* if it's an instance page, discard messages from private users */
+        if (user == NULL && is_msg_from_private_user(msg))
+            continue;
 
         xs_html *entry = html_entry(user, msg, local, 0, v, user ? 0 : 1);
 
