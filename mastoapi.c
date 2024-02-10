@@ -1560,6 +1560,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             if (!valid_status(object_get_by_md5(md5, &msg)))
                 continue;
 
+            /* skip non-public messages */
+            if (!is_msg_public(msg))
+                continue;
+
             /* convert the Note into a Mastodon status */
             xs *st = mastoapi_status(NULL, msg);
 
