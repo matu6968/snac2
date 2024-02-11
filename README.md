@@ -90,17 +90,15 @@ This will:
 
 ## Links of Interest
 
-[Online snac manuals (user, administrator and data formats)](https://comam.es/snac-doc/).
-
-[how to run your own ActivityPub server on OpenBSD via snac (by Jordan Reger)](https://man.sr.ht/~jordanreger/activitypub-server-on-openbsd/).
+* [Online snac manuals (user, administrator and data formats)](https://comam.es/snac-doc/).
+* [How to run your own ActivityPub server on OpenBSD via snac (by Jordan Reger)](https://man.sr.ht/~jordanreger/activitypub-server-on-openbsd/).
+* [How to install & run your own ActivityPub server on FreeBSD using snac, nginx, lets'encrypt  (by gyptazy)](https://gyptazy.ch/blog/install-snac2-on-freebsd-an-activitypub-instance-for-the-fediverse/).
 
 ## Incredibly awesome CSS themes for snac
 
-[A cool, elegant theme (by Haijo7)](https://codeberg.org/Haijo7/snac-custom-css).
-
-[A light, lean theme (by Ворон)](https://codeberg.org/voron/snac-style).
-
-[A terminal-like theme (by Tetra)](https://codeberg.org/ERROR404NULLNOTFOUND/snac-terminal-theme).
+* [A cool, elegant theme (by Haijo7)](https://codeberg.org/Haijo7/snac-custom-css).
+* [A light, lean theme (by Ворон)](https://codeberg.org/voron/snac-style).
+* [A terminal-like theme (by Tetra)](https://codeberg.org/ERROR404NULLNOTFOUND/snac-terminal-theme).
 
 ## License
 
