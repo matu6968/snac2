@@ -12,7 +12,7 @@ Fixed repeated mentions in the reply text field.
 
 One-post only pages include the post content instead of the user bio in their metadata (improving post previews from other software).
 
-Mastodon API: Added support for timelines by tag.
+Mastodon API: Added support for timelines by tag (for sites like e.g. https://fediwall.social to work).
 
 ## 2.46
 
