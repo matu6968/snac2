@@ -767,16 +767,34 @@ static xs_html *html_user_body(snac *user, int local)
             xs_str *k;
             xs_str *v;
 
+            xs_dict *val_metadata = xs_dict_get(user->config, "validated_metadata");
+            if (xs_is_null(val_metadata))
+                val_metadata = xs_stock_dict;
+
             xs_html *snac_metadata = xs_html_tag("div",
                 xs_html_attr("class", "snac-metadata"));
 
             while (xs_dict_iter(&metadata, &k, &v)) {
                 xs_html *value;
 
-                if (xs_startswith(v, "https:/" "/"))
-                    value = xs_html_tag("a",
-                        xs_html_attr("href", v),
-                        xs_html_text(v));
+                if (xs_startswith(v, "https:/" "/")) {
+                    /* is this link validated? */
+                    char *val_date = xs_dict_get(val_metadata, v);
+
+                    if (!xs_is_null(val_date) && *val_date) {
+                        value = xs_html_container(
+                            xs_html_raw("&#10004; "),
+                            xs_html_tag("a",
+                                xs_html_attr("href", v),
+                                xs_html_attr("rel", "me"),
+                                xs_html_text(v)));
+                    }
+                    else {
+                        value = xs_html_tag("a",
+                            xs_html_attr("href", v),
+                            xs_html_text(v));
+                    }
+                }
                 else
                     value = xs_html_text(v);
 
