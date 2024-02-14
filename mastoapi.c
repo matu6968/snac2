@@ -1134,12 +1134,22 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 xs_str *k;
                 xs_str *v;
 
+                xs_dict *val_metadata = xs_dict_get(snac1.config, "validated_metadata");
+                if (xs_is_null(val_metadata))
+                    val_metadata = xs_stock_dict;
+
                 while (xs_dict_iter(&metadata, &k, &v)) {
+                    char *val_date = NULL;
+
+                    if (xs_startswith(v, "https:/" "/"))
+                        val_date = xs_dict_get(val_metadata, v);
+
                     xs *d = xs_dict_new();
 
                     d = xs_dict_append(d, "name", k);
                     d = xs_dict_append(d, "value", v);
-                    d = xs_dict_append(d, "verified_at", xs_stock_null);
+                    d = xs_dict_append(d, "verified_at",
+                        xs_type(val_date) == XSTYPE_STRING ? val_date : xs_stock_null);
 
                     fields = xs_list_append(fields, d);
                 }
