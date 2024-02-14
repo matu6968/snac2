@@ -22,6 +22,8 @@ Integrate "Ability to federate with hidden networks" see https://codeberg.org/gr
 
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
 
+Do something about Akkoma and Misskey's quoted replies (they use the `quoteUrl` field instead of `inReplyTo`).
+
 Add more CSS classes according to https://comam.es/snac/grunfink/p/1705598619.090050
 
 Add support for /share?text=tt&website=url (whatever it is).
