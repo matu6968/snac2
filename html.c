@@ -1915,6 +1915,16 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
         if (user == NULL && is_msg_from_private_user(msg))
             continue;
 
+        /* is this message a non-public reply? */
+        if (user != NULL && !is_msg_public(msg)) {
+            char *irt = xs_dict_get(msg, "inReplyTo");
+
+            if (!xs_is_null(irt) && !object_here(irt)) {
+                snac_debug(user, 1, xs_fmt("skipping non-public reply to an unknown post %s", v));
+                continue;
+            }
+        }
+
         xs_html *entry = html_entry(user, msg, local, 0, v, user ? 0 : 1);
 
         if (entry != NULL)
