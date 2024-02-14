@@ -1221,10 +1221,6 @@ xs_dict *msg_actor(snac *snac)
         xs_str *k;
         xs_str *v;
 
-        xs_dict *val_metadata = xs_dict_get(snac->config, "validated_metadata");
-        if (xs_is_null(val_metadata))
-            val_metadata = xs_stock_dict;
-
         while (xs_dict_iter(&metadata, &k, &v)) {
             xs *d = xs_dict_new();
 
@@ -1232,13 +1228,8 @@ xs_dict *msg_actor(snac *snac)
             xs *v2 = NULL;
 
             if (xs_startswith(v, "https:")) {
-                char *val_date = xs_dict_get(val_metadata, v);
                 xs *t = encode_html(v);
-
-                if (xs_type(val_date) == XSTYPE_STRING && *val_date)
-                    v2 = xs_fmt("<a href=\"%s\" rel=\"me\">%s</a>", t, t);
-                else
-                    v2 = xs_fmt("<a href=\"%s\">%s</a>", t, t);
+                v2 = xs_fmt("<a href=\"%s\" rel=\"me\">%s</a>", t, t);
             }
             else
                 v2 = encode_html(v);
