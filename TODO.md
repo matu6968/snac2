@@ -6,8 +6,6 @@ Unfollowing lemmy groups gets rejected with an http status of 400.
 
 Unfollowing guppe groups seems to work (http status of 200), but messages continue to arrive as if it didn't.
 
-Fix duplicate mentions, see https://codeberg.org/grunfink/snac2/issues/115
-
 Post edits should preserve the image and the image description somewhat.
 
 Mastodon API: fix whatever the fuck is making the official app and Megalodon to crash.
@@ -16,11 +14,11 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
+Add support for rel="me" links, see https://codeberg.org/grunfink/snac2/issues/124 and https://streetpass.social
+
 Integrate "Ability to federate with hidden networks" see https://codeberg.org/grunfink/snac2/issues/93
 
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
-
-Change HTML metadata information to the post info instead of user info, see https://codeberg.org/grunfink/snac2/issues/116
 
 Add more CSS classes according to https://comam.es/snac/grunfink/p/1705598619.090050
 
@@ -295,3 +293,7 @@ Fix case-sensitivity issue described in https://codeberg.org/grunfink/snac2/issu
 Implement real tag links instead of just pretending that it's something that exists  (2023-11-18T22:42:48+0100).
 
 Add a flag to make accounts private, i.e., they don't expose any content from the web interface (only through ActivityPub) (2023-11-18T22:42:48+0100).
+
+Fix duplicate mentions, see https://codeberg.org/grunfink/snac2/issues/115 (2024-02-14T09:51:01+0100).
+
+Change HTML metadata information to the post info instead of user info, see https://codeberg.org/grunfink/snac2/issues/116 (2024-02-14T09:51:22+0100).
