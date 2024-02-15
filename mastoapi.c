@@ -622,6 +622,22 @@ xs_dict *mastoapi_account(const xs_dict *actor)
     p = xs_dict_get(actor, "attachment");
     xs_dict *v;
 
+    /* dict of validated links */
+    xs_dict *val_links = NULL;
+
+    if (xs_startswith(id, srv_baseurl)) {
+        /* if it's a local user, open it and pick its validated links */
+        snac user;
+
+        if (user_open(&user, prefu)) {
+            val_links = xs_dict_get(user.config, "validated_links");
+            user_free(&user);
+        }
+    }
+
+    if (xs_is_null(val_links))
+        val_links = xs_stock_dict;
+
     while (xs_list_iter(&p, &v)) {
         char *type  = xs_dict_get(v, "type");
         char *name  = xs_dict_get(v, "name");
@@ -629,11 +645,18 @@ xs_dict *mastoapi_account(const xs_dict *actor)
 
         if (!xs_is_null(type) && !xs_is_null(name) &&
             !xs_is_null(value) && strcmp(type, "PropertyValue") == 0) {
+            char *val_date = NULL;
+
+            if (xs_startswith(value, "https:/" "/"))
+                val_date = xs_dict_get(val_links, value);
+
             xs *d = xs_dict_new();
 
             d = xs_dict_append(d, "name", name);
             d = xs_dict_append(d, "value", value);
-            d = xs_dict_append(d, "verified_at", xs_stock_null);
+            d = xs_dict_append(d, "verified_at",
+                xs_type(val_date) == XSTYPE_STRING && *val_date ?
+                    val_date : xs_stock_null);
 
             fields = xs_list_append(fields, d);
         }
@@ -1149,7 +1172,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     d = xs_dict_append(d, "name", k);
                     d = xs_dict_append(d, "value", v);
                     d = xs_dict_append(d, "verified_at",
-                        xs_type(val_date) == XSTYPE_STRING ? val_date : xs_stock_null);
+                        xs_type(val_date) == XSTYPE_STRING && *val_date ?
+                            val_date : xs_stock_null);
 
                     fields = xs_list_append(fields, d);
                 }
