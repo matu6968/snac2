@@ -8,6 +8,8 @@
 #include "xs_openssl.h"
 #include "xs_random.h"
 #include "xs_glob.h"
+#include "xs_curl.h"
+#include "xs_regex.h"
 
 #include "snac.h"
 
@@ -406,4 +408,108 @@ int deluser(snac *user)
     rm_rf(user->basedir);
 
     return ret;
+}
+
+
+void verify_links(snac *user)
+/* verifies a user's links */
+{
+    xs_dict *p = xs_dict_get(user->config, "metadata");
+    char *k, *v;
+    int changed = 0;
+
+    while (p && xs_dict_iter(&p, &k, &v)) {
+        /* not an https link? skip */
+        if (!xs_startswith(v, "https:/" "/"))
+            continue;
+
+        int status;
+        xs *req = NULL;
+        xs *payload = NULL;
+        int p_size = 0;
+
+        req = xs_http_request("GET", v, NULL, NULL, 0, &status,
+            &payload, &p_size, 0);
+
+        if (!valid_status(status))
+            continue;
+
+        /* extract the links */
+        xs *ls = xs_regex_select(payload, "< *(a|link) +[^>]+>");
+
+        xs_list *lp = ls;
+        char *ll;
+
+        while (xs_list_iter(&lp, &ll)) {
+            /* extract href and rel */
+            xs *r = xs_regex_select(ll, "(href|rel) *= *(\"[^\"]*\"|'[^']*')");
+
+            /* must have both attributes */
+            if (xs_list_len(r) != 2)
+                continue;
+
+            xs *href = NULL;
+            int is_rel_me = 0;
+            xs_list *pr = r;
+            char *ar;
+
+            while (xs_list_iter(&pr, &ar)) {
+                xs *nq = xs_dup(ar);
+
+                nq = xs_replace_i(nq, "\"", "");
+                nq = xs_replace_i(nq, "'", "");
+
+                xs *r2 = xs_split_n(nq, "=", 1);
+                if (xs_list_len(r2) != 2)
+                    continue;
+
+                xs *ak = xs_strip_i(xs_dup(xs_list_get(r2, 0)));
+                xs *av = xs_strip_i(xs_dup(xs_list_get(r2, 1)));
+
+                if (strcmp(ak, "href") == 0)
+                    href = xs_dup(av);
+                else
+                if (strcmp(ak, "rel") == 0) {
+                    /* split the value by spaces */
+                    xs *vbs = xs_split(av, " ");
+
+                    /* is any of it "me"? */
+                    if (xs_list_in(vbs, "me") != -1)
+                        is_rel_me = 1;
+                }
+            }
+
+            /* after all this acrobatics, do we have an href and a rel="me"? */
+            if (href != NULL && is_rel_me) {
+                /* is it the same as the actor? */
+                if (strcmp(href, user->actor) == 0) {
+                    /* got it! */
+                    xs *verified_at = xs_str_utctime(0, ISO_DATE_SPEC);
+
+                    user->links = xs_dict_set(user->links, v, verified_at);
+
+                    changed++;
+
+                    snac_log(user, xs_fmt("verify_links: %s at %s", v, verified_at));
+                }
+            }
+        }
+    }
+
+    if (changed) {
+        FILE *f;
+
+        /* update the links.json file */
+        xs *fn = xs_fmt("%s/links.json", user->basedir);
+        xs *bfn = xs_fmt("%s.bak", fn);
+
+        rename(fn, bfn);
+
+        if ((f = fopen(fn, "w")) != NULL) {
+            xs_json_dump(user->links, 4, f);
+            fclose(f);
+        }
+        else
+            rename(bfn, fn);
+    }
 }

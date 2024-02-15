@@ -247,6 +247,11 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "verify_links") == 0) { /** **/
+        verify_links(&snac);
+        return 0;
+    }
+
     if (strcmp(cmd, "timeline") == 0) { /** **/
 #if 0
         xs *list = local_list(&snac, XS_ALL);
