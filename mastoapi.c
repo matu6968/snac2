@@ -624,15 +624,12 @@ xs_dict *mastoapi_account(const xs_dict *actor)
 
     /* dict of validated links */
     xs_dict *val_links = NULL;
+    snac user = {0};
 
     if (xs_startswith(id, srv_baseurl)) {
         /* if it's a local user, open it and pick its validated links */
-        snac user;
-
-        if (user_open(&user, prefu)) {
-            val_links = xs_dict_get(user.config, "validated_links");
-            user_free(&user);
-        }
+        if (user_open(&user, prefu))
+            val_links = user.links;
     }
 
     if (xs_is_null(val_links))
@@ -661,6 +658,8 @@ xs_dict *mastoapi_account(const xs_dict *actor)
             fields = xs_list_append(fields, d);
         }
     }
+
+    user_free(&user);
 
     acct = xs_dict_append(acct, "fields", fields);
 
@@ -1157,7 +1156,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 xs_str *k;
                 xs_str *v;
 
-                xs_dict *val_links = xs_dict_get(snac1.config, "validated_links");
+                xs_dict *val_links = snac1.links;
                 if (xs_is_null(val_links))
                     val_links = xs_stock_dict;
 

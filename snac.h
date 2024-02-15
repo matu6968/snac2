@@ -41,6 +41,7 @@ typedef struct {
     xs_dict *config;    /* user configuration */
     xs_dict *config_o;  /* user configuration admin override */
     xs_dict *key;       /* keypair */
+    xs_dict *links;     /* validated links */
     xs_str *actor;      /* actor url */
     xs_str *md5;        /* actor url md5 */
 } snac;

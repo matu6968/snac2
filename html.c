@@ -767,7 +767,7 @@ static xs_html *html_user_body(snac *user, int local)
             xs_str *k;
             xs_str *v;
 
-            xs_dict *val_links = xs_dict_get(user->config, "validated_links");
+            xs_dict *val_links = user->links;
             if (xs_is_null(val_links))
                 val_links = xs_stock_dict;
 

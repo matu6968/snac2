@@ -146,6 +146,7 @@ void user_free(snac *snac)
     xs_free(snac->config);
     xs_free(snac->config_o);
     xs_free(snac->key);
+    xs_free(snac->links);
     xs_free(snac->actor);
     xs_free(snac->md5);
 }
@@ -233,6 +234,14 @@ int user_open(snac *user, const char *uid)
         }
         else
             srv_debug(2, xs_fmt("error opening '%s' %d", cfg_file, errno));
+
+        /* verified links */
+        xs *links_file = xs_fmt("%s/links.json", user->basedir);
+
+        if ((f = fopen(links_file, "r")) != NULL) {
+            user->links = xs_json_load(f);
+            fclose(f);
+        }
     }
     else
         srv_debug(1, xs_fmt("invalid user '%s'", uid));
