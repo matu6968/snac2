@@ -5,6 +5,7 @@
 #define _XS_UNICODE_H
 
  int _xs_utf8_enc(char buf[4], unsigned int cpoint);
+ int xs_is_utf8_cont_byte(char c);
  unsigned int xs_utf8_dec(char **str);
  int xs_unicode_width(unsigned int cpoint);
  int xs_is_surrogate(unsigned int cpoint);
@@ -58,6 +59,13 @@ int _xs_utf8_enc(char buf[4], unsigned int cpoint)
 }
 
 
+int xs_is_utf8_cont_byte(char c)
+/* returns true if c is an utf8 continuation byte */
+{
+    return ((c & 0xc0) == 0x80);
+}
+
+
 unsigned int xs_utf8_dec(char **str)
 /* decodes an utf-8 char inside str and updates the pointer */
 {
@@ -86,7 +94,7 @@ unsigned int xs_utf8_dec(char **str)
     }
 
     /* process the continuation bytes */
-    while (cb > 0 && *p && (*p & 0xc0) == 0x80)
+    while (cb > 0 && *p && xs_is_utf8_cont_byte(*p))
         cpoint |= (*p++ & 0x3f) << (--cb * 6);
 
     /* incomplete or broken? */

@@ -54,6 +54,7 @@ void _xs_destroy(char **var);
 xstype xs_type(const xs_val *data);
 int xs_size(const xs_val *data);
 int xs_is_null(const xs_val *data);
+int xs_cmp(const xs_val *v1, const xs_val *v2);
 xs_val *xs_dup(const xs_val *data);
 xs_val *xs_expand(xs_val *data, int offset, int size);
 xs_val *xs_collapse(xs_val *data, int offset, int size);
@@ -91,7 +92,6 @@ int xs_list_len(const xs_list *list);
 xs_val *xs_list_get(const xs_list *list, int num);
 xs_list *xs_list_del(xs_list *list, int num);
 xs_list *xs_list_insert(xs_list *list, int num, const xs_val *data);
-xs_list *xs_list_insert_sorted(xs_list *list, const char *str);
 xs_list *xs_list_set(xs_list *list, int num, const xs_val *data);
 xs_list *xs_list_dequeue(xs_list *list, xs_val **data, int last);
 #define xs_list_pop(list, data) xs_list_dequeue(list, data, 1)
@@ -347,6 +347,17 @@ int xs_is_null(const xs_val *data)
 /* checks for null */
 {
     return (xs_type(data) == XSTYPE_NULL);
+}
+
+
+int xs_cmp(const xs_val *v1, const xs_val *v2)
+/* compares two values */
+{
+    int s1 = xs_size(v1);
+    int s2 = xs_size(v2);
+    int d = s1 - s2;
+
+    return d == 0 ? memcmp(v1, v2, s1) : d;
 }
 
 
@@ -764,28 +775,6 @@ xs_list *xs_list_insert(xs_list *list, int num, const xs_val *data)
         offset = xs_size(list);
 
     return _xs_list_write_litem(list, offset - 1, data, xs_size(data));
-}
-
-
-xs_list *xs_list_insert_sorted(xs_list *list, const xs_str *str)
-/* inserts a string in the list in its ordered position */
-{
-    XS_ASSERT_TYPE(list, XSTYPE_LIST);
-    XS_ASSERT_TYPE(str, XSTYPE_STRING);
-
-    char *p, *v;
-    int offset = xs_size(list);
-
-    p = list;
-    while (xs_list_iter(&p, &v)) {
-        /* if this element is greater or equal, insert here */
-        if (strcmp(v, str) >= 0) {
-            offset = v - list;
-            break;
-        }
-    }
-
-    return _xs_list_write_litem(list, offset - 1, str, xs_size(str));
 }
 
 
