@@ -1,5 +1,11 @@
 # Release Notes
 
+## 2.48
+
+Follower-only replies to unknown users are not shown in timelines.
+
+Added verification of metadata links: if the linked page contains a link back to the snac user with a rel="me" attribute, it's marked as verified.
+
 ## 2.47
 
 Added pagination to the notification page.
