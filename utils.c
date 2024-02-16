@@ -431,8 +431,10 @@ void verify_links(snac *user)
         req = xs_http_request("GET", v, NULL, NULL, 0, &status,
             &payload, &p_size, 0);
 
-        if (!valid_status(status))
+        if (!valid_status(status)) {
+            snac_log(user, xs_fmt("verify link %s error %d", v, status));
             continue;
+        }
 
         /* extract the links */
         xs *ls = xs_regex_select(payload, "< *(a|link) +[^>]+>");
@@ -490,8 +492,11 @@ void verify_links(snac *user)
 
                     changed++;
 
-                    snac_log(user, xs_fmt("verify_links: %s at %s", v, verified_at));
+                    snac_log(user, xs_fmt("link %s verified at %s", v, verified_at));
                 }
+                else
+                    snac_debug(user, 1,
+                        xs_fmt("verify link %s rel='me' found but not related (%s)", v, href));
             }
         }
     }
