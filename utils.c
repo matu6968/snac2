@@ -418,6 +418,10 @@ void verify_links(snac *user)
     char *k, *v;
     int changed = 0;
 
+    xs *headers = xs_dict_new();
+    headers = xs_dict_append(headers, "accept", "text/html");
+    headers = xs_dict_append(headers, "user-agent", USER_AGENT " (link verify)");
+
     while (p && xs_dict_iter(&p, &k, &v)) {
         /* not an https link? skip */
         if (!xs_startswith(v, "https:/" "/"))
@@ -428,11 +432,11 @@ void verify_links(snac *user)
         xs *payload = NULL;
         int p_size = 0;
 
-        req = xs_http_request("GET", v, NULL, NULL, 0, &status,
+        req = xs_http_request("GET", v, headers, NULL, 0, &status,
             &payload, &p_size, 0);
 
         if (!valid_status(status)) {
-            snac_log(user, xs_fmt("verify link %s error %d", v, status));
+            snac_log(user, xs_fmt("link %s verify error %d", v, status));
             continue;
         }
 
@@ -441,6 +445,7 @@ void verify_links(snac *user)
 
         xs_list *lp = ls;
         char *ll;
+        int vfied = 0;
 
         while (xs_list_iter(&lp, &ll)) {
             /* extract href and rel */
@@ -490,14 +495,22 @@ void verify_links(snac *user)
 
                     user->links = xs_dict_set(user->links, v, verified_at);
 
-                    changed++;
+                    vfied = 1;
 
-                    snac_log(user, xs_fmt("link %s verified at %s", v, verified_at));
+                    break;
                 }
                 else
                     snac_debug(user, 1,
                         xs_fmt("verify link %s rel='me' found but not related (%s)", v, href));
             }
+        }
+
+        if (vfied) {
+            changed++;
+            snac_log(user, xs_fmt("link %s verified", v));
+        }
+        else {
+            snac_log(user, xs_fmt("link %s not verified (rel='me' not found)", v));
         }
     }
 
