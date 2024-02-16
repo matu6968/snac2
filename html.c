@@ -782,7 +782,8 @@ static xs_html *html_user_body(snac *user, int local)
                     char *val_date = xs_dict_get(val_links, v);
 
                     if (!xs_is_null(val_date) && *val_date) {
-                        value = xs_html_container(
+                        value = xs_html_tag("span",
+                            xs_html_attr("title", L("verified link")),
                             xs_html_raw("&#10004; "),
                             xs_html_tag("a",
                                 xs_html_attr("href", v),
