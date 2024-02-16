@@ -40,8 +40,7 @@ int usage(void)
     printf("unblock {basedir} {instance_url}    Unblocks a full instance\n");
     printf("limit {basedir} {uid} {actor}       Limits an actor (drops their announces)\n");
     printf("unlimit {basedir} {uid} {actor}     Unlimits an actor\n");
-
-/*    printf("question {basedir} {uid} 'opts'  Generates a poll (;-separated opts)\n");*/
+    printf("verify_links {basedir} {uid}        Verifies a user's links (in the metadata)\n");
 
     return 1;
 }
