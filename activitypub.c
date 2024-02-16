@@ -198,7 +198,7 @@ xs_list *get_attachments(const xs_dict *msg)
         /* ensure it's a list */
         if (xs_type(p) == XSTYPE_DICT) {
             attach = xs_list_new();
-            attach = xs_list_append(attach, v);
+            attach = xs_list_append(attach, p);
         }
         else
             attach = xs_dup(p);
