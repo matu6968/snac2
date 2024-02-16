@@ -186,7 +186,7 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
         links = xs_list_append(links, aaj);
 
 				prof = xs_dict_append(prof, "rel", "http://webfinger.net/rel/profile-page");
-				prof = xs_dict_append(prof, "type", "text/html";
+				prof = xs_dict_append(prof, "type", "text/html");
 				prof = xs_dict_append(prof, "href", snac.actor);
 
 				links = xs_list_append(links, prof);
