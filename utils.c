@@ -447,7 +447,7 @@ void verify_links(snac *user)
         char *ll;
         int vfied = 0;
 
-        while (xs_list_iter(&lp, &ll)) {
+        while (!vfied && xs_list_iter(&lp, &ll)) {
             /* extract href and rel */
             xs *r = xs_regex_select(ll, "(href|rel) *= *(\"[^\"]*\"|'[^']*')");
 
@@ -493,11 +493,12 @@ void verify_links(snac *user)
                     /* got it! */
                     xs *verified_at = xs_str_utctime(0, ISO_DATE_SPEC);
 
+                    if (user->links == NULL)
+                        user->links = xs_dict_new();
+
                     user->links = xs_dict_set(user->links, v, verified_at);
 
                     vfied = 1;
-
-                    break;
                 }
                 else
                     snac_debug(user, 1,
