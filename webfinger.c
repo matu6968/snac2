@@ -172,7 +172,7 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
         /* build the object */
         xs *acct;
         xs *aaj   = xs_dict_new();
-				xs *prof  = xs_dict_new();
+        xs *prof  = xs_dict_new();
         xs *links = xs_list_new();
         xs *obj   = xs_dict_new();
 
@@ -185,11 +185,11 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
 
         links = xs_list_append(links, aaj);
 
-				prof = xs_dict_append(prof, "rel", "http://webfinger.net/rel/profile-page");
-				prof = xs_dict_append(prof, "type", "text/html");
-				prof = xs_dict_append(prof, "href", snac.actor);
+        prof = xs_dict_append(prof, "rel", "http://webfinger.net/rel/profile-page");
+        prof = xs_dict_append(prof, "type", "text/html");
+        prof = xs_dict_append(prof, "href", snac.actor);
 
-				links = xs_list_append(links, prof);
+        links = xs_list_append(links, prof);
 
         char *avatar = xs_dict_get(snac.config, "avatar");
         if (!xs_is_null(avatar) && *avatar) {
