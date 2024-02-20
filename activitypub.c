@@ -2192,6 +2192,10 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
             timeline_request_replies(snac, id);
     }
     else
+    if (strcmp(type, "verify_links") == 0) {
+        verify_links(snac);
+    }
+    else
         snac_log(snac, xs_fmt("unexpected user q_item type '%s'", type));
 }
 
