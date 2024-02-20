@@ -2714,6 +2714,9 @@ void purge_user(snac *snac)
         int gc = index_gc(idx);
         srv_debug(1, xs_fmt("purge: %s %d", idx, gc));
     }
+
+    /* unrelated to purging, but it's a janitorial process, so what the hell */
+    enqueue_verify_links(snac);
 }
 
 
