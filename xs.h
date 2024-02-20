@@ -86,7 +86,8 @@ xs_str *xs_tolower_i(xs_str *str);
 
 xs_list *xs_list_new(void);
 xs_list *xs_list_append_m(xs_list *list, const char *mem, int dsz);
-#define xs_list_append(list, data) xs_list_append_m(list, data, xs_size(data))
+xs_list *_xs_list_append(xs_list *list, const xs_val *vals[]);
+#define xs_list_append(list, ...) _xs_list_append(list, (const xs_val *[]){ __VA_ARGS__, NULL })
 int xs_list_iter(xs_list **list, xs_val **value);
 int xs_list_len(const xs_list *list);
 xs_val *xs_list_get(const xs_list *list, int num);
@@ -108,7 +109,8 @@ xs_dict *xs_dict_append_m(xs_dict *dict, const xs_str *key, const xs_val *mem, i
 xs_dict *xs_dict_prepend_m(xs_dict *dict, const xs_str *key, const xs_val *mem, int dsz);
 #define xs_dict_prepend(dict, key, data) xs_dict_prepend_m(dict, key, data, xs_size(data))
 int xs_dict_iter(xs_dict **dict, xs_str **key, xs_val **value);
-xs_val *xs_dict_get(const xs_dict *dict, const xs_str *key);
+xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_val *def);
+#define xs_dict_get(dict, key) xs_dict_get_def(dict, key, NULL)
 xs_dict *xs_dict_del(xs_dict *dict, const xs_str *key);
 xs_dict *xs_dict_set(xs_dict *dict, const xs_str *key, const xs_val *data);
 
@@ -677,6 +679,22 @@ xs_list *xs_list_append_m(xs_list *list, const char *mem, int dsz)
 }
 
 
+xs_list *_xs_list_append(xs_list *list, const xs_val *vals[])
+/* adds several values to the list */
+{
+    /* special case: if the first argument is NULL, just insert it */
+    if (*vals == NULL)
+        return xs_list_append_m(list, NULL, 0);
+
+    while (*vals) {
+        list = xs_list_append_m(list, *vals, xs_size(*vals));
+        vals++;
+    }
+
+    return list;
+}
+
+
 int xs_list_iter(xs_list **list, xs_val **value)
 /* iterates a list value */
 {
@@ -1004,8 +1022,8 @@ int xs_dict_iter(xs_dict **dict, xs_str **key, xs_val **value)
 }
 
 
-xs_val *xs_dict_get(const xs_dict *dict, const xs_str *key)
-/* returns the value directed by key */
+xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_val *def)
+/* returns the value directed by key, or the default value */
 {
     XS_ASSERT_TYPE(dict, XSTYPE_DICT);
     XS_ASSERT_TYPE(key, XSTYPE_STRING);
@@ -1019,7 +1037,7 @@ xs_val *xs_dict_get(const xs_dict *dict, const xs_str *key)
             return v;
     }
 
-    return NULL;
+    return (xs_val *)def;
 }
 
 
