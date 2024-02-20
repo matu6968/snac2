@@ -6,6 +6,8 @@ Follower-only replies to unknown users are not shown in timelines.
 
 Added verification of metadata links: if the linked page contains a link back to the snac user with a rel="me" attribute, it's marked as verified.
 
+Added a profile-page relation to links in webfinger responses (contributed by khm).
+
 ## 2.47
 
 Added pagination to the notification page.
