@@ -2374,7 +2374,7 @@ void enqueue_verify_links(snac *user)
 
     qmsg = _enqueue_put(fn, qmsg);
 
-    snac_debug(user, 0, xs_fmt("enqueue_verify_links %s", user->actor));
+    snac_debug(user, 1, xs_fmt("enqueue_verify_links %s", user->actor));
 }
 
 
