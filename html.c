@@ -779,11 +779,21 @@ static xs_html *html_user_body(snac *user, int local)
 
                 if (xs_startswith(v, "https:/" "/")) {
                     /* is this link validated? */
-                    char *val_date = xs_dict_get(val_links, v);
+                    xs *verified_link = NULL;
+                    xs_number *val_time = xs_dict_get(val_links, v);
 
-                    if (!xs_is_null(val_date) && *val_date) {
+                    if (xs_type(val_time) == XSTYPE_NUMBER) {
+                        time_t t = xs_number_get(val_time);
+
+                        if (t > 0) {
+                            xs *s1 = xs_str_utctime(t, ISO_DATE_SPEC);
+                            verified_link = xs_fmt("%s (%s)", L("verified link"), s1);
+                        }
+                    }
+
+                    if (!xs_is_null(verified_link)) {
                         value = xs_html_tag("span",
-                            xs_html_attr("title", L("verified link")),
+                            xs_html_attr("title", verified_link),
                             xs_html_raw("&#10004; "),
                             xs_html_tag("a",
                                 xs_html_attr("href", v),

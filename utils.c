@@ -491,12 +491,12 @@ void verify_links(snac *user)
                 /* is it the same as the actor? */
                 if (strcmp(href, user->actor) == 0) {
                     /* got it! */
-                    xs *verified_at = xs_str_utctime(0, ISO_DATE_SPEC);
+                    xs *verified_time = xs_number_new((double)time(NULL));
 
                     if (user->links == NULL)
                         user->links = xs_dict_new();
 
-                    user->links = xs_dict_set(user->links, v, verified_at);
+                    user->links = xs_dict_set(user->links, v, verified_time);
 
                     vfied = 1;
                 }

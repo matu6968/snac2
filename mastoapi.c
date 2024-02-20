@@ -642,10 +642,17 @@ xs_dict *mastoapi_account(const xs_dict *actor)
 
         if (!xs_is_null(type) && !xs_is_null(name) &&
             !xs_is_null(value) && strcmp(type, "PropertyValue") == 0) {
-            char *val_date = NULL;
+            xs *val_date = NULL;
 
-            if (xs_startswith(value, "https:/" "/"))
-                val_date = xs_dict_get(val_links, value);
+            if (xs_startswith(value, "https:/" "/")) {
+                xs_number *verified_time = xs_dict_get(val_links, value);
+                if (xs_type(verified_time) == XSTYPE_NUMBER) {
+                    time_t t = xs_number_get(verified_time);
+
+                    if (t > 0)
+                        val_date = xs_str_utctime(t, ISO_DATE_SPEC);
+                }
+            }
 
             xs *d = xs_dict_new();
 
@@ -1161,10 +1168,15 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     val_links = xs_stock_dict;
 
                 while (xs_dict_iter(&metadata, &k, &v)) {
-                    char *val_date = NULL;
+                    xs *val_date = NULL;
 
-                    if (xs_startswith(v, "https:/" "/"))
-                        val_date = xs_dict_get(val_links, v);
+                    xs_number *verified_time = xs_dict_get(val_links, v);
+                    if (xs_type(verified_time) == XSTYPE_NUMBER) {
+                        time_t t = xs_number_get(verified_time);
+
+                        if (t > 0)
+                            val_date = xs_str_utctime(t, ISO_DATE_SPEC);
+                    }
 
                     xs *d = xs_dict_new();
 
