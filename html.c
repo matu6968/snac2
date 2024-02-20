@@ -3064,6 +3064,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
         enqueue_message(&snac, u_msg);
 
+        enqueue_verify_links(&snac);
+
         status = 303;
     }
     else
