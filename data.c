@@ -2716,7 +2716,7 @@ void purge_user(snac *snac)
     }
 
     /* unrelated to purging, but it's a janitorial process, so what the hell */
-    enqueue_verify_links(snac);
+    verify_links(snac);
 }
 
 
