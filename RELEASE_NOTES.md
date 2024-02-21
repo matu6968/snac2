@@ -2,6 +2,8 @@
 
 ## 2.48
 
+New instance page, that show all posts by users in the same instance (like the public instance timeline, but interactive). This will help building communities.
+
 Follower-only replies to unknown users are not shown in timelines.
 
 Added verification of metadata links: if the linked page contains a link back to the snac user with a rel="me" attribute, it's marked as verified.
