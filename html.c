@@ -698,6 +698,8 @@ static xs_html *html_user_body(snac *user, int read_only)
         xs *admin_url = xs_fmt("%s/admin", user->actor);
         xs *notify_url = xs_fmt("%s/notifications", user->actor);
         xs *people_url = xs_fmt("%s/people", user->actor);
+        xs *instance_url = xs_fmt("%s/instance", user->actor);
+
         xs_html_add(top_nav,
             xs_html_tag("a",
                 xs_html_attr("href", user->actor),
@@ -714,7 +716,11 @@ static xs_html *html_user_body(snac *user, int read_only)
             xs_html_text(" - "),
             xs_html_tag("a",
                 xs_html_attr("href", people_url),
-                xs_html_text(L("people"))));
+                xs_html_text(L("people"))),
+            xs_html_text(" - "),
+            xs_html_tag("a",
+                xs_html_attr("href", instance_url),
+                xs_html_text(L("instance"))));
     }
 
     xs_html_add(body,
@@ -1962,6 +1968,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     }
 
     if (list && user && read_only) {
+        /** history **/
         if (xs_type(xs_dict_get(srv_config, "disable_history")) != XSTYPE_TRUE) {
             xs_html *ul = xs_html_tag("ul", NULL);
 
@@ -2490,6 +2497,21 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
         else {
             *body   = html_notifications(&snac, skip, show);
+            *b_size = strlen(*body);
+            status  = 200;
+        }
+    }
+    else
+    if (strcmp(p_path, "instance") == 0) { /** instance timeline **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = 401;
+        }
+        else {
+            xs *list = timeline_instance_list(skip, show);
+            xs *next = timeline_instance_list(skip + show, 1);
+
+            *body = html_timeline(&snac, list, 0, skip, show, xs_list_len(next), NULL, "/instance");
             *b_size = strlen(*body);
             status  = 200;
         }
