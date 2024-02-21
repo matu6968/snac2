@@ -1955,9 +1955,12 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         if (xs_type(object) == XSTYPE_DICT)
             object = xs_dict_get(object, "id");
 
-        timeline_admire(snac, object, actor, 1);
-        snac_log(snac, xs_fmt("new 'Like' %s %s", actor, object));
-        do_notify = 1;
+        if (timeline_admire(snac, object, actor, 1) == 201) {
+            snac_log(snac, xs_fmt("new 'Like' %s %s", actor, object));
+            do_notify = 1;
+        }
+        else
+            snac_log(snac, xs_fmt("repeated 'Like' from %s to %s", actor, object));
     }
     else
     if (strcmp(type, "Announce") == 0) { /** **/
@@ -1983,9 +1986,13 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
                     xs *who_o = NULL;
 
                     if (valid_status(actor_request(snac, who, &who_o))) {
-                        timeline_admire(snac, object, actor, 0);
-                        snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
-                        do_notify = 1;
+                        if (timeline_admire(snac, object, actor, 0) == 201) {
+                            snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
+                            do_notify = 1;
+                        }
+                        else
+                            snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",
+                                actor, object));
                     }
                     else
                         snac_debug(snac, 1, xs_fmt("dropped 'Announce' on actor request error %s", who));

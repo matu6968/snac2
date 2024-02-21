@@ -1107,7 +1107,7 @@ int timeline_add(snac *snac, const char *id, const xs_dict *o_msg)
 }
 
 
-void timeline_admire(snac *snac, const char *id, const char *admirer, int like)
+int timeline_admire(snac *snac, const char *id, const char *admirer, int like)
 /* updates a timeline entry with a new admiration */
 {
     /* if we are admiring this, add to both timelines */
@@ -1116,10 +1116,12 @@ void timeline_admire(snac *snac, const char *id, const char *admirer, int like)
         object_user_cache_add(snac, id, "private");
     }
 
-    object_admire(id, admirer, like);
+    int ret = object_admire(id, admirer, like);
 
     snac_debug(snac, 1, xs_fmt("timeline_admire (%s) %s %s",
             like ? "Like" : "Announce", id, admirer));
+
+    return ret;
 }
 
 
