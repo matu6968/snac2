@@ -646,7 +646,7 @@ xs_html *html_user_head(snac *user, char *desc)
 }
 
 
-static xs_html *html_user_body(snac *user, int local)
+static xs_html *html_user_body(snac *user, int read_only)
 {
     xs_html *body = xs_html_tag("body", NULL);
 
@@ -667,7 +667,7 @@ static xs_html *html_user_body(snac *user, int local)
             xs_html_attr("class", "snac-avatar"),
             xs_html_attr("alt", "")));
 
-    if (local) {
+    if (read_only) {
         xs *rss_url = xs_fmt("%s.rss", user->actor);
         xs *admin_url = xs_fmt("%s/admin", user->actor);
 
@@ -724,7 +724,7 @@ static xs_html *html_user_body(snac *user, int local)
     xs_html *top_user = xs_html_tag("div",
         xs_html_attr("class", "h-card snac-top-user"));
 
-    if (local) {
+    if (read_only) {
         char *header = xs_dict_get(user->config, "header");
         if (header && *header) {
             xs_html_add(top_user,
@@ -749,7 +749,7 @@ static xs_html *html_user_body(snac *user, int local)
             xs_html_attr("class", "snac-top-user-id"),
             xs_html_text(handle)));
 
-    if (local) {
+    if (read_only) {
         xs *es1  = encode_html(xs_dict_get(user->config, "bio"));
         xs *bio1 = not_really_markdown(es1, NULL);
         xs *tags = xs_list_new();
@@ -1306,7 +1306,7 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
 }
 
 
-xs_html *html_entry(snac *user, xs_dict *msg, int local,
+xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                    int level, char *md5, int hide_children)
 {
     char *id    = xs_dict_get(msg, "id");
@@ -1315,7 +1315,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
     char *v;
 
     /* do not show non-public messages in the public timeline */
-    if ((local || !user) && !is_msg_public(msg))
+    if ((read_only || !user) && !is_msg_public(msg))
         return NULL;
 
     /* hidden? do nothing more for this conversation */
@@ -1334,7 +1334,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-origin"),
                     xs_html_text(L("follows you"))),
-                html_msg_icon(local ? NULL : user, xs_dict_get(msg, "actor"), msg)));
+                html_msg_icon(read_only ? NULL : user, xs_dict_get(msg, "actor"), msg)));
     }
     else
     if (!xs_match(type, "Note|Question|Page|Article|Video")) {
@@ -1446,7 +1446,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
             if (!xs_is_null(name)) {
                 xs *href = NULL;
 
-                if (!local && user != NULL)
+                if (!read_only && user != NULL)
                     href = xs_fmt("%s/people#%s", user->actor, p);
                 else
                     href = xs_dup(xs_dict_get(actor_r, "id"));
@@ -1482,7 +1482,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
     }
 
     xs_html_add(post_header,
-        html_msg_icon(local ? NULL : user, actor, msg));
+        html_msg_icon(read_only ? NULL : user, actor, msg));
 
     /** post content **/
 
@@ -1510,7 +1510,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
 
         /* only show it when not in the public timeline and the config setting is "open" */
         char *cw = xs_dict_get(user->config, "cw");
-        if (xs_is_null(cw) || local)
+        if (xs_is_null(cw) || read_only)
             cw = "";
 
         snac_content = xs_html_tag("details",
@@ -1574,7 +1574,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
 
         xs_html *poll = xs_html_tag("div", NULL);
 
-        if (local)
+        if (read_only)
             closed = 1; /* non-identified page; show as closed */
         else
         if (xs_dict_get(msg, "closed"))
@@ -1795,7 +1795,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
 
     /** controls **/
 
-    if (!local && user) {
+    if (!read_only && user) {
         xs_html_add(entry,
             html_entry_controls(user, actor, msg, md5));
     }
@@ -1839,7 +1839,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int local,
                     object_get_by_md5(cmd5, &chd);
 
                 if (chd != NULL && xs_is_null(xs_dict_get(chd, "name"))) {
-                    xs_html *che = html_entry(user, chd, local, level + 1, cmd5, hide_children);
+                    xs_html *che = html_entry(user, chd, read_only, level + 1, cmd5, hide_children);
 
                     if (che != NULL) {
                         if (left > 3)
