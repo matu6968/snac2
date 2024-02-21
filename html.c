@@ -1938,11 +1938,9 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
         xs *msg = NULL;
         int status;
 
-#if 0
         if (user && !is_pinned_by_md5(user, v))
             status = timeline_get_by_md5(user, v, &msg);
         else
-#endif
             status = object_get_by_md5(v, &msg);
 
         if (!valid_status(status))
