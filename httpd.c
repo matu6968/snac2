@@ -177,6 +177,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
         char *t = NULL;
 
         if (xs_type(q_vars) == XSTYPE_DICT && (t = xs_dict_get(q_vars, "t"))) {
+            /** search by tag **/
             int skip = 0;
             int show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
             char *v;
@@ -194,12 +195,13 @@ int server_get_handler(xs_dict *req, const char *q_path,
                 more = 1;
             }
 
-            *body = html_timeline(NULL, tl, 0, skip, show, more, t);
+            *body = html_timeline(NULL, tl, 0, skip, show, more, t, NULL);
         }
         else
         if (xs_type(xs_dict_get(srv_config, "show_instance_timeline")) == XSTYPE_TRUE) {
+            /** instance timeline **/
             xs *tl = timeline_instance_list(0, 30);
-            *body = html_timeline(NULL, tl, 0, 0, 0, 0, NULL);
+            *body = html_timeline(NULL, tl, 0, 0, 0, 0, NULL, NULL);
         }
         else
             *body = greeting_html();

@@ -1880,7 +1880,7 @@ xs_html *html_footer(void)
 
 
 xs_str *html_timeline(snac *user, const xs_list *list, int local,
-                      int skip, int show, int show_more, char *tag)
+                      int skip, int show, int show_more, char *tag, char *page)
 /* returns the HTML for the timeline */
 {
     xs_list *p = (xs_list *)list;
@@ -2003,12 +2003,15 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
         xs *m  = NULL;
         xs *ss = xs_fmt("skip=%d&show=%d", skip + show, show);
 
+        xs *url = page == NULL || user == NULL ?
+            xs_dup(srv_baseurl) : xs_fmt("%s%s", user->actor, page);
+
         if (tag) {
-            t = xs_fmt("%s?t=%s", srv_baseurl, tag);
+            t = xs_fmt("%s?t=%s", url, tag);
             m = xs_fmt("%s&%s", t, ss);
         }
         else {
-            t = xs_fmt("%s%s", user ? user->actor : srv_baseurl, local ? "" : "/admin");
+            t = xs_dup(url);
             m = xs_fmt("%s?%s", t, ss);
         }
 
@@ -2401,7 +2404,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         xs *h = xs_str_localtime(0, "%Y-%m.html");
 
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE) {
-            *body = html_timeline(&snac, NULL, 1, 0, 0, 0, NULL);
+            /** empty public timeline for private users **/
+            *body = html_timeline(&snac, NULL, 1, 0, 0, 0, NULL, "");
             *b_size = strlen(*body);
             status  = 200;
         }
@@ -2419,7 +2423,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *pins = pinned_list(&snac);
             pins = xs_list_cat(pins, list);
 
-            *body = html_timeline(&snac, pins, 1, skip, show, xs_list_len(next), NULL);
+            *body = html_timeline(&snac, pins, 1, skip, show, xs_list_len(next), NULL, "");
 
             *b_size = strlen(*body);
             status  = 200;
@@ -2456,7 +2460,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 xs *pins = pinned_list(&snac);
                 pins = xs_list_cat(pins, list);
 
-                *body = html_timeline(&snac, pins, 0, skip, show, xs_list_len(next), NULL);
+                *body = html_timeline(&snac, pins, 0, skip, show, xs_list_len(next), NULL, "/admin");
 
                 *b_size = strlen(*body);
                 status  = 200;
@@ -2504,7 +2508,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
             list = xs_list_append(list, md5);
 
-            *body   = html_timeline(&snac, list, 1, 0, 0, 0, NULL);
+            *body   = html_timeline(&snac, list, 1, 0, 0, 0, NULL, "");
             *b_size = strlen(*body);
             status  = 200;
         }
