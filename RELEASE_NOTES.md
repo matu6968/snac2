@@ -8,6 +8,8 @@ Added verification of metadata links: if the linked page contains a link back to
 
 Added a profile-page relation to links in webfinger responses (contributed by khm).
 
+Fixed some regressions and a crash.
+
 ## 2.47
 
 Added pagination to the notification page.
