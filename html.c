@@ -1879,7 +1879,7 @@ xs_html *html_footer(void)
 }
 
 
-xs_str *html_timeline(snac *user, const xs_list *list, int local,
+xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                       int skip, int show, int show_more, char *tag, char *page)
 /* returns the HTML for the timeline */
 {
@@ -1903,7 +1903,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
 
     if (user) {
         head = html_user_head(user, desc);
-        body = html_user_body(user, local);
+        body = html_user_body(user, read_only);
     }
     else {
         head = html_instance_head();
@@ -1914,7 +1914,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
         head,
         body);
 
-    if (user && !local)
+    if (user && !read_only)
         xs_html_add(body,
             html_top_controls(user));
 
@@ -1954,14 +1954,14 @@ xs_str *html_timeline(snac *user, const xs_list *list, int local,
             }
         }
 
-        xs_html *entry = html_entry(user, msg, local, 0, v, user ? 0 : 1);
+        xs_html *entry = html_entry(user, msg, read_only, 0, v, user ? 0 : 1);
 
         if (entry != NULL)
             xs_html_add(posts,
                 entry);
     }
 
-    if (list && user && local) {
+    if (list && user && read_only) {
         if (xs_type(xs_dict_get(srv_config, "disable_history")) != XSTYPE_TRUE) {
             xs_html *ul = xs_html_tag("ul", NULL);
 
