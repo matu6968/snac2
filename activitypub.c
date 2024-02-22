@@ -1833,16 +1833,29 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         char *actor_date = xs_dict_get(actor_o, "published");
         if (!xs_is_null(actor_date)) {
             time_t actor_t = xs_parse_iso_date(actor_date, 0);
-            int td = (int)(time(NULL) - actor_t);
 
-            snac_debug(snac, 2, xs_fmt("actor %s age: %d seconds", actor, td));
-
-            if (td < min_account_age) {
-                srv_log(xs_fmt("rejected activity from %s (too new, %d seconds)", actor, td));
+            if (actor_t < 950000000) {
+                snac_log(snac, xs_fmt("rejected activity from %s (suspicious date, %s)",
+                    actor, actor_date));
 
                 return 1;
             }
+
+            if (actor_t > 0) {
+                int td = (int)(time(NULL) - actor_t);
+
+                snac_debug(snac, 2, xs_fmt("actor %s age: %d seconds", actor, td));
+
+                if (td < min_account_age) {
+                    snac_log(snac, xs_fmt("rejected activity from %s (too new, %d seconds)",
+                        actor, td));
+
+                    return 1;
+                }
+            }
         }
+        else
+            snac_log(snac, xs_fmt("warning: empty or null creation date for %s", actor));
     }
 
     if (strcmp(type, "Follow") == 0) { /** **/
