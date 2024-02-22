@@ -205,6 +205,10 @@ If set to true, history monthly snapshots are not served nor their links shown.
 This boolean value selects if shared inboxes are announced or not. Enabling
 shared inboxes helps (somewhat) in optimizing incoming traffic for instances
 with a large number of users.
+.It Ic min_account_age
+If this numeric value (in seconds) is set, any activity coming from an account
+that was created more recently than that will be rejected. This may be used
+to mitigate spam from automatically created accounts.
 .El
 .Pp
 You must restart the server to make effective these changes.
