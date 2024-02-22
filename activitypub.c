@@ -1826,6 +1826,25 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         }
     }
 
+    /* check the minimum acceptable account age */
+    int min_account_age = xs_number_get(xs_dict_get(srv_config, "min_account_age"));
+
+    if (min_account_age > 0) {
+        char *actor_date = xs_dict_get(actor_o, "published");
+        if (!xs_is_null(actor_date)) {
+            time_t actor_t = xs_parse_iso_date(actor_date, 0);
+            int td = (int)(time(NULL) - actor_t);
+
+            snac_debug(snac, 2, xs_fmt("actor %s age: %d seconds", actor, td));
+
+            if (td < min_account_age) {
+                srv_log(xs_fmt("rejected activity from %s (too new, %d seconds)", actor, td));
+
+                return 1;
+            }
+        }
+    }
+
     if (strcmp(type, "Follow") == 0) { /** **/
         if (!follower_check(snac, actor)) {
             /* ensure the actor object is here */
