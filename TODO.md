@@ -14,13 +14,15 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
-Add support for rel="me" links, see https://codeberg.org/grunfink/snac2/issues/124 and https://streetpass.social
-
-Hide followers-only replies to unknown accounts, see https://codeberg.org/grunfink/snac2/issues/123
-
 Integrate "Ability to federate with hidden networks" see https://codeberg.org/grunfink/snac2/issues/93
 
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
+
+Consider implementing the rejection of activities from recently-created accounts to mitigate spam, see https://akkoma.dev/AkkomaGang/akkoma/src/branch/develop/lib/pleroma/web/activity_pub/mrf/reject_newly_created_account_note_policy.ex
+
+Consider discarding posts by content using string or regex to mitigate spam.
+
+Consider adding milter-like support to reject posts to mitigate spam.
 
 Do something about Akkoma and Misskey's quoted replies (they use the `quoteUrl` field instead of `inReplyTo`).
 
@@ -301,3 +303,7 @@ Add a flag to make accounts private, i.e., they don't expose any content from th
 Fix duplicate mentions, see https://codeberg.org/grunfink/snac2/issues/115 (2024-02-14T09:51:01+0100).
 
 Change HTML metadata information to the post info instead of user info, see https://codeberg.org/grunfink/snac2/issues/116 (2024-02-14T09:51:22+0100).
+
+Add support for rel="me" links, see https://codeberg.org/grunfink/snac2/issues/124 and https://streetpass.social (2024-02-22T12:40:58+0100).
+
+Hide followers-only replies to unknown accounts, see https://codeberg.org/grunfink/snac2/issues/123 (2024-02-22T12:40:58+0100).
