@@ -195,13 +195,13 @@ int server_get_handler(xs_dict *req, const char *q_path,
                 more = 1;
             }
 
-            *body = html_timeline(NULL, tl, 0, skip, show, more, t, NULL);
+            *body = html_timeline(NULL, tl, 0, skip, show, more, t, NULL, 0);
         }
         else
         if (xs_type(xs_dict_get(srv_config, "show_instance_timeline")) == XSTYPE_TRUE) {
             /** instance timeline **/
             xs *tl = timeline_instance_list(0, 30);
-            *body = html_timeline(NULL, tl, 0, 0, 0, 0, NULL, NULL);
+            *body = html_timeline(NULL, tl, 0, 0, 0, 0, NULL, NULL, 0);
         }
         else
             *body = greeting_html();

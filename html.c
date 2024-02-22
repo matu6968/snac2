@@ -1886,7 +1886,8 @@ xs_html *html_footer(void)
 
 
 xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
-                      int skip, int show, int show_more, char *tag, char *page)
+                      int skip, int show, int show_more,
+                      char *tag, char *page, int utl)
 /* returns the HTML for the timeline */
 {
     xs_list *p = (xs_list *)list;
@@ -1938,7 +1939,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
         xs *msg = NULL;
         int status;
 
-        if (user && !is_pinned_by_md5(user, v))
+        if (utl && user && !is_pinned_by_md5(user, v))
             status = timeline_get_by_md5(user, v, &msg);
         else
             status = object_get_by_md5(v, &msg);
@@ -2412,7 +2413,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE) {
             /** empty public timeline for private users **/
-            *body = html_timeline(&snac, NULL, 1, 0, 0, 0, NULL, "");
+            *body = html_timeline(&snac, NULL, 1, 0, 0, 0, NULL, "", 1);
             *b_size = strlen(*body);
             status  = 200;
         }
@@ -2430,7 +2431,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *pins = pinned_list(&snac);
             pins = xs_list_cat(pins, list);
 
-            *body = html_timeline(&snac, pins, 1, skip, show, xs_list_len(next), NULL, "");
+            *body = html_timeline(&snac, pins, 1, skip, show, xs_list_len(next), NULL, "", 1);
 
             *b_size = strlen(*body);
             status  = 200;
@@ -2467,7 +2468,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 xs *pins = pinned_list(&snac);
                 pins = xs_list_cat(pins, list);
 
-                *body = html_timeline(&snac, pins, 0, skip, show, xs_list_len(next), NULL, "/admin");
+                *body = html_timeline(&snac, pins, 0, skip, show,
+                        xs_list_len(next), NULL, "/admin", 1);
 
                 *b_size = strlen(*body);
                 status  = 200;
@@ -2511,7 +2513,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *list = timeline_instance_list(skip, show);
             xs *next = timeline_instance_list(skip + show, 1);
 
-            *body = html_timeline(&snac, list, 0, skip, show, xs_list_len(next), NULL, "/instance");
+            *body = html_timeline(&snac, list, 0, skip, show,
+                xs_list_len(next), NULL, "/instance", 0);
             *b_size = strlen(*body);
             status  = 200;
         }
@@ -2530,7 +2533,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
             list = xs_list_append(list, md5);
 
-            *body   = html_timeline(&snac, list, 1, 0, 0, 0, NULL, "");
+            *body   = html_timeline(&snac, list, 1, 0, 0, 0, NULL, "", 1);
             *b_size = strlen(*body);
             status  = 200;
         }
