@@ -8,6 +8,8 @@ Follower-only replies to unknown users are not shown in timelines.
 
 Added verification of metadata links: if the linked page contains a link back to the snac user with a rel="me" attribute, it's marked as verified.
 
+Added a new server-level configuration parameter: `min_account_age`. If this value (in seconds) is set in `server.json`, any activity coming from accounts that were created newer than that will be discarded. This can be used to mitigate spam.
+
 Added a profile-page relation to links in webfinger responses (contributed by khm).
 
 Fixed some regressions and a crash.
