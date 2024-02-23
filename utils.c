@@ -66,7 +66,7 @@ static const char *default_css =
     ".snac-footer { margin-top: 2em; font-size: 75% }\n"
     ".snac-poll-result { margin-left: auto; margin-right: auto; }\n"
     "@media (prefers-color-scheme: dark) { \n"
-    "  body { background-color: #000; color: #fff; }\n"
+    "  body, input, textarea { background-color: #000; color: #fff; }\n"
     "  a { color: #7799dd }\n"
     "  a:visited { color: #aa99dd }\n"
     "}\n"
