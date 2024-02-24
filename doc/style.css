@@ -26,7 +26,7 @@ pre { overflow-x: scroll; }
 .snac-footer { margin-top: 2em; font-size: 75% }
 .snac-poll-result { margin-left: auto; margin-right: auto; }
 @media (prefers-color-scheme: dark) { 
-  body { background-color: #000; color: #fff; }
+  body, input, textarea { background-color: #000; color: #fff; }
   a { color: #7799dd }
   a:visited { color: #aa99dd }
 }

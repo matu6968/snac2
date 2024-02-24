@@ -820,7 +820,7 @@ static xs_html *html_user_body(snac *user, int read_only)
                         xs_html_attr("class", "snac-property-name"),
                         xs_html_text(k)),
                     xs_html_text(":"),
-                    xs_html_sctag("br", NULL),
+                    xs_html_raw("&nbsp;"),
                     xs_html_tag("span",
                         xs_html_attr("class", "snac-property-value"),
                         value),
