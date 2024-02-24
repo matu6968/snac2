@@ -18,8 +18,6 @@ Integrate "Ability to federate with hidden networks" see https://codeberg.org/gr
 
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
 
-Consider implementing the rejection of activities from recently-created accounts to mitigate spam, see https://akkoma.dev/AkkomaGang/akkoma/src/branch/develop/lib/pleroma/web/activity_pub/mrf/reject_newly_created_account_note_policy.ex
-
 Consider discarding posts by content using string or regex to mitigate spam.
 
 Consider adding milter-like support to reject posts to mitigate spam.
@@ -307,3 +305,5 @@ Change HTML metadata information to the post info instead of user info, see http
 Add support for rel="me" links, see https://codeberg.org/grunfink/snac2/issues/124 and https://streetpass.social (2024-02-22T12:40:58+0100).
 
 Hide followers-only replies to unknown accounts, see https://codeberg.org/grunfink/snac2/issues/123 (2024-02-22T12:40:58+0100).
+
+Consider implementing the rejection of activities from recently-created accounts to mitigate spam, see https://akkoma.dev/AkkomaGang/akkoma/src/branch/develop/lib/pleroma/web/activity_pub/mrf/reject_newly_created_account_note_policy.ex (2024-02-24T07:46:10+0100).
