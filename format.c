@@ -72,7 +72,7 @@ static xs_str *format_line(const char *line, xs_list **attach)
             else
             if (xs_startswith(v, "http")) {
                 xs *u  = xs_replace(v, "#", "&#35;");
-                xs *v2 = xs_strip_chars_i(xs_dup(u), ".)");
+                xs *v2 = xs_strip_chars_i(xs_dup(u), ".,)");
 
                 const char *mime = xs_mime_by_ext(v2);
 
