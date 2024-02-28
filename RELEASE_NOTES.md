@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.49
+
+Mastodon API: Fixed a bug in how validated links are reported.
+
 ## 2.48
 
 A new instance page, that shows all posts by users in the same instance (like the public instance timeline, but interactive). This will help building communities.
