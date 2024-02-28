@@ -2,7 +2,7 @@
 
 ## 2.48
 
-New instance page, that show all posts by users in the same instance (like the public instance timeline, but interactive). This will help building communities.
+A new instance page, that shows all posts by users in the same instance (like the public instance timeline, but interactive). This will help building communities.
 
 Follower-only replies to unknown users are not shown in timelines.
 
