@@ -624,12 +624,15 @@ xs_dict *mastoapi_account(const xs_dict *actor)
 
     /* dict of validated links */
     xs_dict *val_links = NULL;
+    xs_dict *metadata  = xs_stock_dict;
     snac user = {0};
 
     if (xs_startswith(id, srv_baseurl)) {
         /* if it's a local user, open it and pick its validated links */
-        if (user_open(&user, prefu))
+        if (user_open(&user, prefu)) {
             val_links = user.links;
+            metadata  = xs_dict_get_def(user.config, "metadata", xs_stock_dict);
+        }
     }
 
     if (xs_is_null(val_links))
@@ -644,8 +647,10 @@ xs_dict *mastoapi_account(const xs_dict *actor)
             !xs_is_null(value) && strcmp(type, "PropertyValue") == 0) {
             xs *val_date = NULL;
 
-            if (xs_startswith(value, "https:/" "/")) {
-                xs_number *verified_time = xs_dict_get(val_links, value);
+            char *url = xs_dict_get(metadata, name);
+
+            if (xs_startswith(url, "https:/" "/")) {
+                xs_number *verified_time = xs_dict_get(val_links, url);
                 if (xs_type(verified_time) == XSTYPE_NUMBER) {
                     time_t t = xs_number_get(verified_time);
 
