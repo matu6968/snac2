@@ -649,7 +649,7 @@ xs_dict *mastoapi_account(const xs_dict *actor)
 
             char *url = xs_dict_get(metadata, name);
 
-            if (xs_startswith(url, "https:/" "/")) {
+            if (!xs_is_null(url) && xs_startswith(url, "https:/" "/")) {
                 xs_number *verified_time = xs_dict_get(val_links, url);
                 if (xs_type(verified_time) == XSTYPE_NUMBER) {
                     time_t t = xs_number_get(verified_time);
