@@ -2,7 +2,7 @@
 
 ## 2.49
 
-Mastodon API: Fixed a bug in how validated links are reported.
+Mastodon API: Fixed a bug in how validated links are reported, fixed a bug in search by account.
 
 ## 2.48
 
