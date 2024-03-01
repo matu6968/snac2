@@ -1462,7 +1462,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 /* discard non-Notes */
                 const char *id   = xs_dict_get(msg, "id");
                 const char *type = xs_dict_get(msg, "type");
-                if (!xs_match(type, "Note|Question|Page|Article"))
+                if (!xs_match(type, "Note|Question|Page|Article|Video"))
                     continue;
 
                 const char *from = NULL;
@@ -1492,8 +1492,9 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 if (is_hidden(&snac1, id))
                     continue;
 
-                /* discard poll votes (they have a name) */
-                if (strcmp(type, "Page") != 0 && !xs_is_null(xs_dict_get(msg, "name")))
+                /* if it has a name and it's not a Page or a Video,
+                   it's a poll vote, so discard it */
+                if (!xs_is_null(xs_dict_get(msg, "name")) && !xs_match(type, "Page|Video"))
                     continue;
 
                 /* convert the Note into a Mastodon status */
