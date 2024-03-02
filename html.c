@@ -72,7 +72,6 @@ xs_str *replace_shortnames(xs_str *s, xs_list *tag, int ems)
                     xs_html *img = xs_html_sctag("img",
                         xs_html_attr("loading", "lazy"),
                         xs_html_attr("src", u),
-                        xs_html_attr("title", n),
                         xs_html_attr("style", style));
 
                     xs *s1 = xs_html_render(img);
