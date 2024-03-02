@@ -2,7 +2,13 @@
 
 ## 2.49
 
-Mastodon API: Fixed a bug in how validated links are reported, fixed a bug in search by account, fixed missing `Video` type objects in timelines.
+Mastodon API: Fixed a bug in how validated links are reported.
+
+Mastodon API: Fixed a bug in search by account.
+
+Mastodon API: Fixed missing `Video` type objects in timelines.
+
+Mastodon API: Added search by hashtag.
 
 ## 2.48
 
