@@ -1450,11 +1450,19 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
             if (!xs_is_null(name)) {
                 xs *href = NULL;
+                char *id = xs_dict_get(actor_r, "id");
+                int fwers = 0;
+                int fwing = 0;
 
-                if (!read_only && user != NULL)
+                if (user != NULL) {
+                    fwers = follower_check(user, id);
+                    fwing = following_check(user, id);
+                }
+
+                if (!read_only && (fwers || fwing))
                     href = xs_fmt("%s/people#%s", user->actor, p);
                 else
-                    href = xs_dup(xs_dict_get(actor_r, "id"));
+                    href = xs_dup(id);
 
                 xs_html_add(post_header,
                     xs_html_tag("div",
