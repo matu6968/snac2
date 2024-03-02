@@ -2031,18 +2031,36 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 /* reply something only for offset 0; otherwise,
                    apps like Tusky keep asking again and again */
 
-                if (!xs_is_null(q) && !xs_is_null(type) && strcmp(type, "accounts") == 0) {
-                    /* do a webfinger query */
-                    char *actor = NULL;
-                    char *user  = NULL;
+                if (!xs_is_null(q) && !xs_is_null(type)) {
+                    if (strcmp(type, "accounts") == 0) {
+                        /* do a webfinger query */
+                        char *actor = NULL;
+                        char *user  = NULL;
 
-                    if (valid_status(webfinger_request(q, &actor, &user)) && actor) {
-                        xs *actor_o = NULL;
+                        if (valid_status(webfinger_request(q, &actor, &user)) && actor) {
+                            xs *actor_o = NULL;
 
-                        if (valid_status(actor_request(&snac1, actor, &actor_o))) {
-                            xs *acct = mastoapi_account(actor_o);
+                            if (valid_status(actor_request(&snac1, actor, &actor_o))) {
+                                xs *acct = mastoapi_account(actor_o);
 
-                            acl = xs_list_append(acl, acct);
+                                acl = xs_list_append(acl, acct);
+                            }
+                        }
+                    }
+                    else
+                    if (strcmp(type, "hashtags") == 0) {
+                        /* search this tag */
+                        xs *tl = tag_search((char *)q, 0, 1);
+
+                        if (xs_list_len(tl)) {
+                            xs *d = xs_dict_new();
+
+                            d = xs_dict_append(d, "name", q);
+                            xs *url = xs_fmt("%s?t=%s", srv_baseurl, q);
+                            d = xs_dict_append(d, "url", url);
+                            d = xs_dict_append(d, "history", xs_stock_list);
+
+                            htl = xs_list_append(htl, d);
                         }
                     }
                 }
