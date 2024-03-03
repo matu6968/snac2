@@ -10,6 +10,8 @@ Mastodon API: Fixed missing `Video` type objects in timelines.
 
 Mastodon API: Added search by hashtag.
 
+Some cosmetic fixes to the web interface.
+
 ## 2.48
 
 A new instance page, that shows all posts by users in the same instance (like the public instance timeline, but interactive). This will help building communities.
