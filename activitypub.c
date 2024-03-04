@@ -1855,7 +1855,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
             }
         }
         else
-            snac_log(snac, xs_fmt("warning: empty or null creation date for %s", actor));
+            snac_debug(snac, 1, xs_fmt("warning: empty or null creation date for %s", actor));
     }
 
     if (strcmp(type, "Follow") == 0) { /** **/
