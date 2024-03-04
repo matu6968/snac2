@@ -2457,7 +2457,8 @@ void process_queue_item(xs_dict *q_item)
                     if (is_msg_for_me(&user, msg)) {
                         xs *fn = xs_fmt("%s/queue/%s.json", user.basedir, ntid);
 
-                        snac_debug(&user, 1, xs_fmt("enqueue_input (from shared inbox) %s", fn));
+                        snac_debug(&user, 1,
+                            xs_fmt("enqueue_input (from shared inbox) %s", xs_dict_get(msg, "id")));
 
                         if (link(tmpfn, fn) < 0)
                             srv_log(xs_fmt("link(%s, %s) error", tmpfn, fn));

@@ -2225,7 +2225,7 @@ void enqueue_input(snac *snac, const xs_dict *msg, const xs_dict *req, int retri
 
     qmsg = _enqueue_put(fn, qmsg);
 
-    snac_debug(snac, 1, xs_fmt("enqueue_input %s %s", fn, xs_dict_get(msg, "id")));
+    snac_debug(snac, 1, xs_fmt("enqueue_input %s", xs_dict_get(msg, "id")));
 }
 
 
@@ -2240,7 +2240,7 @@ void enqueue_shared_input(const xs_dict *msg, const xs_dict *req, int retries)
 
     qmsg = _enqueue_put(fn, qmsg);
 
-    srv_debug(1, xs_fmt("enqueue_shared_input %s %s", fn, xs_dict_get(msg, "id")));
+    srv_debug(1, xs_fmt("enqueue_shared_input %s", xs_dict_get(msg, "id")));
 }
 
 
