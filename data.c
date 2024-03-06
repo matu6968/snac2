@@ -102,6 +102,13 @@ int srv_open(char *basedir, int auto_upgrade)
     xs *tmpdir = xs_fmt("%s/tmp", srv_basedir);
     mkdirx(tmpdir);
 
+#ifdef __APPLE__
+/* Apple uses st_atimespec instead of st_atim etc */
+#define st_atim st_atimespec
+#define st_ctim st_ctimespec
+#define st_mtim st_mtimespec
+#endif
+
 #ifdef __OpenBSD__
     char *v = xs_dict_get(srv_config, "disable_openbsd_security");
 
