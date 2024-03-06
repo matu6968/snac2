@@ -1801,7 +1801,11 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         xs *l1 = xs_list_append(xs_list_new(), "en");
         ins = xs_dict_append(ins, "languages", l1);
 
-        ins = xs_dict_append(ins, "urls", xs_stock_dict);
+        xs *wss = xs_fmt("wss:/" "/%s", xs_dict_get(srv_config, "host"));
+        xs *urls = xs_dict_new();
+        urls = xs_dict_append(urls, "streaming_api", wss);
+
+        ins = xs_dict_append(ins, "urls", urls);
 
         xs *d2 = xs_dict_append(xs_dict_new(), "user_count", xs_stock_0);
         d2 = xs_dict_append(d2, "status_count", xs_stock_0);
