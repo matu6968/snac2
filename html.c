@@ -1324,8 +1324,14 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         return NULL;
 
     /* hidden? do nothing more for this conversation */
-    if (user && is_hidden(user, id))
-        return NULL;
+    if (user && is_hidden(user, id)) {
+        xs *s1 = xs_fmt("%s_entry", md5);
+
+        /* return just an dummy anchor, to keep position after hitting 'Hide' */
+        return xs_html_tag("div",
+            xs_html_tag("a",
+                xs_html_attr("name", s1)));
+    }
 
     /* avoid too deep nesting, as it may be a loop */
     if (level >= 256)
@@ -1356,8 +1362,14 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         return NULL;
 
     /* ignore muted morons immediately */
-    if (user && is_muted(user, actor))
-        return NULL;
+    if (user && is_muted(user, actor)) {
+        xs *s1 = xs_fmt("%s_entry", md5);
+
+        /* return just an dummy anchor, to keep position after hitting 'MUTE' */
+        return xs_html_tag("div",
+            xs_html_tag("a",
+                xs_html_attr("name", s1)));
+    }
 
     if ((user == NULL || strcmp(actor, user->actor) != 0)
         && !valid_status(actor_get(actor, NULL)))
