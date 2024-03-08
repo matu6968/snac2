@@ -310,7 +310,7 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
 {
     int status = 0;
 
-    if (level < 256 && !xs_is_null(*id)) {
+    if (level < MAX_CONVERSATION_LEVELS && !xs_is_null(*id)) {
         xs *msg = NULL;
 
         /* is the object already there? */

@@ -16,6 +16,10 @@
 #define MAX_THREADS 256
 #endif
 
+#ifndef MAX_CONVERSATION_LEVELS
+#define MAX_CONVERSATION_LEVELS 48
+#endif
+
 extern double disk_layout;
 extern xs_str *srv_basedir;
 extern xs_dict *srv_config;

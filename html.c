@@ -1334,8 +1334,9 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     }
 
     /* avoid too deep nesting, as it may be a loop */
-    if (level >= 256)
-        return NULL;
+    if (level >= MAX_CONVERSATION_LEVELS)
+        return xs_html_tag("mark",
+            xs_html_text(L("Truncated (too deep)")));
 
     if (strcmp(type, "Follow") == 0) {
         return xs_html_tag("div",
