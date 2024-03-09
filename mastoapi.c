@@ -1172,7 +1172,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 if (xs_is_null(val_links))
                     val_links = xs_stock_dict;
 
-                while (xs_dict_iter(&metadata, &k, &v)) {
+                int c = 0;
+                while (xs_dict_next(metadata, &k, &v, &c)) {
                     xs *val_date = NULL;
 
                     xs_number *verified_time = xs_dict_get(val_links, v);

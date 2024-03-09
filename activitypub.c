@@ -1221,7 +1221,8 @@ xs_dict *msg_actor(snac *snac)
         xs_str *k;
         xs_str *v;
 
-        while (xs_dict_iter(&metadata, &k, &v)) {
+        int c = 0;
+        while (xs_dict_next(metadata, &k, &v, &c)) {
             xs *d = xs_dict_new();
 
             xs *k2 = encode_html(k);

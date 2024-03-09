@@ -423,7 +423,8 @@ void verify_links(snac *user)
     headers = xs_dict_append(headers, "accept", "text/html");
     headers = xs_dict_append(headers, "user-agent", USER_AGENT " (link verify)");
 
-    while (p && xs_dict_iter(&p, &k, &v)) {
+    int c = 0;
+    while (p && xs_dict_next(p, &k, &v, &c)) {
         /* not an https link? skip */
         if (!xs_startswith(v, "https:/" "/"))
             continue;

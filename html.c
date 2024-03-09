@@ -779,7 +779,8 @@ static xs_html *html_user_body(snac *user, int read_only)
             xs_html *snac_metadata = xs_html_tag("div",
                 xs_html_attr("class", "snac-metadata"));
 
-            while (xs_dict_iter(&metadata, &k, &v)) {
+            int c = 0;
+            while (xs_dict_next(metadata, &k, &v, &c)) {
                 xs_html *value;
 
                 if (xs_startswith(v, "https:/" "/")) {
@@ -944,7 +945,8 @@ xs_html *html_top_controls(snac *snac)
     xs_str *k;
     xs_str *v;
 
-    while (xs_dict_iter(&md, &k, &v)) {
+    int c = 0;
+    while (xs_dict_next(md, &k, &v, &c)) {
         xs *kp = xs_fmt("%s=%s", k, v);
 
         if (*metadata)

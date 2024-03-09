@@ -403,7 +403,8 @@ void httpd_connection(FILE *f)
     xs_dict *more_headers = xs_dict_get(srv_config, "http_headers");
     if (xs_type(more_headers) == XSTYPE_DICT) {
         char *k, *v;
-        while (xs_dict_iter(&more_headers, &k, &v))
+        int c = 0;
+        while (xs_dict_next(more_headers, &k, &v, &c))
             headers = xs_dict_set(headers, k, v);
     }
 
