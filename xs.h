@@ -109,6 +109,7 @@ xs_dict *xs_dict_append_m(xs_dict *dict, const xs_str *key, const xs_val *mem, i
 xs_dict *xs_dict_prepend_m(xs_dict *dict, const xs_str *key, const xs_val *mem, int dsz);
 #define xs_dict_prepend(dict, key, data) xs_dict_prepend_m(dict, key, data, xs_size(data))
 int xs_dict_iter(xs_dict **dict, xs_str **key, xs_val **value);
+int xs_dict_next(const xs_dict *dict, xs_str **key, xs_val **value, int *ctxt);
 xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_val *def);
 #define xs_dict_get(dict, key) xs_dict_get_def(dict, key, NULL)
 xs_dict *xs_dict_del(xs_dict *dict, const xs_str *key);
@@ -1024,17 +1025,52 @@ int xs_dict_iter(xs_dict **dict, xs_str **key, xs_val **value)
 }
 
 
+int xs_dict_next(const xs_dict *dict, xs_str **key, xs_val **value, int *ctxt)
+/* iterates a dict, with context */
+{
+    int goon = 1;
+
+    char *p = (char *)dict;
+
+    /* skip the start of the list */
+    if (*ctxt == 0)
+        *ctxt = 1 + _XS_TYPE_SIZE;
+
+    p += *ctxt;
+
+    /* an element? */
+    if (xs_type(p) == XSTYPE_DITEM) {
+        p++;
+
+        *key = p;
+        p += xs_size(*key);
+
+        *value = p;
+        p += xs_size(*value);
+    }
+    else {
+        /* end of list */
+        goon = 0;
+    }
+
+    /* store back the pointer */
+    *ctxt = p - dict;
+
+    return goon;
+}
+
+
 xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_val *def)
 /* returns the value directed by key, or the default value */
 {
     XS_ASSERT_TYPE(dict, XSTYPE_DICT);
     XS_ASSERT_TYPE(key, XSTYPE_STRING);
 
-    xs_dict *p = (xs_dict *)dict;
     xs_str *k;
     xs_val *v;
+    int c = 0;
 
-    while (xs_dict_iter(&p, &k, &v)) {
+    while (xs_dict_next(dict, &k, &v, &c)) {
         if (strcmp(k, key) == 0)
             return v;
     }
@@ -1051,9 +1087,9 @@ xs_dict *xs_dict_del(xs_dict *dict, const xs_str *key)
 
     xs_str *k;
     xs_val *v;
-    xs_dict *p = dict;
+    int c = 0;
 
-    while (xs_dict_iter(&p, &k, &v)) {
+    while (xs_dict_next(dict, &k, &v, &c)) {
         if (strcmp(k, key) == 0) {
             /* the address of the item is just behind the key */
             char *i = k - 1;

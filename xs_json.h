@@ -115,7 +115,9 @@ static void _xs_json_dump(const xs_val *s_data, int level, int indent, FILE *f)
         fputc('{', f);
 
         xs_str *k;
-        while (xs_dict_iter(&data, &k, &v)) {
+        int ct = 0;
+
+        while (xs_dict_next(s_data, &k, &v, &ct)) {
             if (c != 0)
                 fputc(',', f);
 

@@ -93,7 +93,6 @@ xs_dict *xs_http_request(const char *method, const char *url,
     xs_dict *response;
     CURL *curl;
     struct curl_slist *list = NULL;
-    xs_dict *p;
     xs_str *k;
     xs_val *v;
     long lstatus = 0;
@@ -147,8 +146,8 @@ xs_dict *xs_http_request(const char *method, const char *url,
     }
 
     /* fill the request headers */
-    p = (xs_dict *)headers;
-    while (xs_dict_iter(&p, &k, &v)) {
+    int c = 0;
+    while (xs_dict_next(headers, &k, &v, &c)) {
         xs *h = xs_fmt("%s: %s", k, v);
 
         list = curl_slist_append(list, h);

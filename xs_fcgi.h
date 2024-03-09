@@ -293,7 +293,6 @@ void xs_fcgi_response(FILE *f, int status, xs_dict *headers, xs_str *body, int b
     struct fcgi_record_header hdr = {0};
     struct fcgi_end_request ereq = {0};
     xs *out = xs_str_new(NULL);
-    xs_dict *p;
     xs_str *k;
     xs_str *v;
 
@@ -307,8 +306,8 @@ void xs_fcgi_response(FILE *f, int status, xs_dict *headers, xs_str *body, int b
         out = xs_str_cat(out, s1);
     }
 
-    p = headers;
-    while (xs_dict_iter(&p, &k, &v)) {
+    int c = 0;
+    while (xs_dict_next(headers, &k, &v, &c)) {
         xs *s1 = xs_fmt("%s: %s\r\n", k, v);
         out = xs_str_cat(out, s1);
     }
