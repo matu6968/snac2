@@ -1028,6 +1028,9 @@ int xs_dict_iter(xs_dict **dict, xs_str **key, xs_val **value)
 int xs_dict_next(const xs_dict *dict, xs_str **key, xs_val **value, int *ctxt)
 /* iterates a dict, with context */
 {
+    if (xs_type(dict) != XSTYPE_DICT)
+        return 0;
+
     int goon = 1;
 
     char *p = (char *)dict;

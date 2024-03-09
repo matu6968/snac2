@@ -77,7 +77,8 @@ xs_dict *http_signed_request_raw(const char *keyid, const char *seckey,
 
     /* transfer the original headers */
     hdrs = xs_dict_new();
-    while (xs_dict_iter(&headers, &k, &v))
+    int c = 0;
+    while (xs_dict_next(headers, &k, &v, &c))
         hdrs = xs_dict_append(hdrs, k, v);
 
     /* add the new headers */
