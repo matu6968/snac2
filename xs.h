@@ -154,8 +154,15 @@ xs_val xs_stock_true[]  = { XSTYPE_TRUE };
 xs_val xs_stock_false[] = { XSTYPE_FALSE };
 xs_val xs_stock_0[]     = { XSTYPE_NUMBER, '0', '\0' };
 xs_val xs_stock_1[]     = { XSTYPE_NUMBER, '1', '\0' };
+
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 xs_val xs_stock_list[]  = { XSTYPE_LIST, 0, 0, 0, 1 + _XS_TYPE_SIZE + 1, XSTYPE_EOM };
 xs_val xs_stock_dict[]  = { XSTYPE_DICT, 0, 0, 0, 1 + _XS_TYPE_SIZE + 1, XSTYPE_EOM };
+#else
+xs_val xs_stock_list[]  = { XSTYPE_LIST, 1 + _XS_TYPE_SIZE + 1, 0, 0, 0, XSTYPE_EOM };
+xs_val xs_stock_dict[]  = { XSTYPE_DICT, 1 + _XS_TYPE_SIZE + 1, 0, 0, 0, XSTYPE_EOM };
+#endif
+
 
 void *_xs_realloc(void *ptr, size_t size, const char *file, int line, const char *func)
 {
@@ -274,21 +281,16 @@ xstype xs_type(const xs_val *data)
 void _xs_put_size(xs_val *ptr, int i)
 /* must match _XS_TYPE_SIZE */
 {
-    unsigned char *p = (unsigned char *)ptr;
-
-    p[0] = (i >> 24) & 0x7f;
-    p[1] = (i >> 16) & 0xff;
-    p[2] = (i >> 8) & 0xff;
-    p[3] = i & 0xff;
+    memcpy(ptr, &i, sizeof(i));
 }
 
 
 int _xs_get_size(const xs_val *ptr)
 /* must match _XS_TYPE_SIZE */
 {
-    unsigned char *p = (unsigned char *)ptr;
-
-    return (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+    int i;
+    memcpy(&i, ptr, sizeof(i));
+    return i;
 }
 
 
