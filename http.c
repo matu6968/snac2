@@ -32,7 +32,8 @@ xs_dict *http_signed_request_raw(const char *keyid, const char *seckey,
     date = xs_str_utctime(0, "%a, %d %b %Y %H:%M:%S GMT");
 
     {
-        xs *s = xs_replace_n(url, "https:/" "/", "", 1);
+        xs *s1 = xs_replace_n(url, "http:/" "/", "", 1);
+        xs *s = xs_replace_n(s1, "https:/" "/", "", 1);
         l1 = xs_split_n(s, "/", 1);
     }
 
