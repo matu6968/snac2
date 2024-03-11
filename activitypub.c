@@ -1912,7 +1912,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
             return 1;
         }
 
-        if (strcmp(utype, "Note") == 0) { /** **/
+        if (xs_match(utype, "Note|Article")) { /** **/
             char *id          = xs_dict_get(object, "id");
             char *in_reply_to = xs_dict_get(object, "inReplyTo");
             xs *wrk           = NULL;
