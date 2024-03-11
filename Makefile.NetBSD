@@ -1,6 +1,7 @@
 PREFIX=/usr/pkg
 PREFIX_MAN=$(PREFIX)/man
 CFLAGS?=-g -Wall -Wextra
+LDFLAGS=-lrt
 
 all: snac
 
