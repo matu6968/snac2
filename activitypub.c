@@ -354,18 +354,22 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
                 if (xs_match(type, "Note|Page|Article|Video")) {
                     const char *actor = get_atto(object);
 
-                    /* request (and drop) the actor for this entry */
-                    if (!xs_is_null(actor))
-                        actor_request(snac, actor, NULL);
+                    if (content_check("filter_reject.txt", object))
+                        snac_log(snac, xs_fmt("timeline_request rejected by content %s", nid));
+                    else {
+                        /* request (and drop) the actor for this entry */
+                        if (!xs_is_null(actor))
+                            actor_request(snac, actor, NULL);
 
-                    /* does it have an ancestor? */
-                    char *in_reply_to = xs_dict_get(object, "inReplyTo");
+                        /* does it have an ancestor? */
+                        char *in_reply_to = xs_dict_get(object, "inReplyTo");
 
-                    /* store */
-                    timeline_add(snac, nid, object);
+                        /* store */
+                        timeline_add(snac, nid, object);
 
-                    /* recurse! */
-                    timeline_request(snac, &in_reply_to, NULL, level + 1);
+                        /* recurse! */
+                        timeline_request(snac, &in_reply_to, NULL, level + 1);
+                    }
                 }
             }
         }

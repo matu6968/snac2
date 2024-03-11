@@ -2010,7 +2010,8 @@ int instance_unblock(const char *instance)
 /** content filtering **/
 
 int content_check(const char *file, const xs_dict *msg)
-/* checks if message content matches any of the regexes in file */
+/* checks if a message's content matches any of the regexes in file */
+/* file format: one regex per line */
 {
     xs *fn = xs_fmt("%s/%s", srv_basedir, file);
     FILE *f;
@@ -2021,6 +2022,7 @@ int content_check(const char *file, const xs_dict *msg)
         if ((f = fopen(fn, "r")) != NULL) {
             srv_debug(1, xs_fmt("content_check: loading regexes from %s", fn));
 
+            /* massage content (strip HTML tags, etc.) */
             xs *c = xs_regex_replace(v, "<[^>]+>", " ");
             c = xs_regex_replace_i(c, " {2,}", " ");
             c = xs_tolower_i(c);
