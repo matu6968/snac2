@@ -204,6 +204,8 @@ int is_instance_blocked(const char *instance);
 int instance_block(const char *instance);
 int instance_unblock(const char *instance);
 
+int content_check(const char *file, const xs_dict *msg);
+
 void enqueue_input(snac *snac, const xs_dict *msg, const xs_dict *req, int retries);
 void enqueue_shared_input(const xs_dict *msg, const xs_dict *req, int retries);
 void enqueue_output_raw(const char *keyid, const char *seckey,

@@ -1921,10 +1921,15 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
                 snac_debug(snac, 0, xs_fmt("dropped reply %s to hidden post %s", id, in_reply_to));
             }
             else {
+                if (content_check("filter_reject.txt", object)) {
+                    snac_log(snac, xs_fmt("rejected by content %s", id));
+                    return 1;
+                }
+
                 timeline_request(snac, &in_reply_to, &wrk, 0);
 
                 if (timeline_add(snac, id, object)) {
-                    snac_log(snac, xs_fmt("new 'Note' %s %s", actor, id));
+                    snac_log(snac, xs_fmt("new '%s' %s %s", utype, actor, id));
                     do_notify = 1;
                 }
 

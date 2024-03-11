@@ -9,6 +9,7 @@
 #include "xs_glob.h"
 #include "xs_set.h"
 #include "xs_time.h"
+#include "xs_regex.h"
 
 #include "snac.h"
 
@@ -2003,6 +2004,45 @@ int instance_unblock(const char *instance)
         ret = -2;
 
     return ret;
+}
+
+
+/** content filtering **/
+
+int content_check(const char *file, const xs_dict *msg)
+/* checks if message content matches any of the regexes in file */
+{
+    xs *fn = xs_fmt("%s/%s", srv_basedir, file);
+    FILE *f;
+    int r = 0;
+    char *v = xs_dict_get(msg, "content");
+
+    if (xs_type(v) == XSTYPE_STRING && *v) {
+        if ((f = fopen(fn, "r")) != NULL) {
+            srv_debug(1, xs_fmt("content_check: loading regexes from %s", fn));
+
+            xs *c = xs_regex_replace(v, "<[^>]+>", " ");
+            c = xs_regex_replace_i(c, " {2,}", " ");
+            c = xs_tolower_i(c);
+
+            while (!r && !feof(f)) {
+                xs *rx = xs_strip_i(xs_readline(f));
+
+                if (*rx) {
+                    xs *l = xs_regex_select_n(c, rx, 1);
+
+                    if (xs_list_len(l)) {
+                        srv_debug(1, xs_fmt("content_check: match for '%s'", rx));
+                        r = 1;
+                    }
+                }
+            }
+
+            fclose(f);
+        }
+    }
+
+    return r;
 }
 
 
