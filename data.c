@@ -2470,7 +2470,7 @@ void enqueue_actor_refresh(snac *user, const char *actor)
 
     qmsg = _enqueue_put(fn, qmsg);
 
-    snac_debug(user, 1, xs_fmt("enqueue_actor_refresh %s", user->actor));
+    snac_debug(user, 1, xs_fmt("enqueue_actor_refresh %s", actor));
 }
 
 
