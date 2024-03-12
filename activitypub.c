@@ -127,8 +127,14 @@ int actor_request(snac *user, const char *actor, xs_dict **data)
     /* get from disk first */
     status = actor_get(actor, data);
 
-    if (status != 200) {
-        /* actor data non-existent or stale: get from the net */
+    if (status == 205) {
+        /* stale actor: use it, but request a refresh */
+        if (!xs_startswith(actor, srv_baseurl))
+            enqueue_actor_request(user, actor);
+    }
+    else
+    if (!valid_status(status)) {
+        /* actor data non-existent: get from the net */
         status = activitypub_request(user, actor, &payload);
 
         if (valid_status(status)) {
@@ -149,8 +155,6 @@ int actor_request(snac *user, const char *actor, xs_dict **data)
         if (valid_status(status) && data && *data)
             inbox_add_by_actor(*data);
     }
-    else
-        srv_debug(2, xs_fmt("NOT collected"));
 
     return status;
 }
@@ -2248,9 +2252,9 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
     if (strcmp(type, "actor_request") == 0) {
         const char *actor = xs_dict_get(q_item, "actor");
         double mtime = object_mtime(actor);
-        double max_time = 3600.0 * 36.0;
 
-        if (mtime + max_time < (double) time(NULL)) {
+        /* only refresh if it was refreshed more than an hour ago */
+        if (mtime + 3600.0 < (double) time(NULL)) {
             xs *actor_o = NULL;
             int status;
 

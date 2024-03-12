@@ -1596,7 +1596,7 @@ int actor_get_refresh(snac *user, const char *actor, xs_dict **data)
 {
     int status = actor_get(actor, data);
 
-    if (status == 205 && user && !xs_startswith(user->actor, srv_baseurl))
+    if (status == 205 && user && !xs_startswith(actor, srv_baseurl))
         enqueue_actor_request(user, actor);
 
     return status;
