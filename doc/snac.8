@@ -230,9 +230,32 @@ for details. Further, every user can have a private CSS file in their
 that will be served instead of the server-wide one.
 It's not modifiable from the web interface to avoid users
 shooting themselves in the foot by destroying everything.
-.Ss Old Data Purging
-From version 2.06, there is no longer a need to add a special
-cron job for purging old data, as this is managed internally.
+.Ss SPAM Mitigation
+There have been some SPAM attacks on the Fediverse and, as too many
+instances and server implementations out there still allow automatic
+account creation, it will only get worse.
+.Nm
+includes some (not very strong) tools for trying to survive the SPAM
+flood that will eventually happen.
+.Pp
+The 
+.Ic min_account_age
+field in the main configuration file allows setting a minimum age (in
+seconds) to consider too recently created accounts suspicious of being
+a potential source of SPAM. This is a naïve assumption, because spammers
+can create accounts, let them dormant for a while and then start to use
+them. Also, some ActivityPub implementations don't even bother to return
+a creation date for their accounts, so this is not very useful.
+.Pp
+From version 2.50, post content can be filtered out by regular expressions.
+These weapons of mass destruction can be written into the
+.Ic filter_reject.txt
+file in the server base directory, one per line; if this file exists,
+all posts' content will be matched against these regexes, one by one, and
+any match will make the post to be rejected. If you don't know about regular
+expressions, don't use this option (or learn about them in some tutorial,
+there are gazillions of them out there), as you and your users may start
+missing posts.
 .Ss ActivityPub Support
 These are the following activities and objects that
 .Nm
