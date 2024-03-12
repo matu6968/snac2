@@ -359,9 +359,9 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
             }
         }
 
-	/* no code? 
-	   I'm not sure of the impacts of this right now, but Subway Tooter does not
-	   provide a code so one must be generated */
+        /* no code? 
+           I'm not sure of the impacts of this right now, but Subway Tooter does not
+           provide a code so one must be generated */
         if (xs_is_null(code)){
             code = random_str();
         }
@@ -1716,8 +1716,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     else
     if (strcmp(cmd, "/v2/filters") == 0) { /** **/
         /* snac will never have filters 
-	 * but still, without a v2 endpoint a short delay is introduced
-	 * in some apps */
+         * but still, without a v2 endpoint a short delay is introduced
+         * in some apps */
         *body  = xs_dup("[]");
         *ctype = "application/json";
         status = 200;
@@ -2115,7 +2115,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     }
     else if (i_ctype && xs_startswith(i_ctype, "application/x-www-form-urlencoded"))
     {
-	// Some apps send form data instead of json so we should cater for those
+        // Some apps send form data instead of json so we should cater for those
         if (!xs_is_null(payload)) {
             xs *upl = xs_url_dec(payload);
             args    = xs_url_vars(upl);
