@@ -129,7 +129,7 @@ int actor_request(snac *user, const char *actor, xs_dict **data)
 
     if (status == 205) {
         /* stale actor: use it, but request a refresh */
-        if (!xs_startswith(actor, srv_baseurl))
+        if (user && !xs_startswith(actor, srv_baseurl))
             enqueue_actor_refresh(user, actor);
     }
     else
