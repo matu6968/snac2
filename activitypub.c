@@ -130,7 +130,7 @@ int actor_request(snac *user, const char *actor, xs_dict **data)
     if (status == 205) {
         /* stale actor: use it, but request a refresh */
         if (!xs_startswith(actor, srv_baseurl))
-            enqueue_actor_request(user, actor);
+            enqueue_actor_refresh(user, actor);
     }
     else
     if (!valid_status(status)) {
@@ -2249,7 +2249,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         verify_links(snac);
     }
     else
-    if (strcmp(type, "actor_request") == 0) {
+    if (strcmp(type, "actor_refresh") == 0) {
         const char *actor = xs_dict_get(q_item, "actor");
         double mtime = object_mtime(actor);
 
@@ -2263,7 +2263,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
             else
                 object_touch(actor);
 
-            snac_log(snac, xs_fmt("refresh actor %s %d", actor, status));
+            snac_log(snac, xs_fmt("actor_refresh %s %d", actor, status));
         }
     }
     else

@@ -223,7 +223,7 @@ void enqueue_ntfy(const xs_str *msg, const char *ntfy_server, const char *ntfy_t
 void enqueue_message(snac *snac, const xs_dict *msg);
 void enqueue_close_question(snac *user, const char *id, int end_secs);
 void enqueue_verify_links(snac *user);
-void enqueue_actor_request(snac *user, const char *actor);
+void enqueue_actor_refresh(snac *user, const char *actor);
 void enqueue_request_replies(snac *user, const char *id);
 int was_question_voted(snac *user, const char *id);
 
