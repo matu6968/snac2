@@ -746,7 +746,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 /* converts an ActivityPub note to a Mastodon status */
 {
     xs *actor = NULL;
-    actor_get(get_atto(msg), &actor);
+    actor_get_refresh(snac, get_atto(msg), &actor);
 
     /* if the author is not here, discard */
     if (actor == NULL)

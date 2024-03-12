@@ -110,6 +110,8 @@ int object_del(const char *id);
 int object_del_if_unref(const char *id);
 double object_ctime_by_md5(const char *md5);
 double object_ctime(const char *id);
+double object_mtime_by_md5(const char *md5);
+double object_mtime(const char *id);
 int object_admire(const char *id, const char *actor, int like);
 int object_unadmire(const char *id, const char *actor, int like);
 
@@ -172,6 +174,7 @@ xs_list *tag_search(char *tag, int skip, int show);
 
 int actor_add(const char *actor, xs_dict *msg);
 int actor_get(const char *actor, xs_dict **data);
+int actor_get_refresh(snac *user, const char *actor, xs_dict **data);
 
 int static_get(snac *snac, const char *id, xs_val **data, int *size, const char *inm, xs_str **etag);
 void static_put(snac *snac, const char *id, const char *data, int size);
@@ -218,6 +221,7 @@ void enqueue_ntfy(const xs_str *msg, const char *ntfy_server, const char *ntfy_t
 void enqueue_message(snac *snac, const xs_dict *msg);
 void enqueue_close_question(snac *user, const char *id, int end_secs);
 void enqueue_verify_links(snac *user);
+void enqueue_actor_request(snac *user, const char *actor);
 void enqueue_request_replies(snac *user, const char *id);
 int was_question_voted(snac *user, const char *id);
 

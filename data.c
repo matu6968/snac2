@@ -797,6 +797,20 @@ double object_ctime(const char *id)
 }
 
 
+double object_mtime_by_md5(const char *md5)
+{
+    xs *fn = _object_fn_by_md5(md5, "object_mtime_by_md5");
+    return mtime(fn);
+}
+
+
+double object_mtime(const char *id)
+{
+    xs *md5 = xs_md5_hex(id, strlen(id));
+    return object_mtime_by_md5(md5);
+}
+
+
 xs_str *_object_index_fn(const char *id, const char *idxsfx)
 /* returns the filename of an object's index */
 {
@@ -1552,7 +1566,6 @@ int actor_get(const char *actor, xs_dict **data)
     else
         d = xs_free(d);
 
-#ifdef STALE_ACTORS
     xs *fn = _object_fn(actor);
     double max_time;
 
@@ -1561,13 +1574,20 @@ int actor_get(const char *actor, xs_dict **data)
 
     if (mtime(fn) + max_time < (double) time(NULL)) {
         /* actor data exists but also stinks */
-
-        /* touch the file */
-        utimes(fn, NULL);
-
         status = 205; /* "205: Reset Content" "110: Response Is Stale" */
     }
-#endif /* STALE_ACTORS */
+
+    return status;
+}
+
+
+int actor_get_refresh(snac *user, const char *actor, xs_dict **data)
+/* gets an actor and requests and refresh if it's stale */
+{
+    int status = actor_get(actor, data);
+
+    if (status == 205)
+        enqueue_actor_request(user, actor);
 
     return status;
 }
@@ -2426,6 +2446,21 @@ void enqueue_verify_links(snac *user)
     qmsg = _enqueue_put(fn, qmsg);
 
     snac_debug(user, 1, xs_fmt("enqueue_verify_links %s", user->actor));
+}
+
+
+void enqueue_actor_request(snac *user, const char *actor)
+/* enqueues an actor request */
+{
+    xs *qmsg   = _new_qmsg("actor_request", "", 0);
+    char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn     = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+
+    qmsg = xs_dict_append(qmsg, "actor", actor);
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    snac_debug(user, 1, xs_fmt("enqueue_actor_request %s", user->actor));
 }
 
 

@@ -2245,6 +2245,22 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         verify_links(snac);
     }
     else
+    if (strcmp(type, "actor_request") == 0) {
+        const char *actor = xs_dict_get(q_item, "actor");
+        double mtime = object_mtime(actor);
+        double max_time = 3600.0 * 36.0;
+
+        if (mtime + max_time < (double) time(NULL)) {
+            xs *actor_o = NULL;
+            int status;
+
+            if (valid_status((status = activitypub_request(snac, actor, &actor_o))))
+                actor_add(actor, actor_o);
+
+            snac_log(snac, xs_fmt("refresh actor %s %d", actor, status));
+        }
+    }
+    else
         snac_log(snac, xs_fmt("unexpected user q_item type '%s'", type));
 }
 

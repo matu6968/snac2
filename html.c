@@ -245,7 +245,7 @@ xs_html *html_msg_icon(snac *user, char *actor_id, const xs_dict *msg)
     xs *actor = NULL;
     xs_html *actor_icon = NULL;
 
-    if (actor_id && valid_status(actor_get(actor_id, &actor))) {
+    if (actor_id && valid_status(actor_get_refresh(user, actor_id, &actor))) {
         char *date  = NULL;
         char *udate = NULL;
         char *url   = NULL;
