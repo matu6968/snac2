@@ -106,6 +106,11 @@ This file is served when the server base URL is requested from a web browser. Se
 for more information about the customization options.
 .It Pa public.idx
 This file contains the list of public posts from all users in the server.
+.It Pa filter_reject.txt
+This (optional) file contains a list of regular expressions, one per line, to be
+applied to the content of all incoming posts; if any of them match, the post is
+rejected. This brings the flexibility and destruction power of regular expressions
+to your Fediverse experience. To be used wisely.
 .El
 .Pp
 Each user directory is a subdirectory of 
