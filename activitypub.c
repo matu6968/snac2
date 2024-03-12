@@ -2256,6 +2256,8 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
 
             if (valid_status((status = activitypub_request(snac, actor, &actor_o))))
                 actor_add(actor, actor_o);
+            else
+                object_touch(actor);
 
             snac_log(snac, xs_fmt("refresh actor %s %d", actor, status));
         }

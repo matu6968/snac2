@@ -811,6 +811,16 @@ double object_mtime(const char *id)
 }
 
 
+void object_touch(const char *id)
+{
+    xs *md5 = xs_md5_hex(id, strlen(id));
+    xs *fn = _object_fn_by_md5(md5, "object_touch");
+
+    if (mtime(fn))
+        utimes(fn, NULL);
+}
+
+
 xs_str *_object_index_fn(const char *id, const char *idxsfx)
 /* returns the filename of an object's index */
 {
@@ -1586,7 +1596,7 @@ int actor_get_refresh(snac *user, const char *actor, xs_dict **data)
 {
     int status = actor_get(actor, data);
 
-    if (status == 205)
+    if (status == 205 && user && !xs_startswith(user->actor, srv_baseurl))
         enqueue_actor_request(user, actor);
 
     return status;

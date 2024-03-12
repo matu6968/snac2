@@ -112,6 +112,8 @@ double object_ctime_by_md5(const char *md5);
 double object_ctime(const char *id);
 double object_mtime_by_md5(const char *md5);
 double object_mtime(const char *id);
+void object_touch(const char *id);
+
 int object_admire(const char *id, const char *actor, int like);
 int object_unadmire(const char *id, const char *actor, int like);
 
