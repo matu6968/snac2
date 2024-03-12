@@ -1,5 +1,15 @@
 # Release Notes
 
+## 2.50
+
+Posts can now be filtered out by content using regular expressions on a server level (these regexes are written in the `filter_reject.txt` file at the server base directory; see `snac(8)`).
+
+Improved page position after hitting the `Hide` or `MUTE` buttons (for most cases).
+
+Use a shorter maximum conversation thread level (also, this maximum value is now configurable at compilation level with the `MAX_CONVERSATION_LEVELS` define).
+
+Added defines for time to enable MacOS builds (contributed by andypiper).
+
 ## 2.49
 
 Mastodon API: Fixed a bug in how validated links are reported.
