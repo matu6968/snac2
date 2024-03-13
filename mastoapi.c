@@ -574,7 +574,7 @@ xs_dict *mastoapi_account(const xs_dict *actor)
         header = xs_dup(xs_dict_get(hd, "url"));
 
     if (xs_is_null(header))
-        header = xs_dup("");
+        header = xs_fmt("%s/header.png", srv_baseurl);
 
     acct = xs_dict_append(acct, "header", header);
     acct = xs_dict_append(acct, "header_static", header);
@@ -1142,8 +1142,6 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             acct = xs_dict_append(acct, "last_status_at", xs_dict_get(snac1.config, "published"));
             acct = xs_dict_append(acct, "note",         xs_dict_get(snac1.config, "bio"));
             acct = xs_dict_append(acct, "url",          snac1.actor);
-            acct = xs_dict_append(acct, "header",       "");
-            acct = xs_dict_append(acct, "header_static", "");
             acct = xs_dict_append(acct, "locked",       xs_stock_false);
             acct = xs_dict_append(acct, "bot",          xs_dict_get(snac1.config, "bot"));
 
@@ -1161,6 +1159,17 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             acct = xs_dict_append(acct, "avatar", avatar);
             acct = xs_dict_append(acct, "avatar_static", avatar);
+
+            xs *header = NULL;
+            char *hd = xs_dict_get(snac1.config, "header");
+
+            if (!xs_is_null(hd))
+                header = xs_dup(hd);
+            else
+                header = xs_fmt("%s/header.png", srv_baseurl);
+
+            acct = xs_dict_append(acct, "header",        header);
+            acct = xs_dict_append(acct, "header_static", header);
 
             xs_dict *metadata = xs_dict_get(snac1.config, "metadata");
             if (xs_type(metadata) == XSTYPE_DICT) {
