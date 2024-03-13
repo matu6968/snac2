@@ -1592,7 +1592,7 @@ int actor_get(const char *actor, xs_dict **data)
 
 
 int actor_get_refresh(snac *user, const char *actor, xs_dict **data)
-/* gets an actor and requests and refresh if it's stale */
+/* gets an actor and requests a refresh if it's stale */
 {
     int status = actor_get(actor, data);
 

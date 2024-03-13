@@ -125,14 +125,8 @@ int actor_request(snac *user, const char *actor, xs_dict **data)
         *data = NULL;
 
     /* get from disk first */
-    status = actor_get(actor, data);
+    status = actor_get_refresh(user, actor, data);
 
-    if (status == 205) {
-        /* stale actor: use it, but request a refresh */
-        if (user && !xs_startswith(actor, srv_baseurl))
-            enqueue_actor_refresh(user, actor);
-    }
-    else
     if (!valid_status(status)) {
         /* actor data non-existent: get from the net */
         status = activitypub_request(user, actor, &payload);
