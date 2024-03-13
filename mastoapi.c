@@ -335,8 +335,8 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
         /* FIXME: this 'scope' parameter is mandatory for the official Mastodon API,
            but if it's enabled, it makes it crash after some more steps, which
            is FAR WORSE */
-//        const char *scope = xs_dict_get(args, "scope");
         const char *scope = NULL;
+//        scope = xs_dict_get(args, "scope");
 
         /* no client_secret? check if it's inside an authorization header
            (AndStatus does it this way) */
@@ -522,6 +522,12 @@ xs_dict *mastoapi_account(const xs_dict *actor)
     acct = xs_dict_append(acct, "id",           acct_md5);
     acct = xs_dict_append(acct, "username",     prefu);
     acct = xs_dict_append(acct, "display_name", display_name);
+    acct = xs_dict_append(acct, "discoverable", xs_stock_true);
+    acct = xs_dict_append(acct, "group",        xs_stock_false);
+    acct = xs_dict_append(acct, "hide_collections", xs_stock_false);
+    acct = xs_dict_append(acct, "indexable",    xs_stock_true);
+    acct = xs_dict_append(acct, "noindex",      xs_stock_false);
+    acct = xs_dict_append(acct, "roles",        xs_stock_list);
 
     {
         /* create the acct field as user@host */
@@ -550,6 +556,7 @@ xs_dict *mastoapi_account(const xs_dict *actor)
     acct = xs_dict_append(acct, "note", note);
 
     acct = xs_dict_append(acct, "url", id);
+    acct = xs_dict_append(acct, "uri", id);
 
     xs *avatar  = NULL;
     xs_dict *av = xs_dict_get(actor, "icon");
