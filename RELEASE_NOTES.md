@@ -8,6 +8,8 @@ Improved page position after hitting the `Hide` or `MUTE` buttons (for most case
 
 Use a shorter maximum conversation thread level (also, this maximum value is now configurable at compilation level with the `MAX_CONVERSATION_LEVELS` define).
 
+The way of refreshing actor data has been improved.
+
 Added defines for time to enable MacOS builds (contributed by andypiper).
 
 ## 2.49
