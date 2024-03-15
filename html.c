@@ -1858,6 +1858,8 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
             xs_list *p = children;
             char *cmd5;
+            int cnt = 0;
+
             while (xs_list_iter(&p, &cmd5)) {
                 xs *chd = NULL;
 
@@ -1866,23 +1868,33 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 else
                     object_get_by_md5(cmd5, &chd);
 
-                if (chd != NULL && xs_is_null(xs_dict_get(chd, "name"))) {
-                    xs_html *che = html_entry(user, chd, read_only, level + 1, cmd5, hide_children);
+                if (chd != NULL) {
+                    if (xs_is_null(xs_dict_get(chd, "name"))) {
+                        xs_html *che = html_entry(user, chd, read_only,
+                            level + 1, cmd5, hide_children);
 
-                    if (che != NULL) {
-                        if (left > 3)
-                            xs_html_add(ch_older,
-                                che);
-                        else
-                            xs_html_add(ch_container,
-                                che);
+                        if (che != NULL) {
+                            if (left > 3)
+                                xs_html_add(ch_older,
+                                    che);
+                            else
+                                xs_html_add(ch_container,
+                                    che);
+
+                            cnt++;
+                        }
                     }
+
+                    left--;
                 }
                 else
                     srv_debug(2, xs_fmt("cannot read child %s", cmd5));
-
-                left--;
             }
+
+            /* if no children were finally added, hide the details */
+            if (cnt == 0)
+                xs_html_add(ch_details,
+                    xs_html_attr("style", "display: none"));
         }
     }
 
