@@ -2,13 +2,13 @@
 
 ## 2.50
 
-Posts can now be filtered out by content using regular expressions on a server level (these regexes are written in the `filter_reject.txt` file at the server base directory; see `snac(5)` and `snac(8)`).
+Incoming posts can now be filtered out by content using regular expressions on a server level (these regexes are written in the `filter_reject.txt` file at the server base directory; see `snac(5)` and `snac(8)`).
 
 Improved page position after hitting the `Hide` or `MUTE` buttons (for most cases).
 
 Use a shorter maximum conversation thread level (also, this maximum value is now configurable at compilation level with the `MAX_CONVERSATION_LEVELS` define).
 
-The way of refreshing actor data has been improved.
+The way of refreshing remote actor data has been improved.
 
 Posting from the command-line now allows attachments.
 
