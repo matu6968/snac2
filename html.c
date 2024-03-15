@@ -1859,6 +1859,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             xs_list *p = children;
             char *cmd5;
             int cnt = 0;
+            int o_cnt = 0;
 
             while (xs_list_iter(&p, &cmd5)) {
                 xs *chd = NULL;
@@ -1874,9 +1875,12 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                             level + 1, cmd5, hide_children);
 
                         if (che != NULL) {
-                            if (left > 3)
+                            if (left > 3) {
                                 xs_html_add(ch_older,
                                     che);
+
+                                o_cnt++;
+                            }
                             else
                                 xs_html_add(ch_container,
                                     che);
@@ -1894,6 +1898,10 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             /* if no children were finally added, hide the details */
             if (cnt == 0)
                 xs_html_add(ch_details,
+                    xs_html_attr("style", "display: none"));
+
+            if (o_cnt == 0 && ch_older)
+                xs_html_add(ch_older,
                     xs_html_attr("style", "display: none"));
         }
     }
