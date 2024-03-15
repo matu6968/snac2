@@ -5,6 +5,7 @@
 #include "xs_io.h"
 #include "xs_json.h"
 #include "xs_time.h"
+#include "xs_openssl.h"
 
 #include "snac.h"
 
@@ -450,7 +451,39 @@ int main(int argc, char *argv[])
         xs *content = NULL;
         xs *msg = NULL;
         xs *c_msg = NULL;
-        char *in_reply_to = GET_ARGV();
+        xs *attl = xs_list_new();
+        char *fn = NULL;
+
+        /* iterate possible attachments */
+        while ((fn = GET_ARGV())) {
+            FILE *f;
+
+            if ((f = fopen(fn, "rb")) != NULL) {
+                /* get the file size and content */
+                fseek(f, 0, SEEK_END);
+                int sz = ftell(f);
+                fseek(f, 0, SEEK_SET);
+                xs *atc = xs_readall(f);
+                fclose(f);
+
+                char *ext = strrchr(fn, '.');
+                xs *hash  = xs_md5_hex(fn, strlen(fn));
+                xs *id    = xs_fmt("%s%s", hash, ext);
+                xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
+
+                /* store */
+                static_put(&snac, id, atc, sz);
+
+                xs *l = xs_list_new();
+
+                l = xs_list_append(l, url);
+                l = xs_list_append(l, ""); /* alt text */
+
+                attl = xs_list_append(attl, l);
+            }
+            else
+                fprintf(stderr, "Error opening '%s' as attachment\n", fn);
+        }
 
         if (strcmp(url, "-e") == 0) {
             /* get the content from an editor */
@@ -478,7 +511,7 @@ int main(int argc, char *argv[])
         else
             content = xs_dup(url);
 
-        msg = msg_note(&snac, content, NULL, in_reply_to, NULL, 0);
+        msg = msg_note(&snac, content, NULL, NULL, attl, 0);
 
         c_msg = msg_create(&snac, msg);
 
