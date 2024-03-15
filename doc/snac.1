@@ -221,12 +221,14 @@ Sends a Follow message for the specified actor URL.
 .It Cm request Ar basedir Ar uid Ar url
 Requests an object and dumps it to stdout. This is a very low
 level command that is not very useful to you.
-.It Cm note Ar basedir Ar uid Ar text
+.It Cm note Ar basedir Ar uid Ar text Op file file ...
 Enqueues a Create + Note message to all followers. If the
 .Ar text
-argument is -e,  the external editor defined by the EDITOR
+argument is -e, the external editor defined by the EDITOR
 environment variable will be invoked to prepare a message; if
 it's - (a lonely hyphen), the post content will be read from stdin.
+The rest of command line arguments are treated as media files to be
+attached to the post.
 .It Cm block Ar basedir Ar instance_url
 Blocks a full instance, given its URL or domain name. All subsequent
 incoming activities with identifiers from that instance will be immediately
