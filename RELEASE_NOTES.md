@@ -10,6 +10,8 @@ Use a shorter maximum conversation thread level (also, this maximum value is now
 
 The way of refreshing actor data has been improved.
 
+Posting from the command-line now allows attachments.
+
 Added defines for time to enable MacOS builds (contributed by andypiper).
 
 ## 2.49
