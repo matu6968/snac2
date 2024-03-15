@@ -61,6 +61,7 @@ xs_val *xs_collapse(xs_val *data, int offset, int size);
 xs_val *xs_insert_m(xs_val *data, int offset, const char *mem, int size);
 #define xs_insert(data, offset, data2) xs_insert_m(data, offset, data2, xs_size(data2))
 #define xs_append_m(data, mem, size) xs_insert_m(data, xs_size(data) - 1, mem, size)
+xs_val *xs_stock(int type);
 
 xs_str *xs_str_new(const char *str);
 xs_str *xs_str_new_sz(const char *mem, int sz);
@@ -137,33 +138,10 @@ unsigned int xs_hash_func(const char *data, int size);
 #define XS_ASSERT_TYPE_NULL(v, t) (void)(0)
 #endif
 
-extern xs_val xs_stock_null[];
-extern xs_val xs_stock_true[];
-extern xs_val xs_stock_false[];
-extern xs_val xs_stock_0[];
-extern xs_val xs_stock_1[];
-extern xs_val xs_stock_list[];
-extern xs_val xs_stock_dict[];
-
 #define xs_return(v) xs_val *__r = v; v = NULL; return __r
 
 
 #ifdef XS_IMPLEMENTATION
-
-xs_val xs_stock_null[]  = { XSTYPE_NULL };
-xs_val xs_stock_true[]  = { XSTYPE_TRUE };
-xs_val xs_stock_false[] = { XSTYPE_FALSE };
-xs_val xs_stock_0[]     = { XSTYPE_NUMBER, '0', '\0' };
-xs_val xs_stock_1[]     = { XSTYPE_NUMBER, '1', '\0' };
-
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-xs_val xs_stock_list[]  = { XSTYPE_LIST, 0, 0, 0, 1 + _XS_TYPE_SIZE + 1, XSTYPE_EOM };
-xs_val xs_stock_dict[]  = { XSTYPE_DICT, 0, 0, 0, 1 + _XS_TYPE_SIZE + 1, XSTYPE_EOM };
-#else
-xs_val xs_stock_list[]  = { XSTYPE_LIST, 1 + _XS_TYPE_SIZE + 1, 0, 0, 0, XSTYPE_EOM };
-xs_val xs_stock_dict[]  = { XSTYPE_DICT, 1 + _XS_TYPE_SIZE + 1, 0, 0, 0, XSTYPE_EOM };
-#endif
-
 
 void *_xs_realloc(void *ptr, size_t size, const char *file, int line, const char *func)
 {
@@ -369,10 +347,14 @@ int xs_cmp(const xs_val *v1, const xs_val *v2)
 xs_val *xs_dup(const xs_val *data)
 /* creates a duplicate of data */
 {
-    int sz = xs_size(data);
-    xs_val *s = xs_realloc(NULL, _xs_blk_size(sz));
+    xs_val *s = NULL;
 
-    memcpy(s, data, sz);
+    if (data) {
+        int sz = xs_size(data);
+        s = xs_realloc(NULL, _xs_blk_size(sz));
+
+        memcpy(s, data, sz);
+    }
 
     return s;
 }
@@ -434,6 +416,39 @@ xs_val *xs_insert_m(xs_val *data, int offset, const char *mem, int size)
     memcpy(data + offset, mem, size);
 
     return data;
+}
+
+
+xs_val *xs_stock(int type)
+/* returns stock values */
+{
+    static xs_val stock_null[]  = { XSTYPE_NULL };
+    static xs_val stock_true[]  = { XSTYPE_TRUE };
+    static xs_val stock_false[] = { XSTYPE_FALSE };
+    static xs_val stock_0[]     = { XSTYPE_NUMBER, '0', '\0' };
+    static xs_val stock_1[]     = { XSTYPE_NUMBER, '1', '\0' };
+    static xs_list *stock_list = NULL;
+    static xs_dict *stock_dict = NULL;
+
+    switch (type) {
+    case 0:            return stock_0;
+    case 1:            return stock_1;
+    case XSTYPE_NULL:  return stock_null;
+    case XSTYPE_TRUE:  return stock_true;
+    case XSTYPE_FALSE: return stock_false;
+
+    case XSTYPE_LIST:
+        if (stock_list == NULL)
+            stock_list = xs_list_new();
+        return stock_list;
+
+    case XSTYPE_DICT:
+        if (stock_dict == NULL)
+            stock_dict = xs_dict_new();
+        return stock_dict;
+    }
+
+    return NULL;
 }
 
 
@@ -647,10 +662,14 @@ xs_str *xs_tolower_i(xs_str *str)
 xs_list *xs_list_new(void)
 /* creates a new list */
 {
-    return memcpy(
-        xs_realloc(NULL, _xs_blk_size(sizeof(xs_stock_list))),
-        xs_stock_list, sizeof(xs_stock_list)
-    );
+    int sz = 1 + _XS_TYPE_SIZE + 1;
+    xs_list *l = xs_realloc(NULL, sz);
+    memset(l, '\0', sz);
+
+    l[0] = XSTYPE_LIST;
+    _xs_put_size(&l[1], sz);
+
+    return l;
 }
 
 
@@ -660,8 +679,8 @@ xs_list *_xs_list_write_litem(xs_list *list, int offset, const char *mem, int ds
     XS_ASSERT_TYPE(list, XSTYPE_LIST);
 
     if (mem == NULL) {
-        mem = xs_stock_null;
-        dsz = sizeof(xs_stock_null);
+        mem = xs_stock(XSTYPE_NULL);
+        dsz = xs_size(mem);
     }
 
     list = xs_expand(list, offset, dsz + 1);
@@ -947,10 +966,14 @@ xs_list *xs_list_cat(xs_list *l1, const xs_list *l2)
 xs_dict *xs_dict_new(void)
 /* creates a new dict */
 {
-    return memcpy(
-        xs_realloc(NULL, _xs_blk_size(sizeof(xs_stock_dict))),
-        xs_stock_dict, sizeof(xs_stock_dict)
-    );
+    int sz = 1 + _XS_TYPE_SIZE + 1;
+    xs_dict *d = xs_realloc(NULL, sz);
+    memset(d, '\0', sz);
+
+    d[0] = XSTYPE_DICT;
+    _xs_put_size(&d[1], sz);
+
+    return d;
 }
 
 
@@ -962,8 +985,8 @@ xs_dict *_xs_dict_write_ditem(xs_dict *dict, int offset, const xs_str *key,
     XS_ASSERT_TYPE(key, XSTYPE_STRING);
 
     if (data == NULL) {
-        data = xs_stock_null;
-        dsz = sizeof(xs_stock_null);
+        data = xs_stock(XSTYPE_NULL);
+        dsz  = xs_size(data);
     }
 
     int ksz = xs_size(key);

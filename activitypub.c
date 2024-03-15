@@ -1074,7 +1074,7 @@ xs_dict *msg_collection(snac *snac, char *id)
 
     msg = xs_dict_append(msg, "attributedTo", snac->actor);
     msg = xs_dict_append(msg, "orderedItems", ol);
-    msg = xs_dict_append(msg, "totalItems",   xs_stock_0);
+    msg = xs_dict_append(msg, "totalItems",   xs_stock(0));
 
     return msg;
 }
@@ -1610,7 +1610,7 @@ int update_question(snac *user, const char *id)
         const char *name = xs_dict_get(v, "name");
         if (name) {
             lopts = xs_list_append(lopts, name);
-            rcnt  = xs_dict_set(rcnt, name, xs_stock_0);
+            rcnt  = xs_dict_set(rcnt, name, xs_stock(0));
         }
     }
 

@@ -774,7 +774,7 @@ static xs_html *html_user_body(snac *user, int read_only)
 
             xs_dict *val_links = user->links;
             if (xs_is_null(val_links))
-                val_links = xs_stock_dict;
+                val_links = xs_stock(XSTYPE_DICT);
 
             xs_html *snac_metadata = xs_html_tag("div",
                 xs_html_attr("class", "snac-metadata"));
@@ -852,8 +852,8 @@ xs_html *html_top_controls(snac *snac)
             "new_post_div", "new_post_form",
             L("What's on your mind?"), "",
             NULL, NULL,
-            xs_stock_false, "",
-            xs_stock_false, NULL,
+            xs_stock(XSTYPE_FALSE), "",
+            xs_stock(XSTYPE_FALSE), NULL,
             NULL, 1),
 
         /** operations **/
@@ -1285,7 +1285,7 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
                 "", prev_src,
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
-                xs_stock_false, redir,
+                xs_stock(XSTYPE_FALSE), redir,
                 NULL, 0)),
             xs_html_tag("p", NULL));
     }
@@ -1304,7 +1304,7 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
                 "", ct,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
-                xs_stock_false, redir,
+                xs_stock(XSTYPE_FALSE), redir,
                 id, 0)),
             xs_html_tag("p", NULL));
     }
@@ -2181,8 +2181,8 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
                     dm_div_id, dm_form_id,
                     "", "",
                     NULL, actor_id,
-                    xs_stock_false, "",
-                    xs_stock_false, NULL,
+                    xs_stock(XSTYPE_FALSE), "",
+                    xs_stock(XSTYPE_FALSE), NULL,
                     NULL, 0),
                 xs_html_tag("p", NULL));
 
@@ -2802,7 +2802,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 msg = msg_note(&snac, content_2, to, in_reply_to, attach_list, priv);
 
             if (sensitive != NULL) {
-                msg = xs_dict_set(msg, "sensitive", xs_stock_true);
+                msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));
                 msg = xs_dict_set(msg, "summary",   xs_is_null(summary) ? "..." : summary);
             }
 
@@ -3036,17 +3036,17 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "purge_days", days);
         }
         if ((v = xs_dict_get(p_vars, "drop_dm_from_unknown")) != NULL && strcmp(v, "on") == 0)
-            snac.config = xs_dict_set(snac.config, "drop_dm_from_unknown", xs_stock_true);
+            snac.config = xs_dict_set(snac.config, "drop_dm_from_unknown", xs_stock(XSTYPE_TRUE));
         else
-            snac.config = xs_dict_set(snac.config, "drop_dm_from_unknown", xs_stock_false);
+            snac.config = xs_dict_set(snac.config, "drop_dm_from_unknown", xs_stock(XSTYPE_FALSE));
         if ((v = xs_dict_get(p_vars, "bot")) != NULL && strcmp(v, "on") == 0)
-            snac.config = xs_dict_set(snac.config, "bot", xs_stock_true);
+            snac.config = xs_dict_set(snac.config, "bot", xs_stock(XSTYPE_TRUE));
         else
-            snac.config = xs_dict_set(snac.config, "bot", xs_stock_false);
+            snac.config = xs_dict_set(snac.config, "bot", xs_stock(XSTYPE_FALSE));
         if ((v = xs_dict_get(p_vars, "private")) != NULL && strcmp(v, "on") == 0)
-            snac.config = xs_dict_set(snac.config, "private", xs_stock_true);
+            snac.config = xs_dict_set(snac.config, "private", xs_stock(XSTYPE_TRUE));
         else
-            snac.config = xs_dict_set(snac.config, "private", xs_stock_false);
+            snac.config = xs_dict_set(snac.config, "private", xs_stock(XSTYPE_FALSE));
         if ((v = xs_dict_get(p_vars, "metadata")) != NULL) {
             /* split the metadata and store it as a dict */
             xs_dict *md = xs_dict_new();

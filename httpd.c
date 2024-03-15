@@ -814,7 +814,7 @@ void httpd(void)
 
     /* send as many exit jobs as working threads */
     for (n = 1; n < p_state->n_threads; n++)
-        job_post(xs_stock_false, 0);
+        job_post(xs_stock(XSTYPE_FALSE), 0);
 
     /* wait for all the threads to exit */
     for (n = 0; n < p_state->n_threads; n++)
