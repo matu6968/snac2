@@ -1558,6 +1558,7 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
             }
 
             if (xs_set_add(&seen, v2) == 1) {
+                d = xs_dict_append(d, "type",    "Note");
                 d = xs_dict_append(d, "name",    v2);
                 d = xs_dict_append(d, "replies", replies);
                 o = xs_list_append(o, d);
