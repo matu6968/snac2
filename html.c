@@ -2097,9 +2097,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
         snac_posts = xs_html_tag("details",
                 xs_html_attr("open", NULL),
                 xs_html_tag("summary",
-                    xs_html_text("...")),
-                xs_html_tag("div",
-                xs_html_attr("class", "snac-posts"))));
+                    xs_html_text("..."))));
 
     xs_list *p = list;
     char *actor_id;
@@ -2224,8 +2222,10 @@ xs_str *html_people(snac *user)
     xs_html *html = xs_html_tag("html",
         html_user_head(user, NULL),
         xs_html_add(html_user_body(user, 0),
-            html_people_list(user, wing, L("People you follow"), "i"),
-            html_people_list(user, wers, L("People that follow you"), "e"),
+            xs_html_tag("div",
+                xs_html_attr("class", "snac-posts"),
+                html_people_list(user, wing, L("People you follow"), "i"),
+                html_people_list(user, wers, L("People that follow you"), "e")),
             html_footer()));
 
     return xs_html_render_s(html, "<!DOCTYPE html>\n");
