@@ -273,7 +273,8 @@ xs_html *html_note(snac *user, char *summary,
                    char *edit_id, char *actor_id,
                    xs_val *cw_yn, char *cw_text,
                    xs_val *mnt_only, char *redir,
-                   char *in_reply_to, int poll)
+                   char *in_reply_to, int poll,
+                   char *att_file, char *att_alt_text)
 {
     xs *action = xs_fmt("%s/admin/note", user->actor);
 
@@ -359,19 +360,36 @@ xs_html *html_note(snac *user, char *summary,
                 xs_html_attr("name",  "edit_id"),
                 xs_html_attr("value", edit_id)));
 
+    /* attachment controls */
+    xs_html *att;
+
     xs_html_add(form,
         xs_html_tag("p", NULL),
-        xs_html_tag("details",
+        att = xs_html_tag("details",
             xs_html_tag("summary",
                 xs_html_text(L("Attachment..."))),
-                xs_html_tag("p", NULL),
-                xs_html_sctag("input",
-                    xs_html_attr("type",    "file"),
-                    xs_html_attr("name",    "attach")),
-                xs_html_sctag("input",
-                    xs_html_attr("type",    "text"),
-                    xs_html_attr("name",    "alt_text"),
-                    xs_html_attr("placeholder", L("Attachment description")))));
+            xs_html_tag("p", NULL)));
+
+    if (att_file && *att_file)
+        xs_html_add(att,
+            xs_html_text(L("File:")),
+            xs_html_sctag("input",
+                xs_html_attr("type", "text"),
+                xs_html_attr("name", "attach_url"),
+                xs_html_attr("value", att_file)));
+    else
+        xs_html_add(att,
+            xs_html_sctag("input",
+                xs_html_attr("type",    "file"),
+                xs_html_attr("name",    "attach")));
+
+    xs_html_add(att,
+        xs_html_text(" "),
+        xs_html_sctag("input",
+            xs_html_attr("type",    "text"),
+            xs_html_attr("name",    "alt_text"),
+            xs_html_attr("value",   att_alt_text),
+            xs_html_attr("placeholder", L("Attachment description"))));
 
     /* add poll controls */
     if (poll) {
@@ -854,7 +872,7 @@ xs_html *html_top_controls(snac *snac)
             NULL, NULL,
             xs_stock(XSTYPE_FALSE), "",
             xs_stock(XSTYPE_FALSE), NULL,
-            NULL, 1),
+            NULL, 1, "", ""),
 
         /** operations **/
         xs_html_tag("details",
@@ -1278,6 +1296,20 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
         xs *form_id = xs_fmt("%s_edit_form", md5);
         xs *redir   = xs_fmt("%s_entry", md5);
 
+        char *att_file = "";
+        char *att_alt_text = "";
+        xs_list *att_list = xs_dict_get(msg, "attachment");
+
+        /* does it have an attachment? */
+        if (xs_type(att_list) == XSTYPE_LIST && xs_list_len(att_list)) {
+            xs_dict *d = xs_list_get(att_list, 0);
+
+            if (xs_type(d) == XSTYPE_DICT) {
+                att_file = xs_dict_get_def(d, "url", "");
+                att_alt_text = xs_dict_get_def(d, "name", "");
+            }
+        }
+
         xs_html_add(controls, xs_html_tag("div",
             xs_html_tag("p", NULL),
             html_note(snac, L("Edit..."),
@@ -1286,7 +1318,7 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(XSTYPE_FALSE), redir,
-                NULL, 0)),
+                NULL, 0, att_file, att_alt_text)),
             xs_html_tag("p", NULL));
     }
 
@@ -1305,7 +1337,7 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(XSTYPE_FALSE), redir,
-                id, 0)),
+                id, 0, "", "")),
             xs_html_tag("p", NULL));
     }
 
@@ -2201,7 +2233,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
                     NULL, actor_id,
                     xs_stock(XSTYPE_FALSE), "",
                     xs_stock(XSTYPE_FALSE), NULL,
-                    NULL, 0),
+                    NULL, 0, "", ""),
                 xs_html_tag("p", NULL));
 
             xs_html_add(snac_post, snac_controls);
