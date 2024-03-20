@@ -376,6 +376,7 @@ xs_html *html_note(snac *user, char *summary,
             xs_html_sctag("input",
                 xs_html_attr("type", "text"),
                 xs_html_attr("name", "attach_url"),
+                xs_html_attr("title", L("Clear this field to delete the attachment")),
                 xs_html_attr("value", att_file)));
     else
         xs_html_add(att,
