@@ -8,6 +8,8 @@ Improved page position after hitting the `Hide` or `MUTE` buttons (for most case
 
 Use a shorter maximum conversation thread level (also, this maximum value is now configurable at compilation level with the `MAX_CONVERSATION_LEVELS` define).
 
+Fixed a bug where editing a post made the attached media or video to be lost.
+
 The way of refreshing remote actor data has been improved.
 
 Posting from the command-line now allows attachments.
