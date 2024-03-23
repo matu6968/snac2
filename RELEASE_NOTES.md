@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.51
+
+Fixed a bug that caused some notifications to be lost when coming from a user in the same instance.
+
 ## 2.50
 
 Incoming posts can now be filtered out by content using regular expressions on a server level (these regexes are written in the `filter_reject.txt` file at the server base directory; see `snac(5)` and `snac(8)`).
