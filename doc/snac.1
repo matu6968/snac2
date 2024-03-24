@@ -221,6 +221,8 @@ Sends a Follow message for the specified actor URL.
 .It Cm request Ar basedir Ar uid Ar url
 Requests an object and dumps it to stdout. This is a very low
 level command that is not very useful to you.
+.It Cm announce Ar basedir Ar uid Ar url
+Announces (boosts) a post via its URL.
 .It Cm note Ar basedir Ar uid Ar text Op file file ...
 Enqueues a Create + Note message to all followers. If the
 .Ar text
