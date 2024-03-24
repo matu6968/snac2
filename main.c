@@ -377,6 +377,8 @@ int main(int argc, char *argv[])
             if (dbglevel) {
                 xs_json_dump(msg, 4, stdout);
             }
+
+            srv_log(xs_fmt("Ping sent to %s -- see log for Pong reply", url));
         }
         else {
             srv_log(xs_fmt("Error getting actor %s", url));
