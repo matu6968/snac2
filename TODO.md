@@ -16,6 +16,8 @@ Integrate "Ability to federate with hidden networks" see https://codeberg.org/gr
 
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
 
+Consider adding Mastodon import functionality (for following_accounts.csv and outbox.json).
+
 Consider adding milter-like support to reject posts to mitigate spam.
 
 Do something about Akkoma and Misskey's quoted replies (they use the `quoteUrl` field instead of `inReplyTo`).
