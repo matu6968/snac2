@@ -659,6 +659,12 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         return !xs_is_null(object) && strcmp(snac->actor, object) == 0;
     }
 
+    /* only accept Ping directed to us */
+    if (xs_match(type, "Ping")) {
+        char *dest = xs_dict_get(c_msg, "to");
+        return !xs_is_null(dest) && strcmp(snac->actor, dest) == 0;
+    }
+
     /* if it's not a Create or Update, allow as is */
     if (!xs_match(type, "Create|Update")) {
         return 1;
