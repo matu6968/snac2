@@ -361,6 +361,14 @@ int main(int argc, char *argv[])
     if (strcmp(cmd, "ping") == 0) { /** **/
         xs *actor_o = NULL;
 
+        if (!xs_startswith(url, "https:/")) {
+            /* try to resolve via webfinger */
+            if (!valid_status(webfinger_request(url, &url, NULL))) {
+                srv_log(xs_fmt("cannot resolve %s via webfinger", url));
+                return 1;
+            }
+        }
+
         if (valid_status(actor_request(&snac, url, &actor_o))) {
             xs *msg = msg_ping(&snac, url);
 
