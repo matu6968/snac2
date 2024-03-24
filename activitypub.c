@@ -625,6 +625,12 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     const char *type  = xs_dict_get(c_msg, "type");
     const char *actor = xs_dict_get(c_msg, "actor");
 
+    if (strcmp(actor, snac->actor) == 0) {
+        /* message by myself? (most probably via the shared-inbox) reject */
+        snac_debug(snac, 1, xs_fmt("ignoring message by myself"));
+        return 0;
+    }
+
     if (xs_match(type, "Like|Announce")) {
         const char *object = xs_dict_get(c_msg, "object");
 
