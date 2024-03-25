@@ -775,7 +775,7 @@ static xs_html *html_user_body(snac *user, int read_only)
 
     if (read_only) {
         xs *es1  = encode_html(xs_dict_get(user->config, "bio"));
-        xs *bio1 = not_really_markdown(es1, NULL);
+        xs *bio1 = not_really_markdown(es1, NULL, NULL);
         xs *tags = xs_list_new();
         xs *bio2 = process_tags(user, bio1, &tags);
 
@@ -2657,7 +2657,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             return 403;
 
         xs *elems = timeline_simple_list(&snac, "public", 0, 20);
-        xs *bio   = not_really_markdown(xs_dict_get(snac.config, "bio"), NULL);
+        xs *bio   = not_really_markdown(xs_dict_get(snac.config, "bio"), NULL, NULL);
 
         xs *rss_title = xs_fmt("%s (@%s@%s)",
             xs_dict_get(snac.config, "name"),

@@ -6,6 +6,7 @@
 #include "xs_mime.h"
 #include "xs_html.h"
 #include "xs_json.h"
+#include "xs_time.h"
 
 #include "snac.h"
 
@@ -140,7 +141,7 @@ static xs_str *format_line(const char *line, xs_list **attach)
 }
 
 
-xs_str *not_really_markdown(const char *content, xs_list **attach)
+xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag)
 /* formats a content using some Markdown rules */
 {
     xs_str *s  = xs_str_new(NULL);
@@ -229,7 +230,31 @@ xs_str *not_really_markdown(const char *content, xs_list **attach)
         char *k, *v;
 
         while (xs_dict_next(d, &k, &v, &c)) {
-            s = xs_replace_i(s, k, v);
+            const char *t = NULL;
+
+            /* is it an URL to an image? */
+            if (xs_startswith(v, "https:/" "/") && xs_startswith((t = xs_mime_by_ext(v)), "image/")) {
+                if (tag) {
+                    /* add the emoji to the tag list */
+                    xs *e = xs_dict_new();
+                    xs *i = xs_dict_new();
+                    xs *u = xs_str_utctime(0, ISO_DATE_SPEC);
+
+                    e = xs_dict_append(e, "id", v);
+                    e = xs_dict_append(e, "type", "Emoji");
+                    e = xs_dict_append(e, "name", k);
+                    e = xs_dict_append(e, "updated", u);
+
+                    i = xs_dict_append(i, "type", "Image");
+                    i = xs_dict_append(i, "mediaType", t);
+                    i = xs_dict_append(i, "url", v);
+                    e = xs_dict_append(e, "icon", i);
+
+                    *tag = xs_list_append(*tag, e);
+                }
+            }
+            else
+                s = xs_replace_i(s, k, v);
         }
     }
 
