@@ -113,9 +113,13 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
     xs *name = actor_name(actor);
 
     /* get the avatar */
-    if ((v = xs_dict_get(actor, "icon")) != NULL &&
-        (v = xs_dict_get(v, "url")) != NULL) {
-        avatar = xs_dup(v);
+    if ((v = xs_dict_get(actor, "icon")) != NULL) {
+        /* if it's a list (Peertube), get the first one */
+        if (xs_type(v) == XSTYPE_LIST)
+            v = xs_list_get(v, 0);
+
+        if ((v = xs_dict_get(v, "url")) != NULL)
+            avatar = xs_dup(v);
     }
 
     if (avatar == NULL)
