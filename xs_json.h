@@ -11,8 +11,10 @@ xs_val *xs_json_load(FILE *f);
 xs_val *xs_json_loads(const xs_str *json);
 
 xstype xs_json_load_type(FILE *f);
-int xs_json_load_array_iter(FILE *f, xs_val **value, int *c);
-int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, int *c);
+int xs_json_load_array_iter(FILE *f, xs_val **value, xstype *pt, int *c);
+int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, xstype *pt, int *c);
+xs_list *xs_json_load_array(FILE *f);
+xs_dict *xs_json_load_object(FILE *f);
 
 
 #ifdef XS_IMPLEMENTATION
@@ -324,10 +326,9 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
 }
 
 
-static xs_list *_xs_json_load_array(FILE *f);
-static xs_dict *_xs_json_load_object(FILE *f);
-
-int xs_json_load_array_iter(FILE *f, xs_val **value, int *c)
+int xs_json_load_array_iter(FILE *f, xs_val **value, xstype *pt, int *c)
+/* loads the next scalar value from the JSON stream */
+/* if the value ahead is complex, value is NULL and pt is filled */
 {
     js_type t;
 
@@ -346,14 +347,16 @@ int xs_json_load_array_iter(FILE *f, xs_val **value, int *c)
             return -1;
     }
 
-    if (t == JS_OBRACK)
-        *value = _xs_json_load_array(f);
-    else
-    if (t == JS_OCURLY)
-        *value = _xs_json_load_object(f);
-
-    if (*value == NULL)
-        return -1;
+    if (*value == NULL) {
+        /* possible complex type ahead */
+        if (t == JS_OBRACK)
+            *pt = XSTYPE_LIST;
+        else
+        if (t == JS_OCURLY)
+            *pt = XSTYPE_DICT;
+        else
+            return -1;
+    }
 
     *c = *c + 1;
 
@@ -361,21 +364,38 @@ int xs_json_load_array_iter(FILE *f, xs_val **value, int *c)
 }
 
 
-static xs_list *_xs_json_load_array(FILE *f)
-/* parses a JSON array */
+xs_list *xs_json_load_array(FILE *f)
+/* loads a JSON array (after the initial OBRACK) */
 {
+    xstype t;
     xs_list *l = xs_list_new();
     int c = 0;
 
     for (;;) {
         xs *v = NULL;
-        int r = xs_json_load_array_iter(f, &v, &c);
+        int r = xs_json_load_array_iter(f, &v, &t, &c);
 
         if (r == -1)
             l = xs_free(l);
 
-        if (r == 1)
+        if (r == 1) {
+            /* partial load? */
+            if (v == NULL) {
+                if (t == XSTYPE_LIST)
+                    v = xs_json_load_array(f);
+                else
+                if (t == XSTYPE_DICT)
+                    v = xs_json_load_object(f);
+            }
+
+            /* still null? fail */
+            if (v == NULL) {
+                l = xs_free(l);
+                break;
+            }
+
             l = xs_list_append(l, v);
+        }
         else
             break;
     }
@@ -384,7 +404,9 @@ static xs_list *_xs_json_load_array(FILE *f)
 }
 
 
-int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, int *c)
+int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, xstype *pt, int *c)
+/* loads the next key and scalar value from the JSON stream */
+/* if the value ahead is complex, value is NULL and pt is filled */
 {
     js_type t;
 
@@ -413,14 +435,16 @@ int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, int *c)
 
     *value = _xs_json_load_lexer(f, &t);
 
-    if (t == JS_OBRACK)
-        *value = _xs_json_load_array(f);
-    else
-    if (t == JS_OCURLY)
-        *value = _xs_json_load_object(f);
-
-    if (*value == NULL)
-        return -1;
+    if (*value == NULL) {
+        /* possible complex type ahead */
+        if (t == JS_OBRACK)
+            *pt = XSTYPE_LIST;
+        else
+        if (t == JS_OCURLY)
+            *pt = XSTYPE_DICT;
+        else
+            return -1;
+    }
 
     *c = *c + 1;
 
@@ -428,22 +452,39 @@ int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, int *c)
 }
 
 
-static xs_dict *_xs_json_load_object(FILE *f)
-/* parses a JSON object */
+xs_dict *xs_json_load_object(FILE *f)
+/* loads a JSON object (after the initial OCURLY) */
 {
+    xstype t;
     xs_dict *d = xs_dict_new();
     int c = 0;
 
     for (;;) {
         xs *k = NULL;
         xs *v = NULL;
-        int r = xs_json_load_object_iter(f, &k, &v, &c);
+        int r = xs_json_load_object_iter(f, &k, &v, &t, &c);
 
         if (r == -1)
             d = xs_free(d);
 
-        if (r == 1)
+        if (r == 1) {
+            /* partial load? */
+            if (v == NULL) {
+                if (t == XSTYPE_LIST)
+                    v = xs_json_load_array(f);
+                else
+                if (t == XSTYPE_DICT)
+                    v = xs_json_load_object(f);
+            }
+
+            /* still null? fail */
+            if (v == NULL) {
+                d = xs_free(d);
+                break;
+            }
+
             d = xs_dict_append(d, k, v);
+        }
         else
             break;
     }
@@ -492,10 +533,10 @@ xs_val *xs_json_load(FILE *f)
     xstype t = xs_json_load_type(f);
 
     if (t == XSTYPE_LIST)
-        v = _xs_json_load_array(f);
+        v = xs_json_load_array(f);
     else
     if (t == XSTYPE_DICT)
-        v = _xs_json_load_object(f);
+        v = xs_json_load_object(f);
 
     return v;
 }
