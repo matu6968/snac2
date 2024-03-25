@@ -5,6 +5,7 @@
 #include "xs_regex.h"
 #include "xs_mime.h"
 #include "xs_html.h"
+#include "xs_json.h"
 
 #include "snac.h"
 
@@ -34,6 +35,39 @@ const char *smileys[] = {
     ":thumb:",    "&#128077;",
     NULL,         NULL
 };
+
+
+xs_dict *emojis(void)
+/* returns a dict with the emojis */
+{
+    xs *fn = xs_fmt("%s/emojis.json", srv_basedir);
+    FILE *f;
+
+    if (mtime(fn) == 0) {
+        /* file does not exist; create it with the defaults */
+        xs *d = xs_dict_new();
+        const char **emo = smileys;
+
+        while (*emo) {
+            d = xs_dict_append(d, emo[0], emo[1]);
+            emo += 2;
+        }
+
+        if ((f = fopen(fn, "w")) != NULL) {
+            xs_json_dump(d, 4, f);
+            fclose(f);
+        }
+    }
+
+    xs_dict *d = NULL;
+
+    if ((f = fopen(fn, "r")) != NULL) {
+        d = xs_json_load(f);
+        fclose(f);
+    }
+
+    return d;
+}
 
 
 static xs_str *format_line(const char *line, xs_list **attach)
@@ -190,11 +224,12 @@ xs_str *not_really_markdown(const char *content, xs_list **attach)
 
     {
         /* traditional emoticons */
-        const char **emo = smileys;
+        xs *d = emojis();
+        int c = 0;
+        char *k, *v;
 
-        while (*emo) {
-            s = xs_replace_i(s, emo[0], emo[1]);
-            emo += 2;
+        while (xs_dict_next(d, &k, &v, &c)) {
+            s = xs_replace_i(s, k, v);
         }
     }
 

@@ -132,6 +132,9 @@ int srv_open(char *basedir, int auto_upgrade)
     }
 #endif /* __OpenBSD__ */
 
+    /* read (and drop) emojis.json, possibly creating it */
+    xs_free(emojis());
+
     return ret;
 }
 

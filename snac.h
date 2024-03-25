@@ -304,6 +304,7 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
                              char *payload, int p_size,
                              char **body, int *b_size, char **ctype);
 
+xs_dict *emojis(void);
 xs_str *not_really_markdown(const char *content, xs_list **attach);
 xs_str *sanitize(const char *content);
 xs_str *encode_html(const char *str);
