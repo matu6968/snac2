@@ -311,6 +311,12 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
     if (level < MAX_CONVERSATION_LEVELS && !xs_is_null(*id)) {
         xs *msg = NULL;
 
+        /* from a blocked instance? discard and break */
+        if (is_instance_blocked(*id)) {
+            snac_debug(snac, 1, xs_fmt("timeline_request blocked instance %s", *id));
+            return status;
+        }
+
         /* is the object already there? */
         if (!valid_status(object_get(*id, &msg))) {
             /* no; download it */
