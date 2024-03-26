@@ -2,6 +2,8 @@
 
 ## 2.51
 
+Support for custom Emojis has been added; they are no longer hardcoded, but read from the `emojis.json` file at the server base directory. Also, they are no longer limited to string substitutions, but images as external URLs are also supported (see `snac(8)` for more information).
+
 Fixed a bug that caused some notifications to be lost when coming from a user in the same instance.
 
 ## 2.50
