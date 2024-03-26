@@ -230,6 +230,27 @@ for details. Further, every user can have a private CSS file in their
 that will be served instead of the server-wide one.
 It's not modifiable from the web interface to avoid users
 shooting themselves in the foot by destroying everything.
+.Ss Custom Emojis
+From version 2.51, support for customized Emojis in posts is available
+(previously, they were hardcoded). Emojis are read from the
+.Pa emojis.json
+file in the instance base directory, as a JSON object of key / value
+pairs (if this file does not exist, it will be created with
+the predefined set). Each key in the object contains the text to be found (e.g.,
+the :-) for a smiling face), and its associated value, the text string that
+will replace it (in this example case, the HTML entity for the Unicode codepoint
+for the smiley or the Emoji itself as text).
+.Pp
+Emoji values can also be URLs to image files; in this case, they will not be
+substituted in the post content, but added to the 'tag' array as an ActivityPub
+standard 'Emoji' object (it's recommendable that the Emoji key be enclosed in
+colons for maximum compatilibity with other ActivityPub implementations, like
+e.g. :happydoggo:). These images can be served from an external source or from the
+.Pa static
+directory of the instance admin.
+.Pp
+If you want to disable any Emoji substitution, leave it as a 0 byte file
+or with an empty JSON object ({}).
 .Ss SPAM Mitigation
 There have been some SPAM attacks on the Fediverse and, as too many
 instances and server implementations out there still allow automatic
