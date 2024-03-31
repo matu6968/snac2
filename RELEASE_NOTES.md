@@ -6,6 +6,8 @@ Support for custom Emojis has been added; they are no longer hardcoded, but read
 
 Fixed a bug that caused some notifications to be lost when coming from a user in the same instance.
 
+Added an additional check for blocked instances.
+
 ## 2.50
 
 Incoming posts can now be filtered out by content using regular expressions on a server level (these regexes are written in the `filter_reject.txt` file at the server base directory; see `snac(5)` and `snac(8)`).
