@@ -117,18 +117,27 @@ int srv_open(char *basedir, int auto_upgrade)
         srv_debug(1, xs_dup("OpenBSD security disabled by admin"));
     }
     else {
+        int smail = xs_type(xs_dict_get(srv_config, "disable_email_notifications")) != XSTYPE_TRUE;
+
         srv_debug(1, xs_fmt("Calling unveil()"));
         unveil(basedir,                "rwc");
         unveil("/tmp",                 "rwc");
-        unveil("/usr/sbin/sendmail",   "x");
         unveil("/etc/resolv.conf",     "r");
         unveil("/etc/hosts",           "r");
         unveil("/etc/ssl/openssl.cnf", "r");
         unveil("/etc/ssl/cert.pem",    "r");
         unveil("/usr/share/zoneinfo",  "r");
+
+        if (smail)
+            unveil("/usr/sbin/sendmail",   "x");
+
         unveil(NULL,                   NULL);
         srv_debug(1, xs_fmt("Calling pledge()"));
-        pledge("stdio rpath wpath cpath flock inet proc exec dns fattr", NULL);
+
+        if (smail)
+            pledge("stdio rpath wpath cpath flock inet proc exec dns fattr", NULL);
+        else
+            pledge("stdio rpath wpath cpath flock inet proc dns fattr", NULL);
     }
 #endif /* __OpenBSD__ */
 
