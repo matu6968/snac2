@@ -6,7 +6,7 @@ Support for custom Emojis has been added; they are no longer hardcoded, but read
 
 Fixed a bug that caused some notifications to be lost when coming from a user in the same instance.
 
-Added an additional check for blocked instances.
+Added an additional check for blocked instances (sometimes, posts from blocked sites that were ancestors of legit posts were 'leaking' into the timeline).
 
 On OpenBSD, if the `disable_email_notifications` server flag is set to `true`, `unveil()` is not called for the execution of the `/usr/sbin/sendmail` binary and `pledge()` doesn't set the `exec` promise.
 
