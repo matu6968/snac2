@@ -58,6 +58,8 @@ xs_dict *emojis(void)
             xs_json_dump(d, 4, f);
             fclose(f);
         }
+        else
+            srv_log(xs_fmt("Error creating '%s'", fn));
     }
 
     xs_dict *d = NULL;
@@ -65,7 +67,12 @@ xs_dict *emojis(void)
     if ((f = fopen(fn, "r")) != NULL) {
         d = xs_json_load(f);
         fclose(f);
+
+        if (d == NULL)
+            srv_log(xs_fmt("JSON parse error in '%s'", fn));
     }
+    else
+        srv_log(xs_fmt("Error opening '%s'", fn));
 
     return d;
 }
