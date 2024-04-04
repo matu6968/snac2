@@ -12,6 +12,8 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
+Implement `Group`-like accounts (i.e. an actor that boosts to their followers all posts that mention it).
+
 Integrate "Ability to federate with hidden networks" see https://codeberg.org/grunfink/snac2/issues/93
 
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
