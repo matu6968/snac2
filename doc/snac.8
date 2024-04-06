@@ -468,7 +468,7 @@ This is an example of a similar configuration for the Apache2 web server:
 ProxyPreserveHost On
 
 # Main web access point
-<Location /social>
+<Location /fedi>
     ProxyPass http://127.0.0.1:8001/social
 </Location>
 
@@ -528,7 +528,7 @@ an example:
 # other server configuration
 [...]
 
-location "/fedi*" {
+location "/fedi/*" {
     fastcgi socket tcp "127.0.0.1" 8001
 }
 
