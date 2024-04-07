@@ -96,8 +96,8 @@ This will:
 
 ## Incredibly awesome CSS themes for snac
 
+- [A compilation of themes for snac (by Ворон)](https://codeberg.org/voron/snac-style).
 - [A cool, elegant theme (by Haijo7)](https://codeberg.org/Haijo7/snac-custom-css).
-- [A light, lean theme (by Ворон)](https://codeberg.org/voron/snac-style).
 - [A terminal-like theme (by Tetra)](https://codeberg.org/ERROR404NULLNOTFOUND/snac-terminal-theme).
 
 ## License
