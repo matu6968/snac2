@@ -92,8 +92,9 @@ This will:
 
 - [Online snac manuals (user, administrator and data formats)](https://comam.es/snac-doc/).
 - [How to run your own ActivityPub server on OpenBSD via snac (by Jordan Reger)](https://man.sr.ht/~jordanreger/activitypub-server-on-openbsd/).
-- [How to install snac on OpenBSD without relayd (by @antics@mastodon.nu)](https://chai.guru/pub/openbsd/snac.html).
 - [How to install & run your own ActivityPub server on FreeBSD using snac, nginx, lets'encrypt (by gyptazy)](https://gyptazy.ch/blog/install-snac2-on-freebsd-an-activitypub-instance-for-the-fediverse/).
+- [How to install snac on OpenBSD without relayd (by @antics@mastodon.nu)](https://chai.guru/pub/openbsd/snac.html).
+- [Setting up Snac in OpenBSD (by Yonle)](https://wiki.ircnow.org/index.php?n=Openbsd.Snac).
 
 ## Incredibly awesome CSS themes for snac
 
