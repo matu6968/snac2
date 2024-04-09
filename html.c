@@ -574,7 +574,7 @@ static xs_html *html_instance_body(char *tag)
 }
 
 
-xs_html *html_user_head(snac *user, char *desc)
+xs_html *html_user_head(snac *user, char *desc, char *url)
 {
     xs_html *head = html_base_head();
 
@@ -663,6 +663,13 @@ xs_html *html_user_head(snac *user, char *desc)
             xs_html_attr("type", "application/rss+xml"),
             xs_html_attr("title", "RSS"),
             xs_html_attr("href", rss_url)));
+
+    /* ActivityPub alternate link (actor id) */
+    xs_html_add(head,
+        xs_html_sctag("link",
+            xs_html_attr("rel", "alternate"),
+            xs_html_attr("type", "application/activity+json"),
+            xs_html_attr("href", url ? url : user->actor)));
 
     return head;
 }
@@ -1974,6 +1981,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     double t = ftime();
 
     xs *desc = NULL;
+    xs *alternate = NULL;
 
     if (xs_list_len(list) == 1) {
         /* only one element? pick the description from the source */
@@ -1982,13 +1990,15 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
         object_get_by_md5(id, &d);
         if (d && (v = xs_dict_get(d, "sourceContent")) != NULL)
             desc = xs_dup(v);
+
+        alternate = xs_dup(xs_dict_get(d, "id"));
     }
 
     xs_html *head;
     xs_html *body;
 
     if (user) {
-        head = html_user_head(user, desc);
+        head = html_user_head(user, desc, alternate);
         body = html_user_body(user, read_only);
     }
     else {
@@ -2257,7 +2267,7 @@ xs_str *html_people(snac *user)
     xs *wers = follower_list(user);
 
     xs_html *html = xs_html_tag("html",
-        html_user_head(user, NULL),
+        html_user_head(user, NULL, NULL),
         xs_html_add(html_user_body(user, 0),
             xs_html_tag("div",
                 xs_html_attr("class", "snac-posts"),
@@ -2277,7 +2287,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
     xs_html *body = html_user_body(user, 0);
 
     xs_html *html = xs_html_tag("html",
-        html_user_head(user, NULL),
+        html_user_head(user, NULL, NULL),
         body);
 
     xs *clear_all_action = xs_fmt("%s/admin/clear-notifications", user->actor);
