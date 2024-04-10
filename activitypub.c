@@ -1168,6 +1168,33 @@ xs_dict *msg_admiration(snac *snac, char *object, char *type)
 }
 
 
+xs_dict *msg_repulsion(snac *user, char *id, char *type)
+/* creates an Undo + admiration message */
+{
+    xs *a_msg    = NULL;
+    xs_dict *msg = NULL;
+
+    if (valid_status(object_get(id, &a_msg))) {
+        /* create a clone of the original admiration message */
+        xs *object = msg_admiration(user, id, type);
+
+        /* delete the published date */
+        object = xs_dict_del(object, "published");
+
+        /* create an undo message for this object */
+        msg = msg_undo(user, object);
+
+        /* copy the 'to' field */
+        msg = xs_dict_set(msg, "to", xs_dict_get(object, "to"));
+
+        /* now we despise this */
+        object_unadmire(id, user->actor, *type == 'L' ? 1 : 0);
+    }
+
+    return msg;
+}
+
+
 xs_dict *msg_actor(snac *snac)
 /* create a Person message for this actor */
 {

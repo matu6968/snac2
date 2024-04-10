@@ -295,6 +295,20 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "unboost") == 0) { /** **/
+        xs *msg = msg_repulsion(&snac, url, "Announce");
+
+        if (msg != NULL) {
+            enqueue_message(&snac, msg);
+
+            if (dbglevel) {
+                xs_json_dump(msg, 4, stdout);
+            }
+        }
+
+        return 0;
+    }
+
     if (strcmp(cmd, "follow") == 0) { /** **/
         xs *msg = msg_follow(&snac, url);
 
