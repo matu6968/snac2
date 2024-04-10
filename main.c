@@ -18,31 +18,31 @@ int usage(void)
     printf("\n");
     printf("Commands:\n");
     printf("\n");
-    printf("init [{basedir}]                    Initializes the data storage\n");
-    printf("upgrade {basedir}                   Upgrade to a new version\n");
-    printf("adduser {basedir} [{uid}]           Adds a new user\n");
-    printf("deluser {basedir} {uid}             Deletes a user\n");
-    printf("httpd {basedir}                     Starts the HTTPD daemon\n");
-    printf("purge {basedir}                     Purges old data\n");
-    printf("state {basedir}                     Prints server state\n");
-    printf("webfinger {basedir} {actor}         Queries about an actor (@user@host or actor url)\n");
-    printf("queue {basedir} {uid}               Processes a user queue\n");
-    printf("follow {basedir} {uid} {actor}      Follows an actor\n");
-    printf("unfollow {basedir} {uid} {actor}    Unfollows an actor\n");
-    printf("request {basedir} {uid} {url}       Requests an object\n");
-    printf("actor {basedir} [{uid}] {url}       Requests an actor\n");
+    printf("init [{basedir}]                     Initializes the data storage\n");
+    printf("upgrade {basedir}                    Upgrade to a new version\n");
+    printf("adduser {basedir} [{uid}]            Adds a new user\n");
+    printf("deluser {basedir} {uid}              Deletes a user\n");
+    printf("httpd {basedir}                      Starts the HTTPD daemon\n");
+    printf("purge {basedir}                      Purges old data\n");
+    printf("state {basedir}                      Prints server state\n");
+    printf("webfinger {basedir} {actor}          Queries about an actor (@user@host or actor url)\n");
+    printf("queue {basedir} {uid}                Processes a user queue\n");
+    printf("follow {basedir} {uid} {actor}       Follows an actor\n");
+    printf("unfollow {basedir} {uid} {actor}     Unfollows an actor\n");
+    printf("request {basedir} {uid} {url}        Requests an object\n");
+    printf("actor {basedir} [{uid}] {url}        Requests an actor\n");
     printf("note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n");
-    printf("announce {basedir} {uid} {url}      Announces (boosts) a post\n");
-    printf("resetpwd {basedir} {uid}            Resets the password of a user\n");
-    printf("ping {basedir} {uid} {actor}        Pings an actor\n");
-    printf("webfinger_s {basedir} {uid} {actor} Queries about an actor (@user@host or actor url)\n");
-    printf("pin {basedir} {uid} {msg_url}       Pins a message\n");
-    printf("unpin {basedir} {uid} {msg_url}     Unpins a message\n");
-    printf("block {basedir} {instance_url}      Blocks a full instance\n");
-    printf("unblock {basedir} {instance_url}    Unblocks a full instance\n");
-    printf("limit {basedir} {uid} {actor}       Limits an actor (drops their announces)\n");
-    printf("unlimit {basedir} {uid} {actor}     Unlimits an actor\n");
-    printf("verify_links {basedir} {uid}        Verifies a user's links (in the metadata)\n");
+    printf("boost|announce {basedir} {uid} {url} Boosts (announces) a post\n");
+    printf("resetpwd {basedir} {uid}             Resets the password of a user\n");
+    printf("ping {basedir} {uid} {actor}         Pings an actor\n");
+    printf("webfinger_s {basedir} {uid} {actor}  Queries about an actor (@user@host or actor url)\n");
+    printf("pin {basedir} {uid} {msg_url}        Pins a message\n");
+    printf("unpin {basedir} {uid} {msg_url}      Unpins a message\n");
+    printf("block {basedir} {instance_url}       Blocks a full instance\n");
+    printf("unblock {basedir} {instance_url}     Unblocks a full instance\n");
+    printf("limit {basedir} {uid} {actor}        Limits an actor (drops their announces)\n");
+    printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
+    printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
 
     return 1;
 }
@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (strcmp(cmd, "announce") == 0) { /** **/
+    if (strcmp(cmd, "boost") == 0 || strcmp(cmd, "announce") == 0) { /** **/
         xs *msg = msg_admiration(&snac, url, "Announce");
 
         if (msg != NULL) {
