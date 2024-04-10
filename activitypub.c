@@ -1149,8 +1149,10 @@ xs_dict *msg_admiration(snac *snac, char *object, char *type)
 
     if (valid_status(object_get(object, &a_msg))) {
         xs *rcpts = xs_list_new();
+        xs *o_md5 = xs_md5_hex(object, strlen(object));
+        xs *id    = xs_fmt("%s/%s/%s", snac->actor, *type == 'L' ? "l" : "a", o_md5);
 
-        msg = msg_base(snac, type, "@dummy", snac->actor, "@now", object);
+        msg = msg_base(snac, type, id, snac->actor, "@now", object);
 
         if (is_msg_public(a_msg))
             rcpts = xs_list_append(rcpts, public_address);
