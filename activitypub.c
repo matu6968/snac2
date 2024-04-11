@@ -1941,6 +1941,8 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     }
     else
     if (strcmp(type, "Undo") == 0) { /** **/
+        char *id = xs_dict_get(object, "object");
+
         if (xs_type(object) != XSTYPE_DICT)
             utype = "Follow";
 
@@ -1951,6 +1953,18 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
             }
             else
                 snac_log(snac, xs_fmt("error deleting follower %s", actor));
+        }
+        else
+        if (strcmp(utype, "Like") == 0) { /** **/
+            int status = object_unadmire(id, actor, 1);
+
+            snac_log(snac, xs_fmt("Unlike for %s %d", id, status));
+        }
+        else
+        if (strcmp(utype, "Announce") == 0) { /** **/
+            int status = object_unadmire(id, actor, 0);
+
+            snac_log(snac, xs_fmt("Unboost for %s %d", id, status));
         }
         else
             snac_debug(snac, 1, xs_fmt("ignored 'Undo' for object type '%s'", utype));

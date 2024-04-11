@@ -916,6 +916,7 @@ int object_unadmire(const char *id, const char *actor, int like)
     fn = xs_replace_i(fn, ".json", like ? "_l.idx" : "_a.idx");
 
     status = index_del(fn, actor);
+    index_gc(fn);
 
     srv_debug(0,
         xs_fmt("object_unadmire (%s) %s %s %d", like ? "Like" : "Announce", actor, fn, status));
