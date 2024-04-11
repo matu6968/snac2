@@ -2957,6 +2957,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 timeline_admire(&snac, xs_dict_get(msg, "object"), snac.actor, 0);
             }
         }
+        else
         if (strcmp(action, L("Unlike")) == 0) { /** **/
             xs *msg = msg_repulsion(&snac, id, "Like");
 
