@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.52
+
+Posts that were liked or boosted can now be unliked and unboosted.
+
 ## 2.51
 
 Support for custom Emojis has been added; they are no longer hardcoded, but read from the `emojis.json` file at the server base directory. Also, they are no longer limited to string substitutions, but images as external URLs are also supported (see `snac(8)` for more information).
