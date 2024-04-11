@@ -1249,6 +1249,11 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
             xs_html_add(form,
                 html_button("like", L("Like"), L("Say you like this post")));
         }
+        else {
+            /* not like it anymore */
+            xs_html_add(form,
+                html_button("unlike", L("Unlike"), L("Nah don't like it that much")));
+        }
     }
     else {
         if (is_pinned(snac, id))
@@ -1264,6 +1269,11 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
             /* not already boosted or us; add button */
             xs_html_add(form,
                 html_button("boost", L("Boost"), L("Announce this post to your followers")));
+        }
+        else {
+            /* already boosted; add button to regret */
+            xs_html_add(form,
+                html_button("unboost", L("Unboost"), L("I regret I boosted this")));
         }
     }
 
@@ -2945,6 +2955,21 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             if (msg != NULL) {
                 enqueue_message(&snac, msg);
                 timeline_admire(&snac, xs_dict_get(msg, "object"), snac.actor, 0);
+            }
+        }
+        if (strcmp(action, L("Unlike")) == 0) { /** **/
+            xs *msg = msg_repulsion(&snac, id, "Like");
+
+            if (msg != NULL) {
+                enqueue_message(&snac, msg);
+            }
+        }
+        else
+        if (strcmp(action, L("Unboost")) == 0) { /** **/
+            xs *msg = msg_repulsion(&snac, id, "Announce");
+
+            if (msg != NULL) {
+                enqueue_message(&snac, msg);
             }
         }
         else

@@ -33,6 +33,7 @@ int usage(void)
     printf("actor {basedir} [{uid}] {url}        Requests an actor\n");
     printf("note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n");
     printf("boost|announce {basedir} {uid} {url} Boosts (announces) a post\n");
+    printf("unboost {basedir} {uid} {url}        Unboosts a post\n");
     printf("resetpwd {basedir} {uid}             Resets the password of a user\n");
     printf("ping {basedir} {uid} {actor}         Pings an actor\n");
     printf("webfinger_s {basedir} {uid} {actor}  Queries about an actor (@user@host or actor url)\n");
