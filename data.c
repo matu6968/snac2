@@ -2744,6 +2744,16 @@ void purge_server(void)
                     }
                 }
             }
+
+            /* delete index backups */
+            xs *specb = xs_fmt("%s/" "*.bak", v);
+            xs *bakfs = xs_glob(specb, 0, 0);
+
+            p2 = bakfs;
+            while (xs_list_iter(&p2, &v2)) {
+                unlink(v2);
+                srv_debug(1, xs_fmt("purged %s", v2));
+            }
         }
     }
 
