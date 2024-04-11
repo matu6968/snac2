@@ -1186,10 +1186,10 @@ xs_dict *msg_repulsion(snac *user, char *id, char *type)
 
         /* copy the 'to' field */
         msg = xs_dict_set(msg, "to", xs_dict_get(object, "to"));
-
-        /* now we despise this */
-        object_unadmire(id, user->actor, *type == 'L' ? 1 : 0);
     }
+
+    /* now we despise this */
+    object_unadmire(id, user->actor, *type == 'L' ? 1 : 0);
 
     return msg;
 }
