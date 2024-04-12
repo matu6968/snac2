@@ -1962,7 +1962,12 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         }
         else
         if (strcmp(utype, "Announce") == 0) { /** **/
-            int status = object_unadmire(id, actor, 0);
+            int status = 200;
+
+            /* commented out: if a followed user boosts something that
+               is requested and then unboosts, the post remains here,
+               but with no apparent reason, and that is confusing */
+            //status = object_unadmire(id, actor, 0);
 
             snac_log(snac, xs_fmt("Unboost for %s %d", id, status));
         }

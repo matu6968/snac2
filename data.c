@@ -406,7 +406,7 @@ int index_del_md5(const char *fn, const char *md5)
         fclose(f);
     }
     else
-        status = 500;
+        status = 410;
 
     pthread_mutex_unlock(&data_mutex);
 
