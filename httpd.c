@@ -388,6 +388,7 @@ void httpd_connection(FILE *f)
                                 body, xs_dict_get(srv_config, "host"));
 
         headers = xs_dict_append(headers, "WWW-Authenticate", www_auth);
+        headers = xs_dict_append(headers, "Cache-Control", "no-cache, must-revalidate, max-age=0");
     }
 
     if (ctype == NULL)
