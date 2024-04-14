@@ -56,7 +56,7 @@ xs_dict *xs_url_vars(const char *str)
 
         l = args;
         while (xs_list_iter(&l, &v)) {
-            xs *kv = xs_split_n(v, "=", 2);
+            xs *kv = xs_split_n(v, "=", 1);
 
             if (xs_list_len(kv) == 2) {
                 const char *key = xs_list_get(kv, 0);

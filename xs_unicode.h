@@ -27,8 +27,8 @@
 
 #ifdef XS_IMPLEMENTATION
 
-#ifndef countof
-#define countof(a) (sizeof((a)) / sizeof((*a)))
+#ifndef xs_countof
+#define xs_countof(a) (sizeof((a)) / sizeof((*a)))
 #endif
 
 int _xs_utf8_enc(char buf[4], unsigned int cpoint)
@@ -125,7 +125,7 @@ int xs_unicode_width(unsigned int cpoint)
 /* returns the width in columns of a Unicode codepoint (somewhat simplified) */
 {
     int b = 0;
-    int t = countof(xs_unicode_width_table) / 3 - 1;
+    int t = xs_countof(xs_unicode_width_table) / 3 - 1;
 
     while (t >= b) {
         int n = (b + t) / 2;
@@ -193,7 +193,7 @@ unsigned int *_xs_unicode_upper_search(unsigned int cpoint)
 /* searches for an uppercase codepoint in the case fold table */
 {
     int b = 0;
-    int t = countof(xs_unicode_case_fold_table) / 2 + 1;
+    int t = xs_countof(xs_unicode_case_fold_table) / 2 + 1;
 
     while (t >= b) {
         int n = (b + t) / 2;
@@ -216,7 +216,7 @@ unsigned int *_xs_unicode_lower_search(unsigned int cpoint)
 /* searches for a lowercase codepoint in the case fold table */
 {
     unsigned int *p = xs_unicode_case_fold_table;
-    unsigned int *e = p + countof(xs_unicode_case_fold_table);
+    unsigned int *e = p + xs_countof(xs_unicode_case_fold_table);
 
     while (p < e) {
         if (cpoint == p[1])
@@ -251,7 +251,7 @@ int xs_unicode_nfd(unsigned int cpoint, unsigned int *base, unsigned int *diac)
 /* applies unicode Normalization Form D */
 {
     int b = 0;
-    int t = countof(xs_unicode_nfd_table) / 3 - 1;
+    int t = xs_countof(xs_unicode_nfd_table) / 3 - 1;
 
     while (t >= b) {
         int n = (b + t) / 2;
@@ -279,7 +279,7 @@ int xs_unicode_nfc(unsigned int base, unsigned int diac, unsigned int *cpoint)
 /* applies unicode Normalization Form C */
 {
     unsigned int *p = xs_unicode_nfd_table;
-    unsigned int *e = p + countof(xs_unicode_nfd_table);
+    unsigned int *e = p + xs_countof(xs_unicode_nfd_table);
 
     while (p < e) {
         if (p[1] == base && p[2] == diac) {
@@ -298,7 +298,7 @@ int xs_unicode_is_alpha(unsigned int cpoint)
 /* checks if a codepoint is an alpha (i.e. a letter) */
 {
     int b = 0;
-    int t = countof(xs_unicode_alpha_table) / 2 - 1;
+    int t = xs_countof(xs_unicode_alpha_table) / 2 - 1;
 
     while (t >= b) {
         int n = (b + t) / 2;

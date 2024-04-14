@@ -55,19 +55,23 @@ const char *xs_mime_by_ext(const char *file)
     const char *ext = strrchr(file, '.');
 
     if (ext) {
-        const char **p = xs_mime_types;
-        xs *uext       = xs_tolower_i(xs_dup(ext + 1));
+        xs *uext = xs_tolower_i(xs_dup(ext + 1));
+        int b = 0;
+        int t = xs_countof(xs_mime_types) / 2 - 2;
 
-        while (*p) {
-            int c;
+        while (t >= b) {
+            int n = (b + t) / 2;
+            const char *p = xs_mime_types[n * 2];
 
-            if ((c = strcmp(*p, uext)) == 0)
-                return p[1];
+            int c = strcmp(uext, p);
+
+            if (c < 0)
+                t = n - 1;
             else
             if (c > 0)
-                break;
-
-            p += 2;
+                b = n + 1;
+            else
+                return xs_mime_types[(n * 2) + 1];
         }
     }
 

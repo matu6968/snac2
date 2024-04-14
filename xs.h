@@ -45,6 +45,10 @@ typedef char xs_data;
 /* not really all, just very much */
 #define XS_ALL 0xfffffff
 
+#ifndef xs_countof
+#define xs_countof(a) (sizeof((a)) / sizeof((*a)))
+#endif
+
 void *xs_free(void *ptr);
 void *_xs_realloc(void *ptr, size_t size, const char *file, int line, const char *func);
 #define xs_realloc(ptr, size) _xs_realloc(ptr, size, __FILE__, __LINE__, __FUNCTION__)
