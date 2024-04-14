@@ -2119,8 +2119,6 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
         return 0;
 
-    srv_debug(1, xs_fmt("mastoapi_post_handler %s", q_path));
-
     int status    = 404;
     xs *args      = NULL;
     char *i_ctype = xs_dict_get(req, "content-type");
@@ -2625,6 +2623,8 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     /* user cleanup */
     if (logged_in)
         user_free(&snac);
+
+    srv_debug(1, xs_fmt("mastoapi_post_handler %s %d", q_path, status));
 
     return status;
 }
