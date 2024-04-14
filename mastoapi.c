@@ -289,7 +289,11 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
                         *body = xs_dup(code);
                     }
                     else {
-                        *body = xs_fmt("%s?code=%s", redir, code);
+                        if (xs_str_in(redir, "?"))
+                            *body = xs_fmt("%s&code=%s", redir, code);
+                        else
+                            *body = xs_fmt("%s?code=%s", redir, code);
+
                         status = 303;
                     }
 
