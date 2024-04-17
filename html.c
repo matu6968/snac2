@@ -2055,8 +2055,13 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
             char *irt = xs_dict_get(msg, "inReplyTo");
 
             if (!xs_is_null(irt) && !object_here(irt)) {
-                snac_debug(user, 1, xs_fmt("skipping non-public reply to an unknown post %s", v));
-                continue;
+                /* is it for me? */
+                xs_list *to = xs_dict_get(msg, "to");
+
+                if (xs_type(to) == XSTYPE_LIST && xs_list_in(to, user->actor) == -1) {
+                    snac_debug(user, 1, xs_fmt("skipping non-public reply to an unknown post %s", v));
+                    continue;
+                }
             }
         }
 
