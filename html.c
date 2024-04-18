@@ -813,7 +813,7 @@ static xs_html *html_user_body(snac *user, int read_only)
             while (xs_dict_next(metadata, &k, &v, &c)) {
                 xs_html *value;
 
-                if (xs_startswith(v, "http")) {
+                if (xs_startswith(v, "https:/") || xs_startswith(v, "http:/")) {
                     /* is this link validated? */
                     xs *verified_link = NULL;
                     xs_number *val_time = xs_dict_get(val_links, v);

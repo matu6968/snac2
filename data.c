@@ -60,15 +60,17 @@ int srv_open(char *basedir, int auto_upgrade)
             char *host;
             char *prefix;
             char *dbglvl;
+            char *proto;
 
             host   = xs_dict_get(srv_config, "host");
             prefix = xs_dict_get(srv_config, "prefix");
             dbglvl = xs_dict_get(srv_config, "dbglevel");
+            proto  = xs_dict_get_def(srv_config, "protocol", "https");
 
             if (host == NULL || prefix == NULL)
                 error = xs_str_new("ERROR: cannot get server data");
             else {
-                srv_baseurl = xs_fmt("http://%s%s", host, prefix);
+                srv_baseurl = xs_fmt("%s:/" "/%s%s", proto, host, prefix);
 
                 dbglevel = (int) xs_number_get(dbglvl);
 
@@ -1990,7 +1992,7 @@ xs_list *inbox_list(void)
 
 xs_str *_instance_block_fn(const char *instance)
 {
-    xs *s  = xs_replace(instance, "http:/" "/", "");
+    xs *s   = xs_replace(instance, "http:/" "/", "");
     xs *s1  = xs_replace(s, "https:/" "/", "");
     xs *l   = xs_split(s1, "/");
     char *p = xs_list_get(l, 0);

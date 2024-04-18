@@ -156,7 +156,7 @@ const char *login_page = ""
 "</head>\n"
 "<body><h1>%s OAuth identify</h1>\n"
 "<div style=\"background-color: red; color: white\">%s</div>\n"
-"<form method=\"post\" action=\"http:/" "/%s/%s\">\n"
+"<form method=\"post\" action=\"%s:/" "/%s/%s\">\n"
 "<p>Login: <input type=\"text\" name=\"login\"></p>\n"
 "<p>Password: <input type=\"password\" name=\"passwd\"></p>\n"
 "<input type=\"hidden\" name=\"redir\" value=\"%s\">\n"
@@ -193,11 +193,12 @@ int oauth_get_handler(const xs_dict *req, const char *q_path,
 
             if (app != NULL) {
                 const char *host = xs_dict_get(srv_config, "host");
+                const char *proto = xs_dict_get_def(srv_config, "protocol", "https");
 
                 if (xs_is_null(state))
                     state = "";
 
-                *body  = xs_fmt(login_page, host, host, "", host, "oauth/x-snac-login",
+                *body  = xs_fmt(login_page, host, host, "", proto, host, "oauth/x-snac-login",
                                 ruri, cid, state, USER_AGENT);
                 *ctype = "text/html";
                 status = 200;
@@ -213,8 +214,9 @@ int oauth_get_handler(const xs_dict *req, const char *q_path,
     else
     if (strcmp(cmd, "/x-snac-get-token") == 0) { /** **/
         const char *host = xs_dict_get(srv_config, "host");
+        const char *proto = xs_dict_get_def(srv_config, "protocol", "https");
 
-        *body  = xs_fmt(login_page, host, host, "", host, "oauth/x-snac-get-token",
+        *body  = xs_fmt(login_page, host, host, "", proto, host, "oauth/x-snac-get-token",
                         "", "", "", USER_AGENT);
         *ctype = "text/html";
         status = 200;
@@ -265,11 +267,11 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
         const char *redir  = xs_dict_get(args, "redir");
         const char *cid    = xs_dict_get(args, "cid");
         const char *state  = xs_dict_get(args, "state");
-
-        const char *host = xs_dict_get(srv_config, "host");
+        const char *host   = xs_dict_get(srv_config, "host");
+        const char *proto = xs_dict_get_def(srv_config, "protocol", "https");
 
         /* by default, generate another login form with an error */
-        *body  = xs_fmt(login_page, host, host, "LOGIN INCORRECT", host, "oauth/x-snac-login",
+        *body  = xs_fmt(login_page, host, host, "LOGIN INCORRECT", proto, host, "oauth/x-snac-login",
                         redir, cid, state, USER_AGENT);
         *ctype = "text/html";
         status = 200;
@@ -450,11 +452,11 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
     if (strcmp(cmd, "/x-snac-get-token") == 0) { /** **/
         const char *login  = xs_dict_get(args, "login");
         const char *passwd = xs_dict_get(args, "passwd");
-
-        const char *host = xs_dict_get(srv_config, "host");
+        const char *host   = xs_dict_get(srv_config, "host");
+        const char *proto  = xs_dict_get_def(srv_config, "protocol", "https");
 
         /* by default, generate another login form with an error */
-        *body  = xs_fmt(login_page, host, host, "LOGIN INCORRECT", host, "oauth/x-snac-get-token",
+        *body  = xs_fmt(login_page, host, host, "LOGIN INCORRECT", proto, host, "oauth/x-snac-get-token",
                         "", "", "", USER_AGENT);
         *ctype = "text/html";
         status = 200;

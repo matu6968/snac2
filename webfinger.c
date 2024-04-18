@@ -19,7 +19,7 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
     xs_str *host = NULL;
     xs *resource = NULL;
 
-    if (xs_startswith(qs, "http")) {
+    if (xs_startswith(qs, "https:/") || xs_startswith(qs, "http:/")) {
         /* actor query: pick the host */
         xs *s1 = xs_replace_n(qs, "http:/" "/", "", 1);
         xs *s = xs_replace_n(s1, "https:/" "/", "", 1);
@@ -70,7 +70,9 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
                                        &payload, &p_size, &ctype);
     }
     else {
-        xs *url = xs_fmt("http:/" "/%s/.well-known/webfinger?resource=%s", host, resource);
+        const char *proto = xs_dict_get_def(srv_config, "protocol", "https");
+
+        xs *url = xs_fmt("%s:/" "/%s/.well-known/webfinger?resource=%s", proto, host, resource);
 
         if (snac == NULL)
             xs_http_request("GET", url, headers, NULL, 0, &status, &payload, &p_size, 0);
@@ -140,7 +142,7 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
     snac snac;
     int found = 0;
 
-    if (xs_startswith(resource, "https")) {
+    if (xs_startswith(resource, "https:/") || xs_startswith(resource, "http:/")) {
         /* actor search: find a user with this actor */
         xs *l = xs_split(resource, "/");
         char *uid = xs_list_get(l, -1);
