@@ -1277,7 +1277,7 @@ xs_dict *msg_actor(snac *snac)
             xs *k2 = encode_html(k);
             xs *v2 = NULL;
 
-            if (xs_startswith(v, "https:")) {
+            if (xs_startswith(v, "http")) {
                 xs *t = encode_html(v);
                 v2 = xs_fmt("<a href=\"%s\" rel=\"me\">%s</a>", t, t);
             }
@@ -1369,7 +1369,7 @@ xs_dict *msg_follow(snac *snac, const char *q)
 
     xs *url_or_uid = xs_strip_i(xs_str_new(q));
 
-    if (xs_startswith(url_or_uid, "https:/"))
+    if (xs_startswith(url_or_uid, "http"))
         actor = xs_dup(url_or_uid);
     else
     if (!valid_status(webfinger_request(url_or_uid, &actor, NULL)) || actor == NULL) {
