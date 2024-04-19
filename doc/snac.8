@@ -209,6 +209,13 @@ with a large number of users.
 If this numeric value (in seconds) is set, any activity coming from an account
 that was created more recently than that will be rejected. This may be used
 to mitigate spam from automatically created accounts.
+.It Ic protocol
+This string value contains the protocol (schema) to be used in URLs. If not
+set, it defaults to "https". If you run
+.Nm
+as part of a hidden network like Tor or I2P that doesn't have a TLS /
+Certificate infrastructure, you need to set it to "http". Don't change it
+unless you know what you are doing.
 .El
 .Pp
 You must restart the server to make effective these changes.
