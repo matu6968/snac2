@@ -241,7 +241,7 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
 
             /* is it an URL to an image? */
             if (xs_startswith(v, "https:/" "/") && xs_startswith((t = xs_mime_by_ext(v)), "image/")) {
-                if (tag) {
+                if (tag && xs_str_in(s, k) != -1) {
                     /* add the emoji to the tag list */
                     xs *e = xs_dict_new();
                     xs *i = xs_dict_new();
