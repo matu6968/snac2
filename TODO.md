@@ -14,13 +14,9 @@ Important: deleting a follower should do more that just delete the object, see h
 
 Implement `Group`-like accounts (i.e. an actor that boosts to their followers all posts that mention it).
 
-Integrate "Ability to federate with hidden networks" see https://codeberg.org/grunfink/snac2/issues/93
-
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
 
 Consider adding Mastodon import functionality (for following_accounts.csv and outbox.json).
-
-Consider adding milter-like support to reject posts to mitigate spam.
 
 Do something about Akkoma and Misskey's quoted replies (they use the `quoteUrl` field instead of `inReplyTo`).
 
@@ -311,3 +307,7 @@ Consider implementing the rejection of activities from recently-created accounts
 Consider discarding posts by content using string or regex to mitigate spam (2024-03-14T10:40:14+0100).
 
 Post edits should preserve the image and the image description somewhat (2024-03-22T09:57:18+0100).
+
+Integrate "Ability to federate with hidden networks" see https://codeberg.org/grunfink/snac2/issues/93
+
+Consider adding milter-like support to reject posts to mitigate spam (discarded; 2024-04-20T22:46:35+0200).
