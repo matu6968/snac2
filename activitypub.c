@@ -2371,6 +2371,7 @@ void process_queue_item(xs_dict *q_item)
         int p_status   = xs_number_get(xs_dict_get(q_item, "p_status"));
         xs *payload    = NULL;
         int p_size     = 0;
+        int timeout    = 0;
 
         if (xs_is_null(inbox) || xs_is_null(msg) || xs_is_null(keyid) || xs_is_null(seckey)) {
             srv_log(xs_fmt("output message error: missing fields"));
@@ -2383,8 +2384,15 @@ void process_queue_item(xs_dict *q_item)
         }
 
         /* deliver (if previous error status was a timeout, try now longer) */
-        status = send_to_inbox_raw(keyid, seckey, inbox, msg,
-                    &payload, &p_size, p_status == 599 ? 8 : 6);
+        if (p_status == 599)
+            timeout = xs_number_get(xs_dict_get_def(srv_config, "queue_timeout_2", "8"));
+        else
+            timeout = xs_number_get(xs_dict_get_def(srv_config, "queue_timeout", "6"));
+
+        if (timeout == 0)
+            timeout = 6;
+
+        status = send_to_inbox_raw(keyid, seckey, inbox, msg, &payload, &p_size, timeout);
 
         if (payload) {
             if (p_size > 64) {
