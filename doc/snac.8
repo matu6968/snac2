@@ -143,6 +143,14 @@ times the sending will be retried.
 The number of minutes to wait before the failed posting of a message is
 retried. This is not linear, but multipled by the number of retries
 already done.
+.It Ic queue_timeout
+The maximum number of seconds to wait when sending a message from the queue.
+.It Ic queue_timeout_2
+The maximum number of seconds to wait when sending a message from the queue
+to those servers that went timeout in the previous retry. If you want to
+give slow servers a chance to receive your messages, you can increase this
+value (but also take into account that processing the queue will take longer
+while waiting for these molasses to respond).
 .It Ic max_timeline_entries
 This is the maximum timeline entries shown in the web interface.
 .It Ic timeline_purge_days
