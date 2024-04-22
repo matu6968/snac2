@@ -94,6 +94,7 @@ xs_list *xs_list_append_m(xs_list *list, const char *mem, int dsz);
 xs_list *_xs_list_append(xs_list *list, const xs_val *vals[]);
 #define xs_list_append(list, ...) _xs_list_append(list, (const xs_val *[]){ __VA_ARGS__, NULL })
 int xs_list_iter(xs_list **list, xs_val **value);
+int xs_list_next(const xs_list *list, xs_val **value, int *ctxt);
 int xs_list_len(const xs_list *list);
 xs_val *xs_list_get(const xs_list *list, int num);
 xs_list *xs_list_del(xs_list *list, int num);
@@ -752,6 +753,42 @@ int xs_list_iter(xs_list **list, xs_val **value)
 }
 
 
+int xs_list_next(const xs_list *list, xs_val **value, int *ctxt)
+/* iterates a list, with context */
+{
+    if (xs_type(list) != XSTYPE_LIST)
+        return 0;
+
+    int goon = 1;
+
+    char *p = (char *)list;
+
+    /* skip the start of the list */
+    if (*ctxt == 0)
+        *ctxt = 1 + _XS_TYPE_SIZE;
+
+    p += *ctxt;
+
+    /* an element? */
+    if (xs_type(p) == XSTYPE_LITEM) {
+        p++;
+
+        *value = p;
+
+        p += xs_size(*value);
+    }
+    else {
+        /* end of list */
+        goon = 0;
+    }
+
+    /* update the context */
+    *ctxt = p - list;
+
+    return goon;
+}
+
+
 int xs_list_len(const xs_list *list)
 /* returns the number of elements in the list */
 {
@@ -1199,8 +1236,11 @@ double xs_number_get(const xs_number *v)
 {
     double f = 0.0;
 
-    if (v != NULL && v[0] == XSTYPE_NUMBER)
+    if (xs_type(v) == XSTYPE_NUMBER)
         f = atof(&v[1]);
+    else
+    if (xs_type(v) == XSTYPE_STRING)
+        f = atof(v);
 
     return f;
 }
@@ -1211,7 +1251,7 @@ const char *xs_number_str(const xs_number *v)
 {
     const char *p = NULL;
 
-    if (v != NULL && v[0] == XSTYPE_NUMBER)
+    if (xs_type(v) == XSTYPE_NUMBER)
         p = &v[1];
 
     return p;
