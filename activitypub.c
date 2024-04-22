@@ -2516,8 +2516,6 @@ void process_queue_item(xs_dict *q_item)
 
         if (r == 0) {
             /* transient error? retry */
-            int queue_retry_max = xs_number_get(xs_dict_get(srv_config, "queue_retry_max"));
-
             if (retries > queue_retry_max)
                 srv_log(xs_fmt("shared input giving up"));
             else {
