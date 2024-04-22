@@ -1065,14 +1065,18 @@ int timeline_touch(snac *snac)
 xs_str *timeline_fn_by_md5(snac *snac, const char *md5)
 /* get the filename of an entry by md5 from any timeline */
 {
-    xs_str *fn = xs_fmt("%s/private/%s.json", snac->basedir, md5);
+    xs_str *fn = NULL;
 
-    if (mtime(fn) == 0.0) {
-        fn = xs_free(fn);
-        fn = xs_fmt("%s/public/%s.json", snac->basedir, md5);
+    if (xs_is_hex(md5) && strlen(md5) == 32) {
+        fn = xs_fmt("%s/private/%s.json", snac->basedir, md5);
 
-        if (mtime(fn) == 0.0)
+        if (mtime(fn) == 0.0) {
             fn = xs_free(fn);
+            fn = xs_fmt("%s/public/%s.json", snac->basedir, md5);
+
+            if (mtime(fn) == 0.0)
+                fn = xs_free(fn);
+        }
     }
 
     return fn;

@@ -2586,6 +2586,25 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
     }
     else
+    if (xs_startswith(p_path, "admin/p/")) { /** unique post by md5 **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = 401;
+        }
+        else {
+            xs *l = xs_split(p_path, "/");
+            char *md5 = xs_list_get(l, -1);
+
+            if (md5 && *md5 && timeline_here(&snac, md5)) {
+                xs *list = xs_list_append(xs_list_new(), md5);
+
+                *body   = html_timeline(&snac, list, 0, 0, 0, 0, NULL, "/admin", 1);
+                *b_size = strlen(*body);
+                status  = 200;
+            }
+        }
+    }
+    else
     if (strcmp(p_path, "people") == 0) { /** the list of people **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
