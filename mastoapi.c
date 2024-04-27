@@ -291,7 +291,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
                         *body = xs_dup(code);
                     }
                     else {
-                        if (xs_str_in(redir, "?"))
+                        if (xs_str_in(redir, "?") != -1)
                             *body = xs_fmt("%s&code=%s", redir, code);
                         else
                             *body = xs_fmt("%s?code=%s", redir, code);
