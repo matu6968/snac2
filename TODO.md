@@ -14,6 +14,10 @@ Editing / Updating a post does not index newly added hashtags.
 
 ## Wishlist
 
+Implement "FEP-3b86: Activity Intents" https://codeberg.org/fediverse/fep/src/branch/main/fep/3b86/fep-3b86.md
+
+Track "FEP-ef61: Portable Objects" https://codeberg.org/fediverse/fep/src/branch/main/fep/ef61/fep-ef61.md
+
 Implement `Group`-like accounts (i.e. an actor that boosts to their followers all posts that mention it).
 
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
@@ -22,21 +26,15 @@ Consider adding Mastodon import functionality (for following_accounts.csv and ou
 
 Do something about Akkoma and Misskey's quoted replies (they use the `quoteUrl` field instead of `inReplyTo`).
 
-Add more CSS classes according to https://comam.es/snac/grunfink/p/1705598619.090050
-
 Add support for /share?text=tt&website=url (whatever it is, see https://mastodonshare.com/ for details).
 
 Add support for /authorize_interaction (whatever it is).
 
 Add a list of hashtags to drop.
 
-Add domain/subdomain flexibility according to https://codeberg.org/grunfink/snac2/issues/3
-
 The 'history' pages are just monthly HTML snapshots of the local timeline. This is ok and cheap and easy, but is problematic if you e.g. intentionally delete a post because it will remain there in the history forever. If you activate local timeline purging, purged entries will remain in the history as 'ghosts', which may or may not be what the user wants.
 
 Implement bulleted lists. Mastodon is crap and won't show them, but other implementations (Friendica, Pleroma) will do.
-
-User request: "will it be possible to click on a link and instead of opening the original instance, we'll be able only to see a list of the posts of this person here in comam?. Something like Mastodon does."
 
 The actual storage system wastes too much disk space (lots of small files that really consume 4k of storage). Consider alternatives.
 
