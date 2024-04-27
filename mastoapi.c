@@ -550,6 +550,9 @@ xs_dict *mastoapi_account(const xs_dict *actor)
         acct = xs_dict_append(acct, "created_at", date);
     }
 
+    xs *last_status_at = xs_str_utctime(0, "%Y-%m-%d");
+    acct = xs_dict_append(acct, "last_status_at", last_status_at);
+
     const char *note = xs_dict_get(actor, "summary");
     if (xs_is_null(note))
         note = "";
@@ -1000,7 +1003,10 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
     st = xs_dict_append(st, "reblog",   xs_stock(XSTYPE_NULL));
     st = xs_dict_append(st, "card",     xs_stock(XSTYPE_NULL));
-    st = xs_dict_append(st, "language", xs_stock(XSTYPE_NULL));
+    st = xs_dict_append(st, "language", "en");
+
+    st = xs_dict_append(st, "filtered", xs_stock(XSTYPE_LIST));
+    st = xs_dict_append(st, "muted",    xs_stock(XSTYPE_FALSE));
 
     tmp = xs_dict_get(msg, "sourceContent");
     if (xs_is_null(tmp))
