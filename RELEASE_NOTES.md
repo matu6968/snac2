@@ -4,6 +4,8 @@
 
 Posts that were liked or boosted can now be unliked and unboosted.
 
+Outgoing message timeouts are no longer hardcoded and can be configured (see `snac(8)` for more information).
+
 Added a header to avoid over-zealous caching in some browsers (contributed by louis77).
 
 Added support for running and federating inside hidden networks like Tor, I2P or Loki (contributed by iwojima).
