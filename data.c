@@ -1731,9 +1731,9 @@ xs_list *tag_search(char *tag, int skip, int show)
 
 /** lists **/
 
-xs_list *list_maint(snac *user, const char *list, int op)
+xs_val *list_maint(snac *user, const char *list, int op)
 {
-    xs_list *l = NULL;
+    xs_val *l = NULL;
 
     switch (op) {
     case 0: /** list of lists **/
@@ -1752,10 +1752,12 @@ xs_list *list_maint(snac *user, const char *list, int op)
                     fclose(f);
 
                     title = xs_strip_i(title);
-                    xs *md5 = xs_md5_hex(title, strlen(title));
+
+                    xs *v2 = xs_replace(v, ".id", "");
+                    xs *l2 = xs_split(v2, "/");
 
                     /* return [ list_id, list_title ] */
-                    l = xs_list_append(l, xs_list_append(xs_list_new(), md5, title));
+                    l = xs_list_append(l, xs_list_append(xs_list_new(), xs_list_get(l2, -1), title));
                 }
             }
         }
@@ -1764,26 +1766,58 @@ xs_list *list_maint(snac *user, const char *list, int op)
 
     case 1: /** create new list (list is the name) **/
         {
-            FILE *f;
-            xs *dir = xs_fmt("%s/list/", user->basedir);
-            xs *md5 = xs_md5_hex(list, strlen(list));
+            xs *lol = list_maint(user, NULL, 0);
+            int c = 0;
+            xs_list *v;
+            int add = 1;
 
-            mkdirx(dir);
+            /* check if this list name already exists */
+            while (xs_list_next(lol, &v, &c)) {
+                if (strcmp(xs_list_get(v, 1), list) == 0) {
+                    add = 0;
+                    break;
+                }
+            }
 
-            xs *fn = xs_fmt("%s%s.id", dir, md5);
+            if (add) {
+                FILE *f;
+                xs *dir = xs_fmt("%s/list/", user->basedir);
+                xs *id  = xs_fmt("%010x", time(NULL));
 
-            if ((f = fopen(fn, "w")) != NULL) {
-                fprintf(f, "%s\n", list);
-                fclose(f);
+                mkdirx(dir);
+
+                xs *fn = xs_fmt("%s%s.id", dir, id);
+
+                if ((f = fopen(fn, "w")) != NULL) {
+                    fprintf(f, "%s\n", list);
+                    fclose(f);
+                }
+
+                l = xs_stock(XSTYPE_TRUE);
+            }
+            else
+                l = xs_stock(XSTYPE_FALSE);
+        }
+
+        break;
+
+    case 2: /** delete list (list is the id) **/
+        {
+            if (xs_is_hex(list)) {
+                xs *fn = xs_fmt("%s/list/%s.id", user->basedir, list);
+                unlink(fn);
+
+                fn = xs_replace_i(fn, ".id", ".lst");
+                unlink(fn);
+
+                fn = xs_replace_i(fn, ".list", ".idx");
+                unlink(fn);
             }
         }
 
         break;
 
-    case 2: /** delete list (list is md5 id) **/
-        break;
-
-    case 3: /** list content (list is md5 id) **/
+    case 3: /** list content (list is the id) **/
         break;
     }
 

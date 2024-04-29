@@ -174,7 +174,7 @@ int is_hidden(snac *snac, const char *id);
 void tag_index(const char *id, const xs_dict *obj);
 xs_list *tag_search(char *tag, int skip, int show);
 
-xs_list *list_maint(snac *user, const char *list, int op);
+xs_val *list_maint(snac *user, const char *list, int op);
 
 int actor_add(const char *actor, xs_dict *msg);
 int actor_get(const char *actor, xs_dict **data);

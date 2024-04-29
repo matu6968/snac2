@@ -1766,7 +1766,6 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/lists") == 0) { /** **/
-        /* snac does not support lists */
         if (logged_in) {
             xs *lol = list_maint(&snac1, NULL, 0);
             xs *l   = xs_list_new();
@@ -2656,17 +2655,22 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
             if (xs_type(title) == XSTYPE_STRING) {
                 /* add the list */
-                list_maint(&snac, title, 1);
-
                 xs *out = xs_dict_new();
 
-                out = xs_dict_append(out, "title", title);
-                out = xs_dict_append(out, "replies_policy", xs_dict_get_def(args, "replies_policy", "list"));
-                out = xs_dict_append(out, "exclusive", xs_stock(XSTYPE_FALSE));
+                if (xs_type(list_maint(&snac, title, 1)) == XSTYPE_TRUE) {
+                    out = xs_dict_append(out, "title", title);
+                    out = xs_dict_append(out, "replies_policy", xs_dict_get_def(args, "replies_policy", "list"));
+                    out = xs_dict_append(out, "exclusive", xs_stock(XSTYPE_FALSE));
+
+                    status = 200;
+                }
+                else {
+                    out = xs_dict_append(out, "error", "cannot create list");
+                    status = 422;
+                }
 
                 *body  = xs_json_dumps(out, 4);
                 *ctype = "application/json";
-                status = 200;
             }
             else
                 status = 422;
@@ -2691,16 +2695,43 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
     (void)b_size;
     (void)ctype;
 
+    int status = 404;
+
     if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
         return 0;
 
-    srv_debug(1, xs_fmt("mastoapi_delete_handler %s", q_path));
+    snac snac = {0};
+    int logged_in = process_auth_token(&snac, req);
+
     xs *cmd = xs_replace_n(q_path, "/api", "", 1);
+
     if (xs_startswith(cmd, "/v1/push/subscription") || xs_startswith(cmd, "/v2/push/subscription")) { /** **/
         // pretend we deleted it, since it doesn't exist anyway
-        return 200;
+        status = 200;
     }
-    return 0;
+    else
+    if (xs_startswith(cmd, "/v1/lists/")) {
+        if (logged_in) {
+            xs *l = xs_split(cmd, "/");
+            char *id = xs_list_get(l, -1);
+
+            if (xs_is_hex(id)) {
+                list_maint(&snac, id, 2);
+            }
+
+            status = 200;
+        }
+        else
+            status = 401;
+    }
+
+    /* user cleanup */
+    if (logged_in)
+        user_free(&snac);
+
+    srv_debug(1, xs_fmt("mastoapi_delete_handler %s %d", q_path, status));
+
+    return status;
 }
 
 
