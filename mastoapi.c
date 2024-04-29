@@ -1863,22 +1863,52 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     if (xs_startswith(cmd, "/v1/lists/")) { /** list information **/
         if (logged_in) {
             xs *l = xs_split(cmd, "/");
-            char *op = xs_list_get(l, -1);
-            char *id = xs_list_get(l, -2);
+            char *p = xs_list_get(l, -1);
 
-            if (op && id && xs_is_hex(id)) {
-                if (strcmp(op, "accounts") == 0) {
-                    xs *actors = list_content(&snac1, id, NULL, 0);
+            if (p) {
+                if (strcmp(p, "accounts") == 0) {
+                    p = xs_list_get(l, -2);
+
+                    if (p && xs_is_hex(p)) {
+                        xs *actors = list_content(&snac1, p, NULL, 0);
+                        xs *out = xs_list_new();
+                        int c = 0;
+                        char *v;
+
+                        while (xs_list_next(actors, &v, &c)) {
+                            xs *actor = NULL;
+
+                            if (valid_status(object_get_by_md5(v, &actor))) {
+                                xs *acct = mastoapi_account(actor);
+                                out = xs_list_append(out, acct);
+                            }
+                        }
+
+                        *body  = xs_json_dumps(out, 4);
+                        *ctype = "application/json";
+                        status = 200;
+                    }
+                }
+                else
+                if (xs_is_hex(p)) {
                     xs *out = xs_list_new();
+                    xs *lol = list_maint(&snac1, NULL, 0);
                     int c = 0;
-                    char *v;
+                    xs_list *v;
 
-                    while (xs_list_next(actors, &v, &c)) {
-                        xs *actor = NULL;
+                    while (xs_list_next(lol, &v, &c)) {
+                        char *id = xs_list_get(v, 0);
 
-                        if (valid_status(object_get_by_md5(v, &actor))) {
-                            xs *acct = mastoapi_account(actor);
-                            out = xs_list_append(out, acct);
+                        if (id && strcmp(id, p) == 0) {
+                            xs *d = xs_dict_new();
+
+                            d = xs_dict_append(d, "id", p);
+                            d = xs_dict_append(d, "title", xs_list_get(v, 1));
+                            d = xs_dict_append(d, "replies_policy", "list");
+                            d = xs_dict_append(d, "exclusive", xs_stock(XSTYPE_FALSE));
+
+                            out = xs_list_append(out, d);
+                            break;
                         }
                     }
 
