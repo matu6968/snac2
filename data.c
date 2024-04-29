@@ -1732,6 +1732,7 @@ xs_list *tag_search(char *tag, int skip, int show)
 /** lists **/
 
 xs_val *list_maint(snac *user, const char *list, int op)
+/* list maintenance */
 {
     xs_val *l = NULL;
 
@@ -1810,15 +1811,48 @@ xs_val *list_maint(snac *user, const char *list, int op)
                 fn = xs_replace_i(fn, ".id", ".lst");
                 unlink(fn);
 
-                fn = xs_replace_i(fn, ".list", ".idx");
+                fn = xs_replace_i(fn, ".lst", ".idx");
                 unlink(fn);
             }
         }
 
         break;
+    }
 
-    case 3: /** list content (list is the id) **/
+    return l;
+}
+
+
+xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op)
+/* list content management */
+{
+    xs_val *l = NULL;
+
+    if (!xs_is_hex(list))
+        return NULL;
+
+    if (actor_md5 != NULL && !xs_is_hex(actor_md5))
+        return NULL;
+
+    xs *fn = xs_fmt("%s/list/%s.lst", user->basedir, list);
+
+    switch (op) {
+    case 0: /** list content **/
+        l = index_list(fn, XS_ALL);
+
         break;
+
+    case 1: /** append actor to list **/
+        if (actor_md5 != NULL) {
+            if (!index_in(fn, actor_md5))
+                index_add_md5(fn, actor_md5);
+        }
+
+        break;
+
+    case 2: /** delete actor from list **/
+        if (actor_md5 != NULL)
+            index_del_md5(fn, actor_md5);
     }
 
     return l;

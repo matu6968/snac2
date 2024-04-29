@@ -1765,7 +1765,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         status = 200;
     }
     else
-    if (strcmp(cmd, "/v1/lists") == 0) { /** **/
+    if (strcmp(cmd, "/v1/lists") == 0) { /** list of lists **/
         if (logged_in) {
             xs *lol = list_maint(&snac1, NULL, 0);
             xs *l   = xs_list_new();
@@ -1786,6 +1786,36 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             *body  = xs_json_dumps(l, 4);
             *ctype = "application/json";
             status = 200;
+        }
+    }
+    else
+    if (xs_startswith(cmd, "/v1/lists/")) { /** list information **/
+        if (logged_in) {
+            xs *l = xs_split(cmd, "/");
+            char *op = xs_list_get(l, -1);
+            char *id = xs_list_get(l, -2);
+
+            if (op && id && xs_is_hex(id)) {
+                if (strcmp(op, "accounts") == 0) {
+                    xs *actors = list_content(&snac1, id, NULL, 0);
+                    xs *out = xs_list_new();
+                    int c = 0;
+                    char *v;
+
+                    while (xs_list_next(actors, &v, &c)) {
+                        xs *actor = NULL;
+
+                        if (valid_status(object_get_by_md5(v, &actor))) {
+                            xs *acct = mastoapi_account(actor);
+                            out = xs_list_append(out, acct);
+                        }
+                    }
+
+                    *body  = xs_json_dumps(out, 4);
+                    *ctype = "application/json";
+                    status = 200;
+                }
+            }
         }
     }
     else
@@ -2676,6 +2706,29 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 status = 422;
         }
     }
+    if (xs_startswith(cmd, "/v1/lists/")) { /** list maintenance **/
+        if (logged_in) {
+            xs *l = xs_split(cmd, "/");
+            char *op = xs_list_get(l, -1);
+            char *id = xs_list_get(l, -2);
+
+            if (op && id && xs_is_hex(id)) {
+                if (strcmp(op, "accounts") == 0) {
+                    xs_list *accts = xs_dict_get(args, "account_ids[]");
+                    int c = 0;
+                    char *v;
+
+                    while (xs_list_next(accts, &v, &c)) {
+                        list_content(&snac, id, v, 1);
+                    }
+
+                    status = 200;
+                }
+            }
+        }
+        else
+            status = 422;
+    }
 
     /* user cleanup */
     if (logged_in)
@@ -2688,17 +2741,38 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
 
 int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
-                             char **body, int *b_size, char **ctype) {
-
-    (void)req;
+                          const char *payload, int p_size,
+                          char **body, int *b_size, char **ctype)
+{
+    (void)p_size;
     (void)body;
     (void)b_size;
     (void)ctype;
 
-    int status = 404;
-
     if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
         return 0;
+
+    int status    = 404;
+    xs *args      = NULL;
+    char *i_ctype = xs_dict_get(req, "content-type");
+
+    if (i_ctype && xs_startswith(i_ctype, "application/json")) {
+        if (!xs_is_null(payload))
+            args = xs_json_loads(payload);
+    }
+    else if (i_ctype && xs_startswith(i_ctype, "application/x-www-form-urlencoded"))
+    {
+        // Some apps send form data instead of json so we should cater for those
+        if (!xs_is_null(payload)) {
+            xs *upl = xs_url_dec(payload);
+            args    = xs_url_vars(upl);
+        }
+    }
+    else
+        args = xs_dup(xs_dict_get(req, "p_vars"));
+
+    if (args == NULL)
+        return 400;
 
     snac snac = {0};
     int logged_in = process_auth_token(&snac, req);
@@ -2713,10 +2787,26 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
     if (xs_startswith(cmd, "/v1/lists/")) {
         if (logged_in) {
             xs *l = xs_split(cmd, "/");
-            char *id = xs_list_get(l, -1);
+            char *p = xs_list_get(l, -1);
 
-            if (xs_is_hex(id)) {
-                list_maint(&snac, id, 2);
+            if (p) {
+                if (strcmp(p, "accounts") == 0) {
+                    /* delete account from list */
+                    p = xs_list_get(l, -2);
+                    xs_list *accts = xs_dict_get(args, "account_ids[]");
+                    int c = 0;
+                    char *v;
+
+                    while (xs_list_next(accts, &v, &c)) {
+                        list_content(&snac, p, v, 2);
+                    }
+                }
+                else {
+                    /* delete list */
+                    if (xs_is_hex(p)) {
+                        list_maint(&snac, p, 2);
+                    }
+                }
             }
 
             status = 200;

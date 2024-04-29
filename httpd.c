@@ -360,7 +360,7 @@ void httpd_connection(FILE *f)
 #ifndef NO_MASTODON_API
         if (status == 0)
             status = mastoapi_delete_handler(req, q_path,
-                    &body, &b_size, &ctype);
+                    payload, p_size, &body, &b_size, &ctype);
 #endif
     }
 

@@ -175,6 +175,7 @@ void tag_index(const char *id, const xs_dict *obj);
 xs_list *tag_search(char *tag, int skip, int show);
 
 xs_val *list_maint(snac *user, const char *list, int op);
+xs_val *list_content(snac *user, const char *list_id, const char *actor_md5, int op);
 
 int actor_add(const char *actor, xs_dict *msg);
 int actor_get(const char *actor, xs_dict **data);
@@ -339,9 +340,10 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
                        char **body, int *b_size, char **ctype);
 int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                          char **body, int *b_size, char **ctype);
-int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
-                         char **body, int *b_size, char **ctype);
 int mastoapi_post_handler(const xs_dict *req, const char *q_path,
+                          const char *payload, int p_size,
+                          char **body, int *b_size, char **ctype);
+int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
                           const char *payload, int p_size,
                           char **body, int *b_size, char **ctype);
 int mastoapi_put_handler(const xs_dict *req, const char *q_path,
