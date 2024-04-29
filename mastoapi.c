@@ -1647,6 +1647,77 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         status = 200;
     }
     else
+    if (xs_startswith(cmd, "/v1/timelines/list/")) { /** **/
+        /* get the list id */
+        if (logged_in) {
+            xs *l = xs_split(cmd, "/");
+            char *list = xs_list_get(l, -1);
+
+            xs *timeline = list_content(&snac1, list, NULL, 3);
+            xs *out      = xs_list_new();
+            int c = 0;
+            char *md5;
+
+            while (xs_list_next(timeline, &md5, &c)) {
+                xs *msg = NULL;
+
+                /* get the entry */
+                if (!valid_status(timeline_get_by_md5(&snac1, md5, &msg)))
+                    continue;
+
+                /* discard non-Notes */
+                const char *id   = xs_dict_get(msg, "id");
+                const char *type = xs_dict_get(msg, "type");
+                if (!xs_match(type, "Note|Question|Page|Article|Video"))
+                    continue;
+
+                const char *from = NULL;
+                if (strcmp(type, "Page") == 0)
+                    from = xs_dict_get(msg, "audience");
+
+                if (from == NULL)
+                    from = get_atto(msg);
+
+                if (from == NULL)
+                    continue;
+
+                /* is this message from a person we don't follow? */
+                if (strcmp(from, snac1.actor) && !following_check(&snac1, from)) {
+                    /* discard if it was not boosted */
+                    xs *idx = object_announces(id);
+
+                    if (xs_list_len(idx) == 0)
+                        continue;
+                }
+
+                /* discard notes from muted morons */
+                if (is_muted(&snac1, from))
+                    continue;
+
+                /* discard hidden notes */
+                if (is_hidden(&snac1, id))
+                    continue;
+
+                /* if it has a name and it's not a Page or a Video,
+                   it's a poll vote, so discard it */
+                if (!xs_is_null(xs_dict_get(msg, "name")) && !xs_match(type, "Page|Video"))
+                    continue;
+
+                /* convert the Note into a Mastodon status */
+                xs *st = mastoapi_status(&snac1, msg);
+
+                if (st != NULL)
+                    out = xs_list_append(out, st);
+            }
+
+            *body  = xs_json_dumps(out, 4);
+            *ctype = "application/json";
+            status = 200;
+        }
+        else
+            status = 421;
+    }
+    else
     if (strcmp(cmd, "/v1/conversations") == 0) { /** **/
         /* TBD */
         *body  = xs_dup("[]");

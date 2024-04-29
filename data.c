@@ -1855,6 +1855,15 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
     case 2: /** delete actor from list **/
         if (actor_md5 != NULL)
             index_del_md5(fn, actor_md5);
+
+        break;
+
+    case 3: /** list timeline **/
+        fn = xs_replace_i(fn, ".lst", ".idx");
+
+        l = index_list_desc(fn, 0, 2048);
+
+        break;
     }
 
     return l;
@@ -1880,7 +1889,9 @@ void list_distribute(snac *user, const xs_dict *post)
             if (index_in_md5(v, a_md5)) {
                 /* it is; add post md5 to its timeline */
                 xs *idx = xs_replace(v, ".lst", ".idx");
-                index_add(idx, i_md5);
+                index_add_md5(idx, i_md5);
+
+                snac_debug(user, 1, xs_fmt("listed post %s in %s", id, idx));
             }
         }
     }
