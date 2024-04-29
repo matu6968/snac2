@@ -1767,9 +1767,27 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     else
     if (strcmp(cmd, "/v1/lists") == 0) { /** **/
         /* snac does not support lists */
-        *body  = xs_dup("[]");
-        *ctype = "application/json";
-        status = 200;
+        if (logged_in) {
+            xs *lol = list_maint(&snac1, NULL, 0);
+            xs *l   = xs_list_new();
+            int c = 0;
+            xs_list *li;
+
+            while (xs_list_next(lol, &li, &c)) {
+                xs *d = xs_dict_new();
+
+                d = xs_dict_append(d, "id", xs_list_get(li, 0));
+                d = xs_dict_append(d, "title", xs_list_get(li, 1));
+                d = xs_dict_append(d, "replies_policy", "list");
+                d = xs_dict_append(d, "exclusive", xs_stock(XSTYPE_FALSE));
+
+                l = xs_list_append(l, d);
+            }
+
+            *body  = xs_json_dumps(l, 4);
+            *ctype = "application/json";
+            status = 200;
+        }
     }
     else
     if (strcmp(cmd, "/v1/scheduled_statuses") == 0) { /** **/
@@ -2630,6 +2648,29 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
         }
         else
             status = 401;
+    }
+    else
+    if (strcmp(cmd, "/v1/lists") == 0) {
+        if (logged_in) {
+            const char *title = xs_dict_get(args, "title");
+
+            if (xs_type(title) == XSTYPE_STRING) {
+                /* add the list */
+                list_maint(&snac, title, 1);
+
+                xs *out = xs_dict_new();
+
+                out = xs_dict_append(out, "title", title);
+                out = xs_dict_append(out, "replies_policy", xs_dict_get_def(args, "replies_policy", "list"));
+                out = xs_dict_append(out, "exclusive", xs_stock(XSTYPE_FALSE));
+
+                *body  = xs_json_dumps(out, 4);
+                *ctype = "application/json";
+                status = 200;
+            }
+            else
+                status = 422;
+        }
     }
 
     /* user cleanup */

@@ -1729,6 +1729,68 @@ xs_list *tag_search(char *tag, int skip, int show)
 }
 
 
+/** lists **/
+
+xs_list *list_maint(snac *user, const char *list, int op)
+{
+    xs_list *l = NULL;
+
+    switch (op) {
+    case 0: /** list of lists **/
+        {
+            FILE *f;
+            xs *spec = xs_fmt("%s/list/" "*.id", user->basedir);
+            xs *ls   = xs_glob(spec, 0, 0);
+            int c = 0;
+            char *v;
+
+            l = xs_list_new();
+
+            while (xs_list_next(ls, &v, &c)) {
+                if ((f = fopen(v, "r")) != NULL) {
+                    xs *title = xs_readline(f);
+                    fclose(f);
+
+                    title = xs_strip_i(title);
+                    xs *md5 = xs_md5_hex(title, strlen(title));
+
+                    /* return [ list_id, list_title ] */
+                    l = xs_list_append(l, xs_list_append(xs_list_new(), md5, title));
+                }
+            }
+        }
+
+        break;
+
+    case 1: /** create new list (list is the name) **/
+        {
+            FILE *f;
+            xs *dir = xs_fmt("%s/list/", user->basedir);
+            xs *md5 = xs_md5_hex(list, strlen(list));
+
+            mkdirx(dir);
+
+            xs *fn = xs_fmt("%s%s.id", dir, md5);
+
+            if ((f = fopen(fn, "w")) != NULL) {
+                fprintf(f, "%s\n", list);
+                fclose(f);
+            }
+        }
+
+        break;
+
+    case 2: /** delete list (list is md5 id) **/
+        break;
+
+    case 3: /** list content (list is md5 id) **/
+        break;
+    }
+
+    return l;
+}
+
+
 /** static data **/
 
 static int _load_raw_file(const char *fn, xs_val **data, int *size,
