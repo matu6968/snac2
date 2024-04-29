@@ -1154,6 +1154,8 @@ int timeline_add(snac *snac, const char *id, const xs_dict *o_msg)
 
     tag_index(id, o_msg);
 
+    list_distribute(snac, o_msg);
+
     snac_debug(snac, 1, xs_fmt("timeline_add %s", id));
 
     return ret;
@@ -1856,6 +1858,32 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
     }
 
     return l;
+}
+
+
+void list_distribute(snac *user, const xs_dict *post)
+/* distributes the post to all appropriate lists */
+{
+    char *atto = get_atto(post);
+    char *id   = xs_dict_get(post, "id");
+
+    if (xs_type(atto) == XSTYPE_STRING && xs_type(id) == XSTYPE_STRING) {
+        xs *a_md5 = xs_md5_hex(atto, strlen(atto));
+        xs *i_md5 = xs_md5_hex(id, strlen(id));
+        xs *spec  = xs_fmt("%s/list/" "*.lst", user->basedir);
+        xs *ls    = xs_glob(spec, 0, 0);
+        int c = 0;
+        char *v;
+
+        while (xs_list_next(ls, &v, &c)) {
+            /* is the actor in this list? */
+            if (index_in_md5(v, a_md5)) {
+                /* it is; add post md5 to its timeline */
+                xs *idx = xs_replace(v, ".lst", ".idx");
+                index_add(idx, i_md5);
+            }
+        }
+    }
 }
 
 

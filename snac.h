@@ -176,6 +176,7 @@ xs_list *tag_search(char *tag, int skip, int show);
 
 xs_val *list_maint(snac *user, const char *list, int op);
 xs_val *list_content(snac *user, const char *list_id, const char *actor_md5, int op);
+void list_distribute(snac *user, const xs_dict *post);
 
 int actor_add(const char *actor, xs_dict *msg);
 int actor_get(const char *actor, xs_dict **data);
