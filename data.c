@@ -3012,6 +3012,19 @@ void purge_user(snac *snac)
         srv_debug(1, xs_fmt("purge: %s %d", idx, gc));
     }
 
+    /* purge lists */
+    {
+        xs *spec = xs_fmt("%s/list/" "*.idx", snac->basedir);
+        xs *lol  = xs_glob(spec, 0, 0);
+        int c = 0;
+        char *v;
+
+        while (xs_list_next(lol, &v, &c)) {
+            int gc = index_gc(v);
+            srv_debug(1, xs_fmt("purge: %s %d", v, gc));
+        }
+    }
+
     /* unrelated to purging, but it's a janitorial process, so what the hell */
     verify_links(snac);
 }
