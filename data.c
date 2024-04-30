@@ -340,6 +340,12 @@ double f_ctime(const char *fn)
 }
 
 
+int is_md5_hex(const char *md5)
+{
+    return xs_is_hex(md5) && strlen(md5) == 32;
+}
+
+
 /** database 2.1+ **/
 
 /** indexes **/
@@ -350,6 +356,11 @@ int index_add_md5(const char *fn, const char *md5)
 {
     int status = 201; /* Created */
     FILE *f;
+
+    if (!is_md5_hex(md5)) {
+        srv_log(xs_fmt("index_add_md5: bad md5 %s %s", fn, md5));
+        return 400;
+    }
 
     pthread_mutex_lock(&data_mutex);
 
@@ -606,7 +617,7 @@ static xs_str *_object_fn_by_md5(const char *md5, const char *func)
     if (md5[0] == '-')
         ok = 0;
     else
-    if (!xs_is_hex(md5) || strlen(md5) != 32) {
+    if (!is_md5_hex(md5)) {
         srv_log(xs_fmt("_object_fn_by_md5() [from %s()]: bad md5 '%s'", func, md5));
         ok = 0;
     }
