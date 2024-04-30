@@ -2099,6 +2099,9 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
                             snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",
                                 actor, object));
 
+                        /* distribute the post with the actor as 'proxy' */
+                        list_distribute(snac, actor, a_msg);
+
                         do_notify = 1;
                     }
                     else

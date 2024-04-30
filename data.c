@@ -1165,7 +1165,7 @@ int timeline_add(snac *snac, const char *id, const xs_dict *o_msg)
 
     tag_index(id, o_msg);
 
-    list_distribute(snac, o_msg);
+    list_distribute(snac, NULL, o_msg);
 
     snac_debug(snac, 1, xs_fmt("timeline_add %s", id));
 
@@ -1881,14 +1881,17 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
 }
 
 
-void list_distribute(snac *user, const xs_dict *post)
+void list_distribute(snac *user, const char *who, const xs_dict *post)
 /* distributes the post to all appropriate lists */
 {
-    char *atto = get_atto(post);
-    char *id   = xs_dict_get(post, "id");
+    char *id = xs_dict_get(post, "id");
 
-    if (xs_type(atto) == XSTYPE_STRING && xs_type(id) == XSTYPE_STRING) {
-        xs *a_md5 = xs_md5_hex(atto, strlen(atto));
+    /* if who is not set, use the attributedTo in the message */
+    if (xs_is_null(who))
+        who = get_atto(post);
+
+    if (xs_type(who) == XSTYPE_STRING && xs_type(id) == XSTYPE_STRING) {
+        xs *a_md5 = xs_md5_hex(who, strlen(who));
         xs *i_md5 = xs_md5_hex(id, strlen(id));
         xs *spec  = xs_fmt("%s/list/" "*.lst", user->basedir);
         xs *ls    = xs_glob(spec, 0, 0);
