@@ -1947,12 +1947,16 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
             utype = "Follow";
 
         if (strcmp(utype, "Follow") == 0) { /** **/
-            if (valid_status(follower_del(snac, actor))) {
-                snac_log(snac, xs_fmt("no longer following us %s", actor));
-                do_notify = 1;
+            if (id && strcmp(id, snac->actor) != 0)
+                snac_debug(snac, 1, xs_fmt("Undo + Follow from %s not for us (%s)", actor, id));
+            else {
+                if (valid_status(follower_del(snac, actor))) {
+                    snac_log(snac, xs_fmt("no longer following us %s", actor));
+                    do_notify = 1;
+                }
+                else
+                    snac_log(snac, xs_fmt("error deleting follower %s", actor));
             }
-            else
-                snac_log(snac, xs_fmt("error deleting follower %s", actor));
         }
         else
         if (strcmp(utype, "Like") == 0) { /** **/
