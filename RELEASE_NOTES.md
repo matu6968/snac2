@@ -6,7 +6,7 @@ Posts that were liked or boosted can now be unliked and unboosted.
 
 Outgoing message timeouts are no longer hardcoded and can be configured (see `snac(8)` for more information).
 
-Fixed a bug that caused some spurious unfollows under special conditions (with shared inboxes enabled and users from the same instance that follow each other, the internal message distributor was confused).
+Fixed a bug that caused some incorrect unfollows under special conditions (with shared inboxes enabled and users from the same instance that follow each other, the internal message distributor was confused).
 
 Mastodon API: Added support for lists.
 
