@@ -110,11 +110,8 @@ xs_list *xs_split_n(const char *str, const char *sep, int times);
 xs_list *xs_list_cat(xs_list *l1, const xs_list *l2);
 
 xs_dict *xs_dict_new(void);
-xs_dict *xs_dict_append_m(xs_dict *dict, const xs_str *key, const xs_val *mem, int dsz);
-#define xs_dict_append(dict, key, data) xs_dict_append_m(dict, key, data, xs_size(data))
-xs_dict *xs_dict_prepend_m(xs_dict *dict, const xs_str *key, const xs_val *mem, int dsz);
-#define xs_dict_prepend(dict, key, data) xs_dict_prepend_m(dict, key, data, xs_size(data))
-int xs_dict_iter(xs_dict **dict, xs_str **key, xs_val **value);
+xs_dict *xs_dict_append(xs_dict *dict, const xs_str *key, const xs_val *value);
+xs_dict *xs_dict_prepend(xs_dict *dict, const xs_str *key, const xs_val *value);
 int xs_dict_next(const xs_dict *dict, xs_str **key, xs_val **value, int *ctxt);
 xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_val *def);
 #define xs_dict_get(dict, key) xs_dict_get_def(dict, key, NULL)
@@ -1042,50 +1039,17 @@ xs_dict *_xs_dict_write_ditem(xs_dict *dict, int offset, const xs_str *key,
 }
 
 
-xs_dict *xs_dict_append_m(xs_dict *dict, const xs_str *key, const xs_val *mem, int dsz)
+xs_dict *xs_dict_append(xs_dict *dict, const xs_str *key, const xs_val *value)
 /* appends a memory block to the dict */
 {
-    return _xs_dict_write_ditem(dict, xs_size(dict) - 1, key, mem, dsz);
+    return _xs_dict_write_ditem(dict, xs_size(dict) - 1, key, value, xs_size(value));
 }
 
 
-xs_dict *xs_dict_prepend_m(xs_dict *dict, const xs_str *key, const xs_val *mem, int dsz)
+xs_dict *xs_dict_prepend(xs_dict *dict, const xs_str *key, const xs_val *value)
 /* prepends a memory block to the dict */
 {
-    return _xs_dict_write_ditem(dict, 4, key, mem, dsz);
-}
-
-
-int xs_dict_iter(xs_dict **dict, xs_str **key, xs_val **value)
-/* iterates a dict value */
-{
-    int goon = 1;
-
-    xs_val *p = *dict;
-
-    /* skip the start of the list */
-    if (xs_type(p) == XSTYPE_DICT)
-        p += 1 + _XS_TYPE_SIZE;
-
-    /* an element? */
-    if (xs_type(p) == XSTYPE_DITEM) {
-        p++;
-
-        *key = p;
-        p += xs_size(*key);
-
-        *value = p;
-        p += xs_size(*value);
-    }
-    else {
-        /* end of list */
-        goon = 0;
-    }
-
-    /* store back the pointer */
-    *dict = p;
-
-    return goon;
+    return _xs_dict_write_ditem(dict, 4, key, value, xs_size(value));
 }
 
 
