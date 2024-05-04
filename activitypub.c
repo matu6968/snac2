@@ -2313,6 +2313,22 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
             timeline_request_replies(snac, id);
     }
     else
+    if (strcmp(type, "object_request") == 0) {
+        const char *id = xs_dict_get(q_item, "message");
+
+        if (!xs_is_null(id)) {
+            int status;
+            xs *data = NULL;
+
+            status = activitypub_request(snac, id, &data);
+
+            if (valid_status(status))
+                object_add_ow(id, data);
+
+            snac_debug(snac, 1, xs_fmt("object_request %s %d", id, status));
+        }
+    }
+    else
     if (strcmp(type, "verify_links") == 0) {
         verify_links(snac);
     }

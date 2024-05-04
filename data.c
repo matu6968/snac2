@@ -2651,6 +2651,21 @@ void enqueue_close_question(snac *user, const char *id, int end_secs)
 }
 
 
+void enqueue_object_request(snac *user, const char *id, int forward_secs)
+/* enqueues the request of an object in the future */
+{
+    xs *qmsg = _new_qmsg("object_request", id, 0);
+    xs *ntid = tid(forward_secs);
+    xs *fn   = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+
+    qmsg = xs_dict_set(qmsg, "ntid", ntid);
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    snac_debug(user, 0, xs_fmt("enqueue_object_request %s", id));
+}
+
+
 void enqueue_verify_links(snac *user)
 /* enqueues a link verification */
 {

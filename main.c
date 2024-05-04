@@ -458,6 +458,12 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "request2") == 0) { /** **/
+        enqueue_object_request(&snac, url, 2);
+
+        return 0;
+    }
+
     if (strcmp(cmd, "actor") == 0) { /** **/
         int status;
         xs *data = NULL;
