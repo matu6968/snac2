@@ -3300,6 +3300,25 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             timeline_add(&snac, xs_dict_get(msg, "id"), msg);
         }
 
+        {
+            /* get the poll object */
+            xs *poll = NULL;
+
+            if (valid_status(object_get(irt, &poll))) {
+                char *date = xs_dict_get(poll, "endTime");
+                if (xs_is_null(date))
+                    date = xs_dict_get(poll, "closed");
+
+                if (!xs_is_null(date)) {
+                    time_t t = xs_parse_iso_date(date, 0) - time(NULL);
+
+                    /* request the poll when it's closed;
+                       Pleroma does not send and update when the poll closes */
+                    enqueue_object_request(&snac, irt, t + 2);
+                }
+            }
+        }
+
         status = 303;
     }
 

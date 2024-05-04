@@ -2662,7 +2662,7 @@ void enqueue_object_request(snac *user, const char *id, int forward_secs)
 
     qmsg = _enqueue_put(fn, qmsg);
 
-    snac_debug(user, 0, xs_fmt("enqueue_object_request %s", id));
+    snac_debug(user, 0, xs_fmt("enqueue_object_request %s %d", id, forward_secs));
 }
 
 
