@@ -1665,7 +1665,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         else
         if (user && was_question_voted(user, id))
             closed = 1; /* we already voted; closed for us */
-        else
+
         if ((f_closed = xs_dict_get(msg, "closed")) != NULL) {
             /* it has a closed date... but is it in the past? */
             time_t t0 = time(NULL);
