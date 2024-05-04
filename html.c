@@ -1653,20 +1653,27 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         xs_list *p;
         xs_dict *v;
         int closed = 0;
+        char *f_closed = NULL;
 
         xs_html *poll = xs_html_tag("div", NULL);
 
         if (read_only)
             closed = 1; /* non-identified page; show as closed */
         else
-        if (xs_dict_get(msg, "closed"))
-            closed = 2;
-        else
         if (user && xs_startswith(id, user->actor))
             closed = 1; /* we questioned; closed for us */
         else
         if (user && was_question_voted(user, id))
             closed = 1; /* we already voted; closed for us */
+        else
+        if ((f_closed = xs_dict_get(msg, "closed")) != NULL) {
+            /* it has a closed date... but is it in the past? */
+            time_t t0 = time(NULL);
+            time_t t1 = xs_parse_iso_date(f_closed, 0);
+
+            if (t1 < t0)
+                closed = 2;
+        }
 
         /* get the appropriate list of options */
         p = oo != NULL ? oo : ao;
@@ -1756,6 +1763,12 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         else {
             /* show when the poll closes */
             char *end_time = xs_dict_get(msg, "endTime");
+
+            /* Pleroma does not have an endTime field;
+               it has a closed time in the future */
+            if (xs_is_null(end_time))
+                end_time = xs_dict_get(msg, "closed");
+
             if (!xs_is_null(end_time)) {
                 time_t t0 = time(NULL);
                 time_t t1 = xs_parse_iso_date(end_time, 0);
