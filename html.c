@@ -3330,12 +3330,19 @@ xs_str *timeline_to_rss(snac *user, const xs_list *timeline, char *title, char *
             continue;
 
         /* create a title with the first line of the content */
-        xs *es_title = xs_replace(content, "<br>", "\n");
-        xs *title    = xs_str_new(NULL);
+        xs *title = xs_replace(content, "<br>", "\n");
+        title = xs_regex_replace_i(title, "<[^>]+>", " ");
+        title = xs_regex_replace_i(title, "&[^;]+;", " ");
         int i;
 
-        for (i = 0; es_title[i] && es_title[i] != '\n' && es_title[i] != '&' && i < 50; i++)
-            title = xs_append_m(title, &es_title[i], 1);
+        for (i = 0; title[i] && title[i] != '\n' && i < 50; i++);
+
+        if (title[i] != '\0') {
+            title[i] = '\0';
+            title = xs_str_cat(title, "...");
+        }
+
+        title = xs_strip_i(title);
 
         xs_html_add(channel,
             xs_html_tag("item",
