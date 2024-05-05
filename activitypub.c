@@ -1988,8 +1988,15 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         if (xs_match(utype, "Note|Article")) { /** **/
             char *id          = xs_dict_get(object, "id");
             char *in_reply_to = xs_dict_get(object, "inReplyTo");
+            char *atto        = get_atto(object);
             xs *wrk           = NULL;
 
+            if (xs_is_null(id))
+                snac_log(snac, xs_fmt("malformed message: no 'id' field"));
+            else
+            if (xs_is_null(atto))
+                snac_log(snac, xs_fmt("malformed message: no 'attributedTo' field"));
+            else
             if (!xs_is_null(in_reply_to) && is_hidden(snac, in_reply_to)) {
                 snac_debug(snac, 0, xs_fmt("dropped reply %s to hidden post %s", id, in_reply_to));
             }
@@ -1998,6 +2005,9 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
                     snac_log(snac, xs_fmt("rejected by content %s", id));
                     return 1;
                 }
+
+                if (strcmp(actor, atto) != 0)
+                    snac_log(snac, xs_fmt("SUSPICIOUS: actor != atto (%s != %s)", actor, atto));
 
                 timeline_request(snac, &in_reply_to, &wrk, 0);
 
