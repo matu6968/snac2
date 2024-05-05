@@ -169,8 +169,6 @@ int server_get_handler(xs_dict *req, const char *q_path,
 {
     int status = 0;
 
-    (void)req;
-
     /* is it the server root? */
     if (*q_path == '\0') {
         xs_dict *q_vars = xs_dict_get(req, "q_vars");
@@ -195,7 +193,15 @@ int server_get_handler(xs_dict *req, const char *q_path,
                 more = 1;
             }
 
-            *body = html_timeline(NULL, tl, 0, skip, show, more, t, NULL, 0);
+            char *accept = xs_dict_get(req, "accept");
+            if (!xs_is_null(accept) && strcmp(accept, "application/rss+xml") == 0) {
+                xs *link = xs_fmt("%s/?t=%s", srv_baseurl, t);
+
+                *body = timeline_to_rss(NULL, tl, link, link, link);
+                *ctype = "application/rss+xml; charset=utf-8";
+            }
+            else
+                *body = html_timeline(NULL, tl, 0, skip, show, more, t, NULL, 0);
         }
         else
         if (xs_type(xs_dict_get(srv_config, "show_instance_timeline")) == XSTYPE_TRUE) {
