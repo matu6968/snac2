@@ -14,6 +14,8 @@ Added a header to avoid over-zealous caching in some browsers (contributed by lo
 
 Added support for running and federating inside hidden networks like Tor, I2P or Loki (contributed by iwojima).
 
+Fixed an error processing polls coming from Pleroma instances.
+
 ## 2.51
 
 Support for custom Emojis has been added; they are no longer hardcoded, but read from the `emojis.json` file at the server base directory. Also, they are no longer limited to string substitutions, but images as external URLs are also supported (see `snac(8)` for more information).
