@@ -219,7 +219,7 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
     else
         status = 404;
 
-    srv_debug(1, xs_fmt("webfinger_get_handler: resource=%s", resource));
+    srv_debug(1, xs_fmt("webfinger_get_handler resource=%s %d", resource, status));
 
     return status;
 }
