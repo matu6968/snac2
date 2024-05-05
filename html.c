@@ -2728,55 +2728,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs_dict_get(srv_config, "host"));
         xs *rss_link = xs_fmt("%s.rss", snac.actor);
 
-        xs_html *rss = xs_html_tag("rss",
-            xs_html_attr("version", "0.91"));
-
-        xs_html *channel = xs_html_tag("channel",
-            xs_html_tag("title",
-                xs_html_text(rss_title)),
-            xs_html_tag("language",
-                xs_html_text("en")),
-            xs_html_tag("link",
-                xs_html_text(rss_link)),
-            xs_html_tag("description",
-                xs_html_text(bio)));
-
-        xs_html_add(rss, channel);
-
-        xs_list *p = elems;
-        char *v;
-
-        while (xs_list_iter(&p, &v)) {
-            xs *msg  = NULL;
-
-            if (!valid_status(timeline_get_by_md5(&snac, v, &msg)))
-                continue;
-
-            char *id = xs_dict_get(msg, "id");
-            char *content = xs_dict_get(msg, "content");
-
-            if (!xs_startswith(id, snac.actor))
-                continue;
-
-            /* create a title with the first line of the content */
-            xs *es_title = xs_replace(content, "<br>", "\n");
-            xs *title   = xs_str_new(NULL);
-            int i;
-
-            for (i = 0; es_title[i] && es_title[i] != '\n' && es_title[i] != '&' && i < 50; i++)
-                title = xs_append_m(title, &es_title[i], 1);
-
-            xs_html_add(channel,
-                xs_html_tag("item",
-                    xs_html_tag("title",
-                        xs_html_text(title)),
-                    xs_html_tag("link",
-                        xs_html_text(id)),
-                    xs_html_tag("description",
-                        xs_html_text(content))));
-        }
-
-        *body   = xs_html_render_s(rss, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        *body   = timeline_to_rss(&snac, elems, rss_title, rss_link, bio);
         *b_size = strlen(*body);
         *ctype  = "application/rss+xml; charset=utf-8";
         status  = 200;
@@ -3335,4 +3287,65 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     user_free(&snac);
 
     return status;
+}
+
+
+xs_str *timeline_to_rss(snac *user, const xs_list *timeline, char *title, char *link, char *desc)
+/* converts a timeline to rss */
+{
+    xs_html *rss = xs_html_tag("rss",
+        xs_html_attr("version", "0.91"));
+
+    xs_html *channel = xs_html_tag("channel",
+        xs_html_tag("title",
+            xs_html_text(title)),
+        xs_html_tag("language",
+            xs_html_text("en")),
+        xs_html_tag("link",
+            xs_html_text(link)),
+        xs_html_tag("description",
+            xs_html_text(desc)));
+
+    xs_html_add(rss, channel);
+
+    int c = 0;
+    char *v;
+
+    while (xs_list_next(timeline, &v, &c)) {
+        xs *msg = NULL;
+
+        if (user) {
+            if (!valid_status(timeline_get_by_md5(user, v, &msg)))
+                continue;
+        }
+        else {
+            if (!valid_status(object_get_by_md5(v, &msg)))
+                continue;
+        }
+
+        char *id = xs_dict_get(msg, "id");
+        char *content = xs_dict_get(msg, "content");
+
+        if (user && !xs_startswith(id, user->actor))
+            continue;
+
+        /* create a title with the first line of the content */
+        xs *es_title = xs_replace(content, "<br>", "\n");
+        xs *title    = xs_str_new(NULL);
+        int i;
+
+        for (i = 0; es_title[i] && es_title[i] != '\n' && es_title[i] != '&' && i < 50; i++)
+            title = xs_append_m(title, &es_title[i], 1);
+
+        xs_html_add(channel,
+            xs_html_tag("item",
+                xs_html_tag("title",
+                    xs_html_text(title)),
+                xs_html_tag("link",
+                    xs_html_text(id)),
+                xs_html_tag("description",
+                    xs_html_text(content))));
+    }
+
+    return xs_html_render_s(rss, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 }

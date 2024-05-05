@@ -324,6 +324,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 int html_post_handler(const xs_dict *req, const char *q_path,
                       char *payload, int p_size,
                       char **body, int *b_size, char **ctype);
+xs_str *timeline_to_rss(snac *user, const xs_list *timeline, char *title, char *link, char *desc);
 
 int snac_init(const char *_basedir);
 int adduser(const char *uid);
