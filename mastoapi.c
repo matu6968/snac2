@@ -1467,9 +1467,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             if (limit == 0)
                 limit = 20;
 
-            snac_debug(&snac1, 1,
-                xs_fmt("/v1/timelines/home: max_id=%s since_id=%s min_id=%s limit=%s",
-                max_id, since_id, min_id, limit_s));
+            xs *ja = xs_json_dumps(args, 0);
+            snac_debug(&snac1, 1, xs_fmt("/v1/timelines/home: args='%s'", ja));
 
             xs *timeline = timeline_simple_list(&snac1, "private", 0, 2048);
 
