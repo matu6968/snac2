@@ -716,10 +716,23 @@ xs_dict *mastoapi_poll(snac *snac, const xs_dict *msg)
     xs *options = xs_list_new();
 
     poll = xs_dict_append(poll, "id", mid);
-    xs *fd = mastoapi_date(xs_dict_get(msg, "endTime"));
+    char *date = xs_dict_get(msg, "endTime");
+    if (date == NULL)
+        date = xs_dict_get(msg, "closed");
+    if (date == NULL)
+        return NULL;
+
+    xs *fd = mastoapi_date(date);
     poll = xs_dict_append(poll, "expires_at", fd);
+
+    date = xs_dict_get(msg, "closed");
+    time_t t = 0;
+
+    if (date != NULL)
+        t = xs_parse_iso_date(date, 0);
+
     poll = xs_dict_append(poll, "expired",
-            xs_dict_get(msg, "closed") != NULL ? xs_stock(XSTYPE_TRUE) : xs_stock(XSTYPE_FALSE));
+            t < time(NULL) ? xs_stock(XSTYPE_FALSE) : xs_stock(XSTYPE_TRUE));
 
     if ((opts = xs_dict_get(msg, "oneOf")) != NULL)
         poll = xs_dict_append(poll, "multiple", xs_stock(XSTYPE_FALSE));
