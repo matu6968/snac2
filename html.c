@@ -509,7 +509,7 @@ xs_html *html_instance_head(void)
 }
 
 
-static xs_html *html_instance_body(char *tag)
+static xs_html *html_instance_body(char *title)
 {
     char *host  = xs_dict_get(srv_config, "host");
     char *sdesc = xs_dict_get(srv_config, "short_description");
@@ -560,14 +560,11 @@ static xs_html *html_instance_body(char *tag)
                         xs_html_text(handle)))));
     }
 
-    {
-        xs *l = tag ? xs_fmt(L("Search results for #%s"), tag) :
-            xs_dup(L("Recent posts by users in this instance"));
-
+    if (title != NULL) {
         xs_html_add(body,
             xs_html_tag("h2",
                 xs_html_attr("class", "snac-header"),
-                xs_html_text(l)));
+                xs_html_text(title)));
     }
 
     return body;
@@ -1996,7 +1993,7 @@ xs_html *html_footer(void)
 
 xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                       int skip, int show, int show_more,
-                      char *tag, char *page, int utl)
+                      char *title, char *page, int utl)
 /* returns the HTML for the timeline */
 {
     xs_list *p = (xs_list *)list;
@@ -2026,7 +2023,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     }
     else {
         head = html_instance_head();
-        body = html_instance_body(tag);
+        body = html_instance_body(title);
     }
 
     xs_html *html = xs_html_tag("html",
@@ -2126,25 +2123,22 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     }
 
     if (show_more) {
-        xs *t  = NULL;
         xs *m  = NULL;
         xs *ss = xs_fmt("skip=%d&show=%d", skip + show, show);
 
-        xs *url = page == NULL || user == NULL ?
-            xs_dup(srv_baseurl) : xs_fmt("%s%s", user->actor, page);
+        xs *url = xs_dup(user == NULL ? srv_baseurl : user->actor);
 
-        if (tag) {
-            t = xs_fmt("%s?t=%s", url, tag);
-            m = xs_fmt("%s&%s", t, ss);
-        }
-        else {
-            t = xs_dup(url);
-            m = xs_fmt("%s?%s", t, ss);
-        }
+        if (page != NULL)
+            url = xs_str_cat(url, page);
+
+        if (xs_str_in(url, "?") != -1)
+            m = xs_fmt("%s&%s", url, ss);
+        else
+            m = xs_fmt("%s?%s", url, ss);
 
         xs_html *more_links = xs_html_tag("p",
             xs_html_tag("a",
-                xs_html_attr("href", t),
+                xs_html_attr("href", url),
                 xs_html_attr("name", "snac-more"),
                 xs_html_text(L("Back to top"))),
             xs_html_text(" - "),
