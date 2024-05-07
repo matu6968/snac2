@@ -2674,7 +2674,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 xs *base = xs_fmt("/list/%s", lid);
 
                 *body = html_timeline(&snac, list, 0, skip, show,
-                    xs_list_len(next), NULL, base, 0);
+                    xs_list_len(next), NULL, base, 1);
                 *b_size = strlen(*body);
                 status  = 200;
             }
