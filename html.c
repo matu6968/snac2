@@ -2658,6 +2658,29 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
     }
     else
+    if (xs_startswith(p_path, "list/")) { /** list timelines **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = 401;
+        }
+        else {
+            xs *l = xs_split(p_path, "/");
+            char *lid = xs_list_get(l, -1);
+
+            xs *list = list_timeline(&snac, lid, skip, show);
+            xs *next = list_timeline(&snac, lid, skip + show, 1);
+
+            if (list != NULL) {
+                xs *base = xs_fmt("/list/%s", lid);
+
+                *body = html_timeline(&snac, list, 0, skip, show,
+                    xs_list_len(next), NULL, base, 0);
+                *b_size = strlen(*body);
+                status  = 200;
+            }
+        }
+    }
+    else
     if (xs_startswith(p_path, "p/")) { /** a timeline with just one entry **/
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
             return 403;

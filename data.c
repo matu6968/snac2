@@ -1836,6 +1836,23 @@ xs_val *list_maint(snac *user, const char *list, int op)
 }
 
 
+xs_list *list_timeline(snac *user, const char *list, int skip, int show)
+/* returns the timeline of a list */
+{
+    xs_list *l = NULL;
+
+    if (!xs_is_hex(list))
+        return NULL;
+
+    xs *fn = xs_fmt("%s/list/%s.idx", user->basedir, list);
+
+    if (mtime(fn) > 0.0)
+        l = index_list_desc(fn, skip, show);
+
+    return l;
+}
+
+
 xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op)
 /* list content management */
 {
@@ -1869,11 +1886,8 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
 
         break;
 
-    case 3: /** list timeline **/
-        fn = xs_replace_i(fn, ".lst", ".idx");
-
-        l = index_list_desc(fn, 0, 2048);
-
+    default:
+        srv_log(xs_fmt("ERROR: list_content: bad op %d", op));
         break;
     }
 
