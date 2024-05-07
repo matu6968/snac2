@@ -2653,7 +2653,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *next = timeline_instance_list(skip + show, 1);
 
             *body = html_timeline(&snac, list, 0, skip, show,
-                xs_list_len(next), NULL, "/instance", 0);
+                xs_list_len(next), L("Showing instance timeline"), "/instance", 0);
             *b_size = strlen(*body);
             status  = 200;
         }
