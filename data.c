@@ -1830,6 +1830,19 @@ xs_val *list_maint(snac *user, const char *list, int op)
         }
 
         break;
+
+    case 3: /** get list name **/
+        if (xs_is_hex(list)) {
+            FILE *f;
+            xs *fn = xs_fmt("%s/list/%s.id", user->basedir, list);
+
+            if ((f = fopen(fn, "r")) != NULL) {
+                l = xs_strip_i(xs_readline(f));
+                fclose(f);
+            }
+        }
+
+        break;
     }
 
     return l;
