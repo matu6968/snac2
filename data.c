@@ -2491,7 +2491,7 @@ void notify_clear(snac *snac)
 /** searches **/
 
 xs_list *content_search(snac *user, const xs_list *timeline,
-                            const char *regex, int max_secs, int *timeout)
+                        const char *regex, int max_secs, int *timeout)
 /* returns a list of posts which content matches the regex */
 {
     xs_list *r = xs_list_new();
@@ -2514,14 +2514,11 @@ xs_list *content_search(snac *user, const xs_list *timeline,
             break;
         }
 
-        int status;
+        /* if from a user, must be in any timeline */
+        if (user && !timeline_here(user, v))
+            continue;
 
-        if (user)
-            status = timeline_get_by_md5(user, v, &post);
-        else
-            status = object_get_by_md5(v, &post);
-
-        if (!valid_status(status))
+        if (!valid_status(object_get_by_md5(v, &post)))
             continue;
 
         /* must be a Note */
