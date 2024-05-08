@@ -44,6 +44,7 @@ int usage(void)
     printf("limit {basedir} {uid} {actor}        Limits an actor (drops their announces)\n");
     printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
     printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
+    printf("search {basedir} {uid} {regex}       Searches posts by content\n");
 
     return 1;
 }
@@ -370,6 +371,23 @@ int main(int argc, char *argv[])
             snac_log(&snac, xs_fmt("actor %s is no longer limited", url));
         else
             snac_log(&snac, xs_fmt("error unlimiting actor %s (%d)", url, ret));
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "search") == 0) { /** **/
+        xs *tl = timeline_simple_list(&snac, "private", 0, XS_ALL);
+
+        /* 'url' contains the regex */
+        xs *r = search_by_content(&snac, tl, url, 10);
+
+        int c = 0;
+        char *v;
+
+        /* print results as standalone links */
+        while (xs_list_next(r, &v, &c)) {
+            printf("%s/admin/p/%s\n", snac.actor, v);
+        }
 
         return 0;
     }

@@ -2488,6 +2488,64 @@ void notify_clear(snac *snac)
 }
 
 
+/** searches **/
+
+xs_list *search_by_content(snac *user, const xs_list *timeline,
+                            const char *regex, int timeout)
+/* returns a list of posts which content matches the regex */
+{
+    xs_list *r = xs_list_new();
+
+    if (timeout == 0)
+        timeout = 3;
+
+    int c = 0;
+    char *v;
+
+    time_t t = time(NULL) + timeout;
+
+    while (xs_list_next(timeline, &v, &c)) {
+        xs *post = NULL;
+
+        /* timeout? */
+        if (time(NULL) > t)
+            break;
+
+        int status;
+
+        if (user)
+            status = timeline_get_by_md5(user, v, &post);
+        else
+            status = object_get_by_md5(v, &post);
+
+        if (!valid_status(status))
+            continue;
+
+        /* must be a Note */
+        if (strcmp(xs_dict_get_def(post, "type", ""), "Note"))
+            continue;
+
+        char *content = xs_dict_get(post, "content");
+
+        if (xs_is_null(content))
+            continue;
+
+        /* strip HTML */
+        xs *c = xs_regex_replace(content, "<[^>]+>", " ");
+        c = xs_regex_replace_i(c, " {2,}", " ");
+        c = xs_tolower_i(c);
+
+        /* apply regex */
+        xs *l = xs_regex_select_n(c, regex, 1);
+
+        if (xs_list_len(l))
+            r = xs_list_append(r, v);
+    }
+
+    return r;
+}
+
+
 /** the queue **/
 
 static xs_dict *_enqueue_put(const char *fn, xs_dict *msg)
