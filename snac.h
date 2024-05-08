@@ -179,8 +179,7 @@ xs_list *list_timeline(snac *user, const char *list, int skip, int show);
 xs_val *list_content(snac *user, const char *list_id, const char *actor_md5, int op);
 void list_distribute(snac *user, const char *who, const xs_dict *post);
 
-xs_list *content_search(snac *user, const xs_list *timeline,
-                        const char *regex, int max_secs, int *timeout);
+xs_list *content_search(snac *user, const char *regex, int priv, int max_secs, int *timeout);
 
 int actor_add(const char *actor, xs_dict *msg);
 int actor_get(const char *actor, xs_dict **data);

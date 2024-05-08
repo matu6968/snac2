@@ -2490,23 +2490,35 @@ void notify_clear(snac *snac)
 
 /** searches **/
 
-xs_list *content_search(snac *user, const xs_list *timeline,
-                        const char *regex, int max_secs, int *timeout)
+xs_list *content_search(snac *user, const char *regex, int priv, int max_secs, int *timeout)
 /* returns a list of posts which content matches the regex */
 {
-    xs_list *r = xs_list_new();
+    xs_set seen;
+
+    xs_set_init(&seen);
 
     if (max_secs == 0)
         max_secs = 3;
 
-    int c = 0;
-    char *v;
-
     time_t t = time(NULL) + max_secs;
     *timeout = 0;
 
-    while (xs_list_next(timeline, &v, &c)) {
-        xs *post = NULL;
+    /* iterate both timelines simultaneously */
+    xs *pub_tl    = timeline_simple_list(user, "public", 0, XS_ALL);
+    int pub_c     = 0;
+    char *pub_md5 = NULL;
+
+    xs *priv_tl    = priv ? timeline_simple_list(user, "private", 0, XS_ALL) : xs_list_new();
+    int priv_c     = 0;
+    char *priv_md5 = NULL;
+
+    /* first positioning */
+    xs_list_next(pub_tl,  &pub_md5,  &pub_c);
+    xs_list_next(priv_tl, &priv_md5, &priv_c);
+
+    for (;;) {
+        char *md5 = NULL;
+        enum { NONE, PUBLIC, PRIVATE } from = NONE;
 
         /* timeout? */
         if (time(NULL) > t) {
@@ -2514,11 +2526,48 @@ xs_list *content_search(snac *user, const xs_list *timeline,
             break;
         }
 
-        /* if from a user, must be in any timeline */
-        if (user && !timeline_here(user, v))
-            continue;
+        if (pub_md5 == NULL) {
+            /* out of both lists? done */
+            if (priv_md5 == NULL)
+                break;
 
-        if (!valid_status(object_get_by_md5(v, &post)))
+            /* out of public: take element from the private timeline and advance */
+            from = PRIVATE;
+        }
+        else
+        if (priv_md5 == NULL) {
+            /* out of private: take element from the public timeline and advance */
+            from = PUBLIC;
+        }
+        else {
+            /* candidates from both: choose one from the file dates */
+            xs *pub_fn  = xs_fmt("%s/public/%s.json",  user->basedir, pub_md5);
+            xs *priv_fn = xs_fmt("%s/private/%s.json", user->basedir, priv_md5);
+
+            if (mtime(pub_fn) < mtime(priv_fn))
+                from = PRIVATE;
+            else
+                from = PUBLIC;
+        }
+
+        if (from == PUBLIC) { /* public */
+            md5 = pub_md5;
+            if (!xs_list_next(pub_tl, &pub_md5, &pub_c))
+                pub_md5 = NULL;
+        }
+        else
+        if (from == PRIVATE) { /* private */
+            md5 = priv_md5;
+            if (!xs_list_next(priv_tl, &priv_md5, &priv_c))
+                priv_md5 = NULL;
+        }
+
+        if (md5 == NULL)
+            break;
+
+        xs *post = NULL;
+
+        if (!valid_status(timeline_get_by_md5(user, md5, &post)))
             continue;
 
         /* must be a Note */
@@ -2539,10 +2588,10 @@ xs_list *content_search(snac *user, const xs_list *timeline,
         xs *l = xs_regex_select_n(c, regex, 1);
 
         if (xs_list_len(l))
-            r = xs_list_append(r, v);
+            xs_set_add(&seen, md5);
     }
 
-    return r;
+    return xs_set_result(&seen);
 }
 
 
