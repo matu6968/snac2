@@ -509,7 +509,7 @@ xs_html *html_instance_head(void)
 }
 
 
-static xs_html *html_instance_body(char *title)
+static xs_html *html_instance_body(void)
 {
     char *host  = xs_dict_get(srv_config, "host");
     char *sdesc = xs_dict_get(srv_config, "short_description");
@@ -558,13 +558,6 @@ static xs_html *html_instance_body(char *title)
                     xs_html_tag("a",
                         xs_html_attr("href", url),
                         xs_html_text(handle)))));
-    }
-
-    if (title != NULL) {
-        xs_html_add(body,
-            xs_html_tag("h2",
-                xs_html_attr("class", "snac-header"),
-                xs_html_text(title)));
     }
 
     return body;
@@ -2023,7 +2016,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     }
     else {
         head = html_instance_head();
-        body = html_instance_body(title);
+        body = html_instance_body();
     }
 
     xs_html *html = xs_html_tag("html",
@@ -2034,7 +2027,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
         xs_html_add(body,
             html_top_controls(user));
 
-    if (user && title) {
+    if (title) {
         xs_html_add(body,
             xs_html_tag("h2",
                 xs_html_attr("class", "snac-header"),
