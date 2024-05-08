@@ -2490,7 +2490,7 @@ void notify_clear(snac *snac)
 
 /** searches **/
 
-xs_list *search_by_content(snac *user, const xs_list *timeline,
+xs_list *content_search(snac *user, const xs_list *timeline,
                             const char *regex, int max_secs, int *timeout)
 /* returns a list of posts which content matches the regex */
 {

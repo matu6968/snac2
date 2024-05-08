@@ -380,7 +380,26 @@ int main(int argc, char *argv[])
         int to;
 
         /* 'url' contains the regex */
-        xs *r = search_by_content(&snac, tl, url, 10, &to);
+        xs *r = content_search(&snac, tl, url, 10, &to);
+
+        int c = 0;
+        char *v;
+
+        /* print results as standalone links */
+        while (xs_list_next(r, &v, &c)) {
+            printf("%s/admin/p/%s\n", snac.actor, v);
+        }
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "search2") == 0) { /** **/
+        /* undocumented (for testing only) */
+        xs *tl = timeline_simple_list(&snac, "public", 0, XS_ALL);
+        int to;
+
+        /* 'url' contains the regex */
+        xs *r = content_search(&snac, tl, url, 10, &to);
 
         int c = 0;
         char *v;
