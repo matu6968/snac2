@@ -2491,25 +2491,28 @@ void notify_clear(snac *snac)
 /** searches **/
 
 xs_list *search_by_content(snac *user, const xs_list *timeline,
-                            const char *regex, int timeout)
+                            const char *regex, int max_secs, int *timeout)
 /* returns a list of posts which content matches the regex */
 {
     xs_list *r = xs_list_new();
 
-    if (timeout == 0)
-        timeout = 3;
+    if (max_secs == 0)
+        max_secs = 3;
 
     int c = 0;
     char *v;
 
-    time_t t = time(NULL) + timeout;
+    time_t t = time(NULL) + max_secs;
+    *timeout = 0;
 
     while (xs_list_next(timeline, &v, &c)) {
         xs *post = NULL;
 
         /* timeout? */
-        if (time(NULL) > t)
+        if (time(NULL) > t) {
+            *timeout = 1;
             break;
+        }
 
         int status;
 

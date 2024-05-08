@@ -377,9 +377,10 @@ int main(int argc, char *argv[])
 
     if (strcmp(cmd, "search") == 0) { /** **/
         xs *tl = timeline_simple_list(&snac, "private", 0, XS_ALL);
+        int to;
 
         /* 'url' contains the regex */
-        xs *r = search_by_content(&snac, tl, url, 10);
+        xs *r = search_by_content(&snac, tl, url, 10, &to);
 
         int c = 0;
         char *v;
