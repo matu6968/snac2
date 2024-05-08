@@ -1255,8 +1255,8 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
     }
 
     if (is_msg_public(msg)) {
-        if (strcmp(actor, snac->actor) == 0 || xs_list_in(boosts, snac->md5) == -1) {
-            /* not already boosted or us; add button */
+        if (xs_list_in(boosts, snac->md5) == -1) {
+            /* not already boosted; add button */
             xs_html_add(form,
                 html_button("boost", L("Boost"), L("Announce this post to your followers")));
         }
