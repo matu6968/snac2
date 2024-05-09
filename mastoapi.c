@@ -1467,9 +1467,6 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             if (limit == 0)
                 limit = 20;
 
-            xs *ja = xs_json_dumps(args, 0);
-            snac_debug(&snac1, 1, xs_fmt("/v1/timelines/home: args='%s'", ja));
-
             xs *timeline = timeline_simple_list(&snac1, "private", 0, 2048);
 
             xs *out      = xs_list_new();
@@ -2266,20 +2263,18 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         xs *tl = content_search(&snac1, q, 1, 0, &to);
                         int c = 0;
                         char *v;
+                        int cnt = 40;
 
-                        while (xs_list_next(tl, &v, &c)) {
+                        while (xs_list_next(tl, &v, &c) && --cnt) {
                             xs *post = NULL;
 
                             if (!valid_status(timeline_get_by_md5(&snac1, v, &post)))
                                 continue;
 
-                            char *type = xs_dict_get_def(post, "type", "-");
-                            if (!xs_match(type, "Note|Article|Question|Page|Video"))
-                                continue;
-
                             xs *s = mastoapi_status(&snac1, post);
 
-                            stl = xs_list_append(stl, s);
+                            if (!xs_is_null(s))
+                                stl = xs_list_append(stl, s);
                         }
                     }
                 }

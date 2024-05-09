@@ -10,6 +10,7 @@
 #include "xs_set.h"
 #include "xs_time.h"
 #include "xs_regex.h"
+#include "xs_match.h"
 
 #include "snac.h"
 
@@ -2570,8 +2571,7 @@ xs_list *content_search(snac *user, const char *regex, int priv, int max_secs, i
         if (!valid_status(timeline_get_by_md5(user, md5, &post)))
             continue;
 
-        /* must be a Note */
-        if (strcmp(xs_dict_get_def(post, "type", ""), "Note"))
+        if (!xs_match(xs_dict_get_def(post, "type", "-"), "Note|Question|Page|Article|Video"))
             continue;
 
         char *content = xs_dict_get(post, "content");
