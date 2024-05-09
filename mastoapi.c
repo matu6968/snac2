@@ -2228,8 +2228,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 /* reply something only for offset 0; otherwise,
                    apps like Tusky keep asking again and again */
 
-                if (!xs_is_null(q) && !xs_is_null(type)) {
-                    if (strcmp(type, "accounts") == 0) {
+                if (!xs_is_null(q)) {
+                    if (xs_is_null(type) || strcmp(type, "accounts") == 0) {
                         /* do a webfinger query */
                         char *actor = NULL;
                         char *user  = NULL;
@@ -2244,8 +2244,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                             }
                         }
                     }
-                    else
-                    if (strcmp(type, "hashtags") == 0) {
+
+                    if (xs_is_null(type) || strcmp(type, "hashtags") == 0) {
                         /* search this tag */
                         xs *tl = tag_search((char *)q, 0, 1);
 
@@ -2258,6 +2258,28 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                             d = xs_dict_append(d, "history", xs_stock(XSTYPE_LIST));
 
                             htl = xs_list_append(htl, d);
+                        }
+                    }
+
+                    if (xs_is_null(type) || strcmp(type, "statuses") == 0) {
+                        int to = 0;
+                        xs *tl = content_search(&snac1, q, 1, 0, &to);
+                        int c = 0;
+                        char *v;
+
+                        while (xs_list_next(tl, &v, &c)) {
+                            xs *post = NULL;
+
+                            if (!valid_status(timeline_get_by_md5(&snac1, v, &post)))
+                                continue;
+
+                            char *type = xs_dict_get_def(post, "type", "-");
+                            if (!xs_match(type, "Note|Article|Question|Page|Video"))
+                                continue;
+
+                            xs *s = mastoapi_status(&snac1, post);
+
+                            stl = xs_list_append(stl, s);
                         }
                     }
                 }
