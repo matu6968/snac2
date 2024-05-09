@@ -2560,35 +2560,48 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             status = 401;
         }
         else {
-            double t = history_mtime(&snac, "timeline.html_");
+            char *q = xs_dict_get(q_vars, "q");
 
-            /* if enabled by admin, return a cached page if its timestamp is:
-               a) newer than the timeline timestamp
-               b) newer than the start time of the server
-            */
-            if (cache && t > timeline_mtime(&snac) && t > p_state->srv_start_time) {
-                snac_debug(&snac, 1, xs_fmt("serving cached timeline"));
+            if (q && *q) {
+                /* search by content */
+                int to = 0;
+                xs *tl = content_search(&snac, q, 1, 0, show, &to);
 
-                status = history_get(&snac, "timeline.html_", body, b_size,
-                            xs_dict_get(req, "if-none-match"), etag);
-            }
-            else {
-                snac_debug(&snac, 1, xs_fmt("building timeline"));
-
-                xs *list = timeline_list(&snac, "private", skip, show);
-                xs *next = timeline_list(&snac, "private", skip + show, 1);
-
-                xs *pins = pinned_list(&snac);
-                pins = xs_list_cat(pins, list);
-
-                *body = html_timeline(&snac, pins, 0, skip, show,
-                        xs_list_len(next), NULL, "/admin", 1);
-
+                *body   = html_timeline(&snac, tl, 0, 0, show, 0, NULL, "/admin", 1);
                 *b_size = strlen(*body);
                 status  = 200;
+            }
+            else {
+                double t = history_mtime(&snac, "timeline.html_");
 
-                if (save)
-                    history_add(&snac, "timeline.html_", *body, *b_size, etag);
+                /* if enabled by admin, return a cached page if its timestamp is:
+                   a) newer than the timeline timestamp
+                   b) newer than the start time of the server
+                */
+                if (cache && t > timeline_mtime(&snac) && t > p_state->srv_start_time) {
+                    snac_debug(&snac, 1, xs_fmt("serving cached timeline"));
+
+                    status = history_get(&snac, "timeline.html_", body, b_size,
+                                xs_dict_get(req, "if-none-match"), etag);
+                }
+                else {
+                    snac_debug(&snac, 1, xs_fmt("building timeline"));
+
+                    xs *list = timeline_list(&snac, "private", skip, show);
+                    xs *next = timeline_list(&snac, "private", skip + show, 1);
+
+                    xs *pins = pinned_list(&snac);
+                    pins = xs_list_cat(pins, list);
+
+                    *body = html_timeline(&snac, pins, 0, skip, show,
+                            xs_list_len(next), NULL, "/admin", 1);
+
+                    *b_size = strlen(*body);
+                    status  = 200;
+
+                    if (save)
+                        history_add(&snac, "timeline.html_", *body, *b_size, etag);
+                }
             }
         }
     }
