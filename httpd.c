@@ -200,14 +200,18 @@ int server_get_handler(xs_dict *req, const char *q_path,
                 *body = timeline_to_rss(NULL, tl, link, link, link);
                 *ctype = "application/rss+xml; charset=utf-8";
             }
-            else
-                *body = html_timeline(NULL, tl, 0, skip, show, more, t, NULL, 0);
+            else {
+                xs *page = xs_fmt("?t=%s", t);
+                xs *title = xs_fmt(L("Search results for #%s"), t);
+                *body = html_timeline(NULL, tl, 0, skip, show, more, title, page, 0);
+            }
         }
         else
         if (xs_type(xs_dict_get(srv_config, "show_instance_timeline")) == XSTYPE_TRUE) {
             /** instance timeline **/
             xs *tl = timeline_instance_list(0, 30);
-            *body = html_timeline(NULL, tl, 0, 0, 0, 0, NULL, NULL, 0);
+            *body = html_timeline(NULL, tl, 0, 0, 0, 0,
+                L("Recent posts by users in this instance"), NULL, 0);
         }
         else
             *body = greeting_html();

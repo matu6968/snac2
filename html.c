@@ -509,7 +509,7 @@ xs_html *html_instance_head(void)
 }
 
 
-static xs_html *html_instance_body(char *tag)
+static xs_html *html_instance_body(void)
 {
     char *host  = xs_dict_get(srv_config, "host");
     char *sdesc = xs_dict_get(srv_config, "short_description");
@@ -558,16 +558,6 @@ static xs_html *html_instance_body(char *tag)
                     xs_html_tag("a",
                         xs_html_attr("href", url),
                         xs_html_text(handle)))));
-    }
-
-    {
-        xs *l = tag ? xs_fmt(L("Search results for #%s"), tag) :
-            xs_dup(L("Recent posts by users in this instance"));
-
-        xs_html_add(body,
-            xs_html_tag("h2",
-                xs_html_attr("class", "snac-header"),
-                xs_html_text(l)));
     }
 
     return body;
@@ -1265,8 +1255,8 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
     }
 
     if (is_msg_public(msg)) {
-        if (strcmp(actor, snac->actor) == 0 || xs_list_in(boosts, snac->md5) == -1) {
-            /* not already boosted or us; add button */
+        if (xs_list_in(boosts, snac->md5) == -1) {
+            /* not already boosted; add button */
             xs_html_add(form,
                 html_button("boost", L("Boost"), L("Announce this post to your followers")));
         }
@@ -1996,7 +1986,7 @@ xs_html *html_footer(void)
 
 xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                       int skip, int show, int show_more,
-                      char *tag, char *page, int utl)
+                      char *title, char *page, int utl)
 /* returns the HTML for the timeline */
 {
     xs_list *p = (xs_list *)list;
@@ -2026,7 +2016,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     }
     else {
         head = html_instance_head();
-        body = html_instance_body(tag);
+        body = html_instance_body();
     }
 
     xs_html *html = xs_html_tag("html",
@@ -2036,6 +2026,13 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     if (user && !read_only)
         xs_html_add(body,
             html_top_controls(user));
+
+    if (title) {
+        xs_html_add(body,
+            xs_html_tag("h2",
+                xs_html_attr("class", "snac-header"),
+                xs_html_text(title)));
+    }
 
     xs_html_add(body,
         xs_html_tag("a",
@@ -2126,25 +2123,22 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     }
 
     if (show_more) {
-        xs *t  = NULL;
         xs *m  = NULL;
         xs *ss = xs_fmt("skip=%d&show=%d", skip + show, show);
 
-        xs *url = page == NULL || user == NULL ?
-            xs_dup(srv_baseurl) : xs_fmt("%s%s", user->actor, page);
+        xs *url = xs_dup(user == NULL ? srv_baseurl : user->actor);
 
-        if (tag) {
-            t = xs_fmt("%s?t=%s", url, tag);
-            m = xs_fmt("%s&%s", t, ss);
-        }
-        else {
-            t = xs_dup(url);
-            m = xs_fmt("%s?%s", t, ss);
-        }
+        if (page != NULL)
+            url = xs_str_cat(url, page);
+
+        if (xs_str_in(url, "?") != -1)
+            m = xs_fmt("%s&%s", url, ss);
+        else
+            m = xs_fmt("%s?%s", url, ss);
 
         xs_html *more_links = xs_html_tag("p",
             xs_html_tag("a",
-                xs_html_attr("href", t),
+                xs_html_attr("href", url),
                 xs_html_attr("name", "snac-more"),
                 xs_html_text(L("Back to top"))),
             xs_html_text(" - "),
@@ -2652,9 +2646,34 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *next = timeline_instance_list(skip + show, 1);
 
             *body = html_timeline(&snac, list, 0, skip, show,
-                xs_list_len(next), NULL, "/instance", 0);
+                xs_list_len(next), L("Showing instance timeline"), "/instance", 0);
             *b_size = strlen(*body);
             status  = 200;
+        }
+    }
+    else
+    if (xs_startswith(p_path, "list/")) { /** list timelines **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = 401;
+        }
+        else {
+            xs *l = xs_split(p_path, "/");
+            char *lid = xs_list_get(l, -1);
+
+            xs *list = list_timeline(&snac, lid, skip, show);
+            xs *next = list_timeline(&snac, lid, skip + show, 1);
+
+            if (list != NULL) {
+                xs *base = xs_fmt("/list/%s", lid);
+                xs *name = list_maint(&snac, lid, 3);
+                xs *title = xs_fmt(L("Showing timeline for list %s"), name);
+
+                *body = html_timeline(&snac, list, 0, skip, show,
+                    xs_list_len(next), title, base, 1);
+                *b_size = strlen(*body);
+                status  = 200;
+            }
         }
     }
     else

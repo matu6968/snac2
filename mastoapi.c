@@ -1669,7 +1669,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             xs *l = xs_split(cmd, "/");
             char *list = xs_list_get(l, -1);
 
-            xs *timeline = list_content(&snac1, list, NULL, 3);
+            xs *timeline = list_timeline(&snac1, list, 0, 2048);
             xs *out      = xs_list_new();
             int c = 0;
             char *md5;
