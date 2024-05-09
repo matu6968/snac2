@@ -55,7 +55,7 @@ xs_str *replace_shortnames(xs_str *s, xs_list *tag, int ems)
             tag_list = xs_dup(tag);
         }
 
-        xs *style = xs_fmt("height: %dem; vertical-align: middle;", ems);
+        xs *style = xs_fmt("height: %dem; width: %dem; vertical-align: middle;", ems, ems);
 
         xs_list *p = tag_list;
         char *v;

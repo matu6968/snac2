@@ -49,7 +49,7 @@ static const char *default_css =
     ".snac-top-user { text-align: center; padding-bottom: 2em }\n"
     ".snac-top-user-name { font-size: 200% }\n"
     ".snac-top-user-id { font-size: 150% }\n"
-    ".snac-avatar { float: left; height: 2.5em; padding: 0.25em }\n"
+    ".snac-avatar { float: left; height: 2.5em; width: 2.5em; padding: 0.25em }\n"
     ".snac-author { font-size: 90%; text-decoration: none }\n"
     ".snac-author-tag { font-size: 80% }\n"
     ".snac-pubdate { color: #a0a0a0; font-size: 90% }\n"
