@@ -2566,8 +2566,14 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 /* search by content */
                 int to = 0;
                 xs *tl = content_search(&snac, q, 1, 0, show, &to);
+                xs *title = NULL;
 
-                *body   = html_timeline(&snac, tl, 0, 0, show, 0, NULL, "/admin", 1);
+                if (xs_list_len(tl))
+                    title = xs_fmt(L("Search results for '%s'"), q);
+                else
+                    title = xs_fmt(L("Nothing found for '%s'"), q);
+
+                *body   = html_timeline(&snac, tl, 0, 0, show, 0, title, "/admin", 1);
                 *b_size = strlen(*body);
                 status  = 200;
             }
