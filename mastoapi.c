@@ -2260,10 +2260,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                     if (xs_is_null(type) || strcmp(type, "statuses") == 0) {
                         int to = 0;
-                        xs *tl = content_search(&snac1, q, 1, 0, &to);
+                        int cnt = 40;
+                        xs *tl = content_search(&snac1, q, 1, 0, cnt, &to);
                         int c = 0;
                         char *v;
-                        int cnt = 40;
 
                         while (xs_list_next(tl, &v, &c) && --cnt) {
                             xs *post = NULL;
