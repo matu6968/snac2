@@ -2565,15 +2565,18 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             if (q && *q) {
                 /* search by content */
                 int to = 0;
-                xs *tl = content_search(&snac, q, 1, 0, show, &to);
+                xs *tl = content_search(&snac, q, 1, skip ? 10 : 0, skip + show, &to);
                 xs *title = NULL;
+                xs *page = xs_fmt("/admin?q=%s", q);
+                int tl_len = xs_list_len(tl);
 
-                if (xs_list_len(tl))
+                if (tl_len)
                     title = xs_fmt(L("Search results for '%s'"), q);
                 else
                     title = xs_fmt(L("Nothing found for '%s'"), q);
 
-                *body   = html_timeline(&snac, tl, 0, 0, show, 0, title, "/admin", 1);
+                *body   = html_timeline(&snac, tl, 0, 0, tl_len,
+                            (to || tl_len == skip + show), title, page, 1);
                 *b_size = strlen(*body);
                 status  = 200;
             }
