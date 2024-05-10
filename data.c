@@ -2499,10 +2499,8 @@ xs_list *content_search(snac *user, const char *regex,
         return xs_list_new();
 
     xs_set seen;
-    xs_set skipped;
 
     xs_set_init(&seen);
-    xs_set_init(&skipped);
 
     if (max_secs == 0)
         max_secs = 3;
@@ -2522,6 +2520,8 @@ xs_list *content_search(snac *user, const char *regex,
     /* first positioning */
     xs_list_next(pub_tl,  &pub_md5,  &pub_c);
     xs_list_next(priv_tl, &priv_md5, &priv_c);
+
+    show += skip;
 
     while (show > 0) {
         char *md5 = NULL;
@@ -2594,20 +2594,21 @@ xs_list *content_search(snac *user, const char *regex,
         xs *l = xs_regex_select_n(c, regex, 1);
 
         if (xs_list_len(l)) {
-            if (skip > 0) {
-                if (xs_set_add(&skipped, md5) == 1)
-                    skip--;
-            }
-            else {
-                if (xs_set_add(&seen, md5) == 1)
-                    show--;
-            }
+            if (xs_set_add(&seen, md5) == 1)
+            show--;
         }
     }
 
-    xs_set_free(&skipped);
+    xs_list *r = xs_set_result(&seen);
 
-    return xs_set_result(&seen);
+    if (skip) {
+        /* BAD */
+        while (skip--) {
+            r = xs_list_del(r, 0);
+        }
+    }
+
+    return r;
 }
 
 
