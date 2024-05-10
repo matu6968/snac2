@@ -739,7 +739,17 @@ static xs_html *html_user_body(snac *user, int read_only)
             xs_html_text(" - "),
             xs_html_tag("a",
                 xs_html_attr("href", instance_url),
-                xs_html_text(L("instance"))));
+                xs_html_text(L("instance"))),
+            xs_html_text(" "),
+            xs_html_tag("form",
+                xs_html_attr("style", "display: inline!important"),
+                xs_html_attr("class", "snac-search-box"),
+                xs_html_attr("action", admin_url),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "text"),
+                        xs_html_attr("name", "q"),
+                        xs_html_attr("title", L("Search posts by content (regular expression)")),
+                        xs_html_attr("placeholder", L("Content search")))));
     }
 
     xs_html_add(body,
