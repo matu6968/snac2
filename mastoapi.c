@@ -2261,7 +2261,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     if (xs_is_null(type) || strcmp(type, "statuses") == 0) {
                         int to = 0;
                         int cnt = 40;
-                        xs *tl = content_search(&snac1, q, 1, 0, cnt, &to);
+                        xs *tl = content_search(&snac1, q, 1, 0, cnt, 0, &to);
                         int c = 0;
                         char *v;
 

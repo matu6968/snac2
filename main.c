@@ -379,7 +379,7 @@ int main(int argc, char *argv[])
         int to;
 
         /* 'url' contains the regex */
-        xs *r = content_search(&snac, url, 1, 10, XS_ALL, &to);
+        xs *r = content_search(&snac, url, 1, 0, XS_ALL, 10, &to);
 
         int c = 0;
         char *v;

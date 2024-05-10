@@ -2491,7 +2491,8 @@ void notify_clear(snac *snac)
 
 /** searches **/
 
-xs_list *content_search(snac *user, const char *regex, int priv, int max_secs, int max_res, int *timeout)
+xs_list *content_search(snac *user, const char *regex,
+                int priv, int skip, int show, int max_secs, int *timeout)
 /* returns a list of posts which content matches the regex */
 {
     if (regex == NULL || *regex == '\0')
@@ -2520,7 +2521,7 @@ xs_list *content_search(snac *user, const char *regex, int priv, int max_secs, i
     xs_list_next(pub_tl,  &pub_md5,  &pub_c);
     xs_list_next(priv_tl, &priv_md5, &priv_c);
 
-    while (max_res > 0) {
+    while (show > 0) {
         char *md5 = NULL;
         enum { NONE, PUBLIC, PRIVATE } from = NONE;
 
@@ -2591,8 +2592,12 @@ xs_list *content_search(snac *user, const char *regex, int priv, int max_secs, i
         xs *l = xs_regex_select_n(c, regex, 1);
 
         if (xs_list_len(l)) {
-            xs_set_add(&seen, md5);
-            max_res--;
+            if (skip)
+                skip--;
+            else {
+                xs_set_add(&seen, md5);
+                show--;
+            }
         }
     }
 

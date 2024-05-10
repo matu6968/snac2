@@ -2563,9 +2563,9 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             char *q = xs_dict_get(q_vars, "q");
 
             if (q && *q) {
-                /* search by content */
+                /** search by content **/
                 int to = 0;
-                xs *tl = content_search(&snac, q, 1, skip ? 10 : 0, skip + show, &to);
+                xs *tl = content_search(&snac, q, 1, skip, show, skip ? 10 : 0, &to);
                 xs *title = NULL;
                 xs *page = xs_fmt("/admin?q=%s", q);
                 int tl_len = xs_list_len(tl);
@@ -2573,10 +2573,12 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 if (tl_len)
                     title = xs_fmt(L("Search results for '%s'"), q);
                 else
+                if (skip)
+                    title = xs_fmt(L("No more matches for '%s'"), q);
+                else
                     title = xs_fmt(L("Nothing found for '%s'"), q);
 
-                *body   = html_timeline(&snac, tl, 0, 0, tl_len,
-                            (to || tl_len == skip + show), title, page, 1);
+                *body   = html_timeline(&snac, tl, 0, skip, show, tl_len > 0, title, page, 1);
                 *b_size = strlen(*body);
                 status  = 200;
             }
