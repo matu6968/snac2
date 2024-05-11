@@ -256,7 +256,7 @@ xs_html *html_msg_icon(snac *user, char *actor_id, const xs_dict *msg)
         int priv    = 0;
         const char *type = xs_dict_get(msg, "type");
 
-        if (xs_match(type, "Note|Question|Page|Article|Video"))
+        if (xs_match(type, POSTLIKE_OBJECT_TYPE))
             url = xs_dict_get(msg, "id");
 
         priv = !is_msg_public(msg);
@@ -1405,7 +1405,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 html_msg_icon(read_only ? NULL : user, xs_dict_get(msg, "actor"), msg)));
     }
     else
-    if (!xs_match(type, "Note|Question|Page|Article|Video")) {
+    if (!xs_match(type, POSTLIKE_OBJECT_TYPE)) {
         /* skip oddities */
         return NULL;
     }

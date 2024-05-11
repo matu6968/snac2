@@ -355,7 +355,7 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
                         type = "(null)";
                 }
 
-                if (xs_match(type, "Note|Page|Article|Video")) {
+                if (xs_match(type, POSTLIKE_OBJECT_TYPE)) {
                     const char *actor = get_atto(object);
 
                     if (content_check("filter_reject.txt", object))
