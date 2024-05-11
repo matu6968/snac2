@@ -1374,6 +1374,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     char *type  = xs_dict_get(msg, "type");
     char *actor;
     char *v;
+    int has_title = 0;
 
     /* do not show non-public messages in the public timeline */
     if ((read_only || !user) && !is_msg_public(msg))
@@ -1484,6 +1485,14 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         }
     }
 
+    if (strcmp(type, "Event") == 0) {
+        /* add the calendar emoji */
+        xs_html_add(score,
+            xs_html_tag("span",
+                xs_html_attr("title", L("Event")),
+                xs_html_raw(" &#128197; ")));
+    }
+
     /* if it's a user from this same instance, add the score */
     if (xs_startswith(id, srv_baseurl)) {
         int n_likes  = object_likes_len(id);
@@ -1575,11 +1584,13 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     xs_html_add(entry,
         snac_content_wrap);
 
-    if (!xs_is_null(v = xs_dict_get(msg, "name"))) {
+    if (!has_title && !xs_is_null(v = xs_dict_get(msg, "name"))) {
         xs_html_add(snac_content_wrap,
             xs_html_tag("h3",
                 xs_html_attr("class", "snac-entry-title"),
                 xs_html_text(v)));
+
+        has_title = 1;
     }
 
     xs_html *snac_content = NULL;
@@ -1604,11 +1615,14 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     }
     else {
         /* print the summary as a header (sites like e.g. Friendica can contain one) */
-        if (!xs_is_null(v) && *v)
+        if (!has_title && !xs_is_null(v) && *v) {
             xs_html_add(snac_content_wrap,
                 xs_html_tag("h3",
                     xs_html_attr("class", "snac-entry-title"),
                     xs_html_text(v)));
+
+            has_title = 1;
+        }
 
         snac_content = xs_html_tag("div", NULL);
     }

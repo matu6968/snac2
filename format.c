@@ -311,6 +311,7 @@ xs_str *sanitize(const char *content)
 
                 s = xs_str_cat(s, s2);
             } else {
+                /* treat end of divs as paragraph breaks */
                 if (strcmp(v, "</div>"))
                     s = xs_str_cat(s, "<p>");
             }
