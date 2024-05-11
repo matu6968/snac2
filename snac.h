@@ -232,7 +232,7 @@ void enqueue_message(snac *snac, const xs_dict *msg);
 void enqueue_close_question(snac *user, const char *id, int end_secs);
 void enqueue_object_request(snac *user, const char *id, int forward_secs);
 void enqueue_verify_links(snac *user);
-void enqueue_actor_refresh(snac *user, const char *actor);
+void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs);
 void enqueue_request_replies(snac *user, const char *id);
 int was_question_voted(snac *user, const char *id);
 

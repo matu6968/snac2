@@ -1632,7 +1632,7 @@ int actor_get_refresh(snac *user, const char *actor, xs_dict **data)
     int status = actor_get(actor, data);
 
     if (status == 205 && user && !xs_startswith(actor, srv_baseurl))
-        enqueue_actor_refresh(user, actor);
+        enqueue_actor_refresh(user, actor, 0);
 
     return status;
 }
@@ -2830,13 +2830,14 @@ void enqueue_verify_links(snac *user)
 }
 
 
-void enqueue_actor_refresh(snac *user, const char *actor)
+void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs)
 /* enqueues an actor refresh */
 {
-    xs *qmsg   = _new_qmsg("actor_refresh", "", 0);
-    char *ntid = xs_dict_get(qmsg, "ntid");
-    xs *fn     = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+    xs *qmsg = _new_qmsg("actor_refresh", "", 0);
+    xs *ntid = tid(forward_secs);
+    xs *fn   = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
 
+    qmsg = xs_dict_set(qmsg, "ntid", ntid);
     qmsg = xs_dict_append(qmsg, "actor", actor);
 
     qmsg = _enqueue_put(fn, qmsg);
