@@ -2525,7 +2525,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
     int skip = 0;
     int show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
-    char *q_vars = xs_dict_get(req, "q_vars");
+    xs_dict *q_vars = xs_dict_get(req, "q_vars");
     if ((v = xs_dict_get(q_vars, "skip")) != NULL)
         skip = atoi(v), cache = 0, save = 0;
     if ((v = xs_dict_get(q_vars, "show")) != NULL)
@@ -2575,9 +2575,10 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             if (q && *q) {
                 /** search by content **/
                 int to = 0;
-                xs *tl = content_search(&snac, q, 1, skip, show, skip ? 10 : 0, &to);
+                int msecs = atoi(xs_dict_get_def(q_vars, "msecs", "0"));
+                xs *tl = content_search(&snac, q, 1, skip, show, msecs, &to);
                 xs *title = NULL;
-                xs *page = xs_fmt("/admin?q=%s", q);
+                xs *page = xs_fmt("/admin?q=%s&msecs=%d", q, msecs + 10);
                 int tl_len = xs_list_len(tl);
 
                 if (tl_len)
