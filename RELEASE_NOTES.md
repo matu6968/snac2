@@ -1,5 +1,11 @@
 # Release Notes
 
+## 2.53
+
+New search feature (post content, using regular expressions).
+
+Minor fixes: Allow unboosting your own posts (contributed by khm), CSS fixes for the Dillo browser (contributed by kvibber).
+
 ## 2.52
 
 Posts that were liked or boosted can now be unliked and unboosted.
