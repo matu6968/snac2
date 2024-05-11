@@ -14,6 +14,8 @@ Editing / Updating a post does not index newly added hashtags.
 
 ## Wishlist
 
+Implement support for 'Event' data types. Example: https://fediversity.site/item/e9bdb383-eeb9-4d7d-b2f7-c6401267cae0
+
 Implement "FEP-3b86: Activity Intents" https://codeberg.org/fediverse/fep/src/branch/main/fep/3b86/fep-3b86.md
 
 Track "FEP-ef61: Portable Objects" https://codeberg.org/fediverse/fep/src/branch/main/fep/ef61/fep-ef61.md
