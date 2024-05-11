@@ -1407,6 +1407,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     else
     if (!xs_match(type, POSTLIKE_OBJECT_TYPE)) {
         /* skip oddities */
+        snac_debug(user, 1, xs_fmt("html_entry: ignoring object type '%s' %s", type, id));
         return NULL;
     }
 

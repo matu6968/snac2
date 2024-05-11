@@ -29,7 +29,7 @@ extern int dbglevel;
 
 #define L(s) (s)
 
-#define POSTLIKE_OBJECT_TYPE "Note|Question|Page|Article|Video"
+#define POSTLIKE_OBJECT_TYPE "Note|Question|Page|Article|Video|Event"
 
 int mkdirx(const char *pathname);
 
