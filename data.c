@@ -2577,7 +2577,7 @@ xs_list *content_search(snac *user, const char *regex,
         if (!valid_status(timeline_get_by_md5(user, md5, &post)))
             continue;
 
-        if (!xs_match(xs_dict_get_def(post, "type", "-"), "Note|Question|Page|Article|Video"))
+        if (!xs_match(xs_dict_get_def(post, "type", "-"), POSTLIKE_OBJECT_TYPE))
             continue;
 
         char *content = xs_dict_get(post, "content");

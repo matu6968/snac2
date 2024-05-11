@@ -311,9 +311,8 @@ xs_str *sanitize(const char *content)
 
                 s = xs_str_cat(s, s2);
             } else {
-                /* else? just show it with encoded code.. that's it. */
-                xs *el = encode_html(v);
-                s = xs_str_cat(s, el);
+                if (strcmp(v, "</div>"))
+                    s = xs_str_cat(s, "<p>");
             }
         }
         else {
