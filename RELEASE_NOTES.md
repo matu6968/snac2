@@ -2,7 +2,9 @@
 
 ## 2.53
 
-New search feature (post content, using regular expressions).
+New feature to search by post content (using regular expressions).
+
+Added some (partial) support for `Event` object types.
 
 Minor fixes: Allow unboosting your own posts (contributed by khm), CSS fixes for the Dillo browser (contributed by kvibber).
 
