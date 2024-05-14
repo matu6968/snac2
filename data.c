@@ -2508,73 +2508,56 @@ xs_list *content_search(snac *user, const char *regex,
     time_t t = time(NULL) + max_secs;
     *timeout = 0;
 
-    /* iterate both timelines simultaneously */
-    xs *pub_tl    = timeline_simple_list(user, "public", 0, XS_ALL);
-    int pub_c     = 0;
-    char *pub_md5 = NULL;
+    /* iterate all timelines simultaneously */
+    xs_list *tls[3] = {0};
+    char *md5s[3]   = {0};
+    int c[3]        = {0};
 
-    xs *priv_tl    = priv ? timeline_simple_list(user, "private", 0, XS_ALL) : xs_list_new();
-    int priv_c     = 0;
-    char *priv_md5 = NULL;
+    tls[0] = timeline_simple_list(user, "public", 0, XS_ALL);   /* public */
+    tls[1] = timeline_instance_list(0, XS_ALL); /* instance */
+    tls[2] = priv ? timeline_simple_list(user, "private", 0, XS_ALL) : xs_list_new(); /* private or none */
 
     /* first positioning */
-    xs_list_next(pub_tl,  &pub_md5,  &pub_c);
-    xs_list_next(priv_tl, &priv_md5, &priv_c);
+    for (int n = 0; n < 3; n++)
+        xs_list_next(tls[n], &md5s[n], &c[n]);
 
     show += skip;
 
     while (show > 0) {
-        char *md5 = NULL;
-        enum { NONE, PUBLIC, PRIVATE } from = NONE;
-
         /* timeout? */
         if (time(NULL) > t) {
             *timeout = 1;
             break;
         }
 
-        if (pub_md5 == NULL) {
-            /* out of both lists? done */
-            if (priv_md5 == NULL)
-                break;
+        /* find the newest post */
+        int newest = -1;
+        double mtime = 0.0;
 
-            /* out of public: take element from the private timeline and advance */
-            from = PRIVATE;
-        }
-        else
-        if (priv_md5 == NULL) {
-            /* out of private: take element from the public timeline and advance */
-            from = PUBLIC;
-        }
-        else {
-            /* candidates from both: choose one from the file dates */
-            xs *pub_fn  = xs_fmt("%s/public/%s.json",  user->basedir, pub_md5);
-            xs *priv_fn = xs_fmt("%s/private/%s.json", user->basedir, priv_md5);
+        for (int n = 0; n < 3; n++) {
+            if (md5s[n] != NULL) {
+                xs *fn = _object_fn_by_md5(md5s[n], "content_search");
+                double mt = mtime(fn);
 
-            if (mtime(pub_fn) < mtime(priv_fn))
-                from = PRIVATE;
-            else
-                from = PUBLIC;
+                if (mt > mtime) {
+                    newest = n;
+                    mtime = mt;
+                }
+            }
         }
 
-        if (from == PUBLIC) { /* public */
-            md5 = pub_md5;
-            if (!xs_list_next(pub_tl, &pub_md5, &pub_c))
-                pub_md5 = NULL;
-        }
-        else
-        if (from == PRIVATE) { /* private */
-            md5 = priv_md5;
-            if (!xs_list_next(priv_tl, &priv_md5, &priv_c))
-                priv_md5 = NULL;
-        }
-
-        if (md5 == NULL)
+        if (newest == -1)
             break;
+
+        char *md5 = md5s[newest];
+
+        /* advance the chosen timeline */
+        if (!xs_list_next(tls[newest], &md5s[newest], &c[newest]))
+            md5s[newest] = NULL;
 
         xs *post = NULL;
 
-        if (!valid_status(timeline_get_by_md5(user, md5, &post)))
+        if (!valid_status(object_get_by_md5(md5, &post)))
             continue;
 
         if (!xs_match(xs_dict_get_def(post, "type", "-"), POSTLIKE_OBJECT_TYPE))
@@ -2607,6 +2590,10 @@ xs_list *content_search(snac *user, const char *regex,
             r = xs_list_del(r, 0);
         }
     }
+
+    xs_free(tls[0]);
+    xs_free(tls[1]);
+    xs_free(tls[2]);
 
     return r;
 }

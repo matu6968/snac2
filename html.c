@@ -2604,7 +2604,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 else
                     title = xs_fmt(L("Nothing found for '%s'"), q);
 
-                *body   = html_timeline(&snac, tl, 0, skip, tl_len, to || tl_len == show, title, page, 1);
+                *body   = html_timeline(&snac, tl, 0, skip, tl_len, to || tl_len == show, title, page, 0);
                 *b_size = strlen(*body);
                 status  = 200;
             }
