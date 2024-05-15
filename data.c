@@ -2498,6 +2498,8 @@ xs_list *content_search(snac *user, const char *regex,
     if (regex == NULL || *regex == '\0')
         return xs_list_new();
 
+    xs *i_regex = xs_tolower_i(xs_dup(regex));
+
     xs_set seen;
 
     xs_set_init(&seen);
@@ -2574,7 +2576,7 @@ xs_list *content_search(snac *user, const char *regex,
         c = xs_tolower_i(c);
 
         /* apply regex */
-        xs *l = xs_regex_select_n(c, regex, 1);
+        xs *l = xs_regex_select_n(c, i_regex, 1);
 
         if (xs_list_len(l)) {
             if (xs_set_add(&seen, md5) == 1)
