@@ -2270,7 +2270,7 @@ int instance_unblock(const char *instance)
 }
 
 
-/** content filtering **/
+/** operations by content **/
 
 int content_check(const char *file, const xs_dict *msg)
 /* checks if a message's content matches any of the regexes in file */
@@ -2302,6 +2302,114 @@ int content_check(const char *file, const xs_dict *msg)
             fclose(f);
         }
     }
+
+    return r;
+}
+
+
+xs_list *content_search(snac *user, const char *regex,
+                int priv, int skip, int show, int max_secs, int *timeout)
+/* returns a list of posts which content matches the regex */
+{
+    if (regex == NULL || *regex == '\0')
+        return xs_list_new();
+
+    xs *i_regex = xs_tolower_i(xs_dup(regex));
+
+    xs_set seen;
+
+    xs_set_init(&seen);
+
+    if (max_secs == 0)
+        max_secs = 3;
+
+    time_t t = time(NULL) + max_secs;
+    *timeout = 0;
+
+    /* iterate all timelines simultaneously */
+    xs_list *tls[3] = {0};
+    char *md5s[3]   = {0};
+    int c[3]        = {0};
+
+    tls[0] = timeline_simple_list(user, "public", 0, XS_ALL);   /* public */
+    tls[1] = timeline_instance_list(0, XS_ALL); /* instance */
+    tls[2] = priv ? timeline_simple_list(user, "private", 0, XS_ALL) : xs_list_new(); /* private or none */
+
+    /* first positioning */
+    for (int n = 0; n < 3; n++)
+        xs_list_next(tls[n], &md5s[n], &c[n]);
+
+    show += skip;
+
+    while (show > 0) {
+        /* timeout? */
+        if (time(NULL) > t) {
+            *timeout = 1;
+            break;
+        }
+
+        /* find the newest post */
+        int newest = -1;
+        double mtime = 0.0;
+
+        for (int n = 0; n < 3; n++) {
+            if (md5s[n] != NULL) {
+                xs *fn = _object_fn_by_md5(md5s[n], "content_search");
+                double mt = mtime(fn);
+
+                if (mt > mtime) {
+                    newest = n;
+                    mtime = mt;
+                }
+            }
+        }
+
+        if (newest == -1)
+            break;
+
+        char *md5 = md5s[newest];
+
+        /* advance the chosen timeline */
+        if (!xs_list_next(tls[newest], &md5s[newest], &c[newest]))
+            md5s[newest] = NULL;
+
+        xs *post = NULL;
+
+        if (!valid_status(object_get_by_md5(md5, &post)))
+            continue;
+
+        if (!xs_match(xs_dict_get_def(post, "type", "-"), POSTLIKE_OBJECT_TYPE))
+            continue;
+
+        char *content = xs_dict_get(post, "content");
+
+        if (xs_is_null(content))
+            continue;
+
+        /* strip HTML */
+        xs *c = xs_regex_replace(content, "<[^>]+>", " ");
+        c = xs_regex_replace_i(c, " {2,}", " ");
+        c = xs_tolower_i(c);
+
+        /* apply regex */
+        if (xs_regex_match(c, i_regex)) {
+            if (xs_set_add(&seen, md5) == 1)
+            show--;
+        }
+    }
+
+    xs_list *r = xs_set_result(&seen);
+
+    if (skip) {
+        /* BAD */
+        while (skip--) {
+            r = xs_list_del(r, 0);
+        }
+    }
+
+    xs_free(tls[0]);
+    xs_free(tls[1]);
+    xs_free(tls[2]);
 
     return r;
 }
@@ -2482,116 +2590,6 @@ void notify_clear(snac *snac)
         truncate(idx, 0);
         pthread_mutex_unlock(&data_mutex);
     }
-}
-
-
-/** searches **/
-
-xs_list *content_search(snac *user, const char *regex,
-                int priv, int skip, int show, int max_secs, int *timeout)
-/* returns a list of posts which content matches the regex */
-{
-    if (regex == NULL || *regex == '\0')
-        return xs_list_new();
-
-    xs *i_regex = xs_tolower_i(xs_dup(regex));
-
-    xs_set seen;
-
-    xs_set_init(&seen);
-
-    if (max_secs == 0)
-        max_secs = 3;
-
-    time_t t = time(NULL) + max_secs;
-    *timeout = 0;
-
-    /* iterate all timelines simultaneously */
-    xs_list *tls[3] = {0};
-    char *md5s[3]   = {0};
-    int c[3]        = {0};
-
-    tls[0] = timeline_simple_list(user, "public", 0, XS_ALL);   /* public */
-    tls[1] = timeline_instance_list(0, XS_ALL); /* instance */
-    tls[2] = priv ? timeline_simple_list(user, "private", 0, XS_ALL) : xs_list_new(); /* private or none */
-
-    /* first positioning */
-    for (int n = 0; n < 3; n++)
-        xs_list_next(tls[n], &md5s[n], &c[n]);
-
-    show += skip;
-
-    while (show > 0) {
-        /* timeout? */
-        if (time(NULL) > t) {
-            *timeout = 1;
-            break;
-        }
-
-        /* find the newest post */
-        int newest = -1;
-        double mtime = 0.0;
-
-        for (int n = 0; n < 3; n++) {
-            if (md5s[n] != NULL) {
-                xs *fn = _object_fn_by_md5(md5s[n], "content_search");
-                double mt = mtime(fn);
-
-                if (mt > mtime) {
-                    newest = n;
-                    mtime = mt;
-                }
-            }
-        }
-
-        if (newest == -1)
-            break;
-
-        char *md5 = md5s[newest];
-
-        /* advance the chosen timeline */
-        if (!xs_list_next(tls[newest], &md5s[newest], &c[newest]))
-            md5s[newest] = NULL;
-
-        xs *post = NULL;
-
-        if (!valid_status(object_get_by_md5(md5, &post)))
-            continue;
-
-        if (!xs_match(xs_dict_get_def(post, "type", "-"), POSTLIKE_OBJECT_TYPE))
-            continue;
-
-        char *content = xs_dict_get(post, "content");
-
-        if (xs_is_null(content))
-            continue;
-
-        /* strip HTML */
-        xs *c = xs_regex_replace(content, "<[^>]+>", " ");
-        c = xs_regex_replace_i(c, " {2,}", " ");
-        c = xs_tolower_i(c);
-
-        /* apply regex */
-        if (xs_regex_match(c, i_regex)) {
-            if (xs_set_add(&seen, md5) == 1)
-            show--;
-        }
-    }
-
-    xs_list *r = xs_set_result(&seen);
-
-    if (skip) {
-        /* BAD */
-        while (skip--) {
-            r = xs_list_del(r, 0);
-        }
-    }
-
-    xs_free(tls[0]);
-    xs_free(tls[1]);
-    xs_free(tls[2]);
-
-    return r;
 }
 
 
