@@ -2,7 +2,7 @@
 
 ## 2.53
 
-New feature to search by post content (using regular expressions).
+New user feature to search by post content (using regular expressions) or tag.
 
 Added some (partial) support for `Event` object types.
 
