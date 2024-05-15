@@ -1049,7 +1049,7 @@ xs_dict *xs_dict_append(xs_dict *dict, const xs_str *key, const xs_val *value)
 xs_dict *xs_dict_prepend(xs_dict *dict, const xs_str *key, const xs_val *value)
 /* prepends a memory block to the dict */
 {
-    return _xs_dict_write_ditem(dict, 4, key, value, xs_size(value));
+    return _xs_dict_write_ditem(dict, 1 + _XS_TYPE_SIZE, key, value, xs_size(value));
 }
 
 

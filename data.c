@@ -2293,13 +2293,9 @@ int content_check(const char *file, const xs_dict *msg)
             while (!r && !feof(f)) {
                 xs *rx = xs_strip_i(xs_readline(f));
 
-                if (*rx) {
-                    xs *l = xs_regex_select_n(c, rx, 1);
-
-                    if (xs_list_len(l)) {
-                        srv_debug(1, xs_fmt("content_check: match for '%s'", rx));
-                        r = 1;
-                    }
+                if (*rx && xs_regex_match(c, rx)) {
+                    srv_debug(1, xs_fmt("content_check: match for '%s'", rx));
+                    r = 1;
                 }
             }
 
@@ -2576,9 +2572,7 @@ xs_list *content_search(snac *user, const char *regex,
         c = xs_tolower_i(c);
 
         /* apply regex */
-        xs *l = xs_regex_select_n(c, i_regex, 1);
-
-        if (xs_list_len(l)) {
+        if (xs_regex_match(c, i_regex)) {
             if (xs_set_add(&seen, md5) == 1)
             show--;
         }
