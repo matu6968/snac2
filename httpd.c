@@ -202,7 +202,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
             }
             else {
                 xs *page = xs_fmt("?t=%s", t);
-                xs *title = xs_fmt(L("Search results for #%s"), t);
+                xs *title = xs_fmt(L("Search results for tag #%s"), t);
                 *body = html_timeline(NULL, tl, 0, skip, show, more, title, page, 0);
             }
         }

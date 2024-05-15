@@ -748,7 +748,7 @@ static xs_html *html_user_body(snac *user, int read_only)
                     xs_html_sctag("input",
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "q"),
-                        xs_html_attr("title", L("Search posts by content (regular expression)")),
+                        xs_html_attr("title", L("Search posts by content (regular expression) or #tag")),
                         xs_html_attr("placeholder", L("Content search")))));
     }
 
@@ -2588,25 +2588,44 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             char *q = xs_dict_get(q_vars, "q");
 
             if (q && *q) {
-                /** search by content **/
-                int to = 0;
-                int msecs = atoi(xs_dict_get_def(q_vars, "msecs", "0"));
-                xs *tl = content_search(&snac, q, 1, skip, show, msecs, &to);
-                xs *title = NULL;
-                xs *page = xs_fmt("/admin?q=%s&msecs=%d", q, msecs + 10);
-                int tl_len = xs_list_len(tl);
+                if (*q == '#') {
+                    /** search by tag **/
+                    xs *tl = tag_search(q, skip, show + 1);
+                    int more = 0;
+                    if (xs_list_len(tl) >= show + 1) {
+                        /* drop the last one */
+                        tl = xs_list_del(tl, -1);
+                        more = 1;
+                    }
 
-                if (tl_len)
-                    title = xs_fmt(L("Search results for '%s'"), q);
-                else
-                if (skip)
-                    title = xs_fmt(L("No more matches for '%s'"), q);
-                else
-                    title = xs_fmt(L("Nothing found for '%s'"), q);
+                    xs *page = xs_fmt("/admin?q=%%23%s", q + 1);
+                    xs *title = xs_fmt(L("Search results for tag %s"), q);
 
-                *body   = html_timeline(&snac, tl, 0, skip, tl_len, to || tl_len == show, title, page, 0);
-                *b_size = strlen(*body);
-                status  = 200;
+                    *body = html_timeline(&snac, tl, 0, skip, show, more, title, page, 0);
+                    *b_size = strlen(*body);
+                    status  = 200;
+                }
+                else {
+                    /** search by content **/
+                    int to = 0;
+                    int msecs = atoi(xs_dict_get_def(q_vars, "msecs", "0"));
+                    xs *tl = content_search(&snac, q, 1, skip, show, msecs, &to);
+                    xs *title = NULL;
+                    xs *page = xs_fmt("/admin?q=%s&msecs=%d", q, msecs + 10);
+                    int tl_len = xs_list_len(tl);
+
+                    if (tl_len)
+                        title = xs_fmt(L("Search results for '%s'"), q);
+                    else
+                    if (skip)
+                        title = xs_fmt(L("No more matches for '%s'"), q);
+                    else
+                        title = xs_fmt(L("Nothing found for '%s'"), q);
+
+                    *body   = html_timeline(&snac, tl, 0, skip, tl_len, to || tl_len == show, title, page, 0);
+                    *b_size = strlen(*body);
+                    status  = 200;
+                }
             }
             else {
                 double t = history_mtime(&snac, "timeline.html_");
