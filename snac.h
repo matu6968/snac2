@@ -181,9 +181,6 @@ xs_list *list_timeline(snac *user, const char *list, int skip, int show);
 xs_val *list_content(snac *user, const char *list_id, const char *actor_md5, int op);
 void list_distribute(snac *user, const char *who, const xs_dict *post);
 
-xs_list *content_search(snac *user, const char *regex,
-            int priv, int skip, int show, int max_secs, int *timeout);
-
 int actor_add(const char *actor, xs_dict *msg);
 int actor_get(const char *actor, xs_dict **data);
 int actor_get_refresh(snac *user, const char *actor, xs_dict **data);
@@ -219,7 +216,9 @@ int is_instance_blocked(const char *instance);
 int instance_block(const char *instance);
 int instance_unblock(const char *instance);
 
-int content_check(const char *file, const xs_dict *msg);
+int content_match(const char *file, const xs_dict *msg);
+xs_list *content_search(snac *user, const char *regex,
+            int priv, int skip, int show, int max_secs, int *timeout);
 
 void enqueue_input(snac *snac, const xs_dict *msg, const xs_dict *req, int retries);
 void enqueue_shared_input(const xs_dict *msg, const xs_dict *req, int retries);

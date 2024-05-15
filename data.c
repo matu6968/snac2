@@ -2272,7 +2272,7 @@ int instance_unblock(const char *instance)
 
 /** operations by content **/
 
-int content_check(const char *file, const xs_dict *msg)
+int content_match(const char *file, const xs_dict *msg)
 /* checks if a message's content matches any of the regexes in file */
 /* file format: one regex per line */
 {
@@ -2283,7 +2283,7 @@ int content_check(const char *file, const xs_dict *msg)
 
     if (xs_type(v) == XSTYPE_STRING && *v) {
         if ((f = fopen(fn, "r")) != NULL) {
-            srv_debug(1, xs_fmt("content_check: loading regexes from %s", fn));
+            srv_debug(1, xs_fmt("content_match: loading regexes from %s", fn));
 
             /* massage content (strip HTML tags, etc.) */
             xs *c = xs_regex_replace(v, "<[^>]+>", " ");
@@ -2294,7 +2294,7 @@ int content_check(const char *file, const xs_dict *msg)
                 xs *rx = xs_strip_i(xs_readline(f));
 
                 if (*rx && xs_regex_match(c, rx)) {
-                    srv_debug(1, xs_fmt("content_check: match for '%s'", rx));
+                    srv_debug(1, xs_fmt("content_match: match for '%s'", rx));
                     r = 1;
                 }
             }

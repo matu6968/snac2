@@ -356,7 +356,7 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
                 }
 
                 if (xs_match(type, POSTLIKE_OBJECT_TYPE)) {
-                    if (content_check("filter_reject.txt", object))
+                    if (content_match("filter_reject.txt", object))
                         snac_log(snac, xs_fmt("timeline_request rejected by content %s", nid));
                     else {
                         const char *actor = get_atto(object);
@@ -2005,7 +2005,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
                 snac_debug(snac, 0, xs_fmt("dropped reply %s to hidden post %s", id, in_reply_to));
             }
             else {
-                if (content_check("filter_reject.txt", object)) {
+                if (content_match("filter_reject.txt", object)) {
                     snac_log(snac, xs_fmt("rejected by content %s", id));
                     return 1;
                 }
