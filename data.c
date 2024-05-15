@@ -2381,6 +2381,11 @@ xs_list *content_search(snac *user, const char *regex,
         if (!xs_match(xs_dict_get_def(post, "type", "-"), POSTLIKE_OBJECT_TYPE))
             continue;
 
+        const char *id = xs_dict_get(post, "id");
+
+        if (id == NULL || is_hidden(user, id))
+            continue;
+
         char *content = xs_dict_get(post, "content");
 
         if (xs_is_null(content))
