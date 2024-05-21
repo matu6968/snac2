@@ -69,7 +69,7 @@ void snac_log(snac *user, xs_str *str);
 #define snac_debug(user, level, str) do { if (dbglevel >= (level)) \
     { snac_log((user), (str)); } } while (0)
 
-int srv_open(char *basedir, int auto_upgrade);
+int srv_open(const char *basedir, int auto_upgrade);
 void srv_free(void);
 
 int user_open(snac *snac, const char *uid);
@@ -88,7 +88,7 @@ void srv_archive(const char *direction, const char *url, xs_dict *req,
                  const char *body, int b_size);
 void srv_archive_error(const char *prefix, const xs_str *err,
                        const xs_dict *req, const xs_val *data);
-void srv_archive_qitem(char *prefix, xs_dict *q_item);
+void srv_archive_qitem(const char *prefix, xs_dict *q_item);
 
 double mtime_nl(const char *fn, int *n_link);
 #define mtime(fn) mtime_nl(fn, NULL)
@@ -139,13 +139,13 @@ double timeline_mtime(snac *snac);
 int timeline_touch(snac *snac);
 int timeline_here(snac *snac, const char *md5);
 int timeline_get_by_md5(snac *snac, const char *md5, xs_dict **msg);
-int timeline_del(snac *snac, char *id);
+int timeline_del(snac *snac, const char *id);
 xs_list *timeline_simple_list(snac *snac, const char *idx_name, int skip, int show);
 xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show);
 int timeline_add(snac *snac, const char *id, const xs_dict *o_msg);
 int timeline_admire(snac *snac, const char *id, const char *admirer, int like);
 
-xs_list *timeline_top_level(snac *snac, xs_list *list);
+xs_list *timeline_top_level(snac *snac, const xs_list *list);
 xs_list *local_list(snac *snac, int max);
 xs_list *timeline_instance_list(int skip, int show);
 
@@ -174,14 +174,14 @@ void hide(snac *snac, const char *id);
 int is_hidden(snac *snac, const char *id);
 
 void tag_index(const char *id, const xs_dict *obj);
-xs_list *tag_search(char *tag, int skip, int show);
+xs_list *tag_search(const char *tag, int skip, int show);
 
 xs_val *list_maint(snac *user, const char *list, int op);
 xs_list *list_timeline(snac *user, const char *list, int skip, int show);
 xs_val *list_content(snac *user, const char *list_id, const char *actor_md5, int op);
 void list_distribute(snac *user, const char *who, const xs_dict *post);
 
-int actor_add(const char *actor, xs_dict *msg);
+int actor_add(const char *actor, const xs_dict *msg);
 int actor_get(const char *actor, xs_dict **data);
 int actor_get_refresh(snac *user, const char *actor, xs_dict **data);
 
@@ -223,10 +223,13 @@ xs_list *content_search(snac *user, const char *regex,
 void enqueue_input(snac *snac, const xs_dict *msg, const xs_dict *req, int retries);
 void enqueue_shared_input(const xs_dict *msg, const xs_dict *req, int retries);
 void enqueue_output_raw(const char *keyid, const char *seckey,
-                        xs_dict *msg, xs_str *inbox, int retries, int p_status);
-void enqueue_output(snac *snac, xs_dict *msg, xs_str *inbox, int retries, int p_status);
-void enqueue_output_by_actor(snac *snac, xs_dict *msg, const xs_str *actor, int retries);
-void enqueue_email(xs_str *msg, int retries);
+                        const xs_dict *msg, const xs_str *inbox,
+                        int retries, int p_status);
+void enqueue_output(snac *snac, const xs_dict *msg,
+                    const xs_str *inbox, int retries, int p_status);
+void enqueue_output_by_actor(snac *snac, const xs_dict *msg,
+                             const xs_str *actor, int retries);
+void enqueue_email(const xs_str *msg, int retries);
 void enqueue_telegram(const xs_str *msg, const char *bot, const char *chat_id);
 void enqueue_ntfy(const xs_str *msg, const char *ntfy_server, const char *ntfy_token);
 void enqueue_message(snac *snac, const xs_dict *msg);
@@ -234,7 +237,6 @@ void enqueue_close_question(snac *user, const char *id, int end_secs);
 void enqueue_object_request(snac *user, const char *id, int forward_secs);
 void enqueue_verify_links(snac *user);
 void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs);
-void enqueue_request_replies(snac *user, const char *id);
 int was_question_voted(snac *user, const char *id);
 
 xs_list *user_queue(snac *snac);
@@ -247,16 +249,16 @@ void purge_all(void);
 
 xs_dict *http_signed_request_raw(const char *keyid, const char *seckey,
                             const char *method, const char *url,
-                            xs_dict *headers,
+                            const xs_dict *headers,
                             const char *body, int b_size,
                             int *status, xs_str **payload, int *p_size,
                             int timeout);
 xs_dict *http_signed_request(snac *snac, const char *method, const char *url,
-                            xs_dict *headers,
+                            const xs_dict *headers,
                             const char *body, int b_size,
                             int *status, xs_str **payload, int *p_size,
                             int timeout);
-int check_signature(xs_dict *req, xs_str **err);
+int check_signature(const xs_dict *req, xs_str **err);
 
 srv_state *srv_state_op(xs_str **fname, int op);
 void httpd(void);
@@ -270,21 +272,21 @@ const char *default_avatar_base64(void);
 
 xs_str *process_tags(snac *snac, const char *content, xs_list **tag);
 
-char *get_atto(const xs_dict *msg);
+const char *get_atto(const xs_dict *msg);
 xs_list *get_attachments(const xs_dict *msg);
 
-xs_dict *msg_admiration(snac *snac, char *object, char *type);
-xs_dict *msg_repulsion(snac *user, char *id, char *type);
+xs_dict *msg_admiration(snac *snac, const char *object, const char *type);
+xs_dict *msg_repulsion(snac *user, const char *id, const char *type);
 xs_dict *msg_create(snac *snac, const xs_dict *object);
 xs_dict *msg_follow(snac *snac, const char *actor);
 
 xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
-                  xs_str *in_reply_to, xs_list *attach, int priv);
+                  const xs_str *in_reply_to, const xs_list *attach, int priv);
 
-xs_dict *msg_undo(snac *snac, char *object);
-xs_dict *msg_delete(snac *snac, char *id);
+xs_dict *msg_undo(snac *snac, const xs_val *object);
+xs_dict *msg_delete(snac *snac, const char *id);
 xs_dict *msg_actor(snac *snac);
-xs_dict *msg_update(snac *snac, xs_dict *object);
+xs_dict *msg_update(snac *snac, const xs_dict *object);
 xs_dict *msg_ping(snac *user, const char *rcpt);
 xs_dict *msg_pong(snac *user, const char *rcpt, const char *object);
 xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
@@ -292,7 +294,6 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
 
 int activitypub_request(snac *snac, const char *url, xs_dict **data);
 int actor_request(snac *user, const char *actor, xs_dict **data);
-void timeline_request_replies(snac *user, const char *id);
 int send_to_inbox_raw(const char *keyid, const char *seckey,
                   const xs_str *inbox, const xs_dict *msg,
                   xs_val **payload, int *p_size, int timeout);

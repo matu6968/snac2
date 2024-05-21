@@ -418,7 +418,7 @@ int deluser(snac *user)
 void verify_links(snac *user)
 /* verifies a user's links */
 {
-    xs_dict *p = xs_dict_get(user->config, "metadata");
+    const xs_dict *p = xs_dict_get(user->config, "metadata");
     char *k, *v;
     int changed = 0;
 

@@ -125,7 +125,7 @@ static xs_str *greeting_html(void)
 
         /* does it have a %userlist% mark? */
         if (xs_str_in(s, "%userlist%") != -1) {
-            char *host = xs_dict_get(srv_config, "host");
+            const char *host = xs_dict_get(srv_config, "host");
             xs *list = user_list();
             xs_list *p = list;
             xs_str *uid;
@@ -171,14 +171,14 @@ int server_get_handler(xs_dict *req, const char *q_path,
 
     /* is it the server root? */
     if (*q_path == '\0') {
-        xs_dict *q_vars = xs_dict_get(req, "q_vars");
-        char *t = NULL;
+        const xs_dict *q_vars = xs_dict_get(req, "q_vars");
+        const char *t = NULL;
 
         if (xs_type(q_vars) == XSTYPE_DICT && (t = xs_dict_get(q_vars, "t"))) {
             /** search by tag **/
             int skip = 0;
             int show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
-            char *v;
+            const char *v;
 
             if ((v = xs_dict_get(q_vars, "skip")) != NULL)
                 skip = atoi(v);
@@ -193,7 +193,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
                 more = 1;
             }
 
-            char *accept = xs_dict_get(req, "accept");
+            const char *accept = xs_dict_get(req, "accept");
             if (!xs_is_null(accept) && strcmp(accept, "application/rss+xml") == 0) {
                 xs *link = xs_fmt("%s/?t=%s", srv_baseurl, t);
 
@@ -268,7 +268,7 @@ void httpd_connection(FILE *f)
 /* the connection processor */
 {
     xs *req;
-    char *method;
+    const char *method;
     int status   = 0;
     xs_str *body = NULL;
     int b_size   = 0;
@@ -278,7 +278,7 @@ void httpd_connection(FILE *f)
     xs *payload  = NULL;
     xs *etag     = NULL;
     int p_size   = 0;
-    char *p;
+    const char *p;
     int fcgi_id;
 
     if (p_state->use_fcgi)
@@ -411,7 +411,7 @@ void httpd_connection(FILE *f)
         headers = xs_dict_append(headers, "etag", etag);
 
     /* if there are any additional headers, add them */
-    xs_dict *more_headers = xs_dict_get(srv_config, "http_headers");
+    const xs_dict *more_headers = xs_dict_get(srv_config, "http_headers");
     if (xs_type(more_headers) == XSTYPE_DICT) {
         char *k, *v;
         int c = 0;

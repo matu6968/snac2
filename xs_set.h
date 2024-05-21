@@ -104,7 +104,7 @@ int xs_set_add(xs_set *s, const xs_val *data)
 
     /* if it's new, add the data */
     if (ret)
-        s->list = xs_list_append_m(s->list, data, xs_size(data));
+        s->list = xs_list_append(s->list, data);
 
     return ret;
 }

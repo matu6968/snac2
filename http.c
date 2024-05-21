@@ -12,7 +12,7 @@
 
 xs_dict *http_signed_request_raw(const char *keyid, const char *seckey,
                             const char *method, const char *url,
-                            xs_dict *headers,
+                            const xs_dict *headers,
                             const char *body, int b_size,
                             int *status, xs_str **payload, int *p_size,
                             int timeout)
@@ -24,8 +24,8 @@ xs_dict *http_signed_request_raw(const char *keyid, const char *seckey,
     xs *s64 = NULL;
     xs *signature = NULL;
     xs *hdrs = NULL;
-    char *host;
-    char *target;
+    const char *host;
+    const char *target;
     char *k, *v;
     xs_dict *response;
 
@@ -106,13 +106,13 @@ xs_dict *http_signed_request_raw(const char *keyid, const char *seckey,
 
 
 xs_dict *http_signed_request(snac *snac, const char *method, const char *url,
-                            xs_dict *headers,
+                            const xs_dict *headers,
                             const char *body, int b_size,
                             int *status, xs_str **payload, int *p_size,
                             int timeout)
 /* does a signed HTTP request */
 {
-    char *seckey = xs_dict_get(snac->key, "secret");
+    const char *seckey = xs_dict_get(snac->key, "secret");
     xs_dict *response;
 
     response = http_signed_request_raw(snac->actor, seckey, method, url,
@@ -122,17 +122,18 @@ xs_dict *http_signed_request(snac *snac, const char *method, const char *url,
 }
 
 
-int check_signature(xs_dict *req, xs_str **err)
+int check_signature(const xs_dict *req, xs_str **err)
 /* check the signature */
 {
-    char *sig_hdr = xs_dict_get(req, "signature");
+    const char *sig_hdr = xs_dict_get(req, "signature");
     xs *keyId = NULL;
     xs *headers = NULL;
     xs *signature = NULL;
     xs *created = NULL;
     xs *expires = NULL;
-    char *pubkey;
     char *p;
+    const char *pubkey;
+    const char *k;
 
     if (xs_is_null(sig_hdr)) {
         *err = xs_fmt("missing 'signature' header");
@@ -142,10 +143,10 @@ int check_signature(xs_dict *req, xs_str **err)
     {
         /* extract the values */
         xs *l = xs_split(sig_hdr, ",");
-        xs_list *p = l;
+        int c = 0;
         xs_val *v;
 
-        while (xs_list_iter(&p, &v)) {
+        while (xs_list_next(l, &v, &c)) {
             xs *kv = xs_split_n(v, "=", 1);
 
             if (xs_list_len(kv) != 2)
@@ -192,8 +193,8 @@ int check_signature(xs_dict *req, xs_str **err)
         return 0;
     }
 
-    if ((p = xs_dict_get(actor, "publicKey")) == NULL ||
-        ((pubkey = xs_dict_get(p, "publicKeyPem")) == NULL)) {
+    if ((k = xs_dict_get(actor, "publicKey")) == NULL ||
+        ((pubkey = xs_dict_get(k, "publicKeyPem")) == NULL)) {
         *err = xs_fmt("cannot get pubkey from %s", keyId);
         return 0;
     }
@@ -208,7 +209,7 @@ int check_signature(xs_dict *req, xs_str **err)
 
         p = l;
         while (xs_list_iter(&p, &v)) {
-            char *hc;
+            const char *hc;
             xs *ss = NULL;
 
             if (*sig_str != '\0')

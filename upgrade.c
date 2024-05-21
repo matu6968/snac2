@@ -18,7 +18,7 @@ int snac_upgrade(xs_str **error)
     double f = 0.0;
 
     for (;;) {
-        char *layout = xs_dict_get(srv_config, "layout");
+        const char *layout = xs_dict_get(srv_config, "layout");
         double nf;
 
         f = nf = xs_number_get(layout);
@@ -56,8 +56,8 @@ int snac_upgrade(xs_str **error)
 
                     g = list;
                     while (xs_list_iter(&g, &fn)) {
-                        xs *l   = xs_split(fn, "/");
-                        char *b = xs_list_get(l, -1);
+                        xs *l = xs_split(fn, "/");
+                        const char *b = xs_list_get(l, -1);
                         xs *dir = xs_fmt("%s/object/%c%c", srv_basedir, b[0], b[1]);
                         xs *nfn = xs_fmt("%s/%s", dir, b);
 
@@ -152,12 +152,12 @@ int snac_upgrade(xs_str **error)
                             xs *o = xs_json_loads(s);
                             fclose(f);
 
-                            char *type = xs_dict_get(o, "type");
+                            const char *type = xs_dict_get(o, "type");
 
                             if (!xs_is_null(type) && strcmp(type, "Follow") == 0) {
                                 unlink(v);
 
-                                char *actor = xs_dict_get(o, "actor");
+                                const char *actor = xs_dict_get(o, "actor");
 
                                 if (!xs_is_null(actor))
                                     follower_add(&snac, actor);
@@ -198,22 +198,29 @@ int snac_upgrade(xs_str **error)
                             xs *meta = xs_dup(xs_dict_get(o, "_snac"));
                             o = xs_dict_del(o, "_snac");
 
-                            char *id = xs_dict_get(o, "id");
+                            const char *id = xs_dict_get(o, "id");
 
                             /* store object */
                             object_add_ow(id, o);
 
                             /* if it's from us, add to public */
                             if (xs_startswith(id, snac.actor)) {
-                                char *p, *v;
+                                const xs_list *p;
+                                char *v;
+                                int c;
 
                                 object_user_cache_add(&snac, id, "public");
 
                                 p = xs_dict_get(meta, "announced_by");
-                                while (xs_list_iter(&p, &v))
+
+                                c = 0;
+                                while (xs_list_next(p, &v, &c))
                                     object_admire(id, v, 0);
+
                                 p = xs_dict_get(meta, "liked_by");
-                                while (xs_list_iter(&p, &v))
+
+                                c = 0;
+                                while (xs_list_next(p, &v, &c))
                                     object_admire(id, v, 1);
                             }
 
@@ -257,21 +264,28 @@ int snac_upgrade(xs_str **error)
                             xs *meta = xs_dup(xs_dict_get(o, "_snac"));
                             o = xs_dict_del(o, "_snac");
 
-                            char *id = xs_dict_get(o, "id");
+                            const char *id = xs_dict_get(o, "id");
 
                             /* store object */
                             object_add_ow(id, o);
 
                             {
-                                char *p, *v;
+                                const xs_list *p;
+                                char *v;
+                                int c = 0;
 
                                 object_user_cache_add(&snac, id, "private");
 
                                 p = xs_dict_get(meta, "announced_by");
-                                while (xs_list_iter(&p, &v))
+
+                                c = 0;
+                                while (xs_list_next(p, &v, &c))
                                     object_admire(id, v, 0);
+
                                 p = xs_dict_get(meta, "liked_by");
-                                while (xs_list_iter(&p, &v))
+
+                                c = 0;
+                                while (xs_list_next(p, &v, &c))
                                     object_admire(id, v, 1);
                             }
 

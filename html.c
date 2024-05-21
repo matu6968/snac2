@@ -41,7 +41,7 @@ int login(snac *snac, const xs_dict *headers)
 }
 
 
-xs_str *replace_shortnames(xs_str *s, xs_list *tag, int ems)
+xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems)
 /* replaces all the :shortnames: with the emojis in tag */
 {
     if (!xs_is_null(tag)) {
@@ -57,18 +57,18 @@ xs_str *replace_shortnames(xs_str *s, xs_list *tag, int ems)
 
         xs *style = xs_fmt("height: %dem; width: %dem; vertical-align: middle;", ems, ems);
 
-        xs_list *p = tag_list;
         char *v;
+        int c = 0;
 
-        while (xs_list_iter(&p, &v)) {
-            char *t = xs_dict_get(v, "type");
+        while (xs_list_next(tag_list, &v, &c)) {
+            const char *t = xs_dict_get(v, "type");
 
             if (t && strcmp(t, "Emoji") == 0) {
-                char *n = xs_dict_get(v, "name");
-                char *i = xs_dict_get(v, "icon");
+                const char *n = xs_dict_get(v, "name");
+                const char *i = xs_dict_get(v, "icon");
 
                 if (n && i) {
-                    char *u = xs_dict_get(i, "url");
+                    const char *u = xs_dict_get(i, "url");
                     xs_html *img = xs_html_sctag("img",
                         xs_html_attr("loading", "lazy"),
                         xs_html_attr("src", u),
@@ -88,7 +88,7 @@ xs_str *replace_shortnames(xs_str *s, xs_list *tag, int ems)
 xs_str *actor_name(xs_dict *actor)
 /* gets the actor name */
 {
-    char *v;
+    const char *v;
 
     if (xs_is_null((v = xs_dict_get(actor, "name"))) || *v == '\0') {
         if (xs_is_null(v = xs_dict_get(actor, "preferredUsername")) || *v == '\0') {
@@ -106,7 +106,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
     xs_html *actor_icon = xs_html_tag("p", NULL);
 
     xs *avatar = NULL;
-    char *v;
+    const char *v;
     int fwing = 0;
     int fwer = 0;
 
@@ -125,7 +125,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
     if (avatar == NULL)
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
 
-    char *actor_id = xs_dict_get(actor, "id");
+    const char *actor_id = xs_dict_get(actor, "id");
     xs *href = NULL;
 
     if (user) {
@@ -216,7 +216,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
     }
 
     {
-        char *username, *id;
+        const char *username, *id;
 
         if (xs_is_null(username = xs_dict_get(actor, "preferredUsername")) || *username == '\0') {
             /* This should never be reached */
@@ -244,15 +244,15 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
 }
 
 
-xs_html *html_msg_icon(snac *user, char *actor_id, const xs_dict *msg)
+xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg)
 {
     xs *actor = NULL;
     xs_html *actor_icon = NULL;
 
     if (actor_id && valid_status(actor_get_refresh(user, actor_id, &actor))) {
-        char *date  = NULL;
-        char *udate = NULL;
-        char *url   = NULL;
+        const char *date  = NULL;
+        const char *udate = NULL;
+        const char *url   = NULL;
         int priv    = 0;
         const char *type = xs_dict_get(msg, "type");
 
@@ -271,14 +271,14 @@ xs_html *html_msg_icon(snac *user, char *actor_id, const xs_dict *msg)
 }
 
 
-xs_html *html_note(snac *user, char *summary,
-                   char *div_id, char *form_id,
-                   char *ta_plh, char *ta_content,
-                   char *edit_id, char *actor_id,
-                   xs_val *cw_yn, char *cw_text,
-                   xs_val *mnt_only, char *redir,
-                   char *in_reply_to, int poll,
-                   char *att_file, char *att_alt_text)
+xs_html *html_note(snac *user, const char *summary,
+                   const char *div_id, const char *form_id,
+                   const char *ta_plh, const char *ta_content,
+                   const char *edit_id, const char *actor_id,
+                   const xs_val *cw_yn, const char *cw_text,
+                   const xs_val *mnt_only, const char *redir,
+                   const char *in_reply_to, int poll,
+                   const char *att_file, const char *att_alt_text)
 {
     xs *action = xs_fmt("%s/admin/note", user->actor);
 
@@ -460,9 +460,11 @@ static xs_html *html_base_head(void)
     /* add server CSS and favicon */
     xs *f;
     f = xs_fmt("%s/favicon.ico", srv_baseurl);
-    xs_list *p = xs_dict_get(srv_config, "cssurls");
+    const xs_list *p = xs_dict_get(srv_config, "cssurls");
     char *v;
-    while (xs_list_iter(&p, &v)) {
+    int c = 0;
+
+    while (xs_list_next(p, &v, &c)) {
         xs_html_add(head,
             xs_html_sctag("link",
                 xs_html_attr("rel",  "stylesheet"),
@@ -498,8 +500,8 @@ xs_html *html_instance_head(void)
         }
     }
 
-    char *host  = xs_dict_get(srv_config, "host");
-    char *title = xs_dict_get(srv_config, "title");
+    const char *host  = xs_dict_get(srv_config, "host");
+    const char *title = xs_dict_get(srv_config, "title");
 
     xs_html_add(head,
         xs_html_tag("title",
@@ -511,10 +513,10 @@ xs_html *html_instance_head(void)
 
 static xs_html *html_instance_body(void)
 {
-    char *host  = xs_dict_get(srv_config, "host");
-    char *sdesc = xs_dict_get(srv_config, "short_description");
-    char *email = xs_dict_get(srv_config, "admin_email");
-    char *acct  = xs_dict_get(srv_config, "admin_account");
+    const char *host  = xs_dict_get(srv_config, "host");
+    const char *sdesc = xs_dict_get(srv_config, "short_description");
+    const char *email = xs_dict_get(srv_config, "admin_email");
+    const char *acct  = xs_dict_get(srv_config, "admin_account");
 
     xs *blurb = xs_replace(snac_blurb, "%host%", host);
 
@@ -760,7 +762,7 @@ static xs_html *html_user_body(snac *user, int read_only)
         xs_html_attr("class", "h-card snac-top-user"));
 
     if (read_only) {
-        char *header = xs_dict_get(user->config, "header");
+        const char *header = xs_dict_get(user->config, "header");
         if (header && *header) {
             xs_html_add(top_user,
                 xs_html_tag("div",
@@ -797,7 +799,7 @@ static xs_html *html_user_body(snac *user, int read_only)
         xs_html_add(top_user,
             top_user_bio);
 
-        xs_dict *metadata = xs_dict_get(user->config, "metadata");
+        const xs_dict *metadata = xs_dict_get(user->config, "metadata");
         if (xs_type(metadata) == XSTYPE_DICT) {
             xs_str *k;
             xs_str *v;
@@ -816,7 +818,7 @@ static xs_html *html_user_body(snac *user, int read_only)
                 if (xs_startswith(v, "https:/") || xs_startswith(v, "http:/")) {
                     /* is this link validated? */
                     xs *verified_link = NULL;
-                    xs_number *val_time = xs_dict_get(val_links, v);
+                    const xs_number *val_time = xs_dict_get(val_links, v);
 
                     if (xs_type(val_time) == XSTYPE_NUMBER) {
                         time_t t = xs_number_get(val_time);
@@ -928,7 +930,7 @@ xs_html *html_top_controls(snac *snac)
 
     /** user settings **/
 
-    char *email = "[disabled by admin]";
+    const char *email = "[disabled by admin]";
 
     if (xs_type(xs_dict_get(srv_config, "disable_email_notifications")) != XSTYPE_TRUE) {
         email = xs_dict_get(snac->config_o, "email");
@@ -940,38 +942,38 @@ xs_html *html_top_controls(snac *snac)
         }
     }
 
-    char *cw = xs_dict_get(snac->config, "cw");
+    const char *cw = xs_dict_get(snac->config, "cw");
     if (xs_is_null(cw))
         cw = "";
 
-    char *telegram_bot = xs_dict_get(snac->config, "telegram_bot");
+    const char *telegram_bot = xs_dict_get(snac->config, "telegram_bot");
     if (xs_is_null(telegram_bot))
         telegram_bot = "";
 
-    char *telegram_chat_id = xs_dict_get(snac->config, "telegram_chat_id");
+    const char *telegram_chat_id = xs_dict_get(snac->config, "telegram_chat_id");
     if (xs_is_null(telegram_chat_id))
         telegram_chat_id = "";
 
-    char *ntfy_server = xs_dict_get(snac->config, "ntfy_server");
+    const char *ntfy_server = xs_dict_get(snac->config, "ntfy_server");
     if (xs_is_null(ntfy_server))
         ntfy_server = "";
 
-    char *ntfy_token = xs_dict_get(snac->config, "ntfy_token");
+    const char *ntfy_token = xs_dict_get(snac->config, "ntfy_token");
     if (xs_is_null(ntfy_token))
         ntfy_token = "";
 
-    char *purge_days = xs_dict_get(snac->config, "purge_days");
+    const char *purge_days = xs_dict_get(snac->config, "purge_days");
     if (!xs_is_null(purge_days) && xs_type(purge_days) == XSTYPE_NUMBER)
         purge_days = (char *)xs_number_str(purge_days);
     else
         purge_days = "0";
 
-    xs_val *d_dm_f_u  = xs_dict_get(snac->config, "drop_dm_from_unknown");
-    xs_val *bot       = xs_dict_get(snac->config, "bot");
-    xs_val *a_private = xs_dict_get(snac->config, "private");
+    const xs_val *d_dm_f_u  = xs_dict_get(snac->config, "drop_dm_from_unknown");
+    const xs_val *bot       = xs_dict_get(snac->config, "bot");
+    const xs_val *a_private = xs_dict_get(snac->config, "private");
 
     xs *metadata = xs_str_new(NULL);
-    xs_dict *md = xs_dict_get(snac->config, "metadata");
+    const xs_dict *md = xs_dict_get(snac->config, "metadata");
     xs_str *k;
     xs_str *v;
 
@@ -1158,13 +1160,14 @@ xs_str *build_mentions(snac *snac, const xs_dict *msg)
 /* returns a string with the mentions in msg */
 {
     xs_str *s = xs_str_new(NULL);
-    char *list = xs_dict_get(msg, "tag");
+    const char *list = xs_dict_get(msg, "tag");
     char *v;
+    int c = 0;
 
-    while (xs_list_iter(&list, &v)) {
-        char *type = xs_dict_get(v, "type");
-        char *href = xs_dict_get(v, "href");
-        char *name = xs_dict_get(v, "name");
+    while (xs_list_next(list, &v, &c)) {
+        const char *type = xs_dict_get(v, "type");
+        const char *href = xs_dict_get(v, "href");
+        const char *name = xs_dict_get(v, "name");
 
         if (type && strcmp(type, "Mention") == 0 &&
             href && strcmp(href, snac->actor) != 0 && name) {
@@ -1208,10 +1211,11 @@ xs_str *build_mentions(snac *snac, const xs_dict *msg)
 }
 
 
-xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const char *md5)
+xs_html *html_entry_controls(snac *snac, const char *actor,
+                            const xs_dict *msg, const char *md5)
 {
-    char *id    = xs_dict_get(msg, "id");
-    char *group = xs_dict_get(msg, "audience");
+    const char *id    = xs_dict_get(msg, "id");
+    const char *group = xs_dict_get(msg, "audience");
 
     xs *likes   = object_likes(id);
     xs *boosts  = object_announces(id);
@@ -1310,7 +1314,7 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
         html_button("delete", L("Delete"), L("Delete this post")),
         html_button("hide",   L("Hide"), L("Hide this post and its children")));
 
-    char *prev_src = xs_dict_get(msg, "sourceContent");
+    const char *prev_src = xs_dict_get(msg, "sourceContent");
 
     if (!xs_is_null(prev_src) && strcmp(actor, snac->actor) == 0) { /** edit **/
         /* post can be edited */
@@ -1318,13 +1322,13 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
         xs *form_id = xs_fmt("%s_edit_form", md5);
         xs *redir   = xs_fmt("%s_entry", md5);
 
-        char *att_file = "";
-        char *att_alt_text = "";
-        xs_list *att_list = xs_dict_get(msg, "attachment");
+        const char *att_file = "";
+        const char *att_alt_text = "";
+        const xs_list *att_list = xs_dict_get(msg, "attachment");
 
         /* does it have an attachment? */
         if (xs_type(att_list) == XSTYPE_LIST && xs_list_len(att_list)) {
-            xs_dict *d = xs_list_get(att_list, 0);
+            const xs_dict *d = xs_list_get(att_list, 0);
 
             if (xs_type(d) == XSTYPE_DICT) {
                 att_file = xs_dict_get_def(d, "url", "");
@@ -1370,10 +1374,10 @@ xs_html *html_entry_controls(snac *snac, char *actor, const xs_dict *msg, const 
 xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                    int level, char *md5, int hide_children)
 {
-    char *id    = xs_dict_get(msg, "id");
-    char *type  = xs_dict_get(msg, "type");
-    char *actor;
-    char *v;
+    const char *id    = xs_dict_get(msg, "id");
+    const char *type  = xs_dict_get(msg, "type");
+    const char *actor;
+    const char *v;
     int has_title = 0;
 
     /* do not show non-public messages in the public timeline */
@@ -1509,7 +1513,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
     if (xs_list_len(boosts)) {
         /* if somebody boosted this, show as origin */
-        char *p = xs_list_get(boosts, -1);
+        const char *p = xs_list_get(boosts, -1);
         xs *actor_r = NULL;
 
         if (user && xs_list_in(boosts, user->md5) != -1) {
@@ -1529,7 +1533,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
             if (!xs_is_null(name)) {
                 xs *href = NULL;
-                char *id = xs_dict_get(actor_r, "id");
+                const char *id = xs_dict_get(actor_r, "id");
                 int fwers = 0;
                 int fwing = 0;
 
@@ -1558,7 +1562,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     if (strcmp(type, "Note") == 0) {
         if (level == 0) {
             /* is the parent not here? */
-            char *parent = xs_dict_get(msg, "inReplyTo");
+            const char *parent = xs_dict_get(msg, "inReplyTo");
 
             if (user && !xs_is_null(parent) && *parent && !timeline_here(user, parent)) {
                 xs_html_add(post_header,
@@ -1603,7 +1607,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             v = "...";
 
         /* only show it when not in the public timeline and the config setting is "open" */
-        char *cw = xs_dict_get(user->config, "cw");
+        const char *cw = xs_dict_get(user->config, "cw");
         if (xs_is_null(cw) || read_only)
             cw = "";
 
@@ -1632,7 +1636,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
     {
         /** build the content string **/
-        char *content = xs_dict_get(msg, "content");
+        const char *content = xs_dict_get(msg, "content");
 
         xs *c = sanitize(xs_is_null(content) ? "" : content);
 
@@ -1650,7 +1654,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         c = replace_shortnames(c, xs_dict_get(msg, "tag"), 2);
 
         /* Peertube videos content is in markdown */
-        char *mtype = xs_dict_get(msg, "mediaType");
+        const char *mtype = xs_dict_get(msg, "mediaType");
         if (xs_type(mtype) == XSTYPE_STRING && strcmp(mtype, "text/markdown") == 0) {
             /* a full conversion could be better */
             c = xs_replace_i(c, "\r", "");
@@ -1663,12 +1667,12 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     }
 
     if (strcmp(type, "Question") == 0) { /** question content **/
-        xs_list *oo = xs_dict_get(msg, "oneOf");
-        xs_list *ao = xs_dict_get(msg, "anyOf");
-        xs_list *p;
+        const xs_list *oo = xs_dict_get(msg, "oneOf");
+        const xs_list *ao = xs_dict_get(msg, "anyOf");
+        const xs_list *p;
         xs_dict *v;
         int closed = 0;
-        char *f_closed = NULL;
+        const char *f_closed = NULL;
 
         xs_html *poll = xs_html_tag("div", NULL);
 
@@ -1697,10 +1701,11 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             /* closed poll */
             xs_html *poll_result = xs_html_tag("table",
                 xs_html_attr("class", "snac-poll-result"));
+            int c = 0;
 
-            while (xs_list_iter(&p, &v)) {
-                char *name       = xs_dict_get(v, "name");
-                xs_dict *replies = xs_dict_get(v, "replies");
+            while (xs_list_next(p, &v, &c)) {
+                const char *name       = xs_dict_get(v, "name");
+                const xs_dict *replies = xs_dict_get(v, "replies");
 
                 if (name && replies) {
                     char *ti = (char *)xs_number_str(xs_dict_get(replies, "totalItems"));
@@ -1737,9 +1742,10 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                         xs_html_attr("name", "irt"),
                         xs_html_attr("value", id))));
 
-            while (xs_list_iter(&p, &v)) {
-                char *name = xs_dict_get(v, "name");
-                xs_dict *replies = xs_dict_get(v, "replies");
+            int c = 0;
+            while (xs_list_next(p, &v, &c)) {
+                const char *name = xs_dict_get(v, "name");
+                const xs_dict *replies = xs_dict_get(v, "replies");
 
                 if (name) {
                     char *ti = (char *)xs_number_str(xs_dict_get(replies, "totalItems"));
@@ -1777,7 +1783,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         }
         else {
             /* show when the poll closes */
-            char *end_time = xs_dict_get(msg, "endTime");
+            const char *end_time = xs_dict_get(msg, "endTime");
 
             /* Pleroma does not have an endTime field;
                it has a closed time in the future */
@@ -1820,12 +1826,12 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         xs_html_add(snac_content,
             content_attachments);
 
-        xs_list *p = attach;
-
-        while (xs_list_iter(&p, &v)) {
-            char *type = xs_dict_get(v, "type");
-            char *href = xs_dict_get(v, "href");
-            char *name = xs_dict_get(v, "name");
+        int c = 0;
+        xs_dict *a;
+        while (xs_list_next(attach, &a, &c)) {
+            const char *type = xs_dict_get(a, "type");
+            const char *href = xs_dict_get(a, "href");
+            const char *name = xs_dict_get(a, "name");
 
             if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0) {
                 xs_html_add(content_attachments,
@@ -1889,7 +1895,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     }
 
     /* has this message an audience (i.e., comes from a channel or community)? */
-    char *audience = xs_dict_get(msg, "audience");
+    const char *audience = xs_dict_get(msg, "audience");
     if (strcmp(type, "Page") == 0 && !xs_is_null(audience)) {
         xs_html *au_tag = xs_html_tag("p",
             xs_html_text("("),
@@ -2023,11 +2029,12 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 
     if (xs_list_len(list) == 1) {
         /* only one element? pick the description from the source */
-        char *id = xs_list_get(list, 0);
+        const char *id = xs_list_get(list, 0);
         xs *d = NULL;
         object_get_by_md5(id, &d);
-        if (d && (v = xs_dict_get(d, "sourceContent")) != NULL)
-            desc = xs_dup(v);
+        const char *sc = xs_dict_get(d, "sourceContent");
+        if (d && sc != NULL)
+            desc = xs_dup(sc);
 
         alternate = xs_dup(xs_dict_get(d, "id"));
     }
@@ -2087,13 +2094,13 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 
         /* is this message a non-public reply? */
         if (user != NULL && !is_msg_public(msg)) {
-            char *irt = xs_dict_get(msg, "inReplyTo");
+            const char *irt = xs_dict_get(msg, "inReplyTo");
 
             /* is it a reply to something not in the storage? */
             if (!xs_is_null(irt) && !object_here(irt)) {
                 /* is it for me? */
-                xs_list *to = xs_dict_get_def(msg, "to", xs_stock(XSTYPE_LIST));
-                xs_list *cc = xs_dict_get_def(msg, "cc", xs_stock(XSTYPE_LIST));
+                const xs_list *to = xs_dict_get_def(msg, "to", xs_stock(XSTYPE_LIST));
+                const xs_list *cc = xs_dict_get_def(msg, "cc", xs_stock(XSTYPE_LIST));
 
                 if (xs_list_in(to, user->actor) == -1 && xs_list_in(cc, user->actor) == -1) {
                     snac_debug(user, 1, xs_fmt("skipping non-public reply to an unknown post %s", v));
@@ -2212,7 +2219,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
                     html_actor_icon(snac, actor, xs_dict_get(actor, "published"), NULL, NULL, 0, 1)));
 
             /* content (user bio) */
-            char *c = xs_dict_get(actor, "summary");
+            const char *c = xs_dict_get(actor, "summary");
 
             if (!xs_is_null(c)) {
                 xs *sc = sanitize(c);
@@ -2364,10 +2371,10 @@ xs_str *html_notifications(snac *user, int skip, int show)
             continue;
 
         xs *obj = NULL;
-        char *type  = xs_dict_get(noti, "type");
-        char *utype = xs_dict_get(noti, "utype");
-        char *id    = xs_dict_get(noti, "objid");
-        char *date  = xs_dict_get(noti, "date");
+        const char *type  = xs_dict_get(noti, "type");
+        const char *utype = xs_dict_get(noti, "utype");
+        const char *id    = xs_dict_get(noti, "objid");
+        const char *date  = xs_dict_get(noti, "date");
 
         if (xs_is_null(id) || !valid_status(object_get(id, &obj)))
             continue;
@@ -2375,14 +2382,14 @@ xs_str *html_notifications(snac *user, int skip, int show)
         if (is_hidden(user, id))
             continue;
 
-        char *actor_id = xs_dict_get(noti, "actor");
+        const char *actor_id = xs_dict_get(noti, "actor");
         xs *actor = NULL;
 
         if (!valid_status(actor_get(actor_id, &actor)))
             continue;
 
         xs *a_name = actor_name(actor);
-        char *label = type;
+        const char *label = type;
 
         if (strcmp(type, "Create") == 0)
             label = L("Mention");
@@ -2494,14 +2501,14 @@ xs_str *html_notifications(snac *user, int skip, int show)
 int html_get_handler(const xs_dict *req, const char *q_path,
                      char **body, int *b_size, char **ctype, xs_str **etag)
 {
-    char *accept = xs_dict_get(req, "accept");
+    const char *accept = xs_dict_get(req, "accept");
     int status = 404;
     snac snac;
     xs *uid = NULL;
-    char *p_path;
+    const char *p_path;
     int cache = 1;
     int save = 1;
-    char *v;
+    const char *v;
 
     xs *l = xs_split_n(q_path, "/", 2);
     v = xs_list_get(l, 1);
@@ -2540,7 +2547,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
     int skip = 0;
     int show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
-    xs_dict *q_vars = xs_dict_get(req, "q_vars");
+    const xs_dict *q_vars = xs_dict_get(req, "q_vars");
     if ((v = xs_dict_get(q_vars, "skip")) != NULL)
         skip = atoi(v), cache = 0, save = 0;
     if ((v = xs_dict_get(q_vars, "show")) != NULL)
@@ -2585,7 +2592,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             status = 401;
         }
         else {
-            char *q = xs_dict_get(q_vars, "q");
+            const char *q = xs_dict_get(q_vars, "q");
 
             if (q && *q) {
                 if (*q == '#') {
@@ -2669,7 +2676,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
         else {
             xs *l = xs_split(p_path, "/");
-            char *md5 = xs_list_get(l, -1);
+            const char *md5 = xs_list_get(l, -1);
 
             if (md5 && *md5 && timeline_here(&snac, md5)) {
                 xs *list = xs_list_append(xs_list_new(), md5);
@@ -2728,7 +2735,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
         else {
             xs *l = xs_split(p_path, "/");
-            char *lid = xs_list_get(l, -1);
+            const char *lid = xs_list_get(l, -1);
 
             xs *list = list_timeline(&snac, lid, skip, show);
             xs *next = list_timeline(&snac, lid, skip + show, 1);
@@ -2767,7 +2774,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     else
     if (xs_startswith(p_path, "s/")) { /** a static file **/
         xs *l    = xs_split(p_path, "/");
-        char *id = xs_list_get(l, 1);
+        const char *id = xs_list_get(l, 1);
         int sz;
 
         if (id && *id) {
@@ -2788,8 +2795,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         if (xs_type(xs_dict_get(srv_config, "disable_history")) == XSTYPE_TRUE)
             return 403;
 
-        xs *l    = xs_split(p_path, "/");
-        char *id = xs_list_get(l, 1);
+        xs *l = xs_split(p_path, "/");
+        const char *id = xs_list_get(l, 1);
 
         if (id && *id) {
             if (xs_endswith(id, "timeline.html_")) {
@@ -2845,8 +2852,9 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
     int status = 0;
     snac snac;
-    char *uid, *p_path;
-    xs_dict *p_vars;
+    const char *uid;
+    const char *p_path;
+    const xs_dict *p_vars;
 
     xs *l = xs_split_n(q_path, "/", 2);
 
@@ -2874,15 +2882,15 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
     if (p_path && strcmp(p_path, "admin/note") == 0) { /** **/
         /* post note */
-        xs_str *content      = xs_dict_get(p_vars, "content");
-        xs_str *in_reply_to  = xs_dict_get(p_vars, "in_reply_to");
-        xs_str *attach_url   = xs_dict_get(p_vars, "attach_url");
-        xs_list *attach_file = xs_dict_get(p_vars, "attach");
-        xs_str *to           = xs_dict_get(p_vars, "to");
-        xs_str *sensitive    = xs_dict_get(p_vars, "sensitive");
-        xs_str *summary      = xs_dict_get(p_vars, "summary");
-        xs_str *edit_id      = xs_dict_get(p_vars, "edit_id");
-        xs_str *alt_text     = xs_dict_get(p_vars, "alt_text");
+        const xs_str *content      = xs_dict_get(p_vars, "content");
+        const xs_str *in_reply_to  = xs_dict_get(p_vars, "in_reply_to");
+        const xs_str *attach_url   = xs_dict_get(p_vars, "attach_url");
+        const xs_list *attach_file = xs_dict_get(p_vars, "attach");
+        const xs_str *to           = xs_dict_get(p_vars, "to");
+        const xs_str *sensitive    = xs_dict_get(p_vars, "sensitive");
+        const xs_str *summary      = xs_dict_get(p_vars, "summary");
+        const xs_str *edit_id      = xs_dict_get(p_vars, "edit_id");
+        const xs_str *alt_text     = xs_dict_get(p_vars, "alt_text");
         int priv             = !xs_is_null(xs_dict_get(p_vars, "mentioned_only"));
         xs *attach_list      = xs_list_new();
 
@@ -2902,7 +2910,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
         /* is attach_file set? */
         if (!xs_is_null(attach_file) && xs_type(attach_file) == XSTYPE_LIST) {
-            char *fn = xs_list_get(attach_file, 0);
+            const char *fn = xs_list_get(attach_file, 0);
 
             if (*fn != '\0') {
                 char *ext = strrchr(fn, '.');
@@ -2978,7 +2986,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                     int n;
 
                     for (n = 0; fields[n]; n++) {
-                        char *v = xs_dict_get(p_msg, fields[n]);
+                        const char *v = xs_dict_get(p_msg, fields[n]);
                         msg = xs_dict_set(msg, fields[n], v);
                     }
 
@@ -3007,10 +3015,10 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     else
     if (p_path && strcmp(p_path, "admin/action") == 0) { /** **/
         /* action on an entry */
-        char *id     = xs_dict_get(p_vars, "id");
-        char *actor  = xs_dict_get(p_vars, "actor");
-        char *action = xs_dict_get(p_vars, "action");
-        char *group  = xs_dict_get(p_vars, "group");
+        const char *id     = xs_dict_get(p_vars, "id");
+        const char *actor  = xs_dict_get(p_vars, "actor");
+        const char *action = xs_dict_get(p_vars, "action");
+        const char *group  = xs_dict_get(p_vars, "group");
 
         if (action == NULL)
             return 404;
@@ -3134,7 +3142,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         }
         else
         if (strcmp(action, L("Delete")) == 0) { /** **/
-            char *actor_form = xs_dict_get(p_vars, "actor-form");
+            const char *actor_form = xs_dict_get(p_vars, "actor-form");
             if (actor_form != NULL) {
                 /* delete follower */
                 if (valid_status(follower_del(&snac, actor)))
@@ -3178,8 +3186,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     else
     if (p_path && strcmp(p_path, "admin/user-setup") == 0) { /** **/
         /* change of user data */
-        char *v;
-        char *p1, *p2;
+        const char *v;
+        const char *p1, *p2;
 
         if ((v = xs_dict_get(p_vars, "name")) != NULL)
             snac.config = xs_dict_set(snac.config, "name", v);
@@ -3245,7 +3253,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         for (n = 0; uploads[n]; n++) {
             xs *var_name = xs_fmt("%s_file", uploads[n]);
 
-            xs_list *uploaded_file = xs_dict_get(p_vars, var_name);
+            const xs_list *uploaded_file = xs_dict_get(p_vars, var_name);
             if (xs_type(uploaded_file) == XSTYPE_LIST) {
                 const char *fn = xs_list_get(uploaded_file, 0);
 
@@ -3310,7 +3318,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (p_path && strcmp(p_path, "admin/vote") == 0) { /** **/
-        char *irt         = xs_dict_get(p_vars, "irt");
+        const char *irt   = xs_dict_get(p_vars, "irt");
         const char *opt   = xs_dict_get(p_vars, "question");
         const char *actor = xs_dict_get(p_vars, "actor");
 
@@ -3345,7 +3353,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             xs *poll = NULL;
 
             if (valid_status(object_get(irt, &poll))) {
-                char *date = xs_dict_get(poll, "endTime");
+                const char *date = xs_dict_get(poll, "endTime");
                 if (xs_is_null(date))
                     date = xs_dict_get(poll, "closed");
 
@@ -3363,7 +3371,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     }
 
     if (status == 303) {
-        char *redir = xs_dict_get(p_vars, "redir");
+        const char *redir = xs_dict_get(p_vars, "redir");
 
         if (xs_is_null(redir))
             redir = "top";
@@ -3411,8 +3419,8 @@ xs_str *timeline_to_rss(snac *user, const xs_list *timeline, char *title, char *
                 continue;
         }
 
-        char *id = xs_dict_get(msg, "id");
-        char *content = xs_dict_get(msg, "content");
+        const char *id = xs_dict_get(msg, "id");
+        const char *content = xs_dict_get(msg, "content");
 
         if (user && !xs_startswith(id, user->actor))
             continue;

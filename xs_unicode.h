@@ -6,7 +6,7 @@
 
  int _xs_utf8_enc(char buf[4], unsigned int cpoint);
  int xs_is_utf8_cont_byte(char c);
- unsigned int xs_utf8_dec(char **str);
+ unsigned int xs_utf8_dec(const char **str);
  int xs_unicode_width(unsigned int cpoint);
  int xs_is_surrogate(unsigned int cpoint);
  unsigned int xs_surrogate_dec(unsigned int p1, unsigned int p2);
@@ -66,10 +66,10 @@ int xs_is_utf8_cont_byte(char c)
 }
 
 
-unsigned int xs_utf8_dec(char **str)
+unsigned int xs_utf8_dec(const char **str)
 /* decodes an utf-8 char inside str and updates the pointer */
 {
-    char *p = *str;
+    const char *p = *str;
     unsigned int cpoint = 0;
     unsigned char c = *p++;
     int cb = 0;

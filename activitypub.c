@@ -67,7 +67,7 @@ int activitypub_request(snac *user, const char *url, xs_dict **data)
     xs *response = NULL;
     xs *payload = NULL;
     int p_size;
-    char *ctype;
+    const char *ctype;
 
     *data = NULL;
 
@@ -154,20 +154,21 @@ int actor_request(snac *user, const char *actor, xs_dict **data)
 }
 
 
-char *get_atto(const xs_dict *msg)
+const char *get_atto(const xs_dict *msg)
 /* gets the attributedTo field (an actor) */
 {
-    char *actor = xs_dict_get(msg, "attributedTo");
+    const xs_val *actor = xs_dict_get(msg, "attributedTo");
 
     /* if the actor is a list of objects (like on Peertube videos), pick the Person */
     if (xs_type(actor) == XSTYPE_LIST) {
-        xs_list *p = actor;
+        const xs_list *p = actor;
+        int c = 0;
         xs_dict *v;
         actor = NULL;
 
-        while (actor == NULL && xs_list_iter(&p, &v)) {
+        while (actor == NULL && xs_list_next(p, &v, &c)) {
             if (xs_type(v) == XSTYPE_DICT) {
-                char *type = xs_dict_get(v, "type");
+                const char *type = xs_dict_get(v, "type");
                 if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Person") == 0) {
                     actor = xs_dict_get(v, "id");
 
@@ -186,7 +187,7 @@ xs_list *get_attachments(const xs_dict *msg)
 /* unify the garbage fire that are the attachments */
 {
     xs_list *l = xs_list_new();
-    xs_list *p;
+    const xs_list *p;
 
     /* try first the attachments list */
     if (!xs_is_null(p = xs_dict_get(msg, "attachment"))) {
@@ -203,23 +204,24 @@ xs_list *get_attachments(const xs_dict *msg)
 
         if (xs_type(attach) == XSTYPE_LIST) {
             /* does the message have an image? */
-            if (xs_type(v = xs_dict_get(msg, "image")) == XSTYPE_DICT) {
+            const xs_dict *d = xs_dict_get(msg, "image");
+            if (xs_type(d) == XSTYPE_DICT) {
                 /* add it to the attachment list */
-                attach = xs_list_append(attach, v);
+                attach = xs_list_append(attach, d);
             }
         }
 
         /* now iterate the list */
-        p = attach;
-        while (xs_list_iter(&p, &v)) {
-            char *type = xs_dict_get(v, "mediaType");
+        int c = 0;
+        while (xs_list_next(attach, &v, &c)) {
+            const char *type = xs_dict_get(v, "mediaType");
             if (xs_is_null(type))
                 type = xs_dict_get(v, "type");
 
             if (xs_is_null(type))
                 continue;
 
-            char *href = xs_dict_get(v, "url");
+            const char *href = xs_dict_get(v, "url");
             if (xs_is_null(href))
                 href = xs_dict_get(v, "href");
             if (xs_is_null(href))
@@ -233,7 +235,7 @@ xs_list *get_attachments(const xs_dict *msg)
                     type = mt;
             }
 
-            char *name = xs_dict_get(v, "name");
+            const char *name = xs_dict_get(v, "name");
             if (xs_is_null(name))
                 name = xs_dict_get(msg, "name");
             if (xs_is_null(name))
@@ -252,29 +254,31 @@ xs_list *get_attachments(const xs_dict *msg)
     p = xs_dict_get(msg, "url");
 
     if (xs_type(p) == XSTYPE_LIST) {
-        char *href = NULL;
-        char *type = NULL;
+        const char *href = NULL;
+        const char *type = NULL;
+        int c = 0;
         xs_val *v;
 
-        while (href == NULL && xs_list_iter(&p, &v)) {
+        while (href == NULL && xs_list_next(p, &v, &c)) {
             if (xs_type(v) == XSTYPE_DICT) {
-                char *mtype = xs_dict_get(v, "type");
+                const char *mtype = xs_dict_get(v, "type");
 
                 if (xs_type(mtype) == XSTYPE_STRING && strcmp(mtype, "Link") == 0) {
                     mtype = xs_dict_get(v, "mediaType");
-                    xs_list *tag = xs_dict_get(v, "tag");
+                    const xs_list *tag = xs_dict_get(v, "tag");
 
                     if (xs_type(mtype) == XSTYPE_STRING &&
                         strcmp(mtype, "application/x-mpegURL") == 0 &&
                         xs_type(tag) == XSTYPE_LIST) {
                         /* now iterate the tag list, looking for a video URL */
                         xs_dict *d;
+                        int c = 0;
 
-                        while (href == NULL && xs_list_iter(&tag, &d)) {
+                        while (href == NULL && xs_list_next(tag, &d, &c)) {
                             if (xs_type(d) == XSTYPE_DICT) {
                                 if (xs_type(mtype = xs_dict_get(d, "mediaType")) == XSTYPE_STRING &&
                                     xs_startswith(mtype, "video/")) {
-                                    char *h = xs_dict_get(d, "href");
+                                    const char *h = xs_dict_get(d, "href");
 
                                     /* this is probably it */
                                     if (xs_type(h) == XSTYPE_STRING) {
@@ -303,7 +307,7 @@ xs_list *get_attachments(const xs_dict *msg)
 }
 
 
-int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
+int timeline_request(snac *snac, const char **id, xs_str **wrk, int level)
 /* ensures that an entry and its ancestors are in the timeline */
 {
     int status = 0;
@@ -323,7 +327,7 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
             status = activitypub_request(snac, *id, &msg);
 
             if (valid_status(status)) {
-                xs_dict *object  = msg;
+                const xs_dict *object = msg;
                 const char *type = xs_dict_get(object, "type");
 
                 /* get the id again from the object, as it may be different */
@@ -369,7 +373,7 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
                             }
 
                             /* does it have an ancestor? */
-                            char *in_reply_to = xs_dict_get(object, "inReplyTo");
+                            const char *in_reply_to = xs_dict_get(object, "inReplyTo");
 
                             /* store */
                             timeline_add(snac, nid, object);
@@ -381,80 +385,9 @@ int timeline_request(snac *snac, char **id, xs_str **wrk, int level)
                 }
             }
         }
-
-        enqueue_request_replies(snac, *id);
     }
 
     return status;
-}
-
-
-void timeline_request_replies(snac *user, const char *id)
-/* requests all replies of a message */
-/* FIXME: experimental -- needs more testing */
-{
-    /* FIXME: TEMPORARILY DISABLED */
-    /* Reason: I've found that many of the posts in the 'replies' Collection
-       do not have an inReplyTo field (why??? aren't they 'replies'???).
-       For this reason, these requested objects are not stored as children
-       of the original post and they are shown as out-of-context, top level posts.
-       This process is disabled until I find an elegant way of providing a parent
-       for these 'stray' children. */
-    return;
-
-    xs *msg = NULL;
-
-    if (!valid_status(object_get(id, &msg)))
-        return;
-
-    /* does it have a replies collection? */
-    const xs_dict *replies = xs_dict_get(msg, "replies");
-
-    if (!xs_is_null(replies)) {
-        const char *type  = xs_dict_get(replies, "type");
-        const char *first = xs_dict_get(replies, "first");
-
-        if (!xs_is_null(type) && !xs_is_null(first) && strcmp(type, "Collection") == 0) {
-            const char *next = xs_dict_get(first, "next");
-
-            if (!xs_is_null(next)) {
-                xs *rpls = NULL;
-                int status = activitypub_request(user, next, &rpls);
-
-                /* request the Collection of replies */
-                if (valid_status(status)) {
-                    xs_list *items = xs_dict_get(rpls, "items");
-
-                    if (xs_type(items) == XSTYPE_LIST) {
-                        xs_val *v;
-
-                        /* request them all */
-                        while (xs_list_iter(&items, &v)) {
-                            if (xs_type(v) == XSTYPE_DICT) {
-                                /* not an id, but the object itself (!) */
-                                const char *c_id = xs_dict_get(v, "id");
-
-                                if (!xs_is_null(id)) {
-                                    snac_debug(user, 0, xs_fmt("embedded reply %s", c_id));
-
-                                    object_add(c_id, v);
-
-                                    /* get its own children */
-                                    timeline_request_replies(user, v);
-                                }
-                            }
-                            else {
-                                snac_debug(user, 0, xs_fmt("request reply %s", v));
-                                timeline_request(user, &v, NULL, 0);
-                            }
-                        }
-                    }
-                }
-                else
-                    snac_debug(user, 0, xs_fmt("replies request error %s %d", next, status));
-            }
-        }
-    }
 }
 
 
@@ -480,7 +413,7 @@ int send_to_inbox(snac *snac, const xs_str *inbox, const xs_dict *msg,
                   xs_val **payload, int *p_size, int timeout)
 /* sends a message to an Inbox */
 {
-    char *seckey = xs_dict_get(snac->key, "secret");
+    const char *seckey = xs_dict_get(snac->key, "secret");
 
     return send_to_inbox_raw(snac->actor, seckey, inbox, msg, payload, p_size, timeout);
 }
@@ -490,7 +423,7 @@ xs_str *get_actor_inbox(const char *actor)
 /* gets an actor's inbox */
 {
     xs *data = NULL;
-    char *v = NULL;
+    const char *v = NULL;
 
     if (valid_status(actor_request(NULL, actor, &data))) {
         /* try first endpoints/sharedInbox */
@@ -539,16 +472,16 @@ void post_message(snac *snac, const char *actor, const xs_dict *msg)
 xs_list *recipient_list(snac *snac, const xs_dict *msg, int expand_public)
 /* returns the list of recipients for a message */
 {
-    char *to = xs_dict_get(msg, "to");
-    char *cc = xs_dict_get(msg, "cc");
+    const xs_val *to = xs_dict_get(msg, "to");
+    const xs_val *cc = xs_dict_get(msg, "cc");
     xs_set rcpts;
     int n;
 
     xs_set_init(&rcpts);
 
-    char *lists[] = { to, cc, NULL };
+    const xs_list *lists[] = { to, cc, NULL };
     for (n = 0; lists[n]; n++) {
-        char *l = lists[n];
+        xs_list *l = (xs_list *)lists[n];
         char *v;
         xs *tl = NULL;
 
@@ -671,13 +604,13 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 
     /* if it's a Follow, it must be explicitly for us */
     if (xs_match(type, "Follow")) {
-        char *object = xs_dict_get(c_msg, "object");
+        const char *object = xs_dict_get(c_msg, "object");
         return !xs_is_null(object) && strcmp(snac->actor, object) == 0;
     }
 
     /* only accept Ping directed to us */
     if (xs_match(type, "Ping")) {
-        char *dest = xs_dict_get(c_msg, "to");
+        const char *dest = xs_dict_get(c_msg, "to");
         return !xs_is_null(dest) && strcmp(snac->actor, dest) == 0;
     }
 
@@ -692,7 +625,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     if (pub_msg && following_check(snac, actor))
         return 1;
 
-    xs_dict *msg = xs_dict_get(c_msg, "object");
+    const xs_dict *msg = xs_dict_get(c_msg, "object");
     xs *rcpts = recipient_list(snac, msg, 0);
     xs_list *p = rcpts;
     xs_str *v;
@@ -704,8 +637,9 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         xs *actor_obj = NULL;
 
         if (valid_status(object_get(actor, &actor_obj))) {
-            if ((v = xs_dict_get(actor_obj, "followers")))
-                actor_followers = xs_dup(v);
+            const xs_val *fw = xs_dict_get(actor_obj, "followers");
+            if (fw)
+                actor_followers = xs_dup(fw);
         }
     }
 
@@ -728,13 +662,13 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     }
 
     /* accept if it's by someone we follow */
-    char *atto = get_atto(msg);
+    const char *atto = get_atto(msg);
 
     if (pub_msg && !xs_is_null(atto) && following_check(snac, atto))
         return 3;
 
     /* is this message a reply to another? */
-    char *irt = xs_dict_get(msg, "inReplyTo");
+    const char *irt = xs_dict_get(msg, "inReplyTo");
     if (!xs_is_null(irt)) {
         xs *r_msg = NULL;
 
@@ -987,8 +921,8 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
 
     /* telegram */
 
-    char *bot     = xs_dict_get(snac->config, "telegram_bot");
-    char *chat_id = xs_dict_get(snac->config, "telegram_chat_id");
+    const char *bot     = xs_dict_get(snac->config, "telegram_bot");
+    const char *chat_id = xs_dict_get(snac->config, "telegram_chat_id");
 
     if (!xs_is_null(bot) && !xs_is_null(chat_id) && *bot && *chat_id)
         enqueue_telegram(body, bot, chat_id);
@@ -1001,8 +935,8 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
         objid = actor;
 
     /* ntfy */
-    char *ntfy_server = xs_dict_get(snac->config, "ntfy_server");
-    char *ntfy_token  = xs_dict_get(snac->config, "ntfy_token");
+    const char *ntfy_server = xs_dict_get(snac->config, "ntfy_server");
+    const char *ntfy_token  = xs_dict_get(snac->config, "ntfy_token");
 
     if (!xs_is_null(ntfy_server) && *ntfy_server)
         enqueue_ntfy(body, ntfy_server, ntfy_token);
@@ -1088,7 +1022,7 @@ xs_dict *msg_base(snac *snac, const char *type, const char *id,
 }
 
 
-xs_dict *msg_collection(snac *snac, char *id)
+xs_dict *msg_collection(snac *snac, const char *id)
 /* creates an empty OrderedCollection message */
 {
     xs_dict *msg = msg_base(snac, "OrderedCollection", id, NULL, NULL, NULL);
@@ -1102,7 +1036,7 @@ xs_dict *msg_collection(snac *snac, char *id)
 }
 
 
-xs_dict *msg_accept(snac *snac, char *object, char *to)
+xs_dict *msg_accept(snac *snac, const xs_val *object, const char *to)
 /* creates an Accept message (as a response to a Follow) */
 {
     xs_dict *msg = msg_base(snac, "Accept", "@dummy", snac->actor, NULL, object);
@@ -1113,12 +1047,12 @@ xs_dict *msg_accept(snac *snac, char *object, char *to)
 }
 
 
-xs_dict *msg_update(snac *snac, xs_dict *object)
+xs_dict *msg_update(snac *snac, const xs_dict *object)
 /* creates an Update message */
 {
     xs_dict *msg = msg_base(snac, "Update", "@object", snac->actor, "@now", object);
 
-    char *type = xs_dict_get(object, "type");
+    const char *type = xs_dict_get(object, "type");
 
     if (strcmp(type, "Note") == 0) {
         msg = xs_dict_append(msg, "to", xs_dict_get(object, "to"));
@@ -1141,7 +1075,7 @@ xs_dict *msg_update(snac *snac, xs_dict *object)
 }
 
 
-xs_dict *msg_admiration(snac *snac, char *object, char *type)
+xs_dict *msg_admiration(snac *snac, const char *object, const char *type)
 /* creates a Like or Announce message */
 {
     xs *a_msg    = NULL;
@@ -1172,7 +1106,7 @@ xs_dict *msg_admiration(snac *snac, char *object, char *type)
 }
 
 
-xs_dict *msg_repulsion(snac *user, char *id, char *type)
+xs_dict *msg_repulsion(snac *user, const char *id, const char *type)
 /* creates an Undo + admiration message */
 {
     xs *a_msg    = NULL;
@@ -1210,7 +1144,7 @@ xs_dict *msg_actor(snac *snac)
     xs *kid      = NULL;
     xs *f_bio    = NULL;
     xs_dict *msg = msg_base(snac, "Person", snac->actor, NULL, NULL, NULL);
-    char *p;
+    const char *p;
     int n;
 
     /* change the @context (is this really necessary?) */
@@ -1268,7 +1202,7 @@ xs_dict *msg_actor(snac *snac)
     }
 
     /* add the metadata as attachments of PropertyValue */
-    xs_dict *metadata = xs_dict_get(snac->config, "metadata");
+    const xs_dict *metadata = xs_dict_get(snac->config, "metadata");
     if (xs_type(metadata) == XSTYPE_DICT) {
         xs *attach = xs_list_new();
         xs_str *k;
@@ -1314,7 +1248,7 @@ xs_dict *msg_create(snac *snac, const xs_dict *object)
 /* creates a 'Create' message */
 {
     xs_dict *msg = msg_base(snac, "Create", "@wrapper", snac->actor, NULL, object);
-    xs_val *v;
+    const xs_val *v;
 
     if ((v = get_atto(object)))
         msg = xs_dict_append(msg, "attributedTo", v);
@@ -1331,7 +1265,7 @@ xs_dict *msg_create(snac *snac, const xs_dict *object)
 }
 
 
-xs_dict *msg_undo(snac *snac, char *object)
+xs_dict *msg_undo(snac *snac, const xs_val *object)
 /* creates an 'Undo' message */
 {
     xs_dict *msg = msg_base(snac, "Undo", "@object", snac->actor, "@now", object);
@@ -1344,7 +1278,7 @@ xs_dict *msg_undo(snac *snac, char *object)
 }
 
 
-xs_dict *msg_delete(snac *snac, char *id)
+xs_dict *msg_delete(snac *snac, const char *id)
 /* creates a 'Delete' + 'Tombstone' for a local entry */
 {
     xs *tomb = xs_dict_new();
@@ -1386,7 +1320,7 @@ xs_dict *msg_follow(snac *snac, const char *q)
 
     if (valid_status(status)) {
         /* check if the actor is an alias */
-        char *r_actor = xs_dict_get(actor_o, "id");
+        const char *r_actor = xs_dict_get(actor_o, "id");
 
         if (r_actor && strcmp(actor, r_actor) != 0) {
             snac_log(snac, xs_fmt("actor to follow is an alias %s -> %s", actor, r_actor));
@@ -1402,7 +1336,7 @@ xs_dict *msg_follow(snac *snac, const char *q)
 
 
 xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
-                  xs_str *in_reply_to, xs_list *attach, int priv)
+                  const xs_str *in_reply_to, const xs_list *attach, int priv)
 /* creates a 'Note' message */
 {
     xs *ntid = tid(0);
@@ -1442,7 +1376,7 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
 
         if (valid_status(object_get(in_reply_to, &p_msg))) {
             /* add this author as recipient */
-            char *a, *v;
+            const char *a, *v;
 
             if ((a = get_atto(p_msg)) && xs_list_in(to, a) == -1)
                 to = xs_list_append(to, a);
@@ -1453,7 +1387,7 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
                 xs *actor_o = NULL;
 
                 if (xs_list_len(l) > 3 && valid_status(object_get(a, &actor_o))) {
-                    char *uname = xs_dict_get(actor_o, "preferredUsername");
+                    const char *uname = xs_dict_get(actor_o, "preferredUsername");
 
                     if (!xs_is_null(uname) && *uname) {
                         xs *handle = xs_fmt("@%s@%s", uname, xs_list_get(l, 2));
@@ -1492,7 +1426,8 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
 
     /* create the attachment list, if there are any */
     if (!xs_is_null(attach)) {
-        while (xs_list_iter(&attach, &v)) {
+        int c = 0;
+        while (xs_list_next(attach, &v, &c)) {
             xs *d            = xs_dict_new();
             const char *url  = xs_list_get(v, 0);
             const char *alt  = xs_list_get(v, 1);
@@ -1515,7 +1450,7 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     p = tag;
     while (xs_list_iter(&p, &v)) {
         if (xs_type(v) == XSTYPE_DICT) {
-            char *t;
+            const char *t;
 
             if (!xs_is_null(t = xs_dict_get(v, "type")) && strcmp(t, "Mention") == 0) {
                 if (!xs_is_null(t = xs_dict_get(v, "href")))
@@ -1639,7 +1574,7 @@ int update_question(snac *user, const char *id)
     xs *msg   = NULL;
     xs *rcnt  = xs_dict_new();
     xs *lopts = xs_list_new();
-    xs_list *opts;
+    const xs_list *opts;
     xs_list *p;
     xs_val *v;
 
@@ -1657,8 +1592,8 @@ int update_question(snac *user, const char *id)
         return -3;
 
     /* fill the initial count */
-    p = opts;
-    while (xs_list_iter(&p, &v)) {
+    int c = 0;
+    while (xs_list_next(opts, &v, &c)) {
         const char *name = xs_dict_get(v, "name");
         if (name) {
             lopts = xs_list_append(lopts, name);
@@ -1764,13 +1699,13 @@ int update_question(snac *user, const char *id)
 
 /** queues **/
 
-int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
+int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 /* processes an ActivityPub message from the input queue */
 /* return values: -1, fatal error; 0, transient error, retry;
    1, processed and done; 2, propagate to users (only when no user is set) */
 {
-    char *actor = xs_dict_get(msg, "actor");
-    char *type  = xs_dict_get(msg, "type");
+    const char *actor = xs_dict_get(msg, "actor");
+    const char *type  = xs_dict_get(msg, "type");
     xs *actor_o = NULL;
     int a_status;
     int do_notify = 0;
@@ -1790,7 +1725,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         return -1;
     }
 
-    char *object, *utype;
+    const char *object, *utype;
 
     object = xs_dict_get(msg, "object");
     if (object != NULL && xs_type(object) == XSTYPE_DICT)
@@ -1813,7 +1748,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         }
 
         /* also discard if the object to be deleted is not here */
-        char *obj_id = object;
+        const char *obj_id = object;
         if (xs_type(obj_id) == XSTYPE_DICT)
             obj_id = xs_dict_get(obj_id, "id");
 
@@ -1885,7 +1820,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     int min_account_age = xs_number_get(xs_dict_get(srv_config, "min_account_age"));
 
     if (min_account_age > 0) {
-        char *actor_date = xs_dict_get(actor_o, "published");
+        const char *actor_date = xs_dict_get(actor_o, "published");
         if (!xs_is_null(actor_date)) {
             time_t actor_t = xs_parse_iso_date(actor_date, 0);
 
@@ -1945,7 +1880,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
     }
     else
     if (strcmp(type, "Undo") == 0) { /** **/
-        char *id = xs_dict_get(object, "object");
+        const char *id = xs_dict_get(object, "object");
 
         if (xs_type(object) != XSTYPE_DICT)
             utype = "Follow";
@@ -1990,9 +1925,9 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         }
 
         if (xs_match(utype, "Note|Article")) { /** **/
-            char *id          = xs_dict_get(object, "id");
-            char *in_reply_to = xs_dict_get(object, "inReplyTo");
-            char *atto        = get_atto(object);
+            const char *id          = xs_dict_get(object, "id");
+            const char *in_reply_to = xs_dict_get(object, "inReplyTo");
+            const char *atto        = get_atto(object);
             xs *wrk           = NULL;
 
             if (xs_is_null(id))
@@ -2029,14 +1964,14 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
         }
         else
         if (strcmp(utype, "Question") == 0) { /**  **/
-            char *id = xs_dict_get(object, "id");
+            const char *id = xs_dict_get(object, "id");
 
             if (timeline_add(snac, id, object))
                 snac_log(snac, xs_fmt("new 'Question' %s %s", actor, id));
         }
         else
         if (strcmp(utype, "Video") == 0) { /** **/
-            char *id = xs_dict_get(object, "id");
+            const char *id = xs_dict_get(object, "id");
 
             if (timeline_add(snac, id, object))
                 snac_log(snac, xs_fmt("new 'Video' %s %s", actor, id));
@@ -2212,7 +2147,7 @@ int process_input_message(snac *snac, xs_dict *msg, xs_dict *req)
 }
 
 
-int send_email(char *msg)
+int send_email(const char *msg)
 /* invoke sendmail with email headers and body in msg */
 {
     FILE *f;
@@ -2244,14 +2179,14 @@ int send_email(char *msg)
 void process_user_queue_item(snac *snac, xs_dict *q_item)
 /* processes an item from the user queue */
 {
-    char *type;
+    const char *type;
     int queue_retry_max = xs_number_get(xs_dict_get(srv_config, "queue_retry_max"));
 
     if ((type = xs_dict_get(q_item, "type")) == NULL)
         type = "output";
 
     if (strcmp(type, "message") == 0) {
-        xs_dict *msg = xs_dict_get(q_item, "message");
+        const xs_dict *msg = xs_dict_get(q_item, "message");
         xs *rcpts    = recipient_list(snac, msg, 1);
         xs_set inboxes;
         xs_list *p;
@@ -2292,8 +2227,8 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
     else
     if (strcmp(type, "input") == 0) {
         /* process the message */
-        xs_dict *msg = xs_dict_get(q_item, "message");
-        xs_dict *req = xs_dict_get(q_item, "req");
+        const xs_dict *msg = xs_dict_get(q_item, "message");
+        const xs_dict *req = xs_dict_get(q_item, "req");
         int retries  = xs_number_get(xs_dict_get(q_item, "retries"));
 
         if (xs_is_null(msg))
@@ -2318,13 +2253,6 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
 
         if (!xs_is_null(id))
             update_question(snac, id);
-    }
-    else
-    if (strcmp(type, "request_replies") == 0) {
-        const char *id = xs_dict_get(q_item, "message");
-
-        if (!xs_is_null(id))
-            timeline_request_replies(snac, id);
     }
     else
     if (strcmp(type, "object_request") == 0) {
@@ -2395,15 +2323,15 @@ int process_user_queue(snac *snac)
 void process_queue_item(xs_dict *q_item)
 /* processes an item from the global queue */
 {
-    char *type = xs_dict_get(q_item, "type");
+    const char *type = xs_dict_get(q_item, "type");
     int queue_retry_max = xs_number_get(xs_dict_get(srv_config, "queue_retry_max"));
 
     if (strcmp(type, "output") == 0) {
         int status;
-        xs_str *inbox  = xs_dict_get(q_item, "inbox");
-        xs_str *keyid  = xs_dict_get(q_item, "keyid");
-        xs_str *seckey = xs_dict_get(q_item, "seckey");
-        xs_dict *msg   = xs_dict_get(q_item, "message");
+        const xs_str *inbox  = xs_dict_get(q_item, "inbox");
+        const xs_str *keyid  = xs_dict_get(q_item, "keyid");
+        const xs_str *seckey = xs_dict_get(q_item, "seckey");
+        const xs_dict *msg   = xs_dict_get(q_item, "message");
         int retries    = xs_number_get(xs_dict_get(q_item, "retries"));
         int p_status   = xs_number_get(xs_dict_get(q_item, "p_status"));
         xs *payload    = NULL;
@@ -2475,7 +2403,7 @@ void process_queue_item(xs_dict *q_item)
     else
     if (strcmp(type, "email") == 0) {
         /* send this email */
-        xs_str *msg = xs_dict_get(q_item, "message");
+        const xs_str *msg = xs_dict_get(q_item, "message");
         int retries = xs_number_get(xs_dict_get(q_item, "retries"));
 
         if (!send_email(msg))
@@ -2497,8 +2425,8 @@ void process_queue_item(xs_dict *q_item)
     else
     if (strcmp(type, "telegram") == 0) {
         /* send this via telegram */
-        char *bot   = xs_dict_get(q_item, "bot");
-        char *msg   = xs_dict_get(q_item, "message");
+        const char *bot   = xs_dict_get(q_item, "bot");
+        const char *msg   = xs_dict_get(q_item, "message");
         xs *chat_id = xs_dup(xs_dict_get(q_item, "chat_id"));
         int status  = 0;
 
@@ -2521,9 +2449,9 @@ void process_queue_item(xs_dict *q_item)
     else
     if (strcmp(type, "ntfy") == 0) {
         /* send this via ntfy */
-        char *ntfy_server   = xs_dict_get(q_item, "ntfy_server");
-        char *msg   = xs_dict_get(q_item, "message");
-        char *ntfy_token   = xs_dict_get(q_item, "ntfy_token");
+        const char *ntfy_server   = xs_dict_get(q_item, "ntfy_server");
+        const char *msg   = xs_dict_get(q_item, "message");
+        const char *ntfy_token   = xs_dict_get(q_item, "ntfy_token");
         int status  = 0;
 
         xs *url  = xs_fmt("%s", ntfy_server);
@@ -2552,8 +2480,8 @@ void process_queue_item(xs_dict *q_item)
     }
     else
     if (strcmp(type, "input") == 0) {
-        xs_dict *msg = xs_dict_get(q_item, "message");
-        xs_dict *req = xs_dict_get(q_item, "req");
+        const xs_dict *msg = xs_dict_get(q_item, "message");
+        const xs_dict *req = xs_dict_get(q_item, "req");
         int retries  = xs_number_get(xs_dict_get(q_item, "retries"));
 
         /* do some instance-level checks */
@@ -2572,7 +2500,7 @@ void process_queue_item(xs_dict *q_item)
         else
         if (r == 2) {
             /* redistribute the input message to all users */
-            char *ntid = xs_dict_get(q_item, "ntid");
+            const char *ntid = xs_dict_get(q_item, "ntid");
             xs *tmpfn  = xs_fmt("%s/tmp/%s.json", srv_basedir, ntid);
             FILE *f;
 
@@ -2647,7 +2575,7 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
                             char **body, int *b_size, char **ctype)
 {
     int status = 200;
-    char *accept = xs_dict_get(req, "accept");
+    const char *accept = xs_dict_get(req, "accept");
     snac snac;
     xs *msg = NULL;
 
@@ -2659,7 +2587,8 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         return 0;
 
     xs *l = xs_split_n(q_path, "/", 2);
-    char *uid, *p_path;
+    const char *uid;
+    const char *p_path;
 
     uid = xs_list_get(l, 1);
     if (!user_open(&snac, uid)) {
@@ -2677,7 +2606,7 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         msg = msg_actor(&snac);
         *ctype = "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"";
 
-        char *ua = xs_dict_get(req, "user-agent");
+        const char *ua = xs_dict_get(req, "user-agent");
 
         snac_debug(&snac, 0, xs_fmt("serving actor [%s]", ua ? ua : "No UA"));
     }
@@ -2694,8 +2623,8 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
             xs *i = NULL;
 
             if (valid_status(object_get_by_md5(v, &i))) {
-                char *type = xs_dict_get(i, "type");
-                char *id   = xs_dict_get(i, "id");
+                const char *type = xs_dict_get(i, "type");
+                const char *id   = xs_dict_get(i, "id");
 
                 if (type && id && strcmp(type, "Note") == 0 && xs_startswith(id, snac.actor)) {
                     xs *c_msg = msg_create(&snac, i);
@@ -2748,9 +2677,9 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
     (void)b_size;
 
     int status = 202; /* accepted */
-    char *i_ctype = xs_dict_get(req, "content-type");
+    const char *i_ctype = xs_dict_get(req, "content-type");
     snac snac;
-    char *v;
+    const char *v;
 
     if (i_ctype == NULL) {
         *body  = xs_str_new("no content-type");

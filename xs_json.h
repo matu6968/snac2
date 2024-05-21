@@ -71,12 +71,12 @@ static void _xs_json_indent(int level, int indent, FILE *f)
 }
 
 
-static void _xs_json_dump(const xs_val *s_data, int level, int indent, FILE *f)
+static void _xs_json_dump(const xs_val *data, int level, int indent, FILE *f)
 /* dumps partial data as JSON */
 {
     int c = 0;
+    int ct = 0;
     xs_val *v;
-    xs_val *data = (xs_val *)s_data;
 
     switch (xs_type(data)) {
     case XSTYPE_NULL:
@@ -98,7 +98,7 @@ static void _xs_json_dump(const xs_val *s_data, int level, int indent, FILE *f)
     case XSTYPE_LIST:
         fputc('[', f);
 
-        while (xs_list_iter(&data, &v)) {
+        while (xs_list_next(data, &v, &ct)) {
             if (c != 0)
                 fputc(',', f);
 
@@ -117,9 +117,8 @@ static void _xs_json_dump(const xs_val *s_data, int level, int indent, FILE *f)
         fputc('{', f);
 
         xs_str *k;
-        int ct = 0;
 
-        while (xs_dict_next(s_data, &k, &v, &ct)) {
+        while (xs_dict_next(data, &k, &v, &ct)) {
             if (c != 0)
                 fputc(',', f);
 

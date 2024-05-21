@@ -119,8 +119,8 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
     while ((p = xs_memmem(payload + offset, p_size - offset, boundary, bsz)) != NULL) {
         xs *s1 = NULL;
         xs *l1 = NULL;
-        char *vn = NULL;
-        char *fn = NULL;
+        const char *vn = NULL;
+        const char *fn = NULL;
         char *q;
         int po, ps;
 

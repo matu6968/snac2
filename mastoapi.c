@@ -175,7 +175,7 @@ int oauth_get_handler(const xs_dict *req, const char *q_path,
         return 0;
 
     int status   = 404;
-    xs_dict *msg = xs_dict_get(req, "q_vars");
+    const xs_dict *msg = xs_dict_get(req, "q_vars");
     xs *cmd      = xs_replace_n(q_path, "/oauth", "", 1);
 
     srv_debug(1, xs_fmt("oauth_get_handler %s", q_path));
@@ -239,7 +239,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
 
     int status   = 404;
 
-    char *i_ctype = xs_dict_get(req, "content-type");
+    const char *i_ctype = xs_dict_get(req, "content-type");
     xs *args      = NULL;
 
     if (i_ctype && xs_startswith(i_ctype, "application/json")) {
@@ -568,10 +568,10 @@ xs_dict *mastoapi_account(const xs_dict *actor)
     acct = xs_dict_append(acct, "uri", id);
 
     xs *avatar  = NULL;
-    xs_dict *av = xs_dict_get(actor, "icon");
+    const xs_dict *av = xs_dict_get(actor, "icon");
 
     if (xs_type(av) == XSTYPE_DICT) {
-        char *url = xs_dict_get(av, "url");
+        const char *url = xs_dict_get(av, "url");
 
         if (url != NULL)
             avatar = xs_dup(url);
@@ -584,7 +584,7 @@ xs_dict *mastoapi_account(const xs_dict *actor)
     acct = xs_dict_append(acct, "avatar_static", avatar);
 
     xs *header  = NULL;
-    xs_dict *hd = xs_dict_get(actor, "image");
+    const xs_dict *hd = xs_dict_get(actor, "image");
 
     if (xs_type(hd) == XSTYPE_DICT)
         header = xs_dup(xs_dict_get(hd, "url"));
@@ -596,12 +596,13 @@ xs_dict *mastoapi_account(const xs_dict *actor)
     acct = xs_dict_append(acct, "header_static", header);
 
     /* emojis */
-    xs_list *p;
+    const xs_list *p;
     if (!xs_is_null(p = xs_dict_get(actor, "tag"))) {
         xs *eml = xs_list_new();
         xs_dict *v;
+        int c = 0;
 
-        while (xs_list_iter(&p, &v)) {
+        while (xs_list_next(p, &v, &c)) {
             const char *type = xs_dict_get(v, "type");
 
             if (!xs_is_null(type) && strcmp(type, "Emoji") == 0) {
@@ -640,7 +641,7 @@ xs_dict *mastoapi_account(const xs_dict *actor)
 
     /* dict of validated links */
     xs_dict *val_links = NULL;
-    xs_dict *metadata  = xs_stock(XSTYPE_DICT);
+    const xs_dict *metadata  = xs_stock(XSTYPE_DICT);
     snac user = {0};
 
     if (xs_startswith(id, srv_baseurl)) {
@@ -654,19 +655,20 @@ xs_dict *mastoapi_account(const xs_dict *actor)
     if (xs_is_null(val_links))
         val_links = xs_stock(XSTYPE_DICT);
 
-    while (xs_list_iter(&p, &v)) {
-        char *type  = xs_dict_get(v, "type");
-        char *name  = xs_dict_get(v, "name");
-        char *value = xs_dict_get(v, "value");
+    int c = 0;
+    while (xs_list_next(p, &v, &c)) {
+        const char *type  = xs_dict_get(v, "type");
+        const char *name  = xs_dict_get(v, "name");
+        const char *value = xs_dict_get(v, "value");
 
         if (!xs_is_null(type) && !xs_is_null(name) &&
             !xs_is_null(value) && strcmp(type, "PropertyValue") == 0) {
             xs *val_date = NULL;
 
-            char *url = xs_dict_get(metadata, name);
+            const char *url = xs_dict_get(metadata, name);
 
             if (!xs_is_null(url) && xs_startswith(url, "https:/" "/")) {
-                xs_number *verified_time = xs_dict_get(val_links, url);
+                const xs_number *verified_time = xs_dict_get(val_links, url);
                 if (xs_type(verified_time) == XSTYPE_NUMBER) {
                     time_t t = xs_number_get(verified_time);
 
@@ -695,7 +697,7 @@ xs_dict *mastoapi_account(const xs_dict *actor)
 }
 
 
-xs_str *mastoapi_date(char *date)
+xs_str *mastoapi_date(const char *date)
 /* converts an ISO 8601 date to whatever format Mastodon uses */
 {
     xs_str *s = xs_crop_i(xs_dup(date), 0, 19);
@@ -710,13 +712,13 @@ xs_dict *mastoapi_poll(snac *snac, const xs_dict *msg)
 {
     xs_dict *poll = xs_dict_new();
     xs *mid       = mastoapi_id(msg);
-    xs_list *opts = NULL;
+    const xs_list *opts = NULL;
     xs_val *v;
     int num_votes = 0;
     xs *options = xs_list_new();
 
     poll = xs_dict_append(poll, "id", mid);
-    char *date = xs_dict_get(msg, "endTime");
+    const char *date = xs_dict_get(msg, "endTime");
     if (date == NULL)
         date = xs_dict_get(msg, "closed");
     if (date == NULL)
@@ -741,7 +743,8 @@ xs_dict *mastoapi_poll(snac *snac, const xs_dict *msg)
         poll = xs_dict_append(poll, "multiple", xs_stock(XSTYPE_TRUE));
     }
 
-    while (xs_list_iter(&opts, &v)) {
+    int c = 0;
+    while (xs_list_next(opts, &v, &c)) {
         const char *title   = xs_dict_get(v, "name");
         const char *replies = xs_dict_get(v, "replies");
 
@@ -794,7 +797,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
     xs *idx = NULL;
     xs *ixc = NULL;
-    char *tmp;
+    const char *tmp;
     xs *mid  = mastoapi_id(msg);
 
     xs_dict *st = xs_dict_new();
@@ -851,9 +854,9 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
         xs *matt = xs_list_new();
 
         while (xs_list_iter(&p, &v)) {
-            char *type = xs_dict_get(v, "type");
-            char *href = xs_dict_get(v, "href");
-            char *name = xs_dict_get(v, "name");
+            const char *type = xs_dict_get(v, "type");
+            const char *href = xs_dict_get(v, "href");
+            const char *name = xs_dict_get(v, "name");
 
             if (xs_match(type, "image/*|video/*|Image|Video")) { /* */
                 xs *matteid = xs_fmt("%s_%d", id, xs_list_len(matt));
@@ -879,7 +882,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
         xs *ml  = xs_list_new();
         xs *htl = xs_list_new();
         xs *eml = xs_list_new();
-        xs_list *tag = xs_dict_get(msg, "tag");
+        const xs_list *tag = xs_dict_get(msg, "tag");
         int n = 0;
 
         xs *tag_list = NULL;
@@ -897,7 +900,8 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
         tag = tag_list;
         xs_dict *v;
 
-        while (xs_list_iter(&tag, &v)) {
+        int c = 0;
+        while (xs_list_next(tag, &v, &c)) {
             const char *type = xs_dict_get(v, "type");
 
             if (xs_is_null(type))
@@ -1006,7 +1010,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
             xs *irt_mid = mastoapi_id(irto);
             st = xs_dict_set(st, "in_reply_to_id", irt_mid);
 
-            char *at = NULL;
+            const char *at = NULL;
             if (!xs_is_null(at = get_atto(irto))) {
                 xs *at_md5 = xs_md5_hex(at, strlen(at));
                 st = xs_dict_set(st, "in_reply_to_account_id", at_md5);
@@ -1118,7 +1122,7 @@ int process_auth_token(snac *snac, const xs_dict *req)
 /* processes an authorization token, if there is one */
 {
     int logged_in = 0;
-    char *v;
+    const char *v;
 
     /* if there is an authorization field, try to validate it */
     if (!xs_is_null(v = xs_dict_get(req, "authorization")) && xs_startswith(v, "Bearer ")) {
@@ -1156,7 +1160,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         return 0;
 
     int status    = 404;
-    xs_dict *args = xs_dict_get(req, "q_vars");
+    const xs_dict *args = xs_dict_get(req, "q_vars");
     xs *cmd       = xs_replace_n(q_path, "/api", "", 1);
 
     snac snac1 = {0};
@@ -1182,7 +1186,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             acct = xs_dict_append(acct, "source", src);
 
             xs *avatar = NULL;
-            char *av   = xs_dict_get(snac1.config, "avatar");
+            const char *av   = xs_dict_get(snac1.config, "avatar");
 
             if (xs_is_null(av) || *av == '\0')
                 avatar = xs_fmt("%s/susie.png", srv_baseurl);
@@ -1193,7 +1197,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             acct = xs_dict_append(acct, "avatar_static", avatar);
 
             xs *header = NULL;
-            char *hd = xs_dict_get(snac1.config, "header");
+            const char *hd = xs_dict_get(snac1.config, "header");
 
             if (!xs_is_null(hd))
                 header = xs_dup(hd);
@@ -1203,7 +1207,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             acct = xs_dict_append(acct, "header",        header);
             acct = xs_dict_append(acct, "header_static", header);
 
-            xs_dict *metadata = xs_dict_get(snac1.config, "metadata");
+            const xs_dict *metadata = xs_dict_get(snac1.config, "metadata");
             if (xs_type(metadata) == XSTYPE_DICT) {
                 xs *fields = xs_list_new();
                 xs_str *k;
@@ -1217,7 +1221,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 while (xs_dict_next(metadata, &k, &v, &c)) {
                     xs *val_date = NULL;
 
-                    xs_number *verified_time = xs_dict_get(val_links, v);
+                    const xs_number *verified_time = xs_dict_get(val_links, v);
                     if (xs_type(verified_time) == XSTYPE_NUMBER) {
                         time_t t = xs_number_get(verified_time);
 
@@ -1283,13 +1287,13 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     else
     if (strcmp(cmd, "/v1/accounts/lookup") == 0) { /** **/
         /* lookup an account */
-        char *acct = xs_dict_get(args, "acct");
+        const char *acct = xs_dict_get(args, "acct");
 
         if (!xs_is_null(acct)) {
             xs *s = xs_strip_chars_i(xs_dup(acct), "@");
             xs *l = xs_split_n(s, "@", 1);
-            char *uid = xs_list_get(l, 0);
-            char *host = xs_list_get(l, 1);
+            const char *uid = xs_list_get(l, 0);
+            const char *host = xs_list_get(l, 1);
 
             if (uid && (!host || strcmp(host, xs_dict_get(srv_config, "host")) == 0)) {
                 snac user;
@@ -1624,7 +1628,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
         /* get the tag */
         xs *l = xs_split(cmd, "/");
-        char *tag = xs_list_get(l, -1);
+        const char *tag = xs_list_get(l, -1);
 
         xs *timeline = tag_search(tag, 0, limit);
         xs *out      = xs_list_new();
@@ -1664,7 +1668,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         /* get the list id */
         if (logged_in) {
             xs *l = xs_split(cmd, "/");
-            char *list = xs_list_get(l, -1);
+            const char *list = xs_list_get(l, -1);
 
             xs *timeline = list_timeline(&snac1, list, 0, 2048);
             xs *out      = xs_list_new();
@@ -1744,7 +1748,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             xs *out    = xs_list_new();
             xs_list *p = l;
             xs_dict *v;
-            xs_list *excl = xs_dict_get(args, "exclude_types[]");
+            const xs_list *excl = xs_dict_get(args, "exclude_types[]");
 
             while (xs_list_iter(&p, &v)) {
                 xs *noti = notify_get(&snac1, v);
@@ -1876,7 +1880,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     if (xs_startswith(cmd, "/v1/lists/")) { /** list information **/
         if (logged_in) {
             xs *l = xs_split(cmd, "/");
-            char *p = xs_list_get(l, -1);
+            const char *p = xs_list_get(l, -1);
 
             if (p) {
                 if (strcmp(p, "accounts") == 0) {
@@ -1910,7 +1914,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     xs_list *v;
 
                     while (xs_list_next(lol, &v, &c)) {
-                        char *id = xs_list_get(v, 0);
+                        const char *id = xs_list_get(v, 0);
 
                         if (id && strcmp(id, p) == 0) {
                             xs *d = xs_dict_new();
@@ -2314,7 +2318,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
     int status    = 404;
     xs *args      = NULL;
-    char *i_ctype = xs_dict_get(req, "content-type");
+    const char *i_ctype = xs_dict_get(req, "content-type");
 
     if (i_ctype && xs_startswith(i_ctype, "application/json")) {
         if (!xs_is_null(payload))
@@ -2487,7 +2491,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 mid = MID_TO_MD5(mid);
 
                 if (valid_status(timeline_get_by_md5(&snac, mid, &msg))) {
-                    char *id = xs_dict_get(msg, "id");
+                    const char *id = xs_dict_get(msg, "id");
 
                     if (op == NULL) {
                         /* no operation (?) */
@@ -2593,7 +2597,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     if (strcmp(cmd, "/v1/push/subscription") == 0) { /** **/
         /* I don't know what I'm doing */
         if (logged_in) {
-            char *v;
+            const char *v;
 
             xs *wpush = xs_dict_new();
 
@@ -2765,7 +2769,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                     const char *id   = xs_dict_get(msg, "id");
                     const char *atto = get_atto(msg);
 
-                    xs_list *opts = xs_dict_get(msg, "oneOf");
+                    const xs_list *opts = xs_dict_get(msg, "oneOf");
                     if (opts == NULL)
                         opts = xs_dict_get(msg, "anyOf");
 
@@ -2773,7 +2777,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                     }
                     else
                     if (strcmp(op, "votes") == 0) {
-                        xs_list *choices = xs_dict_get(args, "choices[]");
+                        const xs_list *choices = xs_dict_get(args, "choices[]");
 
                         if (xs_is_null(choices))
                             choices = xs_dict_get(args, "choices");
@@ -2781,7 +2785,8 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                         if (xs_type(choices) == XSTYPE_LIST) {
                             xs_str *v;
 
-                            while (xs_list_iter(&choices, &v)) {
+                            int c = 0;
+                            while (xs_list_next(choices, &v, &c)) {
                                 int io           = atoi(v);
                                 const xs_dict *o = xs_list_get(opts, io);
 
@@ -2843,12 +2848,12 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     if (xs_startswith(cmd, "/v1/lists/")) { /** list maintenance **/
         if (logged_in) {
             xs *l = xs_split(cmd, "/");
-            char *op = xs_list_get(l, -1);
-            char *id = xs_list_get(l, -2);
+            const char *op = xs_list_get(l, -1);
+            const char *id = xs_list_get(l, -2);
 
             if (op && id && xs_is_hex(id)) {
                 if (strcmp(op, "accounts") == 0) {
-                    xs_list *accts = xs_dict_get(args, "account_ids[]");
+                    const xs_list *accts = xs_dict_get(args, "account_ids[]");
                     int c = 0;
                     char *v;
 
@@ -2888,7 +2893,7 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
 
     int status    = 404;
     xs *args      = NULL;
-    char *i_ctype = xs_dict_get(req, "content-type");
+    const char *i_ctype = xs_dict_get(req, "content-type");
 
     if (i_ctype && xs_startswith(i_ctype, "application/json")) {
         if (!xs_is_null(payload))
@@ -2921,13 +2926,13 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
     if (xs_startswith(cmd, "/v1/lists/")) {
         if (logged_in) {
             xs *l = xs_split(cmd, "/");
-            char *p = xs_list_get(l, -1);
+            const char *p = xs_list_get(l, -1);
 
             if (p) {
                 if (strcmp(p, "accounts") == 0) {
                     /* delete account from list */
                     p = xs_list_get(l, -2);
-                    xs_list *accts = xs_dict_get(args, "account_ids[]");
+                    const xs_list *accts = xs_dict_get(args, "account_ids[]");
                     int c = 0;
                     char *v;
 
@@ -2971,7 +2976,7 @@ int mastoapi_put_handler(const xs_dict *req, const char *q_path,
 
     int status    = 404;
     xs *args      = NULL;
-    char *i_ctype = xs_dict_get(req, "content-type");
+    const char *i_ctype = xs_dict_get(req, "content-type");
 
     if (i_ctype && xs_startswith(i_ctype, "application/json")) {
         if (!xs_is_null(payload))

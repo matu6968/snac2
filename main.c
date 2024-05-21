@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
         xs *msg = msg_follow(&snac, url);
 
         if (msg != NULL) {
-            char *actor = xs_dict_get(msg, "object");
+            const char *actor = xs_dict_get(msg, "object");
 
             following_add(&snac, actor, msg);
 
