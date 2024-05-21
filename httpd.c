@@ -653,6 +653,29 @@ void term_handler(int s)
 }
 
 
+#ifdef WITHOUT_SHM
+
+/* dummy versions */
+
+int shm_open(const char *name, int flags, mode_t mode)
+{
+    (void)name;
+    (void)flags;
+    (void)mode;
+
+    errno = ENOTSUP;
+    return -1;
+}
+
+int shm_unlink(const char *name)
+{
+    (void)name;
+    return -1;
+}
+
+
+#endif
+
 srv_state *srv_state_op(xs_str **fname, int op)
 /* opens or deletes the shared memory object */
 {

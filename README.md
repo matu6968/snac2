@@ -71,6 +71,12 @@ If your compilation process complains about undefined references to `shm_open()`
 make LDFLAGS=-lrt
 ```
 
+If it still doesn't work (because your system does not implement the shared memory functions) or you are just not interested, you can compile out with
+
+```sh
+make CFLAGS=-DWITHOUT_SHM
+```
+
 See the administrator manual on how to proceed from here.
 
 ## Testing via Docker
