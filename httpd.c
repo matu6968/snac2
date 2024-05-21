@@ -653,29 +653,6 @@ void term_handler(int s)
 }
 
 
-#ifdef WITHOUT_SHM
-
-/* dummy versions */
-
-int shm_open(const char *name, int flags, mode_t mode)
-{
-    (void)name;
-    (void)flags;
-    (void)mode;
-
-    errno = ENOTSUP;
-    return -1;
-}
-
-int shm_unlink(const char *name)
-{
-    (void)name;
-    return -1;
-}
-
-
-#endif
-
 srv_state *srv_state_op(xs_str **fname, int op)
 /* opens or deletes the shared memory object */
 {
@@ -687,6 +664,13 @@ srv_state *srv_state_op(xs_str **fname, int op)
 
     switch (op) {
     case 0: /* open for writing */
+
+#ifdef WITHOUT_SHM
+
+        errno = ENOTSUP;
+
+#else
+
         if ((fd = shm_open(*fname, O_CREAT | O_RDWR, 0666)) != -1) {
             ftruncate(fd, sizeof(*ss));
 
@@ -696,6 +680,8 @@ srv_state *srv_state_op(xs_str **fname, int op)
 
             close(fd);
         }
+
+#endif
 
         if (ss == NULL) {
             /* shared memory error: just create a plain structure */
@@ -710,12 +696,21 @@ srv_state *srv_state_op(xs_str **fname, int op)
         break;
 
     case 1: /* open for reading */
+
+#ifdef WITHOUT_SHM
+
+        errno = ENOTSUP;
+
+#else
+
         if ((fd = shm_open(*fname, O_RDONLY, 0666)) != -1) {
             if ((ss = mmap(0, sizeof(*ss), PROT_READ, MAP_SHARED, fd, 0)) == MAP_FAILED)
                 ss = NULL;
 
             close(fd);
         }
+
+#endif
 
         if (ss == NULL) {
             /* shared memory error */
@@ -734,8 +729,13 @@ srv_state *srv_state_op(xs_str **fname, int op)
         break;
 
     case 2: /* unlink */
+
+#ifndef WITHOUT_SHM
+
         if (*fname)
             shm_unlink(*fname);
+
+#endif
 
         break;
     }
