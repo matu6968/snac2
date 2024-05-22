@@ -103,7 +103,8 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
                     const char *type = xs_dict_get(v, "type");
 
                     if (type && (strcmp(type, "application/activity+json") == 0 ||
-                                strcmp(type, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") == 0)) {
+                                 strcmp(type, "application/ld+json; profile=\"https:/"
+                                    "/www.w3.org/ns/activitystreams\"") == 0)) {
                         *actor = xs_dup(xs_dict_get(v, "href"));
                         break;
                     }
@@ -186,6 +187,12 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
         aaj = xs_dict_append(aaj, "rel",  "self");
         aaj = xs_dict_append(aaj, "type", "application/activity+json");
         aaj = xs_dict_append(aaj, "href", snac.actor);
+
+        links = xs_list_append(links, aaj);
+
+        /* duplicate with the ld+json type */
+        aaj = xs_dict_set(aaj, "type", "application/ld+json; profile=\"https:/"
+                                    "/www.w3.org/ns/activitystreams\"");
 
         links = xs_list_append(links, aaj);
 
