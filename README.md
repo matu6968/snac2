@@ -58,7 +58,6 @@ Run `make` and then `make install` as root.
 
 If you're compiling on NetBSD, you should use the specific provided Makefile and run `make -f Makefile.NetBSD` and then `make -f Makefile.NetBSD install` as root.
 
-
 From version 2.27, `snac` includes support for the Mastodon API; if you are not interested on it, you can compile it out by running
 
 ```sh
@@ -71,7 +70,7 @@ If your compilation process complains about undefined references to `shm_open()`
 make LDFLAGS=-lrt
 ```
 
-If it still doesn't work (because your system does not implement the shared memory functions) or you are just not interested, you can compile out with
+If it still gives compilation errors (because your system does not implement the shared memory functions), you can fix it with
 
 ```sh
 make CFLAGS=-DWITHOUT_SHM
