@@ -214,7 +214,7 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
 
         status = 200;
         *body  = j;
-        *ctype = "application/json";
+        *ctype = "application/jrd+json";
     }
     else
         status = 404;
