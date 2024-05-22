@@ -114,7 +114,7 @@ int srv_open(const char *basedir, int auto_upgrade)
 #endif
 
 #ifdef __OpenBSD__
-    char *v = xs_dict_get(srv_config, "disable_openbsd_security");
+    const char *v = xs_dict_get(srv_config, "disable_openbsd_security");
 
     if (v && xs_type(v) == XSTYPE_TRUE) {
         srv_debug(1, xs_dup("OpenBSD security disabled by admin"));
