@@ -82,7 +82,8 @@ static xs_str *format_line(const char *line, xs_list **attach)
 /* formats a line */
 {
     xs_str *s = xs_str_new(NULL);
-    char *p, *v;
+    char *p;
+    const char *v;
 
     /* split by markup */
     xs *sm = xs_regex_split(line,
@@ -155,7 +156,8 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
     int in_pre = 0;
     int in_blq = 0;
     xs *list;
-    char *p, *v;
+    char *p;
+    const char *v;
 
     /* work by lines */
     list = xs_split(content, "\n");
@@ -234,7 +236,7 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
         /* traditional emoticons */
         xs *d = emojis();
         int c = 0;
-        char *k, *v;
+        const char *k, *v;
 
         while (xs_dict_next(d, &k, &v, &c)) {
             const char *t = NULL;
@@ -280,7 +282,8 @@ xs_str *sanitize(const char *content)
     xs_str *s = xs_str_new(NULL);
     xs *sl;
     int n = 0;
-    char *p, *v;
+    char *p;
+    const char *v;
 
     sl = xs_regex_split(content, "</?[^>]+>");
 

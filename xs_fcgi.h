@@ -293,8 +293,8 @@ void xs_fcgi_response(FILE *f, int status, xs_dict *headers, xs_str *body, int b
     struct fcgi_record_header hdr = {0};
     struct fcgi_end_request ereq = {0};
     xs *out = xs_str_new(NULL);
-    xs_str *k;
-    xs_str *v;
+    const xs_str *k;
+    const xs_str *v;
 
     /* no previous id? it's an error */
     if (fcgi_id == -1)

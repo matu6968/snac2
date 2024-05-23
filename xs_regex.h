@@ -64,7 +64,7 @@ xs_list *xs_regex_select_n(const char *str, const char *rx, int count)
 {
     xs_list *list = xs_list_new();
     xs *split = NULL;
-    xs_val *v;
+    const xs_val *v;
     int n = 0;
     int c = 0;
 
@@ -89,7 +89,7 @@ xs_list *xs_regex_replace_in(xs_str *str, const char *rx, const char *rep, int c
 {
     xs_str *s = xs_str_new(NULL);
     xs *split = xs_regex_split_n(str, rx, count);
-    xs_val *v;
+    const xs_val *v;
     int n = 0;
     int c = 0;
     int pholder = !!strchr(rep, '&');

@@ -382,7 +382,7 @@ int main(int argc, char *argv[])
         xs *r = content_search(&snac, url, 1, 0, XS_ALL, 10, &to);
 
         int c = 0;
-        char *v;
+        const char *v;
 
         /* print results as standalone links */
         while (xs_list_next(r, &v, &c)) {

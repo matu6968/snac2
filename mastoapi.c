@@ -599,7 +599,7 @@ xs_dict *mastoapi_account(const xs_dict *actor)
     const xs_list *p;
     if (!xs_is_null(p = xs_dict_get(actor, "tag"))) {
         xs *eml = xs_list_new();
-        xs_dict *v;
+        const xs_dict *v;
         int c = 0;
 
         while (xs_list_next(p, &v, &c)) {
@@ -637,7 +637,7 @@ xs_dict *mastoapi_account(const xs_dict *actor)
 
     xs *fields = xs_list_new();
     p = xs_dict_get(actor, "attachment");
-    xs_dict *v;
+    const xs_dict *v;
 
     /* dict of validated links */
     xs_dict *val_links = NULL;
@@ -713,7 +713,7 @@ xs_dict *mastoapi_poll(snac *snac, const xs_dict *msg)
     xs_dict *poll = xs_dict_new();
     xs *mid       = mastoapi_id(msg);
     const xs_list *opts = NULL;
-    xs_val *v;
+    const xs_val *v;
     int num_votes = 0;
     xs *options = xs_list_new();
 
@@ -849,7 +849,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
     {
         xs_list *p = attach;
-        xs_dict *v;
+        const xs_dict *v;
 
         xs *matt = xs_list_new();
 
@@ -898,7 +898,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
             tag_list = xs_list_new();
 
         tag = tag_list;
-        xs_dict *v;
+        const xs_dict *v;
 
         int c = 0;
         while (xs_list_next(tag, &v, &c)) {
@@ -1210,8 +1210,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             const xs_dict *metadata = xs_dict_get(snac1.config, "metadata");
             if (xs_type(metadata) == XSTYPE_DICT) {
                 xs *fields = xs_list_new();
-                xs_str *k;
-                xs_str *v;
+                const xs_str *k;
+                const xs_str *v;
 
                 xs_dict *val_links = snac1.links;
                 if (xs_is_null(val_links))
@@ -1334,7 +1334,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     xs *wers = follower_list(&snac1);
                     xs *ulst = user_list();
                     xs_list *p;
-                    xs_str *v;
+                    const xs_str *v;
                     xs_set seen;
 
                     xs_set_init(&seen);
@@ -1410,7 +1410,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     /* the public list of posts of a user */
                     xs *timeline = timeline_simple_list(&snac2, "public", 0, 256);
                     xs_list *p   = timeline;
-                    xs_str *v;
+                    const xs_str *v;
 
                     out = xs_list_new();
 
@@ -1475,7 +1475,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             xs *out      = xs_list_new();
             xs_list *p   = timeline;
-            xs_str *v;
+            const xs_str *v;
 
             while (xs_list_iter(&p, &v) && cnt < limit) {
                 xs *msg = NULL;
@@ -1579,7 +1579,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         xs *timeline = timeline_instance_list(0, limit);
         xs *out      = xs_list_new();
         xs_list *p   = timeline;
-        xs_str *md5;
+        const xs_str *md5;
 
         snac *user = NULL;
         if (logged_in)
@@ -1633,7 +1633,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         xs *timeline = tag_search(tag, 0, limit);
         xs *out      = xs_list_new();
         xs_list *p   = timeline;
-        xs_str *md5;
+        const xs_str *md5;
 
         while (xs_list_iter(&p, &md5) && cnt < limit) {
             xs *msg = NULL;
@@ -1673,7 +1673,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             xs *timeline = list_timeline(&snac1, list, 0, 2048);
             xs *out      = xs_list_new();
             int c = 0;
-            char *md5;
+            const char *md5;
 
             while (xs_list_next(timeline, &md5, &c)) {
                 xs *msg = NULL;
@@ -1747,7 +1747,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             xs *l      = notify_list(&snac1, 0, 64);
             xs *out    = xs_list_new();
             xs_list *p = l;
-            xs_dict *v;
+            const xs_dict *v;
             const xs_list *excl = xs_dict_get(args, "exclude_types[]");
 
             while (xs_list_iter(&p, &v)) {
@@ -1858,7 +1858,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             xs *lol = list_maint(&snac1, NULL, 0);
             xs *l   = xs_list_new();
             int c = 0;
-            xs_list *li;
+            const xs_list *li;
 
             while (xs_list_next(lol, &li, &c)) {
                 xs *d = xs_dict_new();
@@ -1890,7 +1890,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         xs *actors = list_content(&snac1, p, NULL, 0);
                         xs *out = xs_list_new();
                         int c = 0;
-                        char *v;
+                        const char *v;
 
                         while (xs_list_next(actors, &v, &c)) {
                             xs *actor = NULL;
@@ -1911,7 +1911,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     xs *out = xs_list_new();
                     xs *lol = list_maint(&snac1, NULL, 0);
                     int c = 0;
-                    xs_list *v;
+                    const xs_list *v;
 
                     while (xs_list_next(lol, &v, &c)) {
                         const char *id = xs_list_get(v, 0);
@@ -2105,7 +2105,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         xs *anc = xs_list_new();
                         xs *des = xs_list_new();
                         xs_list *p;
-                        xs_str *v;
+                        const xs_str *v;
                         char pid[64];
 
                         /* build the [grand]parent list, moving up */
@@ -2159,7 +2159,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                             l = object_likes(xs_dict_get(msg, "id"));
 
                         xs_list *p = l;
-                        xs_str *v;
+                        const xs_str *v;
 
                         while (xs_list_iter(&p, &v)) {
                             xs *actor2 = NULL;
@@ -2267,7 +2267,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         int cnt = 40;
                         xs *tl = content_search(&snac1, q, 1, 0, cnt, 0, &to);
                         int c = 0;
-                        char *v;
+                        const char *v;
 
                         while (xs_list_next(tl, &v, &c) && --cnt) {
                             xs *post = NULL;
@@ -2433,7 +2433,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 }
 
                 xs_list *p = mi;
-                xs_str *v;
+                const xs_str *v;
 
                 while (xs_list_iter(&p, &v)) {
                     xs *l    = xs_list_new();
@@ -2783,7 +2783,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                             choices = xs_dict_get(args, "choices");
 
                         if (xs_type(choices) == XSTYPE_LIST) {
-                            xs_str *v;
+                            const xs_str *v;
 
                             int c = 0;
                             while (xs_list_next(choices, &v, &c)) {
@@ -2855,7 +2855,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 if (strcmp(op, "accounts") == 0) {
                     const xs_list *accts = xs_dict_get(args, "account_ids[]");
                     int c = 0;
-                    char *v;
+                    const char *v;
 
                     while (xs_list_next(accts, &v, &c)) {
                         list_content(&snac, id, v, 1);
@@ -2934,7 +2934,7 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
                     p = xs_list_get(l, -2);
                     const xs_list *accts = xs_dict_get(args, "account_ids[]");
                     int c = 0;
-                    char *v;
+                    const char *v;
 
                     while (xs_list_next(accts, &v, &c)) {
                         list_content(&snac, p, v, 2);
@@ -3083,7 +3083,7 @@ void mastoapi_purge(void)
     xs *spec   = xs_fmt("%s/app/" "*.json", srv_basedir);
     xs *files  = xs_glob(spec, 1, 0);
     xs_list *p = files;
-    xs_str *v;
+    const xs_str *v;
 
     time_t mt = time(NULL) - 3600;
 

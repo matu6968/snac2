@@ -96,7 +96,7 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
         if (actor != NULL) {
             const xs_list *list = xs_dict_get(obj, "links");
             int c = 0;
-            char *v;
+            const char *v;
 
             while (xs_list_next(list, &v, &c)) {
                 if (xs_type(v) == XSTYPE_DICT) {

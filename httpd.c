@@ -75,7 +75,7 @@ xs_str *nodeinfo_2_0(void)
     int n_posts  = 0;
     xs *users = user_list();
     xs_list *p = users;
-    char *v;
+    const char *v;
     double now = (double)time(NULL);
 
     while (xs_list_iter(&p, &v)) {
@@ -128,7 +128,7 @@ static xs_str *greeting_html(void)
             const char *host = xs_dict_get(srv_config, "host");
             xs *list = user_list();
             xs_list *p = list;
-            xs_str *uid;
+            const xs_str *uid;
 
             xs_html *ul = xs_html_tag("ul",
                 xs_html_attr("class", "snac-user-list"));
@@ -413,7 +413,7 @@ void httpd_connection(FILE *f)
     /* if there are any additional headers, add them */
     const xs_dict *more_headers = xs_dict_get(srv_config, "http_headers");
     if (xs_type(more_headers) == XSTYPE_DICT) {
-        char *k, *v;
+        const char *k, *v;
         int c = 0;
         while (xs_dict_next(more_headers, &k, &v, &c))
             headers = xs_dict_set(headers, k, v);
@@ -590,7 +590,8 @@ static void *background_thread(void *arg)
 
         {
             xs *list = user_list();
-            char *p, *uid;
+            char *p;
+            const char *uid;
 
             /* process queues for all users */
             p = list;

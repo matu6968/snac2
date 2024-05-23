@@ -26,7 +26,7 @@ xs_dict *http_signed_request_raw(const char *keyid, const char *seckey,
     xs *hdrs = NULL;
     const char *host;
     const char *target;
-    char *k, *v;
+    const char *k, *v;
     xs_dict *response;
 
     date = xs_str_utctime(0, "%a, %d %b %Y %H:%M:%S GMT");
@@ -144,7 +144,7 @@ int check_signature(const xs_dict *req, xs_str **err)
         /* extract the values */
         xs *l = xs_split(sig_hdr, ",");
         int c = 0;
-        xs_val *v;
+        const xs_val *v;
 
         while (xs_list_next(l, &v, &c)) {
             xs *kv = xs_split_n(v, "=", 1);
@@ -205,7 +205,7 @@ int check_signature(const xs_dict *req, xs_str **err)
     {
         xs *l = xs_split(headers, " ");
         xs_list *p;
-        xs_val *v;
+        const xs_val *v;
 
         p = l;
         while (xs_list_iter(&p, &v)) {

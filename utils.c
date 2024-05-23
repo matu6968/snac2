@@ -358,7 +358,7 @@ void rm_rf(const char *dir)
     xs *d = xs_str_cat(xs_dup(dir), "/" "*");
     xs *l = xs_glob(d, 0, 0);
     xs_list *p = l;
-    xs_str *v;
+    const xs_str *v;
 
     if (dbglevel >= 1)
         printf("Deleting directory %s\n", dir);
@@ -393,7 +393,7 @@ int deluser(snac *user)
     int ret = 0;
     xs *fwers = following_list(user);
     xs_list *p = fwers;
-    xs_str *v;
+    const xs_str *v;
 
     while (xs_list_iter(&p, &v)) {
         xs *object = NULL;
@@ -419,7 +419,7 @@ void verify_links(snac *user)
 /* verifies a user's links */
 {
     const xs_dict *p = xs_dict_get(user->config, "metadata");
-    char *k, *v;
+    const char *k, *v;
     int changed = 0;
 
     xs *headers = xs_dict_new();
@@ -449,7 +449,7 @@ void verify_links(snac *user)
         xs *ls = xs_regex_select(payload, "< *(a|link) +[^>]+>");
 
         xs_list *lp = ls;
-        char *ll;
+        const char *ll;
         int vfied = 0;
 
         while (!vfied && xs_list_iter(&lp, &ll)) {
@@ -463,7 +463,7 @@ void verify_links(snac *user)
             xs *href = NULL;
             int is_rel_me = 0;
             xs_list *pr = r;
-            char *ar;
+            const char *ar;
 
             while (xs_list_iter(&pr, &ar)) {
                 xs *nq = xs_dup(ar);

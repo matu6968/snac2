@@ -94,8 +94,8 @@ xs_list *xs_list_new(void);
 xs_list *xs_list_append_m(xs_list *list, const char *mem, int dsz);
 xs_list *_xs_list_append(xs_list *list, const xs_val *vals[]);
 #define xs_list_append(list, ...) _xs_list_append(list, (const xs_val *[]){ __VA_ARGS__, NULL })
-int xs_list_iter(xs_list **list, xs_val **value);
-int xs_list_next(const xs_list *list, xs_val **value, int *ctxt);
+int xs_list_iter(xs_list **list, const xs_val **value);
+int xs_list_next(const xs_list *list, const xs_val **value, int *ctxt);
 int xs_list_len(const xs_list *list);
 const xs_val *xs_list_get(const xs_list *list, int num);
 xs_list *xs_list_del(xs_list *list, int num);
@@ -118,7 +118,7 @@ xs_keyval *xs_keyval_make(xs_keyval *keyval, const xs_str *key, const xs_val *va
 xs_dict *xs_dict_new(void);
 xs_dict *xs_dict_append(xs_dict *dict, const xs_str *key, const xs_val *value);
 xs_dict *xs_dict_prepend(xs_dict *dict, const xs_str *key, const xs_val *value);
-int xs_dict_next(const xs_dict *dict, xs_str **key, xs_val **value, int *ctxt);
+int xs_dict_next(const xs_dict *dict, const xs_str **key, const xs_val **value, int *ctxt);
 const xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_val *def);
 #define xs_dict_get(dict, key) xs_dict_get_def(dict, key, NULL)
 xs_dict *xs_dict_del(xs_dict *dict, const xs_str *key);
@@ -726,7 +726,7 @@ xs_list *_xs_list_append(xs_list *list, const xs_val *vals[])
 }
 
 
-int xs_list_iter(xs_list **list, xs_val **value)
+int xs_list_iter(xs_list **list, const xs_val **value)
 /* iterates a list value */
 {
     int goon = 1;
@@ -757,7 +757,7 @@ int xs_list_iter(xs_list **list, xs_val **value)
 }
 
 
-int xs_list_next(const xs_list *list, xs_val **value, int *ctxt)
+int xs_list_next(const xs_list *list, const xs_val **value, int *ctxt)
 /* iterates a list, with context */
 {
     if (xs_type(list) != XSTYPE_LIST)
@@ -765,7 +765,7 @@ int xs_list_next(const xs_list *list, xs_val **value, int *ctxt)
 
     int goon = 1;
 
-    char *p = (char *)list;
+    const char *p = list;
 
     /* skip the start of the list */
     if (*ctxt == 0)
@@ -800,7 +800,7 @@ int xs_list_len(const xs_list *list)
 
     int c = 0;
     xs_list *p = (xs_list *)list;
-    xs_val *v;
+    const xs_val *v;
 
     while (xs_list_iter(&p, &v))
         c++;
@@ -819,7 +819,7 @@ const xs_val *xs_list_get(const xs_list *list, int num)
 
     int c = 0;
     xs_list *p = (xs_list *)list;
-    xs_val *v;
+    const xs_val *v;
 
     while (xs_list_iter(&p, &v)) {
         if (c == num)
@@ -881,7 +881,7 @@ xs_list *xs_list_dequeue(xs_list *list, xs_val **data, int last)
     XS_ASSERT_TYPE(list, XSTYPE_LIST);
 
     xs_list *p = list;
-    xs_val *v  = NULL;
+    const xs_val *v = NULL;
 
     if (!last) {
         /* get the first */
@@ -910,7 +910,7 @@ int xs_list_in(const xs_list *list, const xs_val *val)
 
     int n = 0;
     xs_list *p = (xs_list *)list;
-    xs_val *v;
+    const xs_val *v;
     int sz = xs_size(val);
 
     while (xs_list_iter(&p, &v)) {
@@ -931,7 +931,7 @@ xs_str *xs_join(const xs_list *list, const char *sep)
 
     xs_str *s = NULL;
     xs_list *p = (xs_list *)list;
-    xs_val *v;
+    const xs_val *v;
     int c = 0;
     int offset = 0;
     int ssz = strlen(sep);
@@ -1087,7 +1087,7 @@ xs_dict *xs_dict_prepend(xs_dict *dict, const xs_str *key, const xs_val *value)
 }
 
 
-int xs_dict_next(const xs_dict *dict, xs_str **key, xs_val **value, int *ctxt)
+int xs_dict_next(const xs_dict *dict, const xs_str **key, const xs_val **value, int *ctxt)
 /* iterates a dict, with context */
 {
     if (xs_type(dict) != XSTYPE_DICT)
@@ -1131,8 +1131,8 @@ const xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_v
     XS_ASSERT_TYPE(dict, XSTYPE_DICT);
     XS_ASSERT_TYPE(key, XSTYPE_STRING);
 
-    xs_str *k;
-    xs_val *v;
+    const xs_str *k;
+    const xs_val *v;
     int c = 0;
 
     while (xs_dict_next(dict, &k, &v, &c)) {
@@ -1150,14 +1150,14 @@ xs_dict *xs_dict_del(xs_dict *dict, const xs_str *key)
     XS_ASSERT_TYPE(dict, XSTYPE_DICT);
     XS_ASSERT_TYPE(key, XSTYPE_STRING);
 
-    xs_str *k;
-    xs_val *v;
+    const xs_str *k;
+    const xs_val *v;
     int c = 0;
 
     while (xs_dict_next(dict, &k, &v, &c)) {
         if (strcmp(k, key) == 0) {
             /* the address of the item is just behind the key */
-            char *i = k - 1;
+            char *i = (char *)k - 1;
 
             dict = xs_collapse(dict, i - dict, xs_size(i));
             break;

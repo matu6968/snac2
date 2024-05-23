@@ -85,7 +85,8 @@ int xs_set_add(xs_set *s, const xs_val *data)
 {
     /* is it 'full'? */
     if (s->used >= s->elems / 2) {
-        char *p, *v;
+        char *p;
+        const xs_val *v;
 
         /* expand! */
         s->elems *= 2;

@@ -163,7 +163,7 @@ const char *get_atto(const xs_dict *msg)
     if (xs_type(actor) == XSTYPE_LIST) {
         const xs_list *p = actor;
         int c = 0;
-        xs_dict *v;
+        const xs_dict *v;
         actor = NULL;
 
         while (actor == NULL && xs_list_next(p, &v, &c)) {
@@ -192,7 +192,7 @@ xs_list *get_attachments(const xs_dict *msg)
     /* try first the attachments list */
     if (!xs_is_null(p = xs_dict_get(msg, "attachment"))) {
         xs *attach = NULL;
-        xs_val *v;
+        const xs_val *v;
 
         /* ensure it's a list */
         if (xs_type(p) == XSTYPE_DICT) {
@@ -257,7 +257,7 @@ xs_list *get_attachments(const xs_dict *msg)
         const char *href = NULL;
         const char *type = NULL;
         int c = 0;
-        xs_val *v;
+        const xs_val *v;
 
         while (href == NULL && xs_list_next(p, &v, &c)) {
             if (xs_type(v) == XSTYPE_DICT) {
@@ -271,7 +271,7 @@ xs_list *get_attachments(const xs_dict *msg)
                         strcmp(mtype, "application/x-mpegURL") == 0 &&
                         xs_type(tag) == XSTYPE_LIST) {
                         /* now iterate the tag list, looking for a video URL */
-                        xs_dict *d;
+                        const xs_dict *d;
                         int c = 0;
 
                         while (href == NULL && xs_list_next(tag, &d, &c)) {
@@ -482,7 +482,7 @@ xs_list *recipient_list(snac *snac, const xs_dict *msg, int expand_public)
     const xs_list *lists[] = { to, cc, NULL };
     for (n = 0; lists[n]; n++) {
         xs_list *l = (xs_list *)lists[n];
-        char *v;
+        const char *v;
         xs *tl = NULL;
 
         /* if it's a string, create a list with only one element */
@@ -497,7 +497,7 @@ xs_list *recipient_list(snac *snac, const xs_dict *msg, int expand_public)
             if (expand_public && strcmp(v, public_address) == 0) {
                 /* iterate the followers and add them */
                 xs *fwers = follower_list(snac);
-                char *actor;
+                const char *actor;
 
                 char *p = fwers;
                 while (xs_list_iter(&p, &actor))
@@ -628,7 +628,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     const xs_dict *msg = xs_dict_get(c_msg, "object");
     xs *rcpts = recipient_list(snac, msg, 0);
     xs_list *p = rcpts;
-    xs_str *v;
+    const xs_str *v;
 
     xs *actor_followers = NULL;
 
@@ -693,7 +693,7 @@ xs_str *process_tags(snac *snac, const char *content, xs_list **tag)
     xs_list *tl = *tag;
     xs *split;
     xs_list *p;
-    xs_val *v;
+    const xs_val *v;
     int n = 0;
 
     /* create a default server for incomplete mentions */
@@ -1205,8 +1205,8 @@ xs_dict *msg_actor(snac *snac)
     const xs_dict *metadata = xs_dict_get(snac->config, "metadata");
     if (xs_type(metadata) == XSTYPE_DICT) {
         xs *attach = xs_list_new();
-        xs_str *k;
-        xs_str *v;
+        const xs_str *k;
+        const xs_str *v;
 
         int c = 0;
         while (xs_dict_next(metadata, &k, &v, &c)) {
@@ -1351,7 +1351,7 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     xs *atls = xs_list_new();
     xs_dict *msg = msg_base(snac, "Note", id, NULL, "@now", NULL);
     xs_list *p;
-    xs_val *v;
+    const xs_val *v;
 
     if (rcpts == NULL)
         to = xs_list_new();
@@ -1528,7 +1528,7 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
 
     xs *o = xs_list_new();
     xs_list *p = (xs_list *)opts;
-    xs_str *v;
+    const xs_str *v;
     xs *replies = xs_json_loads("{\"type\":\"Collection\",\"totalItems\":0}");
 
     xs_set_init(&seen);
@@ -1576,7 +1576,7 @@ int update_question(snac *user, const char *id)
     xs *lopts = xs_list_new();
     const xs_list *opts;
     xs_list *p;
-    xs_val *v;
+    const xs_val *v;
 
     /* get the object */
     if (!valid_status(object_get(id, &msg)))
@@ -2190,7 +2190,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         xs *rcpts    = recipient_list(snac, msg, 1);
         xs_set inboxes;
         xs_list *p;
-        xs_str *actor;
+        const xs_str *actor;
 
         xs_set_init(&inboxes);
 
@@ -2212,7 +2212,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         if (is_msg_public(msg)) {
             if (xs_type(xs_dict_get(srv_config, "disable_inbox_collection")) != XSTYPE_TRUE) {
                 xs *shibx = inbox_list();
-                xs_str *inbox;
+                const xs_str *inbox;
 
                 p = shibx;
                 while (xs_list_iter(&p, &inbox)) {
@@ -2304,7 +2304,7 @@ int process_user_queue(snac *snac)
     xs *list = user_queue(snac);
 
     xs_list *p = list;
-    xs_str *fn;
+    const xs_str *fn;
 
     while (xs_list_iter(&p, &fn)) {
         xs *q_item = dequeue(fn);
@@ -2511,7 +2511,7 @@ void process_queue_item(xs_dict *q_item)
 
             xs *users = user_list();
             xs_list *p = users;
-            char *v;
+            const char *v;
             int cnt = 0;
 
             while (xs_list_iter(&p, &v)) {
@@ -2554,7 +2554,7 @@ int process_queue(void)
     xs *list = queue();
 
     xs_list *p = list;
-    xs_str *fn;
+    const xs_str *fn;
 
     while (xs_list_iter(&p, &fn)) {
         xs *q_item = dequeue(fn);
@@ -2616,7 +2616,8 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         xs *elems = timeline_simple_list(&snac, "public", 0, 20);
         xs *list = xs_list_new();
         msg = msg_collection(&snac, id);
-        char *p, *v;
+        char *p;
+        const char *v;
 
         p = elems;
         while (xs_list_iter(&p, &v)) {

@@ -52,7 +52,7 @@ xs_dict *xs_url_vars(const char *str)
         xs *args = xs_split(str, "&");
 
         xs_list *l;
-        xs_val *v;
+        const xs_val *v;
 
         l = args;
         while (xs_list_iter(&l, &v)) {

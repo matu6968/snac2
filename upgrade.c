@@ -43,7 +43,8 @@ int snac_upgrade(xs_str **error)
         else
         if (f < 2.2) {
             xs *users = user_list();
-            char *p, *v;
+            char *p;
+            const char *v;
 
             p = users;
             while (xs_list_iter(&p, &v)) {
@@ -52,7 +53,8 @@ int snac_upgrade(xs_str **error)
                 if (user_open(&snac, v)) {
                     xs *spec = xs_fmt("%s/actors/" "*.json", snac.basedir);
                     xs *list = xs_glob(spec, 0, 0);
-                    char *g, *fn;
+                    char *g;
+                    const char *fn;
 
                     g = list;
                     while (xs_list_iter(&g, &fn)) {
@@ -77,14 +79,16 @@ int snac_upgrade(xs_str **error)
         else
         if (f < 2.3) {
             xs *users = user_list();
-            char *p, *v;
+            char *p;
+            const char *v;
 
             p = users;
             while (xs_list_iter(&p, &v)) {
                 snac snac;
 
                 if (user_open(&snac, v)) {
-                    char *p, *v;
+                    char *p;
+                    const char *v;
                     xs *dir = xs_fmt("%s/hidden", snac.basedir);
 
                     /* create the hidden directory */
@@ -109,7 +113,8 @@ int snac_upgrade(xs_str **error)
         else
         if (f < 2.4) {
             xs *users = user_list();
-            char *p, *v;
+            char *p;
+            const char *v;
 
             p = users;
             while (xs_list_iter(&p, &v)) {
@@ -132,7 +137,8 @@ int snac_upgrade(xs_str **error)
         if (f < 2.5) {
             /* upgrade followers */
             xs *users = user_list();
-            char *p, *v;
+            char *p;
+            const char *v;
 
             p = users;
             while (xs_list_iter(&p, &v)) {
@@ -141,7 +147,8 @@ int snac_upgrade(xs_str **error)
                 if (user_open(&snac, v)) {
                     xs *spec = xs_fmt("%s/followers/" "*.json", snac.basedir);
                     xs *dir  = xs_glob(spec, 0, 0);
-                    char *p, *v;
+                    char *p;
+                    const char *v;
 
                     p = dir;
                     while (xs_list_iter(&p, &v)) {
@@ -175,7 +182,8 @@ int snac_upgrade(xs_str **error)
         if (f < 2.6) {
             /* upgrade local/ to public/ */
             xs *users = user_list();
-            char *p, *v;
+            char *p;
+            const char *v;
 
             p = users;
             while (xs_list_iter(&p, &v)) {
@@ -184,7 +192,8 @@ int snac_upgrade(xs_str **error)
                 if (user_open(&snac, v)) {
                     xs *spec = xs_fmt("%s/local/" "*.json", snac.basedir);
                     xs *dir  = xs_glob(spec, 0, 0);
-                    char *p, *v;
+                    char *p;
+                    const char *v;
 
                     p = dir;
                     while (xs_list_iter(&p, &v)) {
@@ -206,7 +215,7 @@ int snac_upgrade(xs_str **error)
                             /* if it's from us, add to public */
                             if (xs_startswith(id, snac.actor)) {
                                 const xs_list *p;
-                                char *v;
+                                const char *v;
                                 int c;
 
                                 object_user_cache_add(&snac, id, "public");
@@ -241,7 +250,8 @@ int snac_upgrade(xs_str **error)
         if (f < 2.7) {
             /* upgrade timeline/ to private/ */
             xs *users = user_list();
-            char *p, *v;
+            char *p;
+            const char *v;
 
             p = users;
             while (xs_list_iter(&p, &v)) {
@@ -250,7 +260,8 @@ int snac_upgrade(xs_str **error)
                 if (user_open(&snac, v)) {
                     xs *spec = xs_fmt("%s/timeline/" "*.json", snac.basedir);
                     xs *dir  = xs_glob(spec, 0, 0);
-                    char *p, *v;
+                    char *p;
+                    const char *v;
 
                     p = dir;
                     while (xs_list_iter(&p, &v)) {
@@ -271,7 +282,7 @@ int snac_upgrade(xs_str **error)
 
                             {
                                 const xs_list *p;
-                                char *v;
+                                const char *v;
                                 int c = 0;
 
                                 object_user_cache_add(&snac, id, "private");

@@ -193,7 +193,7 @@ int user_open(snac *user, const char *uid)
             xs *lcuid = xs_tolower_i(xs_dup(uid));
             xs *ulist = user_list();
             xs_list *p = ulist;
-            xs_str *v;
+            const xs_str *v;
 
             while (xs_list_iter(&p, &v)) {
                 xs *v2 = xs_tolower_i(xs_dup(v));
@@ -289,7 +289,7 @@ int user_open_by_md5(snac *snac, const char *md5)
 {
     xs *ulist  = user_list();
     xs_list *p = ulist;
-    xs_str *v;
+    const xs_str *v;
 
     while (xs_list_iter(&p, &v)) {
         user_open(snac, v);
@@ -772,7 +772,8 @@ int object_del_by_md5(const char *md5)
         xs *spec  = xs_dup(fn);
         spec      = xs_replace_i(spec, ".json", "*.idx");
         xs *files = xs_glob(spec, 0, 0);
-        char *p, *v;
+        char *p;
+        const char *v;
 
         p = files;
         while (xs_list_iter(&p, &v)) {
@@ -1033,7 +1034,8 @@ xs_list *follower_list(snac *snac)
 {
     xs *list       = object_user_cache_list(snac, "followers", XS_ALL, 0);
     xs_list *fwers = xs_list_new();
-    char *p, *v;
+    char *p;
+    const char *v;
 
     /* resolve the list of md5 to be a list of actors */
     p = list;
@@ -1196,7 +1198,7 @@ xs_list *timeline_top_level(snac *snac, const xs_list *list)
 /* returns the top level md5 entries from this index */
 {
     xs_set seen;
-    xs_str *v;
+    const xs_str *v;
 
     xs_set_init(&seen);
 
@@ -1367,7 +1369,7 @@ xs_list *following_list(snac *snac)
     xs *spec = xs_fmt("%s/following/" "*.json", snac->basedir);
     xs *glist = xs_glob(spec, 0, 0);
     xs_list *p;
-    xs_str *v;
+    const xs_str *v;
     xs_list *list = xs_list_new();
 
     /* iterate the list of files */
@@ -1537,7 +1539,8 @@ void hide(snac *snac, const char *id)
 
         /* hide all the children */
         xs *chld = object_children(id);
-        char *p, *v;
+        char *p;
+        const char *v;
 
         p = chld;
         while (xs_list_iter(&p, &v)) {
@@ -1694,7 +1697,7 @@ void tag_index(const char *id, const xs_dict *obj)
 
         mkdirx(g_tag_dir);
 
-        xs_dict *v;
+        const xs_dict *v;
         int ct = 0;
         while (xs_list_next(tags, &v, &ct)) {
             const char *type = xs_dict_get(v, "type");
@@ -1758,7 +1761,7 @@ xs_val *list_maint(snac *user, const char *list, int op)
             xs *spec = xs_fmt("%s/list/" "*.id", user->basedir);
             xs *ls   = xs_glob(spec, 0, 0);
             int c = 0;
-            char *v;
+            const char *v;
 
             l = xs_list_new();
 
@@ -1784,7 +1787,7 @@ xs_val *list_maint(snac *user, const char *list, int op)
         {
             xs *lol = list_maint(user, NULL, 0);
             int c = 0;
-            xs_list *v;
+            const xs_list *v;
             int add = 1;
 
             /* check if this list name already exists */
@@ -1925,7 +1928,7 @@ void list_distribute(snac *user, const char *who, const xs_dict *post)
         xs *spec  = xs_fmt("%s/list/" "*.lst", user->basedir);
         xs *ls    = xs_glob(spec, 0, 0);
         int c = 0;
-        char *v;
+        const char *v;
 
         while (xs_list_next(ls, &v, &c)) {
             /* is the actor in this list? */
@@ -2183,7 +2186,7 @@ xs_list *inbox_list(void)
     xs *spec     = xs_fmt("%s/inbox/" "*", srv_basedir);
     xs *files    = xs_glob(spec, 0, 0);
     xs_list *p   = files;
-    xs_val *v;
+    const xs_val *v;
 
     while (xs_list_iter(&p, &v)) {
         FILE *f;
@@ -2329,8 +2332,8 @@ xs_list *content_search(snac *user, const char *regex,
 
     /* iterate all timelines simultaneously */
     xs_list *tls[3] = {0};
-    char *md5s[3]   = {0};
-    int c[3]        = {0};
+    const char *md5s[3] = {0};
+    int c[3] = {0};
 
     tls[0] = timeline_simple_list(user, "public", 0, XS_ALL);   /* public */
     tls[1] = timeline_instance_list(0, XS_ALL); /* instance */
@@ -2368,7 +2371,7 @@ xs_list *content_search(snac *user, const char *regex,
         if (newest == -1)
             break;
 
-        char *md5 = md5s[newest];
+        const char *md5 = md5s[newest];
 
         /* advance the chosen timeline */
         if (!xs_list_next(tls[newest], &md5s[newest], &c[newest]))
@@ -2534,7 +2537,7 @@ xs_list *notify_list(snac *snac, int skip, int show)
             xs *spec = xs_fmt("%s/notify/" "*.json", snac->basedir);
             xs *lst  = xs_glob(spec, 1, 0);
             xs_list *p = lst;
-            char *v;
+            const char *v;
 
             while (xs_list_iter(&p, &v)) {
                 char *p = strrchr(v, '.');
@@ -2562,7 +2565,7 @@ int notify_new_num(snac *snac)
     int cnt = 0;
 
     xs_list *p = lst;
-    xs_str *v;
+    const xs_str *v;
 
     while (xs_list_iter(&p, &v)) {
         xs *id = xs_strip_i(xs_dup(v));
@@ -2584,7 +2587,7 @@ void notify_clear(snac *snac)
     xs *spec   = xs_fmt("%s/notify/" "*", snac->basedir);
     xs *lst    = xs_glob(spec, 0, 0);
     xs_list *p = lst;
-    xs_str *v;
+    const xs_str *v;
 
     while (xs_list_iter(&p, &v))
         unlink(v);
@@ -2842,7 +2845,7 @@ int was_question_voted(snac *user, const char *id)
     xs *children = object_children(id);
     int voted = 0;
     xs_list *p;
-    xs_str *md5;
+    const xs_str *md5;
 
     p = children;
     while (xs_list_iter(&p, &md5)) {
@@ -2869,7 +2872,7 @@ xs_list *user_queue(snac *snac)
     xs_list *list = xs_list_new();
     time_t t      = time(NULL);
     xs_list *p;
-    xs_val *v;
+    const xs_val *v;
 
     xs *fns = xs_glob(spec, 0, 0);
 
@@ -2898,7 +2901,7 @@ xs_list *queue(void)
     xs_list *list = xs_list_new();
     time_t t      = time(NULL);
     xs_list *p;
-    xs_val *v;
+    const xs_val *v;
 
     xs *fns = xs_glob(spec, 0, 0);
 
@@ -2974,7 +2977,7 @@ static void _purge_dir(const char *dir, int days)
         xs *spec  = xs_fmt("%s/" "*", dir);
         xs *list  = xs_glob(spec, 0, 0);
         xs_list *p;
-        xs_str *v;
+        const xs_str *v;
 
         p = list;
         while (xs_list_iter(&p, &v))
@@ -3000,7 +3003,7 @@ void purge_server(void)
     xs *spec = xs_fmt("%s/object/??", srv_basedir);
     xs *dirs = xs_glob(spec, 0, 0);
     xs_list *p;
-    xs_str *v;
+    const xs_str *v;
     int cnt = 0;
     int icnt = 0;
 
@@ -3009,7 +3012,7 @@ void purge_server(void)
     p = dirs;
     while (xs_list_iter(&p, &v)) {
         xs_list *p2;
-        xs_str *v2;
+        const xs_str *v2;
 
         {
             xs *spec2 = xs_fmt("%s/" "*.json", v);
@@ -3088,7 +3091,7 @@ void purge_server(void)
         xs *spec2 = xs_fmt("%s/" "*.idx", v);
         xs *files = xs_glob(spec2, 0, 0);
         xs_list *p2;
-        xs_str *v2;
+        const xs_str *v2;
 
         p2 = files;
         while (xs_list_iter(&p2, &v2)) {
@@ -3152,7 +3155,7 @@ void purge_user(snac *snac)
         xs *spec = xs_fmt("%s/list/" "*.idx", snac->basedir);
         xs *lol  = xs_glob(spec, 0, 0);
         int c = 0;
-        char *v;
+        const char *v;
 
         while (xs_list_next(lol, &v, &c)) {
             int gc = index_gc(v);
@@ -3170,7 +3173,8 @@ void purge_all(void)
 {
     snac snac;
     xs *list = user_list();
-    char *p, *uid;
+    char *p;
+    const char *uid;
 
     p = list;
     while (xs_list_iter(&p, &uid)) {

@@ -57,7 +57,7 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems)
 
         xs *style = xs_fmt("height: %dem; width: %dem; vertical-align: middle;", ems, ems);
 
-        char *v;
+        const char *v;
         int c = 0;
 
         while (xs_list_next(tag_list, &v, &c)) {
@@ -461,7 +461,7 @@ static xs_html *html_base_head(void)
     xs *f;
     f = xs_fmt("%s/favicon.ico", srv_baseurl);
     const xs_list *p = xs_dict_get(srv_config, "cssurls");
-    char *v;
+    const char *v;
     int c = 0;
 
     while (xs_list_next(p, &v, &c)) {
@@ -801,8 +801,8 @@ static xs_html *html_user_body(snac *user, int read_only)
 
         const xs_dict *metadata = xs_dict_get(user->config, "metadata");
         if (xs_type(metadata) == XSTYPE_DICT) {
-            xs_str *k;
-            xs_str *v;
+            const xs_str *k;
+            const xs_str *v;
 
             xs_dict *val_links = user->links;
             if (xs_is_null(val_links))
@@ -974,8 +974,8 @@ xs_html *html_top_controls(snac *snac)
 
     xs *metadata = xs_str_new(NULL);
     const xs_dict *md = xs_dict_get(snac->config, "metadata");
-    xs_str *k;
-    xs_str *v;
+    const xs_str *k;
+    const xs_str *v;
 
     int c = 0;
     while (xs_dict_next(md, &k, &v, &c)) {
@@ -1161,7 +1161,7 @@ xs_str *build_mentions(snac *snac, const xs_dict *msg)
 {
     xs_str *s = xs_str_new(NULL);
     const char *list = xs_dict_get(msg, "tag");
-    char *v;
+    const char *v;
     int c = 0;
 
     while (xs_list_next(list, &v, &c)) {
@@ -1372,7 +1372,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
 
 
 xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
-                   int level, char *md5, int hide_children)
+                   int level, const char *md5, int hide_children)
 {
     const char *id    = xs_dict_get(msg, "id");
     const char *type  = xs_dict_get(msg, "type");
@@ -1670,7 +1670,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         const xs_list *oo = xs_dict_get(msg, "oneOf");
         const xs_list *ao = xs_dict_get(msg, "anyOf");
         const xs_list *p;
-        xs_dict *v;
+        const xs_dict *v;
         int closed = 0;
         const char *f_closed = NULL;
 
@@ -1827,7 +1827,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             content_attachments);
 
         int c = 0;
-        xs_dict *a;
+        const xs_dict *a;
         while (xs_list_next(attach, &a, &c)) {
             const char *type = xs_dict_get(a, "type");
             const char *href = xs_dict_get(a, "href");
@@ -1945,7 +1945,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             }
 
             xs_list *p = children;
-            char *cmd5;
+            const char *cmd5;
             int cnt = 0;
             int o_cnt = 0;
 
@@ -2021,7 +2021,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 /* returns the HTML for the timeline */
 {
     xs_list *p = (xs_list *)list;
-    char *v;
+    const char *v;
     double t = ftime();
 
     xs *desc = NULL;
@@ -2130,7 +2130,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 
             xs *list = history_list(user);
             xs_list *p = list;
-            char *v;
+            const char *v;
 
             while (xs_list_iter(&p, &v)) {
                 xs *fn  = xs_replace(v, ".html", "");
@@ -2203,7 +2203,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
                     xs_html_text("..."))));
 
     xs_list *p = list;
-    char *actor_id;
+    const char *actor_id;
 
     while (xs_list_iter(&p, &actor_id)) {
         xs *md5 = xs_md5_hex(actor_id, strlen(actor_id));
@@ -2363,7 +2363,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
     xs_html *noti_seen = NULL;
 
     xs_list *p = n_list;
-    xs_str *v;
+    const xs_str *v;
     while (xs_list_iter(&p, &v)) {
         xs *noti = notify_get(user, v);
 
@@ -3232,7 +3232,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             xs_dict *md = xs_dict_new();
             xs *l = xs_split(v, "\n");
             xs_list *p = l;
-            xs_str *kp;
+            const xs_str *kp;
 
             while (xs_list_iter(&p, &kp)) {
                 xs *kpl = xs_split_n(kp, "=", 1);
@@ -3333,7 +3333,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         }
 
         xs_list *p = ls;
-        xs_str *v;
+        const xs_str *v;
 
         while (xs_list_iter(&p, &v)) {
             xs *msg = msg_note(&snac, "", actor, irt, NULL, 1);
@@ -3405,7 +3405,7 @@ xs_str *timeline_to_rss(snac *user, const xs_list *timeline, char *title, char *
     xs_html_add(rss, channel);
 
     int c = 0;
-    char *v;
+    const char *v;
 
     while (xs_list_next(timeline, &v, &c)) {
         xs *msg = NULL;
