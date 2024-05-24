@@ -2059,13 +2059,6 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
         xs_html_add(body,
             html_top_controls(user));
 
-    if (title) {
-        xs_html_add(body,
-            xs_html_tag("h2",
-                xs_html_attr("class", "snac-header"),
-                xs_html_text(title)));
-    }
-
     /* show links to the available lists */
     {
         xs *lists = list_maint(user, NULL, 0); /* get list of lists */
@@ -2089,6 +2082,13 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                             xs_html_text(xs_list_get(v, 1)))));
             }
         }
+    }
+
+    if (title) {
+        xs_html_add(body,
+            xs_html_tag("h2",
+                xs_html_attr("class", "snac-header"),
+                xs_html_text(title)));
     }
 
     xs_html_add(body,
@@ -2768,7 +2768,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             if (list != NULL) {
                 xs *base = xs_fmt("/list/%s", lid);
                 xs *name = list_maint(&snac, lid, 3);
-                xs *title = xs_fmt(L("Showing timeline for list %s"), name);
+                xs *title = xs_fmt(L("Showing timeline for list '%s'"), name);
 
                 *body = html_timeline(&snac, list, 0, skip, show,
                     xs_list_len(next), title, base, 1);
