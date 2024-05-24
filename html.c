@@ -2060,7 +2060,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
             html_top_controls(user));
 
     /* show links to the available lists */
-    {
+    if (user && !read_only) {
         xs *lists = list_maint(user, NULL, 0); /* get list of lists */
 
         if (xs_list_len(lists)) {
