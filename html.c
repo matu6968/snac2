@@ -2066,6 +2066,31 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                 xs_html_text(title)));
     }
 
+    /* show links to the available lists */
+    {
+        xs *lists = list_maint(user, NULL, 0); /* get list of lists */
+
+        if (xs_list_len(lists)) {
+            int ct = 0;
+            const char *v;
+
+            xs_html *lol = xs_html_tag("ul",
+                xs_html_attr("class", "snac-list-of-lists"));
+            xs_html_add(body, lol);
+
+            while (xs_list_next(lists, &v, &ct)) {
+                xs *url = xs_fmt("%s/list/%s", user->actor, xs_list_get(v, 0));
+
+                xs_html_add(lol,
+                    xs_html_tag("li",
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_attr("class", "snac-list-link"),
+                            xs_html_text(xs_list_get(v, 1)))));
+            }
+        }
+    }
+
     xs_html_add(body,
         xs_html_tag("a",
             xs_html_attr("name", "snac-posts")));
