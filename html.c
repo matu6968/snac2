@@ -2631,7 +2631,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                     }
 
                     xs *page = xs_fmt("/admin?q=%%23%s", q + 1);
-                    xs *title = xs_fmt(L("Search results for tag %s"), q);
+                    xs *title = xs_fmt(xs_list_len(tl) ?
+                        L("Search results for tag %s") : L("Nothing found for tag %s"), q);
 
                     *body = html_timeline(&snac, tl, 0, skip, show, more, title, page, 0);
                     *b_size = strlen(*body);
