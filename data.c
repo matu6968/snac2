@@ -1831,6 +1831,9 @@ xs_val *list_maint(snac *user, const char *list, int op)
 
                 fn = xs_replace_i(fn, ".lst", ".idx");
                 unlink(fn);
+
+                fn = xs_append(fn, ".bak");
+                unlink(fn);
             }
         }
 
