@@ -2072,14 +2072,17 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
             xs_html_add(body, lol);
 
             while (xs_list_next(lists, &v, &ct)) {
+                const char *lname = xs_list_get(v, 1);
                 xs *url = xs_fmt("%s/list/%s", user->actor, xs_list_get(v, 0));
+                xs *ttl = xs_fmt(L("Timeline for list '%s'"), lname);
 
                 xs_html_add(lol,
                     xs_html_tag("li",
                         xs_html_tag("a",
                             xs_html_attr("href", url),
                             xs_html_attr("class", "snac-list-link"),
-                            xs_html_text(xs_list_get(v, 1)))));
+                            xs_html_attr("title", ttl),
+                            xs_html_text(lname))));
             }
         }
     }
