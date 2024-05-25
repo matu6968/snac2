@@ -1013,11 +1013,21 @@ xs_html *html_top_controls(snac *snac)
                         xs_html_attr("type", "file"),
                         xs_html_attr("name", "avatar_file"))),
                 xs_html_tag("p",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "checkbox"),
+                        xs_html_attr("name", "avatar_delete")),
+        			xs_html_text(L("Delete current avatar"))),
+                xs_html_tag("p",
                     xs_html_text(L("Header image (banner): ")),
                     xs_html_sctag("input",
                         xs_html_attr("type", "file"),
                         xs_html_attr("name", "header_file"))),
                 xs_html_tag("p",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "checkbox"),
+                        xs_html_attr("name", "header_delete")),
+        			xs_html_text(L("Delete current header image"))),
+		        xs_html_tag("p",
                     xs_html_text(L("Bio:")),
                     xs_html_sctag("br", NULL),
                     xs_html_tag("textarea",
@@ -3303,6 +3313,16 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                         snac.config = xs_dict_set(snac.config, uploads[n], url);
                     }
                 }
+            }
+        }
+
+        /* delete images by removing url from user.json */
+        for (n = 0; uploads[n]; n++) {
+            xs *var_name = xs_fmt("%s_delete", uploads[n]);
+            const char *delete_var = xs_dict_get(p_vars, var_name);
+
+            if (delete_var != NULL && strcmp(delete_var, "on") == 0) {
+                    snac.config = xs_dict_set(snac.config, uploads[n], "");
             }
         }
 
