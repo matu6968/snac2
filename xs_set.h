@@ -85,7 +85,6 @@ int xs_set_add(xs_set *s, const xs_val *data)
 {
     /* is it 'full'? */
     if (s->used >= s->elems / 2) {
-        char *p;
         const xs_val *v;
 
         /* expand! */
@@ -96,8 +95,8 @@ int xs_set_add(xs_set *s, const xs_val *data)
         memset(s->hash, '\0', s->elems * sizeof(int));
 
         /* add the list elements back */
-        p = s->list;
-        while (xs_list_iter(&p, &v))
+        int ct = 0;
+        while (xs_list_next(s->list, &v, &ct))
             _store_hash(s, v, v - s->list);
     }
 

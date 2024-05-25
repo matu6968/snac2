@@ -16,6 +16,11 @@ xs_list *xs_regex_replace_in(xs_str *str, const char *rx, const char *rep, int c
 
 #ifdef XS_IMPLEMENTATION
 
+#ifdef __TINYC__
+/* fix a compilation error in tcc */
+#define _REGEX_NELTS(n)
+#endif
+
 #include <regex.h>
 
 xs_list *xs_regex_split_n(const char *str, const char *rx, int count)

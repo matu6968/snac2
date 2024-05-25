@@ -798,11 +798,10 @@ int xs_list_len(const xs_list *list)
 {
     XS_ASSERT_TYPE_NULL(list, XSTYPE_LIST);
 
-    int c = 0;
-    xs_list *p = (xs_list *)list;
+    int c = 0, ct = 0;
     const xs_val *v;
 
-    while (xs_list_iter(&p, &v))
+    while (xs_list_next(list, &v, &ct))
         c++;
 
     return c;
@@ -817,11 +816,10 @@ const xs_val *xs_list_get(const xs_list *list, int num)
     if (num < 0)
         num = xs_list_len(list) + num;
 
-    int c = 0;
-    xs_list *p = (xs_list *)list;
+    int c = 0, ct = 0;
     const xs_val *v;
 
-    while (xs_list_iter(&p, &v)) {
+    while (xs_list_next(list, &v, &ct)) {
         if (c == num)
             return v;
 
@@ -880,16 +878,16 @@ xs_list *xs_list_dequeue(xs_list *list, xs_val **data, int last)
 {
     XS_ASSERT_TYPE(list, XSTYPE_LIST);
 
-    xs_list *p = list;
+    int ct = 0;
     const xs_val *v = NULL;
 
     if (!last) {
         /* get the first */
-        xs_list_iter(&p, &v);
+        xs_list_next(list, &v, &ct);
     }
     else {
         /* iterate to the end */
-        while (xs_list_iter(&p, &v));
+        while (xs_list_next(list, &v, &ct));
     }
 
     if (v != NULL) {
@@ -909,11 +907,11 @@ int xs_list_in(const xs_list *list, const xs_val *val)
     XS_ASSERT_TYPE_NULL(list, XSTYPE_LIST);
 
     int n = 0;
-    xs_list *p = (xs_list *)list;
+    int ct = 0;
     const xs_val *v;
     int sz = xs_size(val);
 
-    while (xs_list_iter(&p, &v)) {
+    while (xs_list_next(list, &v, &ct)) {
         if (sz == xs_size(v) && memcmp(val, v, sz) == 0)
             return n;
 
@@ -930,13 +928,13 @@ xs_str *xs_join(const xs_list *list, const char *sep)
     XS_ASSERT_TYPE(list, XSTYPE_LIST);
 
     xs_str *s = NULL;
-    xs_list *p = (xs_list *)list;
     const xs_val *v;
     int c = 0;
+    int ct = 0;
     int offset = 0;
     int ssz = strlen(sep);
 
-    while (xs_list_iter(&p, &v)) {
+    while (xs_list_next(list, &v, &ct)) {
         /* refuse to join non-string values */
         if (xs_type(v) == XSTYPE_STRING) {
             int sz;

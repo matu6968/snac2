@@ -51,11 +51,10 @@ xs_dict *xs_url_vars(const char *str)
         /* split by arguments */
         xs *args = xs_split(str, "&");
 
-        xs_list *l;
+        int ct = 0;
         const xs_val *v;
 
-        l = args;
-        while (xs_list_iter(&l, &v)) {
+        while (xs_list_next(args, &v, &ct)) {
             xs *kv = xs_split_n(v, "=", 1);
 
             if (xs_list_len(kv) == 2) {
