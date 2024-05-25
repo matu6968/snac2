@@ -16,12 +16,13 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
     int p_size = 0;
     xs *headers = xs_dict_new();
     xs *l = NULL;
-    xs_str *host = NULL;
+    const char *host = NULL;
     xs *resource = NULL;
 
-    if (xs_startswith(qs, "https:/" "/")) {
+    if (xs_startswith(qs, "https:/") || xs_startswith(qs, "http:/")) {
         /* actor query: pick the host */
-        xs *s = xs_replace_n(qs, "https:/" "/", "", 1);
+        xs *s1 = xs_replace_n(qs, "http:/" "/", "", 1);
+        xs *s = xs_replace_n(s1, "https:/" "/", "", 1);
 
         l = xs_split_n(s, "/", 1);
 
@@ -69,7 +70,9 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
                                        &payload, &p_size, &ctype);
     }
     else {
-        xs *url = xs_fmt("https:/" "/%s/.well-known/webfinger?resource=%s", host, resource);
+        const char *proto = xs_dict_get_def(srv_config, "protocol", "https");
+
+        xs *url = xs_fmt("%s:/" "/%s/.well-known/webfinger?resource=%s", proto, host, resource);
 
         if (snac == NULL)
             xs_http_request("GET", url, headers, NULL, 0, &status, &payload, &p_size, 0);
@@ -84,22 +87,24 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
 
     if (obj) {
         if (user != NULL) {
-            char *subject = xs_dict_get(obj, "subject");
+            const char *subject = xs_dict_get(obj, "subject");
 
             if (subject)
                 *user = xs_replace_n(subject, "acct:", "", 1);
         }
 
         if (actor != NULL) {
-            char *list = xs_dict_get(obj, "links");
-            char *v;
+            const xs_list *list = xs_dict_get(obj, "links");
+            int c = 0;
+            const char *v;
 
-            while (xs_list_iter(&list, &v)) {
+            while (xs_list_next(list, &v, &c)) {
                 if (xs_type(v) == XSTYPE_DICT) {
-                    char *type = xs_dict_get(v, "type");
+                    const char *type = xs_dict_get(v, "type");
 
                     if (type && (strcmp(type, "application/activity+json") == 0 ||
-                                strcmp(type, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") == 0)) {
+                                 strcmp(type, "application/ld+json; profile=\"https:/"
+                                    "/www.w3.org/ns/activitystreams\"") == 0)) {
                         *actor = xs_dup(xs_dict_get(v, "href"));
                         break;
                     }
@@ -130,8 +135,8 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
     if (strcmp(q_path, "/.well-known/webfinger") != 0)
         return 0;
 
-    char *q_vars   = xs_dict_get(req, "q_vars");
-    char *resource = xs_dict_get(q_vars, "resource");
+    const char *q_vars   = xs_dict_get(req, "q_vars");
+    const char *resource = xs_dict_get(q_vars, "resource");
 
     if (resource == NULL)
         return 400;
@@ -139,10 +144,10 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
     snac snac;
     int found = 0;
 
-    if (xs_startswith(resource, "https:/" "/")) {
+    if (xs_startswith(resource, "https:/") || xs_startswith(resource, "http:/")) {
         /* actor search: find a user with this actor */
         xs *l = xs_split(resource, "/");
-        char *uid = xs_list_get(l, -1);
+        const char *uid = xs_list_get(l, -1);
 
         if (uid)
             found = user_open(&snac, uid);
@@ -160,8 +165,8 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
         l = xs_split_n(an, "@", 1);
 
         if (xs_list_len(l) == 2) {
-            char *uid  = xs_list_get(l, 0);
-            char *host = xs_list_get(l, 1);
+            const char *uid  = xs_list_get(l, 0);
+            const char *host = xs_list_get(l, 1);
 
             if (strcmp(host, xs_dict_get(srv_config, "host")) == 0)
                 found = user_open(&snac, uid);
@@ -185,13 +190,19 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
 
         links = xs_list_append(links, aaj);
 
+        /* duplicate with the ld+json type */
+        aaj = xs_dict_set(aaj, "type", "application/ld+json; profile=\"https:/"
+                                    "/www.w3.org/ns/activitystreams\"");
+
+        links = xs_list_append(links, aaj);
+
         prof = xs_dict_append(prof, "rel", "http://webfinger.net/rel/profile-page");
         prof = xs_dict_append(prof, "type", "text/html");
         prof = xs_dict_append(prof, "href", snac.actor);
 
         links = xs_list_append(links, prof);
 
-        char *avatar = xs_dict_get(snac.config, "avatar");
+        const char *avatar = xs_dict_get(snac.config, "avatar");
         if (!xs_is_null(avatar) && *avatar) {
             xs *d = xs_dict_new();
 
@@ -211,10 +222,12 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
 
         status = 200;
         *body  = j;
-        *ctype = "application/json";
+        *ctype = "application/jrd+json";
     }
     else
         status = 404;
+
+    srv_debug(1, xs_fmt("webfinger_get_handler resource=%s %d", resource, status));
 
     return status;
 }

@@ -75,7 +75,7 @@ xs_str *nodeinfo_2_0(void)
     int n_posts  = 0;
     xs *users = user_list();
     xs_list *p = users;
-    char *v;
+    const char *v;
     double now = (double)time(NULL);
 
     while (xs_list_iter(&p, &v)) {
@@ -125,10 +125,10 @@ static xs_str *greeting_html(void)
 
         /* does it have a %userlist% mark? */
         if (xs_str_in(s, "%userlist%") != -1) {
-            char *host = xs_dict_get(srv_config, "host");
+            const char *host = xs_dict_get(srv_config, "host");
             xs *list = user_list();
             xs_list *p = list;
-            xs_str *uid;
+            const xs_str *uid;
 
             xs_html *ul = xs_html_tag("ul",
                 xs_html_attr("class", "snac-user-list"));
@@ -169,18 +169,16 @@ int server_get_handler(xs_dict *req, const char *q_path,
 {
     int status = 0;
 
-    (void)req;
-
     /* is it the server root? */
     if (*q_path == '\0') {
-        xs_dict *q_vars = xs_dict_get(req, "q_vars");
-        char *t = NULL;
+        const xs_dict *q_vars = xs_dict_get(req, "q_vars");
+        const char *t = NULL;
 
         if (xs_type(q_vars) == XSTYPE_DICT && (t = xs_dict_get(q_vars, "t"))) {
             /** search by tag **/
             int skip = 0;
             int show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
-            char *v;
+            const char *v;
 
             if ((v = xs_dict_get(q_vars, "skip")) != NULL)
                 skip = atoi(v);
@@ -195,13 +193,25 @@ int server_get_handler(xs_dict *req, const char *q_path,
                 more = 1;
             }
 
-            *body = html_timeline(NULL, tl, 0, skip, show, more, t, NULL, 0);
+            const char *accept = xs_dict_get(req, "accept");
+            if (!xs_is_null(accept) && strcmp(accept, "application/rss+xml") == 0) {
+                xs *link = xs_fmt("%s/?t=%s", srv_baseurl, t);
+
+                *body = timeline_to_rss(NULL, tl, link, link, link);
+                *ctype = "application/rss+xml; charset=utf-8";
+            }
+            else {
+                xs *page = xs_fmt("?t=%s", t);
+                xs *title = xs_fmt(L("Search results for tag #%s"), t);
+                *body = html_timeline(NULL, tl, 0, skip, show, more, title, page, 0);
+            }
         }
         else
         if (xs_type(xs_dict_get(srv_config, "show_instance_timeline")) == XSTYPE_TRUE) {
             /** instance timeline **/
             xs *tl = timeline_instance_list(0, 30);
-            *body = html_timeline(NULL, tl, 0, 0, 0, 0, NULL, NULL, 0);
+            *body = html_timeline(NULL, tl, 0, 0, 0, 0,
+                L("Recent posts by users in this instance"), NULL, 0);
         }
         else
             *body = greeting_html();
@@ -258,7 +268,7 @@ void httpd_connection(FILE *f)
 /* the connection processor */
 {
     xs *req;
-    char *method;
+    const char *method;
     int status   = 0;
     xs_str *body = NULL;
     int b_size   = 0;
@@ -268,7 +278,7 @@ void httpd_connection(FILE *f)
     xs *payload  = NULL;
     xs *etag     = NULL;
     int p_size   = 0;
-    char *p;
+    const char *p;
     int fcgi_id;
 
     if (p_state->use_fcgi)
@@ -360,7 +370,7 @@ void httpd_connection(FILE *f)
 #ifndef NO_MASTODON_API
         if (status == 0)
             status = mastoapi_delete_handler(req, q_path,
-                    &body, &b_size, &ctype);
+                    payload, p_size, &body, &b_size, &ctype);
 #endif
     }
 
@@ -401,9 +411,9 @@ void httpd_connection(FILE *f)
         headers = xs_dict_append(headers, "etag", etag);
 
     /* if there are any additional headers, add them */
-    xs_dict *more_headers = xs_dict_get(srv_config, "http_headers");
+    const xs_dict *more_headers = xs_dict_get(srv_config, "http_headers");
     if (xs_type(more_headers) == XSTYPE_DICT) {
-        char *k, *v;
+        const char *k, *v;
         int c = 0;
         while (xs_dict_next(more_headers, &k, &v, &c))
             headers = xs_dict_set(headers, k, v);
@@ -580,7 +590,8 @@ static void *background_thread(void *arg)
 
         {
             xs *list = user_list();
-            char *p, *uid;
+            char *p;
+            const char *uid;
 
             /* process queues for all users */
             p = list;
@@ -654,6 +665,13 @@ srv_state *srv_state_op(xs_str **fname, int op)
 
     switch (op) {
     case 0: /* open for writing */
+
+#ifdef WITHOUT_SHM
+
+        errno = ENOTSUP;
+
+#else
+
         if ((fd = shm_open(*fname, O_CREAT | O_RDWR, 0666)) != -1) {
             ftruncate(fd, sizeof(*ss));
 
@@ -663,6 +681,8 @@ srv_state *srv_state_op(xs_str **fname, int op)
 
             close(fd);
         }
+
+#endif
 
         if (ss == NULL) {
             /* shared memory error: just create a plain structure */
@@ -677,12 +697,21 @@ srv_state *srv_state_op(xs_str **fname, int op)
         break;
 
     case 1: /* open for reading */
+
+#ifdef WITHOUT_SHM
+
+        errno = ENOTSUP;
+
+#else
+
         if ((fd = shm_open(*fname, O_RDONLY, 0666)) != -1) {
             if ((ss = mmap(0, sizeof(*ss), PROT_READ, MAP_SHARED, fd, 0)) == MAP_FAILED)
                 ss = NULL;
 
             close(fd);
         }
+
+#endif
 
         if (ss == NULL) {
             /* shared memory error */
@@ -701,8 +730,13 @@ srv_state *srv_state_op(xs_str **fname, int op)
         break;
 
     case 2: /* unlink */
+
+#ifndef WITHOUT_SHM
+
         if (*fname)
             shm_unlink(*fname);
+
+#endif
 
         break;
     }

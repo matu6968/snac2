@@ -44,6 +44,7 @@ int usage(void)
     printf("limit {basedir} {uid} {actor}        Limits an actor (drops their announces)\n");
     printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
     printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
+    printf("search {basedir} {uid} {regex}       Searches posts by content\n");
 
     return 1;
 }
@@ -314,7 +315,7 @@ int main(int argc, char *argv[])
         xs *msg = msg_follow(&snac, url);
 
         if (msg != NULL) {
-            char *actor = xs_dict_get(msg, "object");
+            const char *actor = xs_dict_get(msg, "object");
 
             following_add(&snac, actor, msg);
 
@@ -370,6 +371,23 @@ int main(int argc, char *argv[])
             snac_log(&snac, xs_fmt("actor %s is no longer limited", url));
         else
             snac_log(&snac, xs_fmt("error unlimiting actor %s (%d)", url, ret));
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "search") == 0) { /** **/
+        int to;
+
+        /* 'url' contains the regex */
+        xs *r = content_search(&snac, url, 1, 0, XS_ALL, 10, &to);
+
+        int c = 0;
+        const char *v;
+
+        /* print results as standalone links */
+        while (xs_list_next(r, &v, &c)) {
+            printf("%s/admin/p/%s\n", snac.actor, v);
+        }
 
         return 0;
     }
@@ -454,6 +472,12 @@ int main(int argc, char *argv[])
         if (data != NULL) {
             xs_json_dump(data, 4, stdout);
         }
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "request2") == 0) { /** **/
+        enqueue_object_request(&snac, url, 2);
 
         return 0;
     }

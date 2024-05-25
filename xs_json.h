@@ -71,12 +71,12 @@ static void _xs_json_indent(int level, int indent, FILE *f)
 }
 
 
-static void _xs_json_dump(const xs_val *s_data, int level, int indent, FILE *f)
+static void _xs_json_dump(const xs_val *data, int level, int indent, FILE *f)
 /* dumps partial data as JSON */
 {
     int c = 0;
-    xs_val *v;
-    xs_val *data = (xs_val *)s_data;
+    int ct = 0;
+    const xs_val *v;
 
     switch (xs_type(data)) {
     case XSTYPE_NULL:
@@ -98,7 +98,7 @@ static void _xs_json_dump(const xs_val *s_data, int level, int indent, FILE *f)
     case XSTYPE_LIST:
         fputc('[', f);
 
-        while (xs_list_iter(&data, &v)) {
+        while (xs_list_next(data, &v, &ct)) {
             if (c != 0)
                 fputc(',', f);
 
@@ -116,10 +116,9 @@ static void _xs_json_dump(const xs_val *s_data, int level, int indent, FILE *f)
     case XSTYPE_DICT:
         fputc('{', f);
 
-        xs_str *k;
-        int ct = 0;
+        const xs_str *k;
 
-        while (xs_dict_next(s_data, &k, &v, &ct)) {
+        while (xs_dict_next(data, &k, &v, &ct)) {
             if (c != 0)
                 fputc(',', f);
 
@@ -328,7 +327,7 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
 
 int xs_json_load_array_iter(FILE *f, xs_val **value, xstype *pt, int *c)
 /* loads the next scalar value from the JSON stream */
-/* if the value ahead is complex, value is NULL and pt is filled */
+/* if the value ahead is compound, value is NULL and pt is set */
 {
     js_type t;
 
@@ -348,7 +347,7 @@ int xs_json_load_array_iter(FILE *f, xs_val **value, xstype *pt, int *c)
     }
 
     if (*value == NULL) {
-        /* possible complex type ahead */
+        /* possible compound type ahead */
         if (t == JS_OBRACK)
             *pt = XSTYPE_LIST;
         else
@@ -365,7 +364,7 @@ int xs_json_load_array_iter(FILE *f, xs_val **value, xstype *pt, int *c)
 
 
 xs_list *xs_json_load_array(FILE *f)
-/* loads a JSON array (after the initial OBRACK) */
+/* loads a full JSON array (after the initial OBRACK) */
 {
     xstype t;
     xs_list *l = xs_list_new();
@@ -406,7 +405,7 @@ xs_list *xs_json_load_array(FILE *f)
 
 int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, xstype *pt, int *c)
 /* loads the next key and scalar value from the JSON stream */
-/* if the value ahead is complex, value is NULL and pt is filled */
+/* if the value ahead is compound, value is NULL and pt is set */
 {
     js_type t;
 
@@ -453,7 +452,7 @@ int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, xstype *pt, 
 
 
 xs_dict *xs_json_load_object(FILE *f)
-/* loads a JSON object (after the initial OCURLY) */
+/* loads a full JSON object (after the initial OCURLY) */
 {
     xstype t;
     xs_dict *d = xs_dict_new();

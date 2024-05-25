@@ -25,6 +25,8 @@ static const char *default_srv_config = "{"
     "\"dbglevel\":             0,"
     "\"queue_retry_minutes\":  2,"
     "\"queue_retry_max\":      10,"
+    "\"queue_timeout\":        6,"
+    "\"queue_timeout_2\":      8,"
     "\"cssurls\":              [\"\"],"
     "\"max_timeline_entries\": 50,"
     "\"timeline_purge_days\":  120,"
@@ -34,6 +36,7 @@ static const char *default_srv_config = "{"
     "\"admin_account\":        \"\","
     "\"title\":                \"\","
     "\"short_description\":    \"\","
+    "\"protocol\":             \"https\","
     "\"fastcgi\":              false"
     "}";
 
@@ -46,7 +49,7 @@ static const char *default_css =
     ".snac-top-user { text-align: center; padding-bottom: 2em }\n"
     ".snac-top-user-name { font-size: 200% }\n"
     ".snac-top-user-id { font-size: 150% }\n"
-    ".snac-avatar { float: left; height: 2.5em; padding: 0.25em }\n"
+    ".snac-avatar { float: left; height: 2.5em; width: 2.5em; padding: 0.25em }\n"
     ".snac-author { font-size: 90%; text-decoration: none }\n"
     ".snac-author-tag { font-size: 80% }\n"
     ".snac-pubdate { color: #a0a0a0; font-size: 90% }\n"
@@ -355,7 +358,7 @@ void rm_rf(const char *dir)
     xs *d = xs_str_cat(xs_dup(dir), "/" "*");
     xs *l = xs_glob(d, 0, 0);
     xs_list *p = l;
-    xs_str *v;
+    const xs_str *v;
 
     if (dbglevel >= 1)
         printf("Deleting directory %s\n", dir);
@@ -390,7 +393,7 @@ int deluser(snac *user)
     int ret = 0;
     xs *fwers = following_list(user);
     xs_list *p = fwers;
-    xs_str *v;
+    const xs_str *v;
 
     while (xs_list_iter(&p, &v)) {
         xs *object = NULL;
@@ -415,8 +418,8 @@ int deluser(snac *user)
 void verify_links(snac *user)
 /* verifies a user's links */
 {
-    xs_dict *p = xs_dict_get(user->config, "metadata");
-    char *k, *v;
+    const xs_dict *p = xs_dict_get(user->config, "metadata");
+    const char *k, *v;
     int changed = 0;
 
     xs *headers = xs_dict_new();
@@ -446,7 +449,7 @@ void verify_links(snac *user)
         xs *ls = xs_regex_select(payload, "< *(a|link) +[^>]+>");
 
         xs_list *lp = ls;
-        char *ll;
+        const char *ll;
         int vfied = 0;
 
         while (!vfied && xs_list_iter(&lp, &ll)) {
@@ -460,7 +463,7 @@ void verify_links(snac *user)
             xs *href = NULL;
             int is_rel_me = 0;
             xs_list *pr = r;
-            char *ar;
+            const char *ar;
 
             while (xs_list_iter(&pr, &ar)) {
                 xs *nq = xs_dup(ar);

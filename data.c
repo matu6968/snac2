@@ -10,6 +10,7 @@
 #include "xs_set.h"
 #include "xs_time.h"
 #include "xs_regex.h"
+#include "xs_match.h"
 
 #include "snac.h"
 
@@ -28,7 +29,7 @@ pthread_mutex_t data_mutex = {0};
 int snac_upgrade(xs_str **error);
 
 
-int srv_open(char *basedir, int auto_upgrade)
+int srv_open(const char *basedir, int auto_upgrade)
 /* opens a server */
 {
     int ret = 0;
@@ -57,18 +58,20 @@ int srv_open(char *basedir, int auto_upgrade)
         if (srv_config == NULL)
             error = xs_fmt("ERROR: cannot parse '%s'", cfg_file);
         else {
-            char *host;
-            char *prefix;
-            char *dbglvl;
+            const char *host;
+            const char *prefix;
+            const char *dbglvl;
+            const char *proto;
 
             host   = xs_dict_get(srv_config, "host");
             prefix = xs_dict_get(srv_config, "prefix");
             dbglvl = xs_dict_get(srv_config, "dbglevel");
+            proto  = xs_dict_get_def(srv_config, "protocol", "https");
 
             if (host == NULL || prefix == NULL)
                 error = xs_str_new("ERROR: cannot get server data");
             else {
-                srv_baseurl = xs_fmt("https://%s%s", host, prefix);
+                srv_baseurl = xs_fmt("%s:/" "/%s%s", proto, host, prefix);
 
                 dbglevel = (int) xs_number_get(dbglvl);
 
@@ -111,7 +114,7 @@ int srv_open(char *basedir, int auto_upgrade)
 #endif
 
 #ifdef __OpenBSD__
-    char *v = xs_dict_get(srv_config, "disable_openbsd_security");
+    const char *v = xs_dict_get(srv_config, "disable_openbsd_security");
 
     if (v && xs_type(v) == XSTYPE_TRUE) {
         srv_debug(1, xs_dup("OpenBSD security disabled by admin"));
@@ -190,7 +193,7 @@ int user_open(snac *user, const char *uid)
             xs *lcuid = xs_tolower_i(xs_dup(uid));
             xs *ulist = user_list();
             xs_list *p = ulist;
-            xs_str *v;
+            const xs_str *v;
 
             while (xs_list_iter(&p, &v)) {
                 xs *v2 = xs_tolower_i(xs_dup(v));
@@ -286,7 +289,7 @@ int user_open_by_md5(snac *snac, const char *md5)
 {
     xs *ulist  = user_list();
     xs_list *p = ulist;
-    xs_str *v;
+    const xs_str *v;
 
     while (xs_list_iter(&p, &v)) {
         user_open(snac, v);
@@ -338,6 +341,12 @@ double f_ctime(const char *fn)
 }
 
 
+int is_md5_hex(const char *md5)
+{
+    return xs_is_hex(md5) && strlen(md5) == 32;
+}
+
+
 /** database 2.1+ **/
 
 /** indexes **/
@@ -348,6 +357,11 @@ int index_add_md5(const char *fn, const char *md5)
 {
     int status = 201; /* Created */
     FILE *f;
+
+    if (!is_md5_hex(md5)) {
+        srv_log(xs_fmt("index_add_md5: bad md5 %s %s", fn, md5));
+        return 400;
+    }
 
     pthread_mutex_lock(&data_mutex);
 
@@ -406,7 +420,7 @@ int index_del_md5(const char *fn, const char *md5)
         fclose(f);
     }
     else
-        status = 500;
+        status = 410;
 
     pthread_mutex_unlock(&data_mutex);
 
@@ -604,7 +618,7 @@ static xs_str *_object_fn_by_md5(const char *md5, const char *func)
     if (md5[0] == '-')
         ok = 0;
     else
-    if (!xs_is_hex(md5) || strlen(md5) != 32) {
+    if (!is_md5_hex(md5)) {
         srv_log(xs_fmt("_object_fn_by_md5() [from %s()]: bad md5 '%s'", func, md5));
         ok = 0;
     }
@@ -696,7 +710,7 @@ int _object_add(const char *id, const xs_dict *obj, int ow)
         fclose(f);
 
         /* does this object has a parent? */
-        char *in_reply_to = xs_dict_get(obj, "inReplyTo");
+        const char *in_reply_to = xs_dict_get(obj, "inReplyTo");
 
         if (!xs_is_null(in_reply_to) && *in_reply_to) {
             /* update the children index of the parent */
@@ -758,7 +772,8 @@ int object_del_by_md5(const char *md5)
         xs *spec  = xs_dup(fn);
         spec      = xs_replace_i(spec, ".json", "*.idx");
         xs *files = xs_glob(spec, 0, 0);
-        char *p, *v;
+        char *p;
+        const char *v;
 
         p = files;
         while (xs_list_iter(&p, &v)) {
@@ -917,6 +932,9 @@ int object_unadmire(const char *id, const char *actor, int like)
 
     status = index_del(fn, actor);
 
+    if (valid_status(status))
+        index_gc(fn);
+
     srv_debug(0,
         xs_fmt("object_unadmire (%s) %s %s %d", like ? "Like" : "Announce", actor, fn, status));
 
@@ -1016,7 +1034,8 @@ xs_list *follower_list(snac *snac)
 {
     xs *list       = object_user_cache_list(snac, "followers", XS_ALL, 0);
     xs_list *fwers = xs_list_new();
-    char *p, *v;
+    char *p;
+    const char *v;
 
     /* resolve the list of md5 to be a list of actors */
     p = list;
@@ -1060,14 +1079,18 @@ int timeline_touch(snac *snac)
 xs_str *timeline_fn_by_md5(snac *snac, const char *md5)
 /* get the filename of an entry by md5 from any timeline */
 {
-    xs_str *fn = xs_fmt("%s/private/%s.json", snac->basedir, md5);
+    xs_str *fn = NULL;
 
-    if (mtime(fn) == 0.0) {
-        fn = xs_free(fn);
-        fn = xs_fmt("%s/public/%s.json", snac->basedir, md5);
+    if (xs_is_hex(md5) && strlen(md5) == 32) {
+        fn = xs_fmt("%s/private/%s.json", snac->basedir, md5);
 
-        if (mtime(fn) == 0.0)
+        if (mtime(fn) == 0.0) {
             fn = xs_free(fn);
+            fn = xs_fmt("%s/public/%s.json", snac->basedir, md5);
+
+            if (mtime(fn) == 0.0)
+                fn = xs_free(fn);
+        }
     }
 
     return fn;
@@ -1103,7 +1126,7 @@ int timeline_get_by_md5(snac *snac, const char *md5, xs_dict **msg)
 }
 
 
-int timeline_del(snac *snac, char *id)
+int timeline_del(snac *snac, const char *id)
 /* deletes a message from the timeline */
 {
     /* delete from the user's caches */
@@ -1145,6 +1168,8 @@ int timeline_add(snac *snac, const char *id, const xs_dict *o_msg)
 
     tag_index(id, o_msg);
 
+    list_distribute(snac, NULL, o_msg);
+
     snac_debug(snac, 1, xs_fmt("timeline_add %s", id));
 
     return ret;
@@ -1169,17 +1194,16 @@ int timeline_admire(snac *snac, const char *id, const char *admirer, int like)
 }
 
 
-xs_list *timeline_top_level(snac *snac, xs_list *list)
+xs_list *timeline_top_level(snac *snac, const xs_list *list)
 /* returns the top level md5 entries from this index */
 {
     xs_set seen;
-    xs_list *p;
-    xs_str *v;
+    const xs_str *v;
 
     xs_set_init(&seen);
 
-    p = list;
-    while (xs_list_iter(&p, &v)) {
+    int c = 0;
+    while (xs_list_next(list, &v, &c)) {
         char line[256] = "";
 
         strncpy(line, v, sizeof(line));
@@ -1267,7 +1291,7 @@ int following_add(snac *snac, const char *actor, const xs_dict *msg)
         /* object already exists; if it's of type Accept,
            the actor is already being followed and confirmed,
            so do nothing */
-        char *type = xs_dict_get(p_object, "type");
+        const char *type = xs_dict_get(p_object, "type");
 
         if (!xs_is_null(type) && strcmp(type, "Accept") == 0) {
             snac_debug(snac, 1, xs_fmt("following_add actor already confirmed %s", actor));
@@ -1345,7 +1369,7 @@ xs_list *following_list(snac *snac)
     xs *spec = xs_fmt("%s/following/" "*.json", snac->basedir);
     xs *glist = xs_glob(spec, 0, 0);
     xs_list *p;
-    xs_str *v;
+    const xs_str *v;
     xs_list *list = xs_list_new();
 
     /* iterate the list of files */
@@ -1515,7 +1539,8 @@ void hide(snac *snac, const char *id)
 
         /* hide all the children */
         xs *chld = object_children(id);
-        char *p, *v;
+        char *p;
+        const char *v;
 
         p = chld;
         while (xs_list_iter(&p, &v)) {
@@ -1523,8 +1548,9 @@ void hide(snac *snac, const char *id)
 
             /* resolve to get the id */
             if (valid_status(object_get_by_md5(v, &co))) {
-                if ((v = xs_dict_get(co, "id")) != NULL)
-                    hide(snac, v);
+                const char *id = xs_dict_get(co, "id");
+                if (id != NULL)
+                    hide(snac, id);
             }
         }
     }
@@ -1540,7 +1566,7 @@ int is_hidden(snac *snac, const char *id)
 }
 
 
-int actor_add(const char *actor, xs_dict *msg)
+int actor_add(const char *actor, const xs_dict *msg)
 /* adds an actor */
 {
     return object_add_ow(actor, msg);
@@ -1609,7 +1635,7 @@ int actor_get_refresh(snac *user, const char *actor, xs_dict **data)
     int status = actor_get(actor, data);
 
     if (status == 205 && user && !xs_startswith(actor, srv_baseurl))
-        enqueue_actor_refresh(user, actor);
+        enqueue_actor_refresh(user, actor, 0);
 
     return status;
 }
@@ -1664,17 +1690,18 @@ int limited(snac *user, const char *id, int cmd)
 void tag_index(const char *id, const xs_dict *obj)
 /* update the tag indexes for this object */
 {
-    xs_list *tags = xs_dict_get(obj, "tag");
+    const xs_list *tags = xs_dict_get(obj, "tag");
 
     if (is_msg_public(obj) && xs_type(tags) == XSTYPE_LIST && xs_list_len(tags) > 0) {
         xs *g_tag_dir = xs_fmt("%s/tag", srv_basedir);
 
         mkdirx(g_tag_dir);
 
-        xs_dict *v;
-        while (xs_list_iter(&tags, &v)) {
-            char *type = xs_dict_get(v, "type");
-            char *name = xs_dict_get(v, "name");
+        const xs_dict *v;
+        int ct = 0;
+        while (xs_list_next(tags, &v, &ct)) {
+            const char *type = xs_dict_get(v, "type");
+            const char *name = xs_dict_get(v, "name");
 
             if (!xs_is_null(type) && !xs_is_null(name) && strcmp(type, "Hashtag") == 0) {
                 while (*name == '#' || *name == '@')
@@ -1683,7 +1710,7 @@ void tag_index(const char *id, const xs_dict *obj)
                 if (*name == '\0')
                     continue;
 
-                name = xs_tolower_i(name);
+                name = xs_tolower_i((xs_str *)name);
 
                 xs *md5_tag   = xs_md5_hex(name, strlen(name));
                 xs *tag_dir   = xs_fmt("%s/%c%c", g_tag_dir, md5_tag[0], md5_tag[1]);
@@ -1706,7 +1733,7 @@ void tag_index(const char *id, const xs_dict *obj)
 }
 
 
-xs_list *tag_search(char *tag, int skip, int show)
+xs_list *tag_search(const char *tag, int skip, int show)
 /* returns the list of posts tagged with tag */
 {
     if (*tag == '#')
@@ -1717,6 +1744,206 @@ xs_list *tag_search(char *tag, int skip, int show)
     xs *idx    = xs_fmt("%s/tag/%c%c/%s.idx", srv_basedir, md5[0], md5[1], md5);
 
     return index_list_desc(idx, skip, show);
+}
+
+
+/** lists **/
+
+xs_val *list_maint(snac *user, const char *list, int op)
+/* list maintenance */
+{
+    xs_val *l = NULL;
+
+    switch (op) {
+    case 0: /** list of lists **/
+        {
+            FILE *f;
+            xs *spec = xs_fmt("%s/list/" "*.id", user->basedir);
+            xs *ls   = xs_glob(spec, 0, 0);
+            int c = 0;
+            const char *v;
+
+            l = xs_list_new();
+
+            while (xs_list_next(ls, &v, &c)) {
+                if ((f = fopen(v, "r")) != NULL) {
+                    xs *title = xs_readline(f);
+                    fclose(f);
+
+                    title = xs_strip_i(title);
+
+                    xs *v2 = xs_replace(v, ".id", "");
+                    xs *l2 = xs_split(v2, "/");
+
+                    /* return [ list_id, list_title ] */
+                    l = xs_list_append(l, xs_list_append(xs_list_new(), xs_list_get(l2, -1), title));
+                }
+            }
+        }
+
+        break;
+
+    case 1: /** create new list (list is the name) **/
+        {
+            xs *lol = list_maint(user, NULL, 0);
+            int c = 0;
+            const xs_list *v;
+            int add = 1;
+
+            /* check if this list name already exists */
+            while (xs_list_next(lol, &v, &c)) {
+                if (strcmp(xs_list_get(v, 1), list) == 0) {
+                    add = 0;
+                    break;
+                }
+            }
+
+            if (add) {
+                FILE *f;
+                xs *dir = xs_fmt("%s/list/", user->basedir);
+                xs *id  = xs_fmt("%010x", time(NULL));
+
+                mkdirx(dir);
+
+                xs *fn = xs_fmt("%s%s.id", dir, id);
+
+                if ((f = fopen(fn, "w")) != NULL) {
+                    fprintf(f, "%s\n", list);
+                    fclose(f);
+                }
+
+                l = xs_stock(XSTYPE_TRUE);
+            }
+            else
+                l = xs_stock(XSTYPE_FALSE);
+        }
+
+        break;
+
+    case 2: /** delete list (list is the id) **/
+        {
+            if (xs_is_hex(list)) {
+                xs *fn = xs_fmt("%s/list/%s.id", user->basedir, list);
+                unlink(fn);
+
+                fn = xs_replace_i(fn, ".id", ".lst");
+                unlink(fn);
+
+                fn = xs_replace_i(fn, ".lst", ".idx");
+                unlink(fn);
+
+                fn = xs_str_cat(fn, ".bak");
+                unlink(fn);
+            }
+        }
+
+        break;
+
+    case 3: /** get list name **/
+        if (xs_is_hex(list)) {
+            FILE *f;
+            xs *fn = xs_fmt("%s/list/%s.id", user->basedir, list);
+
+            if ((f = fopen(fn, "r")) != NULL) {
+                l = xs_strip_i(xs_readline(f));
+                fclose(f);
+            }
+        }
+
+        break;
+    }
+
+    return l;
+}
+
+
+xs_list *list_timeline(snac *user, const char *list, int skip, int show)
+/* returns the timeline of a list */
+{
+    xs_list *l = NULL;
+
+    if (!xs_is_hex(list))
+        return NULL;
+
+    xs *fn = xs_fmt("%s/list/%s.idx", user->basedir, list);
+
+    if (mtime(fn) > 0.0)
+        l = index_list_desc(fn, skip, show);
+
+    return l;
+}
+
+
+xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op)
+/* list content management */
+{
+    xs_val *l = NULL;
+
+    if (!xs_is_hex(list))
+        return NULL;
+
+    if (actor_md5 != NULL && !xs_is_hex(actor_md5))
+        return NULL;
+
+    xs *fn = xs_fmt("%s/list/%s.lst", user->basedir, list);
+
+    switch (op) {
+    case 0: /** list content **/
+        l = index_list(fn, XS_ALL);
+
+        break;
+
+    case 1: /** append actor to list **/
+        if (actor_md5 != NULL) {
+            if (!index_in(fn, actor_md5))
+                index_add_md5(fn, actor_md5);
+        }
+
+        break;
+
+    case 2: /** delete actor from list **/
+        if (actor_md5 != NULL)
+            index_del_md5(fn, actor_md5);
+
+        break;
+
+    default:
+        srv_log(xs_fmt("ERROR: list_content: bad op %d", op));
+        break;
+    }
+
+    return l;
+}
+
+
+void list_distribute(snac *user, const char *who, const xs_dict *post)
+/* distributes the post to all appropriate lists */
+{
+    const char *id = xs_dict_get(post, "id");
+
+    /* if who is not set, use the attributedTo in the message */
+    if (xs_is_null(who))
+        who = get_atto(post);
+
+    if (xs_type(who) == XSTYPE_STRING && xs_type(id) == XSTYPE_STRING) {
+        xs *a_md5 = xs_md5_hex(who, strlen(who));
+        xs *i_md5 = xs_md5_hex(id, strlen(id));
+        xs *spec  = xs_fmt("%s/list/" "*.lst", user->basedir);
+        xs *ls    = xs_glob(spec, 0, 0);
+        int c = 0;
+        const char *v;
+
+        while (xs_list_next(ls, &v, &c)) {
+            /* is the actor in this list? */
+            if (index_in_md5(v, a_md5)) {
+                /* it is; add post md5 to its timeline */
+                xs *idx = xs_replace(v, ".lst", ".idx");
+                index_add_md5(idx, i_md5);
+
+                snac_debug(user, 1, xs_fmt("listed post %s in %s", id, idx));
+            }
+        }
+    }
 }
 
 
@@ -1944,7 +2171,7 @@ void inbox_add(const char *inbox)
 void inbox_add_by_actor(const xs_dict *actor)
 /* collects an actor's shared inbox, if it has one */
 {
-    char *v;
+    const char *v;
 
     if (!xs_is_null(v = xs_dict_get(actor, "endpoints")) &&
         !xs_is_null(v = xs_dict_get(v, "sharedInbox"))) {
@@ -1962,7 +2189,7 @@ xs_list *inbox_list(void)
     xs *spec     = xs_fmt("%s/inbox/" "*", srv_basedir);
     xs *files    = xs_glob(spec, 0, 0);
     xs_list *p   = files;
-    xs_val *v;
+    const xs_val *v;
 
     while (xs_list_iter(&p, &v)) {
         FILE *f;
@@ -1987,9 +2214,10 @@ xs_list *inbox_list(void)
 
 xs_str *_instance_block_fn(const char *instance)
 {
-    xs *s1  = xs_replace(instance, "https:/" "/", "");
+    xs *s   = xs_replace(instance, "http:/" "/", "");
+    xs *s1  = xs_replace(s, "https:/" "/", "");
     xs *l   = xs_split(s1, "/");
-    char *p = xs_list_get(l, 0);
+    const char *p = xs_list_get(l, 0);
     xs *md5 = xs_md5_hex(p, strlen(p));
 
     return xs_fmt("%s/block/%s", srv_basedir, md5);
@@ -2049,20 +2277,20 @@ int instance_unblock(const char *instance)
 }
 
 
-/** content filtering **/
+/** operations by content **/
 
-int content_check(const char *file, const xs_dict *msg)
+int content_match(const char *file, const xs_dict *msg)
 /* checks if a message's content matches any of the regexes in file */
 /* file format: one regex per line */
 {
     xs *fn = xs_fmt("%s/%s", srv_basedir, file);
     FILE *f;
     int r = 0;
-    char *v = xs_dict_get(msg, "content");
+    const char *v = xs_dict_get(msg, "content");
 
     if (xs_type(v) == XSTYPE_STRING && *v) {
         if ((f = fopen(fn, "r")) != NULL) {
-            srv_debug(1, xs_fmt("content_check: loading regexes from %s", fn));
+            srv_debug(1, xs_fmt("content_match: loading regexes from %s", fn));
 
             /* massage content (strip HTML tags, etc.) */
             xs *c = xs_regex_replace(v, "<[^>]+>", " ");
@@ -2072,19 +2300,128 @@ int content_check(const char *file, const xs_dict *msg)
             while (!r && !feof(f)) {
                 xs *rx = xs_strip_i(xs_readline(f));
 
-                if (*rx) {
-                    xs *l = xs_regex_select_n(c, rx, 1);
-
-                    if (xs_list_len(l)) {
-                        srv_debug(1, xs_fmt("content_check: match for '%s'", rx));
-                        r = 1;
-                    }
+                if (*rx && xs_regex_match(c, rx)) {
+                    srv_debug(1, xs_fmt("content_match: match for '%s'", rx));
+                    r = 1;
                 }
             }
 
             fclose(f);
         }
     }
+
+    return r;
+}
+
+
+xs_list *content_search(snac *user, const char *regex,
+                int priv, int skip, int show, int max_secs, int *timeout)
+/* returns a list of posts which content matches the regex */
+{
+    if (regex == NULL || *regex == '\0')
+        return xs_list_new();
+
+    xs *i_regex = xs_tolower_i(xs_dup(regex));
+
+    xs_set seen;
+
+    xs_set_init(&seen);
+
+    if (max_secs == 0)
+        max_secs = 3;
+
+    time_t t = time(NULL) + max_secs;
+    *timeout = 0;
+
+    /* iterate all timelines simultaneously */
+    xs_list *tls[3] = {0};
+    const char *md5s[3] = {0};
+    int c[3] = {0};
+
+    tls[0] = timeline_simple_list(user, "public", 0, XS_ALL);   /* public */
+    tls[1] = timeline_instance_list(0, XS_ALL); /* instance */
+    tls[2] = priv ? timeline_simple_list(user, "private", 0, XS_ALL) : xs_list_new(); /* private or none */
+
+    /* first positioning */
+    for (int n = 0; n < 3; n++)
+        xs_list_next(tls[n], &md5s[n], &c[n]);
+
+    show += skip;
+
+    while (show > 0) {
+        /* timeout? */
+        if (time(NULL) > t) {
+            *timeout = 1;
+            break;
+        }
+
+        /* find the newest post */
+        int newest = -1;
+        double mtime = 0.0;
+
+        for (int n = 0; n < 3; n++) {
+            if (md5s[n] != NULL) {
+                xs *fn = _object_fn_by_md5(md5s[n], "content_search");
+                double mt = mtime(fn);
+
+                if (mt > mtime) {
+                    newest = n;
+                    mtime = mt;
+                }
+            }
+        }
+
+        if (newest == -1)
+            break;
+
+        const char *md5 = md5s[newest];
+
+        /* advance the chosen timeline */
+        if (!xs_list_next(tls[newest], &md5s[newest], &c[newest]))
+            md5s[newest] = NULL;
+
+        xs *post = NULL;
+
+        if (!valid_status(object_get_by_md5(md5, &post)))
+            continue;
+
+        if (!xs_match(xs_dict_get_def(post, "type", "-"), POSTLIKE_OBJECT_TYPE))
+            continue;
+
+        const char *id = xs_dict_get(post, "id");
+
+        if (id == NULL || is_hidden(user, id))
+            continue;
+
+        const char *content = xs_dict_get(post, "content");
+
+        if (xs_is_null(content))
+            continue;
+
+        /* strip HTML */
+        xs *c = xs_regex_replace(content, "<[^>]+>", " ");
+        c = xs_regex_replace_i(c, " {2,}", " ");
+        c = xs_tolower_i(c);
+
+        /* apply regex */
+        if (xs_regex_match(c, i_regex)) {
+            if (xs_set_add(&seen, md5) == 1)
+            show--;
+        }
+    }
+
+    xs_list *r = xs_set_result(&seen);
+
+    if (skip) {
+        /* BAD */
+        while (skip--) {
+            r = xs_list_del(r, 0);
+        }
+    }
+
+    xs_free(tls[0]);
+    xs_free(tls[1]);
+    xs_free(tls[2]);
 
     return r;
 }
@@ -2203,7 +2540,7 @@ xs_list *notify_list(snac *snac, int skip, int show)
             xs *spec = xs_fmt("%s/notify/" "*.json", snac->basedir);
             xs *lst  = xs_glob(spec, 1, 0);
             xs_list *p = lst;
-            char *v;
+            const char *v;
 
             while (xs_list_iter(&p, &v)) {
                 char *p = strrchr(v, '.');
@@ -2231,7 +2568,7 @@ int notify_new_num(snac *snac)
     int cnt = 0;
 
     xs_list *p = lst;
-    xs_str *v;
+    const xs_str *v;
 
     while (xs_list_iter(&p, &v)) {
         xs *id = xs_strip_i(xs_dup(v));
@@ -2253,7 +2590,7 @@ void notify_clear(snac *snac)
     xs *spec   = xs_fmt("%s/notify/" "*", snac->basedir);
     xs *lst    = xs_glob(spec, 0, 0);
     xs_list *p = lst;
-    xs_str *v;
+    const xs_str *v;
 
     while (xs_list_iter(&p, &v))
         unlink(v);
@@ -2309,7 +2646,7 @@ void enqueue_input(snac *snac, const xs_dict *msg, const xs_dict *req, int retri
 /* enqueues an input message */
 {
     xs *qmsg   = _new_qmsg("input", msg, retries);
-    char *ntid = xs_dict_get(qmsg, "ntid");
+    const char *ntid = xs_dict_get(qmsg, "ntid");
     xs *fn     = xs_fmt("%s/queue/%s.json", snac->basedir, ntid);
 
     qmsg = xs_dict_append(qmsg, "req", req);
@@ -2324,7 +2661,7 @@ void enqueue_shared_input(const xs_dict *msg, const xs_dict *req, int retries)
 /* enqueues an input message from the shared input */
 {
     xs *qmsg   = _new_qmsg("input", msg, retries);
-    char *ntid = xs_dict_get(qmsg, "ntid");
+    const char *ntid = xs_dict_get(qmsg, "ntid");
     xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
 
     qmsg = xs_dict_append(qmsg, "req", req);
@@ -2336,11 +2673,12 @@ void enqueue_shared_input(const xs_dict *msg, const xs_dict *req, int retries)
 
 
 void enqueue_output_raw(const char *keyid, const char *seckey,
-                        xs_dict *msg, xs_str *inbox, int retries, int p_status)
+                        const xs_dict *msg, const xs_str *inbox,
+                        int retries, int p_status)
 /* enqueues an output message to an inbox */
 {
     xs *qmsg   = _new_qmsg("output", msg, retries);
-    char *ntid = xs_dict_get(qmsg, "ntid");
+    const char *ntid = xs_dict_get(qmsg, "ntid");
     xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
 
     xs *ns = xs_number_new(p_status);
@@ -2360,7 +2698,8 @@ void enqueue_output_raw(const char *keyid, const char *seckey,
 }
 
 
-void enqueue_output(snac *snac, xs_dict *msg, xs_str *inbox, int retries, int p_status)
+void enqueue_output(snac *snac, const xs_dict *msg,
+                    const xs_str *inbox, int retries, int p_status)
 /* enqueues an output message to an inbox */
 {
     if (xs_startswith(inbox, snac->actor)) {
@@ -2368,13 +2707,14 @@ void enqueue_output(snac *snac, xs_dict *msg, xs_str *inbox, int retries, int p_
         return;
     }
 
-    char *seckey = xs_dict_get(snac->key, "secret");
+    const char *seckey = xs_dict_get(snac->key, "secret");
 
     enqueue_output_raw(snac->actor, seckey, msg, inbox, retries, p_status);
 }
 
 
-void enqueue_output_by_actor(snac *snac, xs_dict *msg, const xs_str *actor, int retries)
+void enqueue_output_by_actor(snac *snac, const xs_dict *msg,
+                            const xs_str *actor, int retries)
 /* enqueues an output message for an actor */
 {
     xs *inbox = get_actor_inbox(actor);
@@ -2386,11 +2726,11 @@ void enqueue_output_by_actor(snac *snac, xs_dict *msg, const xs_str *actor, int 
 }
 
 
-void enqueue_email(xs_str *msg, int retries)
+void enqueue_email(const xs_str *msg, int retries)
 /* enqueues an email message to be sent */
 {
     xs *qmsg   = _new_qmsg("email", msg, retries);
-    char *ntid = xs_dict_get(qmsg, "ntid");
+    const char *ntid = xs_dict_get(qmsg, "ntid");
     xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
 
     qmsg = _enqueue_put(fn, qmsg);
@@ -2403,7 +2743,7 @@ void enqueue_telegram(const xs_str *msg, const char *bot, const char *chat_id)
 /* enqueues a message to be sent via Telegram */
 {
     xs *qmsg   = _new_qmsg("telegram", msg, 0);
-    char *ntid = xs_dict_get(qmsg, "ntid");
+    const char *ntid = xs_dict_get(qmsg, "ntid");
     xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
 
     qmsg = xs_dict_append(qmsg, "bot",      bot);
@@ -2418,7 +2758,7 @@ void enqueue_ntfy(const xs_str *msg, const char *ntfy_server, const char *ntfy_t
 /* enqueues a message to be sent via ntfy */
 {
     xs *qmsg   = _new_qmsg("ntfy", msg, 0);
-    char *ntid = xs_dict_get(qmsg, "ntid");
+    const char *ntid = xs_dict_get(qmsg, "ntid");
     xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
 
     qmsg = xs_dict_append(qmsg, "ntfy_server", ntfy_server);
@@ -2434,7 +2774,7 @@ void enqueue_message(snac *snac, const xs_dict *msg)
 /* enqueues an output message */
 {
     xs *qmsg   = _new_qmsg("message", msg, 0);
-    char *ntid = xs_dict_get(qmsg, "ntid");
+    const char *ntid = xs_dict_get(qmsg, "ntid");
     xs *fn     = xs_fmt("%s/queue/%s.json", snac->basedir, ntid);
 
     qmsg = _enqueue_put(fn, qmsg);
@@ -2458,11 +2798,26 @@ void enqueue_close_question(snac *user, const char *id, int end_secs)
 }
 
 
+void enqueue_object_request(snac *user, const char *id, int forward_secs)
+/* enqueues the request of an object in the future */
+{
+    xs *qmsg = _new_qmsg("object_request", id, 0);
+    xs *ntid = tid(forward_secs);
+    xs *fn   = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+
+    qmsg = xs_dict_set(qmsg, "ntid", ntid);
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    snac_debug(user, 0, xs_fmt("enqueue_object_request %s %d", id, forward_secs));
+}
+
+
 void enqueue_verify_links(snac *user)
 /* enqueues a link verification */
 {
     xs *qmsg   = _new_qmsg("verify_links", "", 0);
-    char *ntid = xs_dict_get(qmsg, "ntid");
+    const char *ntid = xs_dict_get(qmsg, "ntid");
     xs *fn     = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
 
     qmsg = _enqueue_put(fn, qmsg);
@@ -2471,54 +2826,19 @@ void enqueue_verify_links(snac *user)
 }
 
 
-void enqueue_actor_refresh(snac *user, const char *actor)
+void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs)
 /* enqueues an actor refresh */
 {
-    xs *qmsg   = _new_qmsg("actor_refresh", "", 0);
-    char *ntid = xs_dict_get(qmsg, "ntid");
-    xs *fn     = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+    xs *qmsg = _new_qmsg("actor_refresh", "", 0);
+    xs *ntid = tid(forward_secs);
+    xs *fn   = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
 
+    qmsg = xs_dict_set(qmsg, "ntid", ntid);
     qmsg = xs_dict_append(qmsg, "actor", actor);
 
     qmsg = _enqueue_put(fn, qmsg);
 
     snac_debug(user, 1, xs_fmt("enqueue_actor_refresh %s", actor));
-}
-
-
-void enqueue_request_replies(snac *user, const char *id)
-/* enqueues a request for the replies of a message */
-{
-    /* test first if this precise request is already in the queue */
-    xs *queue = user_queue(user);
-    xs_list *p = queue;
-    xs_str *v;
-
-    while (xs_list_iter(&p, &v)) {
-        xs *q_item = queue_get(v);
-
-        if (q_item != NULL) {
-            const char *type = xs_dict_get(q_item, "type");
-            const char *msg  = xs_dict_get(q_item, "message");
-
-            if (type && msg && strcmp(type, "request_replies") == 0 && strcmp(msg, id) == 0) {
-                /* don't requeue */
-                snac_debug(user, 1, xs_fmt("enqueue_request_replies already here %s", id));
-                return;
-            }
-        }
-    }
-
-    /* not there; enqueue the request with a small delay */
-    xs *qmsg = _new_qmsg("request_replies", id, 0);
-    xs *ntid = tid(10);
-    xs *fn   = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
-
-    qmsg = xs_dict_set(qmsg, "ntid", ntid);
-
-    qmsg = _enqueue_put(fn, qmsg);
-
-    snac_debug(user, 2, xs_fmt("enqueue_request_replies %s", id));
 }
 
 
@@ -2528,14 +2848,14 @@ int was_question_voted(snac *user, const char *id)
     xs *children = object_children(id);
     int voted = 0;
     xs_list *p;
-    xs_str *md5;
+    const xs_str *md5;
 
     p = children;
     while (xs_list_iter(&p, &md5)) {
         xs *obj = NULL;
 
         if (valid_status(object_get_by_md5(md5, &obj))) {
-            char *atto = get_atto(obj);
+            const char *atto = get_atto(obj);
             if (atto && strcmp(atto, user->actor) == 0 &&
                 !xs_is_null(xs_dict_get(obj, "name"))) {
                 voted = 1;
@@ -2555,7 +2875,7 @@ xs_list *user_queue(snac *snac)
     xs_list *list = xs_list_new();
     time_t t      = time(NULL);
     xs_list *p;
-    xs_val *v;
+    const xs_val *v;
 
     xs *fns = xs_glob(spec, 0, 0);
 
@@ -2584,7 +2904,7 @@ xs_list *queue(void)
     xs_list *list = xs_list_new();
     time_t t      = time(NULL);
     xs_list *p;
-    xs_val *v;
+    const xs_val *v;
 
     xs *fns = xs_glob(spec, 0, 0);
 
@@ -2660,7 +2980,7 @@ static void _purge_dir(const char *dir, int days)
         xs *spec  = xs_fmt("%s/" "*", dir);
         xs *list  = xs_glob(spec, 0, 0);
         xs_list *p;
-        xs_str *v;
+        const xs_str *v;
 
         p = list;
         while (xs_list_iter(&p, &v))
@@ -2686,7 +3006,7 @@ void purge_server(void)
     xs *spec = xs_fmt("%s/object/??", srv_basedir);
     xs *dirs = xs_glob(spec, 0, 0);
     xs_list *p;
-    xs_str *v;
+    const xs_str *v;
     int cnt = 0;
     int icnt = 0;
 
@@ -2695,7 +3015,7 @@ void purge_server(void)
     p = dirs;
     while (xs_list_iter(&p, &v)) {
         xs_list *p2;
-        xs_str *v2;
+        const xs_str *v2;
 
         {
             xs *spec2 = xs_fmt("%s/" "*.json", v);
@@ -2709,7 +3029,7 @@ void purge_server(void)
                 if (mtime_nl(v2, &n_link) < mt && n_link < 2) {
                     xs *s1    = xs_replace(v2, ".json", "");
                     xs *l     = xs_split(s1, "/");
-                    char *md5 = xs_list_get(l, -1);
+                    const char *md5 = xs_list_get(l, -1);
 
                     object_del_by_md5(md5);
                     cnt++;
@@ -2743,6 +3063,16 @@ void purge_server(void)
                     }
                 }
             }
+
+            /* delete index backups */
+            xs *specb = xs_fmt("%s/" "*.bak", v);
+            xs *bakfs = xs_glob(specb, 0, 0);
+
+            p2 = bakfs;
+            while (xs_list_iter(&p2, &v2)) {
+                unlink(v2);
+                srv_debug(1, xs_fmt("purged %s", v2));
+            }
         }
     }
 
@@ -2764,7 +3094,7 @@ void purge_server(void)
         xs *spec2 = xs_fmt("%s/" "*.idx", v);
         xs *files = xs_glob(spec2, 0, 0);
         xs_list *p2;
-        xs_str *v2;
+        const xs_str *v2;
 
         p2 = files;
         while (xs_list_iter(&p2, &v2)) {
@@ -2791,7 +3121,7 @@ void purge_user(snac *snac)
 /* do the purge for this user */
 {
     int priv_days, pub_days, user_days = 0;
-    char *v;
+    const char *v;
     int n;
 
     priv_days = xs_number_get(xs_dict_get(srv_config, "timeline_purge_days"));
@@ -2823,6 +3153,19 @@ void purge_user(snac *snac)
         srv_debug(1, xs_fmt("purge: %s %d", idx, gc));
     }
 
+    /* purge lists */
+    {
+        xs *spec = xs_fmt("%s/list/" "*.idx", snac->basedir);
+        xs *lol  = xs_glob(spec, 0, 0);
+        int c = 0;
+        const char *v;
+
+        while (xs_list_next(lol, &v, &c)) {
+            int gc = index_gc(v);
+            srv_debug(1, xs_fmt("purge: %s %d", v, gc));
+        }
+    }
+
     /* unrelated to purging, but it's a janitorial process, so what the hell */
     verify_links(snac);
 }
@@ -2833,7 +3176,8 @@ void purge_all(void)
 {
     snac snac;
     xs *list = user_list();
-    char *p, *uid;
+    char *p;
+    const char *uid;
 
     p = list;
     while (xs_list_iter(&p, &uid)) {
@@ -2887,7 +3231,7 @@ void srv_archive(const char *direction, const char *url, xs_dict *req,
         if (p_size && payload) {
             xs *payload_fn = NULL;
             xs *payload_fn_raw = NULL;
-            char *v = xs_dict_get(req, "content-type");
+            const char *v = xs_dict_get(req, "content-type");
 
             if (v && xs_str_in(v, "json") != -1) {
                 payload_fn = xs_fmt("%s/payload.json", dir);
@@ -2918,7 +3262,7 @@ void srv_archive(const char *direction, const char *url, xs_dict *req,
 
         if (b_size && body) {
             xs *body_fn = NULL;
-            char *v = xs_dict_get(headers, "content-type");
+            const char *v = xs_dict_get(headers, "content-type");
 
             if (v && xs_str_in(v, "json") != -1) {
                 body_fn = xs_fmt("%s/body.json", dir);
@@ -2987,7 +3331,7 @@ void srv_archive_error(const char *prefix, const xs_str *err,
 }
 
 
-void srv_archive_qitem(char *prefix, xs_dict *q_item)
+void srv_archive_qitem(const char *prefix, xs_dict *q_item)
 /* archives a q_item in the error folder */
 {
     xs *ntid = tid(0);

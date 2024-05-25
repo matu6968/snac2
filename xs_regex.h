@@ -4,6 +4,7 @@
 
 #define _XS_REGEX_H
 
+int xs_regex_match(const char *str, const char *rx);
 xs_list *xs_regex_split_n(const char *str, const char *rx, int count);
 #define xs_regex_split(str, rx) xs_regex_split_n(str, rx, XS_ALL)
 xs_list *xs_regex_select_n(const char *str, const char *rx, int count);
@@ -15,21 +16,29 @@ xs_list *xs_regex_replace_in(xs_str *str, const char *rx, const char *rep, int c
 
 #ifdef XS_IMPLEMENTATION
 
+#ifdef __TINYC__
+/* fix a compilation error in tcc */
+#define _REGEX_NELTS(n)
+#endif
+
 #include <regex.h>
 
 xs_list *xs_regex_split_n(const char *str, const char *rx, int count)
-/* splits str by regex */
+/* splits str using regex as a separator, at most count times.
+    Always returns a list:
+    len == 0: regcomp error
+    len == 1: full string (no matches)
+    len == odd: first part [ separator / next part ]...
+*/
 {
     regex_t re;
     regmatch_t rm;
     int offset = 0;
-    xs_list *list = NULL;
+    xs_list *list = xs_list_new();
     const char *p;
 
     if (regcomp(&re, rx, REG_EXTENDED))
-        return NULL;
-
-    list = xs_list_new();
+        return list;
 
     while (count > 0 && !regexec(&re, (p = str + offset), 1, &rm, offset > 0 ? REG_NOTBOL : 0)) {
         /* add first the leading part of the string */
@@ -60,16 +69,15 @@ xs_list *xs_regex_select_n(const char *str, const char *rx, int count)
 {
     xs_list *list = xs_list_new();
     xs *split = NULL;
-    xs_list *p;
-    xs_val *v;
+    const xs_val *v;
     int n = 0;
+    int c = 0;
 
     /* split */
     split = xs_regex_split_n(str, rx, count);
 
     /* now iterate to get only the 'separators' (odd ones) */
-    p = split;
-    while (xs_list_iter(&p, &v)) {
+    while (xs_list_next(split, &v, &c)) {
         if (n & 0x1)
             list = xs_list_append(list, v);
 
@@ -86,13 +94,12 @@ xs_list *xs_regex_replace_in(xs_str *str, const char *rx, const char *rep, int c
 {
     xs_str *s = xs_str_new(NULL);
     xs *split = xs_regex_split_n(str, rx, count);
-    xs_list *p;
-    xs_val *v;
+    const xs_val *v;
     int n = 0;
+    int c = 0;
     int pholder = !!strchr(rep, '&');
 
-    p = split;
-    while (xs_list_iter(&p, &v)) {
+    while (xs_list_next(split, &v, &c)) {
         if (n & 0x1) {
             if (pholder) {
                 /* rep has a placeholder; process char by char */
@@ -127,6 +134,16 @@ xs_list *xs_regex_replace_in(xs_str *str, const char *rx, const char *rep, int c
 
     return s;
 }
+
+
+int xs_regex_match(const char *str, const char *rx)
+/* returns if str matches the regex at least once */
+{
+    xs *l = xs_regex_select_n(str, rx, 1);
+
+    return xs_list_len(l) == 1;
+}
+
 
 #endif /* XS_IMPLEMENTATION */
 

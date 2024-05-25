@@ -28,7 +28,7 @@ static size_t _header_callback(char *buffer, size_t size,
     if (xs_str_in(l, ": ") != -1) {
         xs *knv = xs_split_n(l, ": ", 1);
 
-        xs_tolower_i(xs_list_get(knv, 0));
+        xs_tolower_i((xs_str *)xs_list_get(knv, 0));
 
         headers = xs_dict_set(headers, xs_list_get(knv, 0), xs_list_get(knv, 1));
     }
@@ -93,8 +93,8 @@ xs_dict *xs_http_request(const char *method, const char *url,
     xs_dict *response;
     CURL *curl;
     struct curl_slist *list = NULL;
-    xs_str *k;
-    xs_val *v;
+    const xs_str *k;
+    const xs_val *v;
     long lstatus = 0;
     struct _payload_data pd;
 

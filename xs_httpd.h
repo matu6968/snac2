@@ -16,7 +16,7 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
     xs *q_vars = NULL;
     xs *p_vars = NULL;
     xs *l1, *l2;
-    char *v;
+    const char *v;
 
     xs_socket_timeout(fileno(f), 2.0, 0.0);
 
@@ -60,7 +60,8 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
         p = xs_split_n(l, ": ", 1);
 
         if (xs_list_len(p) == 2)
-            req = xs_dict_append(req, xs_tolower_i(xs_list_get(p, 0)), xs_list_get(p, 1));
+            req = xs_dict_append(req, xs_tolower_i(
+                    (xs_str *)xs_list_get(p, 0)), xs_list_get(p, 1));
     }
 
     xs_socket_timeout(fileno(f), 5.0, 0.0);
@@ -98,8 +99,8 @@ void xs_httpd_response(FILE *f, int status, xs_dict *headers, xs_str *body, int 
 /* sends an httpd response */
 {
     xs *proto;
-    xs_str *k;
-    xs_val *v;
+    const xs_str *k;
+    const xs_val *v;
 
     proto = xs_fmt("HTTP/1.1 %d %s", status, status / 100 == 2 ? "OK" : "ERROR");
     fprintf(f, "%s\r\n", proto);

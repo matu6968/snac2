@@ -51,12 +51,11 @@ xs_dict *xs_url_vars(const char *str)
         /* split by arguments */
         xs *args = xs_split(str, "&");
 
-        xs_list *l;
-        xs_val *v;
+        int ct = 0;
+        const xs_val *v;
 
-        l = args;
-        while (xs_list_iter(&l, &v)) {
-            xs *kv = xs_split_n(v, "=", 2);
+        while (xs_list_next(args, &v, &ct)) {
+            xs *kv = xs_split_n(v, "=", 1);
 
             if (xs_list_len(kv) == 2) {
                 const char *key = xs_list_get(kv, 0);
@@ -119,8 +118,8 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
     while ((p = xs_memmem(payload + offset, p_size - offset, boundary, bsz)) != NULL) {
         xs *s1 = NULL;
         xs *l1 = NULL;
-        char *vn = NULL;
-        char *fn = NULL;
+        const char *vn = NULL;
+        const char *fn = NULL;
         char *q;
         int po, ps;
 

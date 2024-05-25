@@ -6,26 +6,26 @@
 
 typedef struct xs_html xs_html;
 
-xs_str *xs_html_encode(char *str);
+xs_str *xs_html_encode(const char *str);
 
-xs_html *xs_html_attr(char *key, char *value);
-xs_html *xs_html_text(char *content);
-xs_html *xs_html_raw(char *content);
+xs_html *xs_html_attr(const char *key, const char *value);
+xs_html *xs_html_text(const char *content);
+xs_html *xs_html_raw(const char *content);
 
 xs_html *_xs_html_add(xs_html *tag, xs_html *var[]);
 #define xs_html_add(tag, ...) _xs_html_add(tag, (xs_html *[]) { __VA_ARGS__, NULL })
 
-xs_html *_xs_html_tag(char *tag, xs_html *var[]);
+xs_html *_xs_html_tag(const char *tag, xs_html *var[]);
 #define xs_html_tag(tag, ...) _xs_html_tag(tag, (xs_html *[]) { __VA_ARGS__, NULL })
 
-xs_html *_xs_html_sctag(char *tag, xs_html *var[]);
+xs_html *_xs_html_sctag(const char *tag, xs_html *var[]);
 #define xs_html_sctag(tag, ...) _xs_html_sctag(tag, (xs_html *[]) { __VA_ARGS__, NULL })
 
 xs_html *_xs_html_container(xs_html *var[]);
 #define xs_html_container(...) _xs_html_container((xs_html *[]) { __VA_ARGS__, NULL })
 
 void xs_html_render_f(xs_html *h, FILE *f);
-xs_str *xs_html_render_s(xs_html *tag, char *prefix);
+xs_str *xs_html_render_s(xs_html *tag, const char *prefix);
 #define xs_html_render(tag) xs_html_render_s(tag, NULL)
 
 
@@ -47,16 +47,16 @@ struct xs_html {
     xs_html *next;
 };
 
-xs_str *xs_html_encode(char *str)
+xs_str *xs_html_encode(const char *str)
 /* encodes str using HTML entities */
 {
     xs_str *s = xs_str_new(NULL);
     int o = 0;
-    char *e = str + strlen(str);
+    const char *e = str + strlen(str);
 
     for (;;) {
         char *ec = "<>\"'&";   /* characters to escape */
-        char *q = e;
+        const char *q = e;
         int z;
 
         /* find the nearest happening of a char */
@@ -90,7 +90,7 @@ xs_str *xs_html_encode(char *str)
 
 #define XS_HTML_NEW() memset(xs_realloc(NULL, sizeof(xs_html)), '\0', sizeof(xs_html))
 
-xs_html *xs_html_attr(char *key, char *value)
+xs_html *xs_html_attr(const char *key, const char *value)
 /* creates an HTML block with an attribute */
 {
     xs_html *a = XS_HTML_NEW();
@@ -108,7 +108,7 @@ xs_html *xs_html_attr(char *key, char *value)
 }
 
 
-xs_html *xs_html_text(char *content)
+xs_html *xs_html_text(const char *content)
 /* creates an HTML block of text, escaping it previously */
 {
     xs_html *a = XS_HTML_NEW();
@@ -120,7 +120,7 @@ xs_html *xs_html_text(char *content)
 }
 
 
-xs_html *xs_html_raw(char *content)
+xs_html *xs_html_raw(const char *content)
 /* creates an HTML block without escaping (for pre-formatted HTML, comments, etc) */
 {
     xs_html *a = XS_HTML_NEW();
@@ -152,7 +152,7 @@ xs_html *_xs_html_add(xs_html *tag, xs_html *var[])
 }
 
 
-static xs_html *_xs_html_tag_t(xs_html_type type, char *tag, xs_html *var[])
+static xs_html *_xs_html_tag_t(xs_html_type type, const char *tag, xs_html *var[])
 /* creates a tag with a variable list of attributes and subtags */
 {
     xs_html *a = XS_HTML_NEW();
@@ -169,13 +169,13 @@ static xs_html *_xs_html_tag_t(xs_html_type type, char *tag, xs_html *var[])
 }
 
 
-xs_html *_xs_html_tag(char *tag, xs_html *var[])
+xs_html *_xs_html_tag(const char *tag, xs_html *var[])
 {
     return _xs_html_tag_t(XS_HTML_TAG, tag, var);
 }
 
 
-xs_html *_xs_html_sctag(char *tag, xs_html *var[])
+xs_html *_xs_html_sctag(const char *tag, xs_html *var[])
 {
     return _xs_html_tag_t(XS_HTML_SCTAG, tag, var);
 }
@@ -239,7 +239,7 @@ void xs_html_render_f(xs_html *h, FILE *f)
 }
 
 
-xs_str *xs_html_render_s(xs_html *tag, char *prefix)
+xs_str *xs_html_render_s(xs_html *tag, const char *prefix)
 /* renders to a string */
 {
     xs_str *s = NULL;

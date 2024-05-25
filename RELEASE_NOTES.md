@@ -1,8 +1,28 @@
 # Release Notes
 
+## 2.53
+
+New user feature to search by post content (using regular expressions) or tag.
+
+Added some (partial) support for `Event` object types.
+
+Minor fixes: Allow unboosting your own posts (contributed by khm), CSS fixes for the Dillo browser (contributed by kvibber).
+
 ## 2.52
 
 Posts that were liked or boosted can now be unliked and unboosted.
+
+Outgoing message timeouts are no longer hardcoded and can be configured (see `snac(8)` for more information).
+
+Fixed a bug that caused some incorrect unfollows under special conditions (with shared inboxes enabled and users from the same instance that follow each other, the internal message distributor was confused).
+
+Mastodon API: Added support for lists.
+
+Added a header to avoid over-zealous caching in some browsers (contributed by louis77).
+
+Added support for running and federating inside hidden networks like Tor, I2P or Loki (contributed by iwojima).
+
+Fixed an error processing polls coming from Pleroma instances.
 
 ## 2.51
 
