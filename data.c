@@ -355,12 +355,12 @@ int is_md5_hex(const char *md5)
 int index_add_md5(const char *fn, const char *md5)
 /* adds an md5 to an index */
 {
-    int status = 201; /* Created */
+    int status = HTTP_STATUS_CREATED;
     FILE *f;
 
     if (!is_md5_hex(md5)) {
         srv_log(xs_fmt("index_add_md5: bad md5 %s %s", fn, md5));
-        return 400;
+        return HTTP_STATUS_BAD_REQUEST;
     }
 
     pthread_mutex_lock(&data_mutex);
@@ -375,7 +375,7 @@ int index_add_md5(const char *fn, const char *md5)
         fclose(f);
     }
     else
-        status = 500;
+        status = HTTP_STATUS_INTERNAL_SERVER_ERROR;
 
     pthread_mutex_unlock(&data_mutex);
 
@@ -394,7 +394,7 @@ int index_add(const char *fn, const char *id)
 int index_del_md5(const char *fn, const char *md5)
 /* deletes an md5 from an index */
 {
-    int status = 404;
+    int status = HTTP_STATUS_NOT_FOUND;
     FILE *f;
 
     pthread_mutex_lock(&data_mutex);
@@ -411,7 +411,7 @@ int index_del_md5(const char *fn, const char *md5)
                    [yes: this breaks index_len()] */
                 fseek(f, -33, SEEK_CUR);
                 fwrite("-", 1, 1, f);
-                status = 200;
+                status = HTTP_STATUS_OK;
 
                 break;
             }
@@ -420,7 +420,7 @@ int index_del_md5(const char *fn, const char *md5)
         fclose(f);
     }
     else
-        status = 410;
+        status = HTTP_STATUS_GONE;
 
     pthread_mutex_unlock(&data_mutex);
 
@@ -660,7 +660,7 @@ int object_here(const char *id)
 int object_get_by_md5(const char *md5, xs_dict **obj)
 /* returns a stored object, optionally of the requested type */
 {
-    int status = 404;
+    int status = HTTP_STATUS_NOT_FOUND;
     xs *fn     = _object_fn_by_md5(md5, "object_get_by_md5");
     FILE *f;
 
@@ -669,7 +669,7 @@ int object_get_by_md5(const char *md5, xs_dict **obj)
         fclose(f);
 
         if (*obj)
-            status = 200;
+            status = HTTP_STATUS_OK;
     }
     else
         *obj = NULL;
@@ -689,7 +689,7 @@ int object_get(const char *id, xs_dict **obj)
 int _object_add(const char *id, const xs_dict *obj, int ow)
 /* stores an object */
 {
-    int status = 201; /* Created */
+    int status = HTTP_STATUS_CREATED; /* Created */
     xs *fn     = _object_fn(id);
     FILE *f;
 
@@ -697,10 +697,10 @@ int _object_add(const char *id, const xs_dict *obj, int ow)
         if (!ow) {
             /* object already here */
             srv_debug(1, xs_fmt("object_add object already here %s", id));
-            return 204; /* No content */
+            return HTTP_STATUS_NO_CONTENT;
         }
         else
-            status = 200;
+            status = HTTP_STATUS_OK;
     }
 
     if ((f = fopen(fn, "w")) != NULL) {
@@ -736,7 +736,7 @@ int _object_add(const char *id, const xs_dict *obj, int ow)
     }
     else {
         srv_log(xs_fmt("object_add error writing %s (errno: %d)", fn, errno));
-        status = 500;
+        status = HTTP_STATUS_INTERNAL_SERVER_ERROR;
     }
 
     srv_debug(1, xs_fmt("object_add %s %s %d", id, fn, status));
@@ -762,11 +762,11 @@ int object_add_ow(const char *id, const xs_dict *obj)
 int object_del_by_md5(const char *md5)
 /* deletes an object by its md5 */
 {
-    int status = 404;
+    int status = HTTP_STATUS_NOT_FOUND;
     xs *fn     = _object_fn_by_md5(md5, "object_del_by_md5");
 
     if (unlink(fn) != -1) {
-        status = 200;
+        status = HTTP_STATUS_OK;
 
         /* also delete associated indexes */
         xs *spec  = xs_dup(fn);
@@ -907,7 +907,7 @@ int object_parent(const char *md5, char *buf, int size)
 int object_admire(const char *id, const char *actor, int like)
 /* actor likes or announces this object */
 {
-    int status = 200;
+    int status = HTTP_STATUS_OK;
     xs *fn     = _object_fn(id);
 
     fn = xs_replace_i(fn, ".json", like ? "_l.idx" : "_a.idx");
@@ -1007,7 +1007,7 @@ int follower_add(snac *snac, const char *actor)
 
     snac_debug(snac, 2, xs_fmt("follower_add %s", actor));
 
-    return ret == -1 ? 500 : 200;
+    return ret == -1 ? HTTP_STATUS_INTERNAL_SERVER_ERROR : HTTP_STATUS_OK;
 }
 
 
@@ -1018,7 +1018,7 @@ int follower_del(snac *snac, const char *actor)
 
     snac_debug(snac, 2, xs_fmt("follower_del %s", actor));
 
-    return ret == -1 ? 404 : 200;
+    return ret == -1 ? HTTP_STATUS_NOT_FOUND : HTTP_STATUS_OK;
 }
 
 
@@ -1109,7 +1109,7 @@ int timeline_here(snac *snac, const char *md5)
 int timeline_get_by_md5(snac *snac, const char *md5, xs_dict **msg)
 /* gets a message from the timeline */
 {
-    int status = 404;
+    int status = HTTP_STATUS_NOT_FOUND;
     FILE *f    = NULL;
 
     xs *fn = timeline_fn_by_md5(snac, md5);
@@ -1119,7 +1119,7 @@ int timeline_get_by_md5(snac *snac, const char *md5, xs_dict **msg)
         fclose(f);
 
         if (*msg != NULL)
-            status = 200;
+            status = HTTP_STATUS_OK;
     }
 
     return status;
@@ -1282,7 +1282,7 @@ xs_str *_following_fn(snac *snac, const char *actor)
 int following_add(snac *snac, const char *actor, const xs_dict *msg)
 /* adds to the following list */
 {
-    int ret = 201; /* created */
+    int ret = HTTP_STATUS_CREATED;
     xs *fn = _following_fn(snac, actor);
     FILE *f;
     xs *p_object = NULL;
@@ -1295,7 +1295,7 @@ int following_add(snac *snac, const char *actor, const xs_dict *msg)
 
         if (!xs_is_null(type) && strcmp(type, "Accept") == 0) {
             snac_debug(snac, 1, xs_fmt("following_add actor already confirmed %s", actor));
-            return 200;
+            return HTTP_STATUS_OK;
         }
     }
 
@@ -1311,7 +1311,7 @@ int following_add(snac *snac, const char *actor, const xs_dict *msg)
         link(actor_fn, fn);
     }
     else
-        ret = 500;
+        ret = HTTP_STATUS_INTERNAL_SERVER_ERROR;
 
     snac_debug(snac, 2, xs_fmt("following_add %s %s", actor, fn));
 
@@ -1332,7 +1332,7 @@ int following_del(snac *snac, const char *actor)
     fn = xs_replace_i(fn, ".json", "_a.json");
     unlink(fn);
 
-    return 200;
+    return HTTP_STATUS_OK;
 }
 
 
@@ -1350,14 +1350,14 @@ int following_get(snac *snac, const char *actor, xs_dict **data)
 {
     xs *fn = _following_fn(snac, actor);
     FILE *f;
-    int status = 200;
+    int status = HTTP_STATUS_OK;
 
     if ((f = fopen(fn, "r")) != NULL) {
         *data = xs_json_load(f);
         fclose(f);
     }
     else
-        status = 404;
+        status = HTTP_STATUS_NOT_FOUND;
 
     return status;
 }
@@ -1576,7 +1576,7 @@ int actor_add(const char *actor, const xs_dict *msg)
 int actor_get(const char *actor, xs_dict **data)
 /* returns an already downloaded actor */
 {
-    int status = 200;
+    int status = HTTP_STATUS_OK;
     xs_dict *d = NULL;
 
     if (xs_startswith(actor, srv_baseurl)) {
@@ -1590,10 +1590,10 @@ int actor_get(const char *actor, xs_dict **data)
                 *data = msg_actor(&user);
 
             user_free(&user);
-            return 200;
+            return HTTP_STATUS_OK;
         }
         else
-            return 404;
+            return HTTP_STATUS_NOT_FOUND;
     }
 
     /* read the object */
@@ -1606,7 +1606,7 @@ int actor_get(const char *actor, xs_dict **data)
     if (xs_is_null(xs_dict_get(d, "id")) || xs_is_null(xs_dict_get(d, "type"))) {
         srv_debug(1, xs_fmt("corrupted actor object %s", actor));
         d = xs_free(d);
-        return 404;
+        return HTTP_STATUS_NOT_FOUND;
     }
 
     if (data)
@@ -1622,7 +1622,7 @@ int actor_get(const char *actor, xs_dict **data)
 
     if (mtime(fn) + max_time < (double) time(NULL)) {
         /* actor data exists but also stinks */
-        status = 205; /* "205: Reset Content" "110: Response Is Stale" */
+        status = HTTP_STATUS_RESET_CONTENT; /* "110: Response Is Stale" */
     }
 
     return status;
@@ -1634,7 +1634,7 @@ int actor_get_refresh(snac *user, const char *actor, xs_dict **data)
 {
     int status = actor_get(actor, data);
 
-    if (status == 205 && user && !xs_startswith(actor, srv_baseurl))
+    if (status == HTTP_STATUS_RESET_CONTENT && user && !xs_startswith(actor, srv_baseurl))
         enqueue_actor_refresh(user, actor, 0);
 
     return status;
@@ -1953,7 +1953,7 @@ static int _load_raw_file(const char *fn, xs_val **data, int *size,
                         const char *inm, xs_str **etag)
 /* loads a cached file */
 {
-    int status = 404;
+    int status = HTTP_STATUS_NOT_FOUND;
 
     if (fn) {
         double tm = mtime(fn);
@@ -1965,7 +1965,7 @@ static int _load_raw_file(const char *fn, xs_val **data, int *size,
             /* if if-none-match is set, check if it's the same */
             if (!xs_is_null(inm) && strcmp(e, inm) == 0) {
                 /* client has the newest version */
-                status = 304;
+                status = HTTP_STATUS_NOT_MODIFIED;
             }
             else {
                 /* newer or never downloaded; read the full file */
@@ -1976,7 +1976,7 @@ static int _load_raw_file(const char *fn, xs_val **data, int *size,
                     *data = xs_read(f, size);
                     fclose(f);
 
-                    status = 200;
+                    status = HTTP_STATUS_OK;
                 }
             }
 

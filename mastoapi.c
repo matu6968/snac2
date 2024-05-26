@@ -32,9 +32,9 @@ int app_add(const char *id, const xs_dict *app)
 /* stores an app */
 {
     if (!xs_is_hex(id))
-        return 500;
+        return HTTP_STATUS_INTERNAL_SERVER_ERROR;
 
-    int status = 201;
+    int status = HTTP_STATUS_CREATED;
     xs *fn     = xs_fmt("%s/app/", srv_basedir);
     FILE *f;
 
@@ -47,7 +47,7 @@ int app_add(const char *id, const xs_dict *app)
         fclose(f);
     }
     else
-        status = 500;
+        status = HTTP_STATUS_INTERNAL_SERVER_ERROR;
 
     return status;
 }
@@ -95,9 +95,9 @@ int token_add(const char *id, const xs_dict *token)
 /* stores a token */
 {
     if (!xs_is_hex(id))
-        return 500;
+        return HTTP_STATUS_INTERNAL_SERVER_ERROR;
 
-    int status = 201;
+    int status = HTTP_STATUS_CREATED;
     xs *fn     = xs_fmt("%s/token/", srv_basedir);
     FILE *f;
 
@@ -110,7 +110,7 @@ int token_add(const char *id, const xs_dict *token)
         fclose(f);
     }
     else
-        status = 500;
+        status = HTTP_STATUS_INTERNAL_SERVER_ERROR;
 
     return status;
 }
@@ -174,7 +174,7 @@ int oauth_get_handler(const xs_dict *req, const char *q_path,
     if (!xs_startswith(q_path, "/oauth/"))
         return 0;
 
-    int status   = 404;
+    int status   = HTTP_STATUS_NOT_FOUND;
     const xs_dict *msg = xs_dict_get(req, "q_vars");
     xs *cmd      = xs_replace_n(q_path, "/oauth", "", 1);
 
@@ -186,7 +186,7 @@ int oauth_get_handler(const xs_dict *req, const char *q_path,
         const char *rtype = xs_dict_get(msg, "response_type");
         const char *state = xs_dict_get(msg, "state");
 
-        status = 400;
+        status = HTTP_STATUS_BAD_REQUEST;
 
         if (cid && ruri && rtype && strcmp(rtype, "code") == 0) {
             xs *app = app_get(cid);
@@ -201,7 +201,7 @@ int oauth_get_handler(const xs_dict *req, const char *q_path,
                 *body  = xs_fmt(login_page, host, host, "", proto, host, "oauth/x-snac-login",
                                 ruri, cid, state, USER_AGENT);
                 *ctype = "text/html";
-                status = 200;
+                status = HTTP_STATUS_OK;
 
                 srv_debug(1, xs_fmt("oauth authorize: generating login page"));
             }
@@ -219,7 +219,7 @@ int oauth_get_handler(const xs_dict *req, const char *q_path,
         *body  = xs_fmt(login_page, host, host, "", proto, host, "oauth/x-snac-get-token",
                         "", "", "", USER_AGENT);
         *ctype = "text/html";
-        status = 200;
+        status = HTTP_STATUS_OK;
 
     }
 
@@ -237,7 +237,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
     if (!xs_startswith(q_path, "/oauth/"))
         return 0;
 
-    int status   = 404;
+    int status   = HTTP_STATUS_NOT_FOUND;
 
     const char *i_ctype = xs_dict_get(req, "content-type");
     xs *args      = NULL;
@@ -255,7 +255,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
         args = xs_dup(xs_dict_get(req, "p_vars"));
 
     if (args == NULL)
-        return 400;
+        return HTTP_STATUS_BAD_REQUEST;
 
     xs *cmd = xs_replace_n(q_path, "/oauth", "", 1);
 
@@ -274,7 +274,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
         *body  = xs_fmt(login_page, host, host, "LOGIN INCORRECT", proto, host, "oauth/x-snac-login",
                         redir, cid, state, USER_AGENT);
         *ctype = "text/html";
-        status = 200;
+        status = HTTP_STATUS_OK;
 
         if (login && passwd && redir && cid) {
             snac snac;
@@ -296,7 +296,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
                         else
                             *body = xs_fmt("%s?code=%s", redir, code);
 
-                        status = 303;
+                        status = HTTP_STATUS_SEE_OTHER;
                     }
 
                     /* if there is a state, add it */
@@ -375,12 +375,12 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
             xs *app = app_get(cid);
 
             if (app == NULL) {
-                status = 401;
+                status = HTTP_STATUS_UNAUTHORIZED;
                 srv_log(xs_fmt("oauth token: invalid app %s", cid));
             }
             else
             if (strcmp(csec, xs_dict_get(app, "client_secret")) != 0) {
-                status = 401;
+                status = HTTP_STATUS_UNAUTHORIZED;
                 srv_log(xs_fmt("oauth token: invalid client_secret for app %s", cid));
             }
             else {
@@ -397,7 +397,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
 
                 *body  = xs_json_dumps(rsp, 4);
                 *ctype = "application/json";
-                status = 200;
+                status = HTTP_STATUS_OK;
 
                 const char *uid = xs_dict_get(app, "uid");
 
@@ -416,7 +416,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
         }
         else {
             srv_debug(1, xs_fmt("oauth token: invalid or unset arguments"));
-            status = 400;
+            status = HTTP_STATUS_BAD_REQUEST;
         }
     }
     else
@@ -433,12 +433,12 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
 
             if (token == NULL || strcmp(csec, xs_dict_get(token, "client_secret")) != 0) {
                 srv_debug(1, xs_fmt("oauth revoke: bad secret for token %s", tokid));
-                status = 403;
+                status = HTTP_STATUS_FORBIDDEN;
             }
             else {
                 token_del(tokid);
                 srv_debug(1, xs_fmt("oauth revoke: revoked token %s", tokid));
-                status = 200;
+                status = HTTP_STATUS_OK;
 
                 /* also delete the app, as it serves no purpose from now on */
                 app_del(cid);
@@ -446,7 +446,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
         }
         else {
             srv_debug(1, xs_fmt("oauth revoke: invalid or unset arguments"));
-            status = 403;
+            status = HTTP_STATUS_FORBIDDEN;
         }
     }
     if (strcmp(cmd, "/x-snac-get-token") == 0) { /** **/
@@ -459,7 +459,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
         *body  = xs_fmt(login_page, host, host, "LOGIN INCORRECT", proto, host, "oauth/x-snac-get-token",
                         "", "", "", USER_AGENT);
         *ctype = "text/html";
-        status = 200;
+        status = HTTP_STATUS_OK;
 
         if (login && passwd) {
             snac user;
@@ -1159,7 +1159,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
         return 0;
 
-    int status    = 404;
+    int status    = HTTP_STATUS_NOT_FOUND;
     const xs_dict *args = xs_dict_get(req, "q_vars");
     xs *cmd       = xs_replace_n(q_path, "/api", "", 1);
 
@@ -1249,10 +1249,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_json_dumps(acct, 4);
             *ctype = "application/json";
-            status = 200;
+            status = HTTP_STATUS_OK;
         }
         else {
-            status = 422;   // "Unprocessable entity" (no login)
+            status = HTTP_STATUS_UNPROCESSABLE_CONTENT; // (no login)
         }
     }
     else
@@ -1279,10 +1279,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_json_dumps(res, 4);
             *ctype = "application/json";
-            status = 200;
+            status = HTTP_STATUS_OK;
         }
         else
-            status = 422;
+            status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
     }
     else
     if (strcmp(cmd, "/v1/accounts/lookup") == 0) { /** **/
@@ -1304,7 +1304,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                     *body  = xs_json_dumps(macct, 4);
                     *ctype = "application/json";
-                    status = 200;
+                    status = HTTP_STATUS_OK;
 
                     user_free(&user);
                 }
@@ -1450,7 +1450,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             if (out != NULL) {
                 *body  = xs_json_dumps(out, 4);
                 *ctype = "application/json";
-                status = 200;
+                status = HTTP_STATUS_OK;
             }
         }
     }
@@ -1554,12 +1554,12 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
-            status = 200;
+            status = HTTP_STATUS_OK;
 
             srv_debug(2, xs_fmt("mastoapi timeline: returned %d entries", xs_list_len(out)));
         }
         else {
-            status = 401; // unauthorized
+            status = HTTP_STATUS_UNAUTHORIZED;
         }
     }
     else
@@ -1612,7 +1612,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
         *body  = xs_json_dumps(out, 4);
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (xs_startswith(cmd, "/v1/timelines/tag/")) { /** **/
@@ -1661,7 +1661,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
         *body  = xs_json_dumps(out, 4);
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (xs_startswith(cmd, "/v1/timelines/list/")) { /** **/
@@ -1729,17 +1729,17 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
-            status = 200;
+            status = HTTP_STATUS_OK;
         }
         else
-            status = 421;
+            status = HTTP_STATUS_MISDIRECTED_REQUEST;
     }
     else
     if (strcmp(cmd, "/v1/conversations") == 0) { /** **/
         /* TBD */
         *body  = xs_dup("[]");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v1/notifications") == 0) { /** **/
@@ -1817,17 +1817,17 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
-            status = 200;
+            status = HTTP_STATUS_OK;
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (strcmp(cmd, "/v1/filters") == 0) { /** **/
         /* snac will never have filters */
         *body  = xs_dup("[]");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v2/filters") == 0) { /** **/
@@ -1836,21 +1836,21 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
          * in some apps */
         *body  = xs_dup("[]");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v1/favourites") == 0) { /** **/
         /* snac will never support a list of favourites */
         *body  = xs_dup("[]");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v1/bookmarks") == 0) { /** **/
         /* snac does not support bookmarks */
         *body  = xs_dup("[]");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v1/lists") == 0) { /** list of lists **/
@@ -1873,7 +1873,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_json_dumps(l, 4);
             *ctype = "application/json";
-            status = 200;
+            status = HTTP_STATUS_OK;
         }
     }
     else
@@ -1903,7 +1903,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                         *body  = xs_json_dumps(out, 4);
                         *ctype = "application/json";
-                        status = 200;
+                        status = HTTP_STATUS_OK;
                     }
                 }
                 else
@@ -1931,7 +1931,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                     *body  = xs_json_dumps(out, 4);
                     *ctype = "application/json";
-                    status = 200;
+                    status = HTTP_STATUS_OK;
                 }
             }
         }
@@ -1941,28 +1941,28 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         /* snac does not schedule notes */
         *body  = xs_dup("[]");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v1/follow_requests") == 0) { /** **/
         /* snac does not support optional follow confirmations */
         *body  = xs_dup("[]");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v1/announcements") == 0) { /** **/
         /* snac has no announcements (yet?) */
         *body  = xs_dup("[]");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v1/custom_emojis") == 0) { /** **/
         /* are you kidding me? */
         *body  = xs_dup("[]");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v1/instance") == 0) { /** **/
@@ -2075,7 +2075,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
         *body  = xs_json_dumps(ins, 4);
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (xs_startswith(cmd, "/v1/statuses/")) { /** **/
@@ -2188,30 +2188,30 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 if (out != NULL) {
                     *body  = xs_json_dumps(out, 4);
                     *ctype = "application/json";
-                    status = 200;
+                    status = HTTP_STATUS_OK;
                 }
             }
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (strcmp(cmd, "/v1/preferences") == 0) { /** **/
         *body  = xs_dup("{}");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v1/markers") == 0) { /** **/
         *body  = xs_dup("{}");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v1/followed_tags") == 0) { /** **/
         *body  = xs_dup("[]");
         *ctype = "application/json";
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(cmd, "/v2/search") == 0) { /** **/
@@ -2290,10 +2290,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_json_dumps(res, 4);
             *ctype = "application/json";
-            status = 200;
+            status = HTTP_STATUS_OK;
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
 
     /* user cleanup */
@@ -2316,7 +2316,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
         return 0;
 
-    int status    = 404;
+    int status    = HTTP_STATUS_NOT_FOUND;
     xs *args      = NULL;
     const char *i_ctype = xs_dict_get(req, "content-type");
 
@@ -2336,7 +2336,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
         args = xs_dup(xs_dict_get(req, "p_vars"));
 
     if (args == NULL)
-        return 400;
+        return HTTP_STATUS_BAD_REQUEST;
 
     xs *cmd = xs_replace_n(q_path, "/api", "", 1);
 
@@ -2378,7 +2378,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_json_dumps(app, 4);
             *ctype = "application/json";
-            status = 200;
+            status = HTTP_STATUS_OK;
 
             app = xs_dict_append(app, "code", "");
 
@@ -2470,10 +2470,10 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_json_dumps(st, 4);
             *ctype = "application/json";
-            status = 200;
+            status = HTTP_STATUS_OK;
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (xs_startswith(cmd, "/v1/statuses")) { /** **/
@@ -2552,7 +2552,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                         if (pin(&snac, id))
                             out = mastoapi_status(&snac, msg);
                         else
-                            status = 422;
+                            status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
                     }
                     else
                     if (strcmp(op, "unpin") == 0) { /** **/
@@ -2573,12 +2573,12 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 if (out != NULL) {
                     *body  = xs_json_dumps(out, 4);
                     *ctype = "application/json";
-                    status = 200;
+                    status = HTTP_STATUS_OK;
                 }
             }
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (strcmp(cmd, "/v1/notifications/clear") == 0) { /** **/
@@ -2588,10 +2588,10 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_dup("{}");
             *ctype = "application/json";
-            status = 200;
+            status = HTTP_STATUS_OK;
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (strcmp(cmd, "/v1/push/subscription") == 0) { /** **/
@@ -2616,10 +2616,10 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_json_dumps(wpush, 4);
             *ctype = "application/json";
-            status = 200;
+            status = HTTP_STATUS_OK;
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (strcmp(cmd, "/v1/media") == 0 || strcmp(cmd, "/v2/media") == 0) { /** **/
@@ -2630,7 +2630,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             if (xs_is_null(desc))
                 desc = "";
 
-            status = 400;
+            status = HTTP_STATUS_BAD_REQUEST;
 
             if (xs_type(file) == XSTYPE_LIST) {
                 const char *fn = xs_list_get(file, 0);
@@ -2659,12 +2659,12 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
                     *body  = xs_json_dumps(rsp, 4);
                     *ctype = "application/json";
-                    status = 200;
+                    status = HTTP_STATUS_OK;
                 }
             }
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (xs_startswith(cmd, "/v1/accounts")) { /** **/
@@ -2744,11 +2744,11 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             if (rsp != NULL) {
                 *body  = xs_json_dumps(rsp, 4);
                 *ctype = "application/json";
-                status = 200;
+                status = HTTP_STATUS_OK;
             }
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (xs_startswith(cmd, "/v1/polls")) { /** **/
@@ -2810,12 +2810,12 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 if (out != NULL) {
                     *body  = xs_json_dumps(out, 4);
                     *ctype = "application/json";
-                    status = 200;
+                    status = HTTP_STATUS_OK;
                 }
             }
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (strcmp(cmd, "/v1/lists") == 0) {
@@ -2831,18 +2831,18 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                     out = xs_dict_append(out, "replies_policy", xs_dict_get_def(args, "replies_policy", "list"));
                     out = xs_dict_append(out, "exclusive", xs_stock(XSTYPE_FALSE));
 
-                    status = 200;
+                    status = HTTP_STATUS_OK;
                 }
                 else {
                     out = xs_dict_append(out, "error", "cannot create list");
-                    status = 422;
+                    status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
                 }
 
                 *body  = xs_json_dumps(out, 4);
                 *ctype = "application/json";
             }
             else
-                status = 422;
+                status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
         }
     }
     if (xs_startswith(cmd, "/v1/lists/")) { /** list maintenance **/
@@ -2861,12 +2861,12 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                         list_content(&snac, id, v, 1);
                     }
 
-                    status = 200;
+                    status = HTTP_STATUS_OK;
                 }
             }
         }
         else
-            status = 422;
+            status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
     }
 
     /* user cleanup */
@@ -2891,7 +2891,7 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
     if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
         return 0;
 
-    int status    = 404;
+    int status    = HTTP_STATUS_NOT_FOUND;
     xs *args      = NULL;
     const char *i_ctype = xs_dict_get(req, "content-type");
 
@@ -2911,7 +2911,7 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
         args = xs_dup(xs_dict_get(req, "p_vars"));
 
     if (args == NULL)
-        return 400;
+        return HTTP_STATUS_BAD_REQUEST;
 
     snac snac = {0};
     int logged_in = process_auth_token(&snac, req);
@@ -2920,7 +2920,7 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
 
     if (xs_startswith(cmd, "/v1/push/subscription") || xs_startswith(cmd, "/v2/push/subscription")) { /** **/
         // pretend we deleted it, since it doesn't exist anyway
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (xs_startswith(cmd, "/v1/lists/")) {
@@ -2948,10 +2948,10 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
                 }
             }
 
-            status = 200;
+            status = HTTP_STATUS_OK;
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
 
     /* user cleanup */
@@ -2974,7 +2974,7 @@ int mastoapi_put_handler(const xs_dict *req, const char *q_path,
     if (!xs_startswith(q_path, "/api/v1/") && !xs_startswith(q_path, "/api/v2/"))
         return 0;
 
-    int status    = 404;
+    int status    = HTTP_STATUS_NOT_FOUND;
     xs *args      = NULL;
     const char *i_ctype = xs_dict_get(req, "content-type");
 
@@ -2986,7 +2986,7 @@ int mastoapi_put_handler(const xs_dict *req, const char *q_path,
         args = xs_dup(xs_dict_get(req, "p_vars"));
 
     if (args == NULL)
-        return 400;
+        return HTTP_STATUS_BAD_REQUEST;
 
     xs *cmd = xs_replace_n(q_path, "/api", "", 1);
 
@@ -3017,11 +3017,11 @@ int mastoapi_put_handler(const xs_dict *req, const char *q_path,
 
                 *body  = xs_json_dumps(rsp, 4);
                 *ctype = "application/json";
-                status = 200;
+                status = HTTP_STATUS_OK;
             }
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (xs_startswith(cmd, "/v1/statuses")) {
@@ -3060,12 +3060,12 @@ int mastoapi_put_handler(const xs_dict *req, const char *q_path,
                 if (rsp != NULL) {
                     *body  = xs_json_dumps(rsp, 4);
                     *ctype = "application/json";
-                    status = 200;
+                    status = HTTP_STATUS_OK;
                 }
             }
         }
         else
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
 
     /* user cleanup */

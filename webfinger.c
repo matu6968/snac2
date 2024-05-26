@@ -42,7 +42,7 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
     }
 
     if (host == NULL || resource == NULL)
-        return 400;
+        return HTTP_STATUS_BAD_REQUEST;
 
     headers = xs_dict_append(headers, "accept",     "application/json");
     headers = xs_dict_append(headers, "user-agent", USER_AGENT);
@@ -139,7 +139,7 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
     const char *resource = xs_dict_get(q_vars, "resource");
 
     if (resource == NULL)
-        return 400;
+        return HTTP_STATUS_BAD_REQUEST;
 
     snac snac;
     int found = 0;
@@ -220,12 +220,12 @@ int webfinger_get_handler(xs_dict *req, char *q_path,
 
         user_free(&snac);
 
-        status = 200;
+        status = HTTP_STATUS_OK;
         *body  = j;
         *ctype = "application/jrd+json";
     }
     else
-        status = 404;
+        status = HTTP_STATUS_NOT_FOUND;
 
     srv_debug(1, xs_fmt("webfinger_get_handler resource=%s %d", resource, status));
 
