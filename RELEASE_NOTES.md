@@ -1,5 +1,13 @@
 # Release Notes
 
+## 2.54
+
+Markdown-style links are now supported.
+
+The avatar and/or the header images can now be deleted (contributed by louis77).
+
+The webfinger content-type response header is now RFC-compliant (contributed by steve-bate).
+
 ## 2.53
 
 New user feature to search by post content (using regular expressions) or tag.
