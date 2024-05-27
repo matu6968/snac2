@@ -1466,6 +1466,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         /* we don't serve statuses of others; return the empty list */ 
                         out = xs_list_new();
                     }
+                    else
                     if (strcmp(opt, "featured_tags") == 0) {
                         /* snac doesn't have features tags, yet? */
                         /* implement empty response so apps like Tokodon don't show an error */
