@@ -1322,7 +1322,7 @@ unsigned int xs_hash_func(const char *data, int size)
     int n;
 
     for (n = 0; n < size; n++) {
-        hash ^= data[n];
+        hash ^= (unsigned char)data[n];
         hash *= 111111111;
     }
 
