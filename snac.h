@@ -76,6 +76,7 @@ int user_open(snac *snac, const char *uid);
 void user_free(snac *snac);
 xs_list *user_list(void);
 int user_open_by_md5(snac *snac, const char *md5);
+int user_persist(snac *snac);
 
 int validate_uid(const char *uid);
 
@@ -356,6 +357,10 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
                           const char *payload, int p_size,
                           char **body, int *b_size, char **ctype);
 int mastoapi_put_handler(const xs_dict *req, const char *q_path,
+                          const char *payload, int p_size,
+                          char **body, int *b_size, char **ctype);
+void persist_image(const char *key, const xs_val *data, const char *payload, snac *snac);
+int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
                           const char *payload, int p_size,
                           char **body, int *b_size, char **ctype);
 void mastoapi_purge(void);

@@ -3334,27 +3334,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "passwd", pw);
         }
 
-        xs *fn  = xs_fmt("%s/user.json", snac.basedir);
-        xs *bfn = xs_fmt("%s.bak", fn);
-        FILE *f;
-
-        rename(fn, bfn);
-
-        if ((f = fopen(fn, "w")) != NULL) {
-            xs_json_dump(snac.config, 4, f);
-            fclose(f);
-        }
-        else
-            rename(bfn, fn);
-
-        history_del(&snac, "timeline.html_");
-
-        xs *a_msg = msg_actor(&snac);
-        xs *u_msg = msg_update(&snac, a_msg);
-
-        enqueue_message(&snac, u_msg);
-
-        enqueue_verify_links(&snac);
+        user_persist(&snac);
 
         status = HTTP_STATUS_SEE_OTHER;
     }

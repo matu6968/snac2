@@ -362,6 +362,16 @@ void httpd_connection(FILE *f)
 
     }
     else
+    if (strcmp(method, "PATCH") == 0) {
+
+#ifndef NO_MASTODON_API
+        if (status == 0)
+            status = mastoapi_patch_handler(req, q_path,
+                        payload, p_size, &body, &b_size, &ctype);
+#endif
+
+    }
+    else
     if (strcmp(method, "OPTIONS") == 0) {
         status = HTTP_STATUS_OK;
     }

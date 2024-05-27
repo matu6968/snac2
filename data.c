@@ -303,6 +303,33 @@ int user_open_by_md5(snac *snac, const char *md5)
     return 0;
 }
 
+int user_persist(snac *snac)
+/* store user */
+{
+    xs *fn  = xs_fmt("%s/user.json", snac->basedir);
+    xs *bfn = xs_fmt("%s.bak", fn);
+    FILE *f;
+
+    rename(fn, bfn);
+
+    if ((f = fopen(fn, "w")) != NULL) {
+        xs_json_dump(snac->config, 4, f);
+        fclose(f);
+    }
+    else
+        rename(bfn, fn);
+
+    history_del(snac, "timeline.html_");
+
+    xs *a_msg = msg_actor(snac);
+    xs *u_msg = msg_update(snac, a_msg);
+
+    enqueue_message(snac, u_msg);
+    enqueue_verify_links(snac);
+
+    return 0;
+}
+
 
 double mtime_nl(const char *fn, int *n_link)
 /* returns the mtime and number of links of a file or directory, or 0.0 */
