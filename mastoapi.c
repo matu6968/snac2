@@ -1443,6 +1443,14 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         }
                     }
                 }
+                else
+                if (strcmp(opt, "featured_tags") == 0) {
+                    /* snac doesn't have features tags, yet? */
+                    /* implement empty response so apps like Tokodon don't show an error */
+                    *body  = xs_dup("[]");
+                    *ctype = "application/json";
+                    status = HTTP_STATUS_OK;
+                }
 
                 user_free(&snac2);
             }
@@ -1455,8 +1463,15 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     }
                     else
                     if (strcmp(opt, "statuses") == 0) {
-                        /* we don't serve statuses of others; return the empty list */
+                        /* we don't serve statuses of others; return the empty list */ 
                         out = xs_list_new();
+                    }
+                    if (strcmp(opt, "featured_tags") == 0) {
+                        /* snac doesn't have features tags, yet? */
+                        /* implement empty response so apps like Tokodon don't show an error */
+                        *body  = xs_dup("[]");
+                        *ctype = "application/json";
+                        status = HTTP_STATUS_OK;
                     }
                 }
             }
@@ -2031,7 +2046,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 "\"max_characters\":100000,\"max_media_attachments\":8}");
             cfg = xs_dict_append(cfg, "statuses", d11);
 
-            xs *d12 = xs_json_loads("{\"max_featured_tags\":10}");
+            xs *d12 = xs_json_loads("{\"max_featured_tags\":0}");
             cfg = xs_dict_append(cfg, "accounts", d12);
 
             xs *d13 = xs_json_loads("{\"image_matrix_limit\":33177600,"
