@@ -277,7 +277,7 @@ int _xs_get_size(const xs_val *ptr)
 /* must match _XS_TYPE_SIZE */
 {
     int i;
-    memcpy(&i, ptr, sizeof(i));
+    memcpy(&i, ptr + 1, sizeof(i));
     return i;
 }
 
@@ -299,7 +299,7 @@ int xs_size(const xs_val *data)
     case XSTYPE_LIST:
     case XSTYPE_DICT:
     case XSTYPE_DATA:
-        len = _xs_get_size(data + 1);
+        len = _xs_get_size(data);
 
         break;
 
@@ -1286,7 +1286,7 @@ xs_data *xs_data_new(const void *data, int size)
 int xs_data_size(const xs_data *value)
 /* returns the size of the data stored inside value */
 {
-    return _xs_get_size(value + 1) - (1 + _XS_TYPE_SIZE);
+    return _xs_get_size(value) - (1 + _XS_TYPE_SIZE);
 }
 
 
