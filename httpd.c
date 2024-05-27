@@ -442,7 +442,7 @@ void httpd_connection(FILE *f)
     if (p_state->use_fcgi)
         xs_fcgi_response(f, status, headers, body, b_size, fcgi_id);
     else
-        xs_httpd_response(f, status, headers, body, b_size);
+        xs_httpd_response(f, status, http_status_text(status), headers, body, b_size);
 
     fclose(f);
 

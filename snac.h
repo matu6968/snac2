@@ -367,52 +367,11 @@ void mastoapi_purge(void);
 
 void verify_links(snac *user);
 
-/* HTTP responses RFC 9110 plus some extensions */
 
 typedef enum {
-    HTTP_STATUS_CONTINUE                      = 100,
-    HTTP_STATUS_SWITCHTING_PROTOCOLS          = 101,
-    HTTP_STATUS_PROCESSING                    = 102,
-    HTTP_STATUS_EARLY_HINTS                   = 103,
-    HTTP_STATUS_OK                            = 200,
-    HTTP_STATUS_CREATED                       = 201,
-    HTTP_STATUS_ACCEPTED                      = 202,
-    HTTP_STATUS_NON_AUTHORITATIVE_INFORMATION = 203,
-    HTTP_STATUS_NO_CONTENT                    = 204,
-    HTTP_STATUS_RESET_CONTENT                 = 205,
-    HTTP_STATUS_PARTIAL_CONTENT               = 206,
-    HTTP_STATUS_MULTI_STATUS                  = 207,
-    HTTP_STATUS_ALREADY_REPORTED              = 208,
-    HTTP_STATUS_THIS_IS_FINE                  = 218,
-    HTTP_STATUS_IM_USED                       = 226,
-    HTTP_STATUS_MULTIPLE_CHOICES              = 300,
-    HTTP_STATUS_MOVED_PERMANENTLY             = 301,
-    HTTP_STATUS_FOUND                         = 302,
-    HTTP_STATUS_SEE_OTHER                     = 303,
-    HTTP_STATUS_NOT_MODIFIED                  = 304,
-    HTTP_STATUS_USE_PROXY                     = 305,
-    HTTP_STATUS_SWITCH_PROXY                  = 306,
-    HTTP_STATUS_TEMPORARY_REDIRECT            = 307,
-    HTTP_STATUS_PERMANENT_REDIRECT            = 308,
-    HTTP_STATUS_BAD_REQUEST                   = 400,
-    HTTP_STATUS_UNAUTHORIZED                  = 401,
-    HTTP_STATUS_PAYMENT_REQUIRED              = 402,
-    HTTP_STATUS_FORBIDDEN                     = 403,
-    HTTP_STATUS_NOT_FOUND                     = 404,
-    HTTP_STATUS_METHOD_NOT_ALLOWED            = 405,
-    HTTP_STATUS_NOT_ACCEPTABLE                = 406,
-    HTTP_STATUS_PROXY_AUTHENTICATION_REQUIRED = 407,
-    HTTP_STATUS_REQUEST_TIMEOUT               = 408,
-    HTTP_STATUS_CONFLICT                      = 409,
-    HTTP_STATUS_GONE                          = 410,
-    HTTP_STATUS_MISDIRECTED_REQUEST           = 421,
-    HTTP_STATUS_UNPROCESSABLE_CONTENT         = 422,
-    HTTP_STATUS_CLIENT_CLOSED_REQUEST         = 499,
-    HTTP_STATUS_INTERNAL_SERVER_ERROR         = 500,
-    HTTP_STATUS_NOT_IMPLEMENTED               = 501,
-    HTTP_STATUS_BAD_GATEWAY                   = 502,
-    HTTP_STATUS_SERVICE_UNAVAILABLE           = 503,
-    HTTP_STATUS_GATEWAY_TIMEOUT               = 504,
-    HTTP_STATUS_HTTP_VERSION_NOT_SUPPORTED    = 505,
-    HTTP_STATUS_INSUFFICIENT_STORAGE          = 507
+#define HTTP_STATUS(code, name, text) HTTP_STATUS_ ## name = code,
+#include "http_codes.h"
+#undef HTTP_STATUS
 } http_status;
+
+const char *http_status_text(int status);
