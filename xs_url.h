@@ -107,7 +107,13 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
         if (xs_list_len(l1) != 2)
             return NULL;
 
-        boundary = xs_fmt("--%s", xs_list_get(l1, 1));
+        boundary = xs_dup(xs_list_get(l1, 1));
+
+        /* Tokodon sends the boundary header with double quotes surrounded */
+        if (xs_starts_and_ends("\"", boundary, "\"") != 0)
+            boundary = xs_strip_chars_i(boundary, "\"");
+
+        boundary = xs_fmt("--%s", boundary);
     }
 
     bsz = strlen(boundary);
