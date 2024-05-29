@@ -8,7 +8,6 @@ xs_str *xs_url_dec(const char *str);
 xs_dict *xs_url_vars(const char *str);
 xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *header);
 
-
 #ifdef XS_IMPLEMENTATION
 
 xs_str *xs_url_dec(const char *str)
@@ -126,6 +125,7 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
         xs *l1 = NULL;
         const char *vn = NULL;
         const char *fn = NULL;
+        const char *ct = NULL;
         char *q;
         int po, ps;
 
@@ -138,32 +138,47 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
         /* skip the \r\n */
         p += 2;
 
-        /* now on a Content-Disposition... line; get it */
-        q = strchr(p, '\r');
-        s1 = xs_realloc(NULL, q - p + 1);
-        memcpy(s1, p, q - p);
-        s1[q - p] = '\0';
+        /* Tokodon sends also a Content-Type headers,
+           let's use it to determine the file type */
+        do {
+            if (p[0] == 13 && p[1] == 10)
+                break;
+            q = strchr(p, '\r');
+            s1 = xs_realloc(NULL, q - p + 1);
+            memcpy(s1, p, q - p);
+            s1[q - p] = '\0';
 
-        /* move on (over a \r\n) */
-        p = q;
+            if (xs_startswith(s1, "Content-Disposition")) {
+                /* split by " like a primitive man */
+                l1 = xs_split(s1, "\"");
 
-        /* split by " like a primitive man */
-        l1 = xs_split(s1, "\"");
+                /* get the variable name */
+                vn = xs_list_get(l1, 1);
 
-        /* get the variable name */
-        vn = xs_list_get(l1, 1);
+                /* is it an attached file? */
+                if (xs_list_len(l1) >= 4 && strcmp(xs_list_get(l1, 2), "; filename=") == 0) {
+                    /* get the file name */
+                    fn = xs_list_get(l1, 3);
+                }
+            }
+            else
+            if (xs_startswith(s1, "Content-Type")) {
+                l1 = xs_split(s1, ":");
 
-        /* is it an attached file? */
-        if (xs_list_len(l1) >= 4 && strcmp(xs_list_get(l1, 2), "; filename=") == 0) {
-            /* get the file name */
-            fn = xs_list_get(l1, 3);
-        }
+                if (xs_list_len(l1) >= 2) {
+                    ct = xs_lstrip_chars_i(xs_dup(xs_list_get(l1, 1)), " ");
+                }
+            }
+
+            p += (q - p);
+            p += 2; // Skip /r/n
+        } while (1);
 
         /* find the start of the part content */
-        if ((p = xs_memmem(p, p_size - (p - payload), "\r\n\r\n", 4)) == NULL)
+        if ((p = xs_memmem(p, p_size - (p - payload), "\r\n", 2)) == NULL)
             break;
 
-        p += 4;
+        p += 2; // Skip empty line
 
         /* find the next boundary */
         if ((q = xs_memmem(p, p_size - (p - payload), boundary, bsz)) == NULL)
@@ -175,6 +190,13 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
         /* is it a filename? */
         if (fn != NULL) {
             /* p_var value is a list */
+            /* if filename has no extension and content-type is image, attach extension to the filename */
+            if (strchr(fn, '.') == NULL && xs_startswith(ct, "image/")) {
+                char *ext = strchr(ct, '/');
+                ext++;
+                fn = xs_str_cat(xs_str_new(""), fn, ".", ext);
+            }
+
             xs *l1 = xs_list_new();
             xs *vpo = xs_number_new(po);
             xs *vps = xs_number_new(ps);

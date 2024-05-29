@@ -3116,15 +3116,16 @@ void persist_image(const char *key, const xs_val *data, const char *payload, sna
 
             if (fn && *fn) {
                 const char *ext = strrchr(fn, '.');
-                /* Mona iOS sends JPG file as application/octet-stream with filename "header"
-                 * Make sure we have a unique file name, otherwise updated images will not be
-                 * loaded by clients.
-                 */
+
+                /* Mona iOS sends always jpg as application/octet-stream with no filename */
                 if (ext == NULL || strcmp(fn, key) == 0) {
-                    fn = random_str();
                     ext = ".jpg";
                 }
-                xs *hash        = xs_md5_hex(fn, strlen(fn));
+
+                /* Make sure we have a unique file name, otherwise updated images will not be
+                 * re-loaded by clients. */
+                xs *rnd         = random_str();
+                xs *hash        = xs_md5_hex(rnd, strlen(rnd));
                 xs *id          = xs_fmt("%s%s", hash, ext);
                 xs *url         = xs_fmt("%s/s/%s", snac->actor, id);
                 int fo          = xs_number_get(xs_list_get(data, 1));
@@ -3158,6 +3159,14 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
         if (!xs_is_null(payload))
             args = xs_json_loads(payload);
     }
+    else if (i_ctype && xs_startswith(i_ctype, "application/x-www-form-urlencoded"))
+    {
+        // Some apps send form data instead of json so we should cater for those
+        if (!xs_is_null(payload)) {
+            xs *upl = xs_url_dec(payload);
+            args    = xs_url_vars(upl);
+        }
+    }
     else
         args = xs_dup(xs_dict_get(req, "p_vars"));
 
@@ -3172,10 +3181,6 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
     if (xs_startswith(cmd, "/v1/accounts/update_credentials")) {
         /* Update user profile fields */
         if (logged_in) {
-            /*
-            xs_str *dump = xs_json_dumps(args, 4);
-            printf("%s\n\n", dump);
-            */
             int c = 0;
             const xs_str *k;
             const xs_val *v;
@@ -3195,7 +3200,8 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
                 if (strcmp(k, "bot") == 0) {
                     if (v != NULL)
                         snac.config = xs_dict_set(snac.config, "bot",
-                            strcmp(v, "true") == 0 ? xs_stock(XSTYPE_TRUE) : xs_stock(XSTYPE_FALSE));
+                            (strcmp(v, "true") == 0 ||
+                                strcmp(v, "1") == 0) ? xs_stock(XSTYPE_TRUE) : xs_stock(XSTYPE_FALSE));
                 }
                 else
                 if (strcmp(k, "source[sensitive]") == 0) {
@@ -3228,6 +3234,10 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
                         snac.config = xs_dict_set(snac.config, "metadata", new_fields);
                     }
                 }
+                /* we don't have support for the following options, yet
+                   - discoverable (0/1)
+                   - locked (0/1)
+                 */
             }
 
             /* Persist profile */
