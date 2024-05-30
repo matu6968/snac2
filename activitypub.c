@@ -239,7 +239,7 @@ xs_list *get_attachments(const xs_dict *msg)
             if (xs_is_null(name))
                 name = xs_dict_get(msg, "name");
             if (xs_is_null(name))
-                name = L("No description");
+                name = "";
 
             xs *d = xs_dict_new();
             d = xs_dict_append(d, "type", type);
