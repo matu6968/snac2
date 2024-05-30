@@ -2540,7 +2540,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                      char **body, int *b_size, char **ctype, xs_str **etag)
 {
     const char *accept = xs_dict_get(req, "accept");
-    int status = 404;
+    int status = HTTP_STATUS_NOT_FOUND;
     snac snac;
     xs *uid = NULL;
     const char *p_path;
@@ -2553,7 +2553,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
     if (xs_is_null(v)) {
         srv_log(xs_fmt("html_get_handler bad query '%s'", q_path));
-        return 404;
+        return HTTP_STATUS_NOT_FOUND;
     }
 
     uid = xs_dup(v);
@@ -2569,7 +2569,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     if (!uid || !user_open(&snac, uid)) {
         /* invalid user */
         srv_debug(1, xs_fmt("html_get_handler bad user %s", uid));
-        return 404;
+        return HTTP_STATUS_NOT_FOUND;
     }
 
     /* return the RSS if requested by Accept header */
@@ -2598,7 +2598,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             /** empty public timeline for private users **/
             *body = html_timeline(&snac, NULL, 1, 0, 0, 0, NULL, "", 1);
             *b_size = strlen(*body);
-            status  = 200;
+            status  = HTTP_STATUS_OK;
         }
         else
         if (cache && history_mtime(&snac, h) > timeline_mtime(&snac)) {
@@ -2617,7 +2617,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             *body = html_timeline(&snac, pins, 1, skip, show, xs_list_len(next), NULL, "", 1);
 
             *b_size = strlen(*body);
-            status  = 200;
+            status  = HTTP_STATUS_OK;
 
             if (save)
                 history_add(&snac, h, *body, *b_size, etag);
@@ -2627,7 +2627,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     if (strcmp(p_path, "admin") == 0) { /** private timeline **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
         }
         else {
             const char *q = xs_dict_get(q_vars, "q");
@@ -2649,7 +2649,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
                     *body = html_timeline(&snac, tl, 0, skip, show, more, title, page, 0);
                     *b_size = strlen(*body);
-                    status  = 200;
+                    status  = HTTP_STATUS_OK;
                 }
                 else {
                     /** search by content **/
@@ -2670,7 +2670,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
                     *body   = html_timeline(&snac, tl, 0, skip, tl_len, to || tl_len == show, title, page, 0);
                     *b_size = strlen(*body);
-                    status  = 200;
+                    status  = HTTP_STATUS_OK;
                 }
             }
             else {
@@ -2699,7 +2699,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                             xs_list_len(next), NULL, "/admin", 1);
 
                     *b_size = strlen(*body);
-                    status  = 200;
+                    status  = HTTP_STATUS_OK;
 
                     if (save)
                         history_add(&snac, "timeline.html_", *body, *b_size, etag);
@@ -2711,7 +2711,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     if (xs_startswith(p_path, "admin/p/")) { /** unique post by md5 **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
         }
         else {
             xs *l = xs_split(p_path, "/");
@@ -2722,7 +2722,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
                 *body   = html_timeline(&snac, list, 0, 0, 0, 0, NULL, "/admin", 1);
                 *b_size = strlen(*body);
-                status  = 200;
+                status  = HTTP_STATUS_OK;
             }
         }
     }
@@ -2730,31 +2730,31 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     if (strcmp(p_path, "people") == 0) { /** the list of people **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
         }
         else {
             *body   = html_people(&snac);
             *b_size = strlen(*body);
-            status  = 200;
+            status  = HTTP_STATUS_OK;
         }
     }
     else
     if (strcmp(p_path, "notifications") == 0) { /** the list of notifications **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
         }
         else {
             *body   = html_notifications(&snac, skip, show);
             *b_size = strlen(*body);
-            status  = 200;
+            status  = HTTP_STATUS_OK;
         }
     }
     else
     if (strcmp(p_path, "instance") == 0) { /** instance timeline **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
         }
         else {
             xs *list = timeline_instance_list(skip, show);
@@ -2763,14 +2763,14 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             *body = html_timeline(&snac, list, 0, skip, show,
                 xs_list_len(next), L("Showing instance timeline"), "/instance", 0);
             *b_size = strlen(*body);
-            status  = 200;
+            status  = HTTP_STATUS_OK;
         }
     }
     else
     if (xs_startswith(p_path, "list/")) { /** list timelines **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
-            status = 401;
+            status = HTTP_STATUS_UNAUTHORIZED;
         }
         else {
             xs *l = xs_split(p_path, "/");
@@ -2787,14 +2787,14 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 *body = html_timeline(&snac, list, 0, skip, show,
                     xs_list_len(next), title, base, 1);
                 *b_size = strlen(*body);
-                status  = 200;
+                status  = HTTP_STATUS_OK;
             }
         }
     }
     else
     if (xs_startswith(p_path, "p/")) { /** a timeline with just one entry **/
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
-            return 403;
+            return HTTP_STATUS_FORBIDDEN;
 
         xs *id  = xs_fmt("%s/%s", snac.actor, p_path);
         xs *msg = NULL;
@@ -2807,7 +2807,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
             *body   = html_timeline(&snac, list, 1, 0, 0, 0, NULL, "", 1);
             *b_size = strlen(*body);
-            status  = 200;
+            status  = HTTP_STATUS_OK;
         }
     }
     else
@@ -2829,10 +2829,10 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     else
     if (xs_startswith(p_path, "h/")) { /** an entry from the history **/
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
-            return 403;
+            return HTTP_STATUS_FORBIDDEN;
 
         if (xs_type(xs_dict_get(srv_config, "disable_history")) == XSTYPE_TRUE)
-            return 403;
+            return HTTP_STATUS_FORBIDDEN;
 
         xs *l = xs_split(p_path, "/");
         const char *id = xs_list_get(l, 1);
@@ -2841,7 +2841,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             if (xs_endswith(id, "timeline.html_")) {
                 /* Don't let them in */
                 *b_size = 0;
-                status = 404;
+                status = HTTP_STATUS_NOT_FOUND;
             }
             else
                 status = history_get(&snac, id, body, b_size,
@@ -2851,7 +2851,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     else
     if (strcmp(p_path, ".rss") == 0) { /** public timeline in RSS format **/
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
-            return 403;
+            return HTTP_STATUS_FORBIDDEN;
 
         xs *elems = timeline_simple_list(&snac, "public", 0, 20);
         xs *bio   = not_really_markdown(xs_dict_get(snac.config, "bio"), NULL, NULL);
@@ -2865,12 +2865,12 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         *body   = timeline_to_rss(&snac, elems, rss_title, rss_link, bio);
         *b_size = strlen(*body);
         *ctype  = "application/rss+xml; charset=utf-8";
-        status  = 200;
+        status  = HTTP_STATUS_OK;
 
         snac_debug(&snac, 1, xs_fmt("serving RSS"));
     }
     else
-        status = 404;
+        status = HTTP_STATUS_NOT_FOUND;
 
     user_free(&snac);
 
@@ -2901,7 +2901,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     if (!uid || !user_open(&snac, uid)) {
         /* invalid user */
         srv_debug(1, xs_fmt("html_post_handler bad user %s", uid));
-        return 404;
+        return HTTP_STATUS_NOT_FOUND;
     }
 
     p_path = xs_list_get(l, 2);
@@ -2910,7 +2910,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     if (!login(&snac, req)) {
         user_free(&snac);
         *body  = xs_dup(uid);
-        return 401;
+        return HTTP_STATUS_UNAUTHORIZED;
     }
 
     p_vars = xs_dict_get(req, "p_vars");
@@ -3049,7 +3049,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             history_del(&snac, "timeline.html_");
         }
 
-        status = 303;
+        status = HTTP_STATUS_SEE_OTHER;
     }
     else
     if (p_path && strcmp(p_path, "admin/action") == 0) { /** **/
@@ -3060,11 +3060,11 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         const char *group  = xs_dict_get(p_vars, "group");
 
         if (action == NULL)
-            return 404;
+            return HTTP_STATUS_NOT_FOUND;
 
         snac_debug(&snac, 1, xs_fmt("web action '%s' received", action));
 
-        status = 303;
+        status = HTTP_STATUS_SEE_OTHER;
 
         if (strcmp(action, L("Like")) == 0) { /** **/
             xs *msg = msg_admiration(&snac, id, "Like");
@@ -3216,10 +3216,10 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             timeline_touch(&snac);
         }
         else
-            status = 404;
+            status = HTTP_STATUS_NOT_FOUND;
 
         /* delete the cached timeline */
-        if (status == 303)
+        if (status == HTTP_STATUS_SEE_OTHER)
             history_del(&snac, "timeline.html_");
     }
     else
@@ -3334,36 +3334,16 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "passwd", pw);
         }
 
-        xs *fn  = xs_fmt("%s/user.json", snac.basedir);
-        xs *bfn = xs_fmt("%s.bak", fn);
-        FILE *f;
+        user_persist(&snac);
 
-        rename(fn, bfn);
-
-        if ((f = fopen(fn, "w")) != NULL) {
-            xs_json_dump(snac.config, 4, f);
-            fclose(f);
-        }
-        else
-            rename(bfn, fn);
-
-        history_del(&snac, "timeline.html_");
-
-        xs *a_msg = msg_actor(&snac);
-        xs *u_msg = msg_update(&snac, a_msg);
-
-        enqueue_message(&snac, u_msg);
-
-        enqueue_verify_links(&snac);
-
-        status = 303;
+        status = HTTP_STATUS_SEE_OTHER;
     }
     else
     if (p_path && strcmp(p_path, "admin/clear-notifications") == 0) { /** **/
         notify_clear(&snac);
         timeline_touch(&snac);
 
-        status = 303;
+        status = HTTP_STATUS_SEE_OTHER;
     }
     else
     if (p_path && strcmp(p_path, "admin/vote") == 0) { /** **/
@@ -3416,10 +3396,10 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             }
         }
 
-        status = 303;
+        status = HTTP_STATUS_SEE_OTHER;
     }
 
-    if (status == 303) {
+    if (status == HTTP_STATUS_SEE_OTHER) {
         const char *redir = xs_dict_get(p_vars, "redir");
 
         if (xs_is_null(redir))

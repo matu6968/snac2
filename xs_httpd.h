@@ -5,7 +5,7 @@
 #define _XS_HTTPD_H
 
 xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size);
-void xs_httpd_response(FILE *f, int status, xs_dict *headers, xs_str *body, int b_size);
+void xs_httpd_response(FILE *f, int status, const char *status_text, xs_dict *headers, xs_str *body, int b_size);
 
 
 #ifdef XS_IMPLEMENTATION
@@ -95,14 +95,14 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
 }
 
 
-void xs_httpd_response(FILE *f, int status, xs_dict *headers, xs_str *body, int b_size)
+void xs_httpd_response(FILE *f, int status, const char *status_text, xs_dict *headers, xs_str *body, int b_size)
 /* sends an httpd response */
 {
     xs *proto;
     const xs_str *k;
     const xs_val *v;
 
-    proto = xs_fmt("HTTP/1.1 %d %s", status, status / 100 == 2 ? "OK" : "ERROR");
+    proto = xs_fmt("HTTP/1.1 %d %s", status, status_text);
     fprintf(f, "%s\r\n", proto);
 
     int c = 0;

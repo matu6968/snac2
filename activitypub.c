@@ -96,19 +96,19 @@ int activitypub_request(snac *user, const char *url, xs_dict **data)
         ctype = xs_dict_get(response, "content-type");
 
         if (xs_is_null(ctype))
-            status = 400;
+            status = HTTP_STATUS_BAD_REQUEST;
         else
         if (xs_str_in(ctype, "application/activity+json") != -1 ||
             xs_str_in(ctype, "application/ld+json") != -1) {
 
             /* if there is no payload, fail */
             if (xs_is_null(payload))
-                status = 400;
+                status = HTTP_STATUS_BAD_REQUEST;
             else
                 *data = xs_json_loads(payload);
         }
         else
-            status = 500;
+            status = HTTP_STATUS_INTERNAL_SERVER_ERROR;
     }
 
     return status;
@@ -443,7 +443,7 @@ int send_to_actor(snac *snac, const char *actor, const xs_dict *msg,
                   xs_val **payload, int *p_size, int timeout)
 /* sends a message to an actor */
 {
-    int status = 400;
+    int status = HTTP_STATUS_BAD_REQUEST;
     xs *inbox = get_actor_inbox(actor);
 
     if (!xs_is_null(inbox))
@@ -1762,7 +1762,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     a_status = actor_request(snac, actor, &actor_o);
 
     /* do not retry permanent failures */
-    if (a_status == 404 || a_status == 410 || a_status < 0) {
+    if (a_status == HTTP_STATUS_NOT_FOUND
+        || a_status == HTTP_STATUS_GONE
+        || a_status < 0) {
         srv_debug(1, xs_fmt("dropping message due to actor error %s %d", actor, a_status));
         return -1;
     }
@@ -1905,7 +1907,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         }
         else
         if (strcmp(utype, "Announce") == 0) { /** **/
-            int status = 200;
+            int status = HTTP_STATUS_OK;
 
             /* commented out: if a followed user boosts something that
                is requested and then unboosts, the post remains here,
@@ -2015,7 +2017,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         if (xs_type(object) == XSTYPE_DICT)
             object = xs_dict_get(object, "id");
 
-        if (timeline_admire(snac, object, actor, 1) == 201)
+        if (timeline_admire(snac, object, actor, 1) == HTTP_STATUS_CREATED)
             snac_log(snac, xs_fmt("new 'Like' %s %s", actor, object));
         else
             snac_log(snac, xs_fmt("repeated 'Like' from %s to %s", actor, object));
@@ -2046,7 +2048,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                     xs *who_o = NULL;
 
                     if (valid_status(actor_request(snac, who, &who_o))) {
-                        if (timeline_admire(snac, object, actor, 0) == 201)
+                        if (timeline_admire(snac, object, actor, 0) == HTTP_STATUS_CREATED)
                             snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
                         else
                             snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",
@@ -2383,11 +2385,15 @@ void process_queue_item(xs_dict *q_item)
 
             /* if it's not the first time it fails with a timeout,
                penalize the server by skipping one retry */
-            if (p_status == status && status == 499)
+            if (p_status == status && status == HTTP_STATUS_CLIENT_CLOSED_REQUEST)
                 retries++;
 
             /* error sending; requeue? */
-            if (status == 400 || status == 404 || status == 405 || status == 410 || status < 0)
+            if (status == HTTP_STATUS_BAD_REQUEST
+                || status == HTTP_STATUS_NOT_FOUND
+                || status == HTTP_STATUS_METHOD_NOT_ALLOWED
+                || status == HTTP_STATUS_GONE
+                || status < 0)
                 /* explicit error: discard */
                 srv_log(xs_fmt("output message: fatal error %s %d", inbox, status));
             else
@@ -2574,7 +2580,7 @@ int process_queue(void)
 int activitypub_get_handler(const xs_dict *req, const char *q_path,
                             char **body, int *b_size, char **ctype)
 {
-    int status = 200;
+    int status = HTTP_STATUS_OK;
     const char *accept = xs_dict_get(req, "accept");
     snac snac;
     xs *msg = NULL;
@@ -2594,7 +2600,7 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
     if (!user_open(&snac, uid)) {
         /* invalid user */
         srv_debug(1, xs_fmt("activitypub_get_handler bad user %s", uid));
-        return 404;
+        return HTTP_STATUS_NOT_FOUND;
     }
 
     p_path = xs_list_get(l, 2);
@@ -2652,12 +2658,12 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
 
         /* don't return non-public objects */
         if (valid_status(status) && !is_msg_public(msg))
-            status = 404;
+            status = HTTP_STATUS_NOT_FOUND;
     }
     else
-        status = 404;
+        status = HTTP_STATUS_NOT_FOUND;
 
-    if (status == 200 && msg != NULL) {
+    if (status == HTTP_STATUS_OK && msg != NULL) {
         *body   = xs_json_dumps(msg, 4);
         *b_size = strlen(*body);
     }
@@ -2677,7 +2683,7 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
 {
     (void)b_size;
 
-    int status = 202; /* accepted */
+    int status = HTTP_STATUS_ACCEPTED;
     const char *i_ctype = xs_dict_get(req, "content-type");
     snac snac;
     const char *v;
@@ -2685,13 +2691,13 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
     if (i_ctype == NULL) {
         *body  = xs_str_new("no content-type");
         *ctype = "text/plain";
-        return 400;
+        return HTTP_STATUS_BAD_REQUEST;
     }
 
     if (xs_is_null(payload)) {
         *body  = xs_str_new("no payload");
         *ctype = "text/plain";
-        return 400;
+        return HTTP_STATUS_BAD_REQUEST;
     }
 
     if (xs_str_in(i_ctype, "application/activity+json") == -1 &&
@@ -2709,7 +2715,7 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
 
         *body  = xs_str_new("JSON error");
         *ctype = "text/plain";
-        return 400;
+        return HTTP_STATUS_BAD_REQUEST;
     }
 
     if (id && is_instance_blocked(id)) {
@@ -2717,7 +2723,7 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
 
         *body  = xs_str_new("blocked");
         *ctype = "text/plain";
-        return 403;
+        return HTTP_STATUS_FORBIDDEN;
     }
 
     /* get the user and path */
@@ -2725,20 +2731,20 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
 
     if (xs_list_len(l) == 2 && strcmp(xs_list_get(l, 1), "shared-inbox") == 0) {
         enqueue_shared_input(msg, req, 0);
-        return 202;
+        return HTTP_STATUS_ACCEPTED;
     }
 
     if (xs_list_len(l) != 3 || strcmp(xs_list_get(l, 2), "inbox") != 0) {
         /* strange q_path */
         srv_debug(1, xs_fmt("activitypub_post_handler unsupported path %s", q_path));
-        return 404;
+        return HTTP_STATUS_NOT_FOUND;
     }
 
     const char *uid = xs_list_get(l, 1);
     if (!user_open(&snac, uid)) {
         /* invalid user */
         srv_debug(1, xs_fmt("activitypub_post_handler bad user %s", uid));
-        return 404;
+        return HTTP_STATUS_NOT_FOUND;
     }
 
     /* if it has a digest, check it now, because
@@ -2752,7 +2758,7 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_str_new("bad digest");
             *ctype = "text/plain";
-            status = 400;
+            status = HTTP_STATUS_BAD_REQUEST;
         }
     }
 
@@ -2763,7 +2769,7 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
 
             *body  = xs_str_new("rejected");
             *ctype = "text/plain";
-            status = 403;
+            status = HTTP_STATUS_FORBIDDEN;
         }
     }
 

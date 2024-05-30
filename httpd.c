@@ -217,17 +217,17 @@ int server_get_handler(xs_dict *req, const char *q_path,
             *body = greeting_html();
 
         if (*body)
-            status = 200;
+            status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(q_path, "/susie.png") == 0 || strcmp(q_path, "/favicon.ico") == 0 ) {
-        status = 200;
+        status = HTTP_STATUS_OK;
         *body  = xs_base64_dec(default_avatar_base64(), b_size);
         *ctype = "image/png";
     }
     else
     if (strcmp(q_path, "/.well-known/nodeinfo") == 0) {
-        status = 200;
+        status = HTTP_STATUS_OK;
         *ctype = "application/json; charset=utf-8";
         *body  = xs_fmt("{\"links\":["
             "{\"rel\":\"http:/" "/nodeinfo.diaspora.software/ns/schema/2.0\","
@@ -236,7 +236,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(q_path, "/.well-known/host-meta") == 0) {
-        status = 200;
+        status = HTTP_STATUS_OK;
         *ctype = "application/xrd+xml";
         *body  = xs_fmt("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 "<XRD>"
@@ -245,13 +245,13 @@ int server_get_handler(xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(q_path, "/nodeinfo_2_0") == 0) {
-        status = 200;
+        status = HTTP_STATUS_OK;
         *ctype = "application/json; charset=utf-8";
         *body  = nodeinfo_2_0();
     }
     else
     if (strcmp(q_path, "/robots.txt") == 0) {
-        status = 200;
+        status = HTTP_STATUS_OK;
         *ctype = "text/plain";
         *body  = xs_str_new("User-agent: *\n"
                             "Disallow: /\n");
@@ -362,8 +362,18 @@ void httpd_connection(FILE *f)
 
     }
     else
+    if (strcmp(method, "PATCH") == 0) {
+
+#ifndef NO_MASTODON_API
+        if (status == 0)
+            status = mastoapi_patch_handler(req, q_path,
+                        payload, p_size, &body, &b_size, &ctype);
+#endif
+
+    }
+    else
     if (strcmp(method, "OPTIONS") == 0) {
-        status = 200;
+        status = HTTP_STATUS_OK;
     }
     else
     if (strcmp(method, "DELETE") == 0) {
@@ -378,22 +388,22 @@ void httpd_connection(FILE *f)
     if (status == 0) {
         srv_archive_error("unattended_method", "unattended method", req, payload);
         srv_debug(1, xs_fmt("httpd_connection unattended %s %s", method, q_path));
-        status = 404;
+        status = HTTP_STATUS_NOT_FOUND;
     }
 
-    if (status == 403)
+    if (status == HTTP_STATUS_FORBIDDEN)
         body = xs_str_new("<h1>403 Forbidden</h1>");
 
-    if (status == 404)
+    if (status == HTTP_STATUS_NOT_FOUND)
         body = xs_str_new("<h1>404 Not Found</h1>");
 
-    if (status == 400 && body != NULL)
+    if (status == HTTP_STATUS_BAD_REQUEST && body != NULL)
         body = xs_str_new("<h1>400 Bad Request</h1>");
 
-    if (status == 303)
+    if (status == HTTP_STATUS_SEE_OTHER)
         headers = xs_dict_append(headers, "location", body);
 
-    if (status == 401) {
+    if (status == HTTP_STATUS_UNAUTHORIZED) {
         xs *www_auth = xs_fmt("Basic realm=\"@%s@%s snac login\"",
                                 body, xs_dict_get(srv_config, "host"));
 
@@ -432,7 +442,7 @@ void httpd_connection(FILE *f)
     if (p_state->use_fcgi)
         xs_fcgi_response(f, status, headers, body, b_size, fcgi_id);
     else
-        xs_httpd_response(f, status, headers, body, b_size);
+        xs_httpd_response(f, status, http_status_text(status), headers, body, b_size);
 
     fclose(f);
 

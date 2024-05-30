@@ -170,3 +170,15 @@ int check_password(const char *uid, const char *passwd, const char *hash)
 
     return ret;
 }
+
+
+const char *http_status_text(int status)
+/* translate status codes to canonical status texts */
+{
+    switch (status) {
+#define HTTP_STATUS(code, name, text) case HTTP_STATUS_ ## name: return #text;
+#include "http_codes.h"
+#undef HTTP_STATUS
+        default: return "Unknown";
+    }
+}
