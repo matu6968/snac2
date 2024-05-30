@@ -1909,6 +1909,9 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                         xs_html_tag("a",
                             xs_html_attr("href", href),
                             xs_html_text(href))));
+
+                /* do not generate an Alt... */
+                name = NULL;
             }
             else {
                 xs_html_add(content_attachments,
@@ -1918,6 +1921,19 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                             xs_html_text(L("Attachment")),
                             xs_html_text(": "),
                             xs_html_text(href))));
+
+                /* do not generate an Alt... */
+                name = NULL;
+            }
+
+            if (name != NULL && *name) {
+                xs_html_add(content_attachments,
+                    xs_html_tag("p",
+                        xs_html_attr("class", "snac-alt-text"),
+                        xs_html_tag("details",
+                            xs_html_tag("summary",
+                                xs_html_text(L("Alt..."))),
+                            xs_html_text(name))));
             }
         }
     }

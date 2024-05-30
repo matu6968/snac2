@@ -3215,7 +3215,7 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
             const xs_str *k;
             const xs_val *v;
             const xs_str *field_name = NULL;
-            xs_dict *new_fields = xs_dict_new();
+            xs *new_fields = xs_dict_new();
             while (xs_dict_next(args, &k, &v, &c)) {
                 if (strcmp(k, "display_name") == 0) {
                     if (v != NULL)
