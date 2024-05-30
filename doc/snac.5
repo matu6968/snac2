@@ -121,6 +121,14 @@ rejected. This brings the flexibility and destruction power of regular expressio
 to your Fediverse experience. To be used wisely (see
 .Xr snac 8
 for more information).
+.It Pa announcement.txt
+If this file is present, an announcement will be shown to logged in users
+on every page with its contents. It is also available through the Mastodon API.
+Users can dismiss the announcement, which works by storing the modification time
+in the "last_announcement" field of the
+.Pa user.json
+file. When the file is modified, the announcement will then reappear. It can
+contain only text and will be ignored if it has more than 2048 bytes.
 .El
 .Pp
 Each user directory is a subdirectory of 

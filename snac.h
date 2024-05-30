@@ -375,3 +375,9 @@ typedef enum {
 } http_status;
 
 const char *http_status_text(int status);
+
+typedef struct {
+    double timestamp;
+    char   *text;
+} t_announcement;
+t_announcement *announcement(double after);

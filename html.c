@@ -786,6 +786,24 @@ static xs_html *html_user_body(snac *user, int read_only)
             xs_html_attr("class", "snac-top-user-id"),
             xs_html_text(handle)));
 
+    /** instance announcement **/
+
+    double la = 0.0;
+    xs *user_la = xs_dup(xs_dict_get(user->config, "last_announcement"));
+    if (user_la != NULL)
+        la = xs_number_get(user_la);
+
+    const t_announcement *an = announcement(la);
+    if (an != NULL && (an->text != NULL)) {
+        xs_html_add(top_user,  xs_html_tag("div",
+            xs_html_attr("class", "snac-announcement"),
+                xs_html_text(an->text),
+                xs_html_text(" "),
+                xs_html_sctag("a",
+                        xs_html_attr("href", xs_dup(xs_fmt("?da=%.0f", an->timestamp)))),
+                        xs_html_text("Dismiss")));
+    }
+
     if (read_only) {
         xs *es1  = encode_html(xs_dict_get(user->config, "bio"));
         xs *bio1 = not_really_markdown(es1, NULL, NULL);
@@ -2590,6 +2608,16 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         skip = atoi(v), cache = 0, save = 0;
     if ((v = xs_dict_get(q_vars, "show")) != NULL)
         show = atoi(v), cache = 0, save = 0;
+    if ((v = xs_dict_get(q_vars, "da")) != NULL) {
+        /* user dismissed an announcement */
+        if (login(&snac, req)) {
+            double ts = atof(v);
+            xs *timestamp = xs_number_new(ts);
+            srv_log(xs_fmt("user dismissed announcements until %d", ts));
+            snac.config = xs_dict_set(snac.config, "last_announcement", timestamp);
+            user_persist(&snac);
+        }
+    }
 
     if (p_path == NULL) { /** public timeline **/
         xs *h = xs_str_localtime(0, "%Y-%m.html");

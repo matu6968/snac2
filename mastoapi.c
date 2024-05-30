@@ -1982,10 +1982,40 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/announcements") == 0) { /** **/
-        /* snac has no announcements (yet?) */
-        *body  = xs_dup("[]");
-        *ctype = "application/json";
-        status = HTTP_STATUS_OK;
+        if (logged_in) {
+            xs *resp = xs_list_new();
+            double la = 0.0;
+            xs *user_la = xs_dup(xs_dict_get(snac1.config, "last_announcement"));
+            if (user_la != NULL)
+                la = xs_number_get(user_la);
+            xs *val_date = xs_str_utctime(la, ISO_DATE_SPEC);
+
+            /* contrary to html, we always send the announcement and set the read flag instead */
+
+            const t_announcement *annce = announcement(la);
+            if (annce != NULL && annce->text != NULL) {
+                xs *an = xs_dict_new();
+                an = xs_dict_set(an, "id",           xs_fmt("%d", annce->timestamp));
+                an = xs_dict_set(an, "content",      xs_fmt("<p>%s</p>", annce->text));
+                an = xs_dict_set(an, "starts_at",    xs_stock(XSTYPE_NULL));
+                an = xs_dict_set(an, "ends_at",      xs_stock(XSTYPE_NULL));
+                an = xs_dict_set(an, "all_day",      xs_stock(XSTYPE_TRUE));
+                an = xs_dict_set(an, "published_at", val_date);
+                an = xs_dict_set(an, "updated_at",   val_date);
+                an = xs_dict_set(an, "read",         (annce->timestamp >= la)
+                    ? xs_stock(XSTYPE_FALSE) : xs_stock(XSTYPE_TRUE));
+                an = xs_dict_set(an, "mentions",     xs_stock(XSTYPE_LIST));
+                an = xs_dict_set(an, "statuses",     xs_stock(XSTYPE_LIST));
+                an = xs_dict_set(an, "tags",         xs_stock(XSTYPE_LIST));
+                an = xs_dict_set(an, "emojis",       xs_stock(XSTYPE_LIST));
+                an = xs_dict_set(an, "reactions",    xs_stock(XSTYPE_LIST));
+                resp = xs_list_append(resp, an);
+            }
+
+            *body  = xs_json_dumps(resp, 4);
+            *ctype = "application/json";
+            status = HTTP_STATUS_OK;
+        }
     }
     else
     if (strcmp(cmd, "/v1/custom_emojis") == 0) { /** **/

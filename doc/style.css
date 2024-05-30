@@ -6,6 +6,7 @@ pre { overflow-x: scroll; }
 .snac-top-user { text-align: center; padding-bottom: 2em }
 .snac-top-user-name { font-size: 200% }
 .snac-top-user-id { font-size: 150% }
+.snac-announcement { border: black 1px solid; padding: 0.5em }
 .snac-avatar { float: left; height: 2.5em; padding: 0.25em }
 .snac-author { font-size: 90%; text-decoration: none }
 .snac-author-tag { font-size: 80% }
