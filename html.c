@@ -1911,6 +1911,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             if (name != NULL && *name) {
                 xs_html_add(content_attachments,
                     xs_html_tag("p",
+                        xs_html_attr("class", "snac-alt-text"),
                         xs_html_tag("details",
                             xs_html_tag("summary",
                                 xs_html_text(L("Alt..."))),
