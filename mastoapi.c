@@ -2259,6 +2259,12 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         status = HTTP_STATUS_OK;
     }
     else
+    if (strcmp(cmd, "/v1/trends/tags") == 0) { /** **/
+        *body  = xs_dup("[]");
+        *ctype = "application/json";
+        status = HTTP_STATUS_OK;
+    }
+    else
     if (strcmp(cmd, "/v2/search") == 0) { /** **/
         if (logged_in) {
             const char *q      = xs_dict_get(args, "q");
