@@ -2633,7 +2633,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *timestamp = xs_number_new(ts);
             srv_log(xs_fmt("user dismissed announcements until %d", ts));
             snac.config = xs_dict_set(snac.config, "last_announcement", timestamp);
-            user_persist(&snac);
+            user_persist(&snac, 0);
         }
     }
 
@@ -3380,7 +3380,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "passwd", pw);
         }
 
-        user_persist(&snac);
+        user_persist(&snac, 1);
 
         status = HTTP_STATUS_SEE_OTHER;
     }

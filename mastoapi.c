@@ -3319,7 +3319,7 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
             }
 
             /* Persist profile */
-            if (user_persist(&snac) == 0)
+            if (user_persist(&snac, 1) == 0)
                 credentials_get(body, ctype, &status, snac);
             else
                 status = HTTP_STATUS_INTERNAL_SERVER_ERROR;

@@ -76,7 +76,7 @@ int user_open(snac *snac, const char *uid);
 void user_free(snac *snac);
 xs_list *user_list(void);
 int user_open_by_md5(snac *snac, const char *md5);
-int user_persist(snac *snac);
+int user_persist(snac *snac, int publish);
 
 int validate_uid(const char *uid);
 

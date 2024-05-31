@@ -303,7 +303,7 @@ int user_open_by_md5(snac *snac, const char *md5)
     return 0;
 }
 
-int user_persist(snac *snac)
+int user_persist(snac *snac, int publish)
 /* store user */
 {
     xs *fn  = xs_fmt("%s/user.json", snac->basedir);
@@ -321,10 +321,13 @@ int user_persist(snac *snac)
 
     history_del(snac, "timeline.html_");
 
-    xs *a_msg = msg_actor(snac);
-    xs *u_msg = msg_update(snac, a_msg);
+    if (publish) {
+        xs *a_msg = msg_actor(snac);
+        xs *u_msg = msg_update(snac, a_msg);
 
-    enqueue_message(snac, u_msg);
+        enqueue_message(snac, u_msg);
+    }
+
     enqueue_verify_links(snac);
 
     return 0;
