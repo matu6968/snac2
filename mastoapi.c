@@ -2991,6 +2991,10 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
                     /* delete account from list */
                     p = xs_list_get(l, -2);
                     const xs_list *accts = xs_dict_get(args, "account_ids[]");
+
+                    if (xs_is_null(accts))
+                        accts = xs_dict_get(args, "account_ids");
+
                     int c = 0;
                     const char *v;
 
@@ -3006,6 +3010,7 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
                 }
             }
 
+            *ctype = "application/json";
             status = HTTP_STATUS_OK;
         }
         else
