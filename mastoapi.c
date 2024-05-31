@@ -152,6 +152,7 @@ const char *login_page = ""
 "<html>\n"
 "<head>\n"
 "<title>%s OAuth - Snac2</title>\n"
+"<meta content=\"width=device-width, initial-scale=1, minimum-scale=1, user-scalable=no\" name=\"viewport\">"
 "<style>:root {color-scheme: light dark}</style>\n"
 "</head>\n"
 "<body><h1>%s OAuth identify</h1>\n"
@@ -338,11 +339,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
         const char *cid   = xs_dict_get(args, "client_id");
         const char *csec  = xs_dict_get(args, "client_secret");
         const char *ruri  = xs_dict_get(args, "redirect_uri");
-        /* FIXME: this 'scope' parameter is mandatory for the official Mastodon API,
-           but if it's enabled, it makes it crash after some more steps, which
-           is FAR WORSE */
-        const char *scope = NULL;
-//        scope = xs_dict_get(args, "scope");
+        const char *scope = xs_dict_get(args, "scope");
 
         /* no client_secret? check if it's inside an authorization header
            (AndStatus does it this way) */
@@ -1164,8 +1161,10 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     acct = xs_dict_append(acct, "url", snac.actor);
     acct = xs_dict_append(acct, "locked", xs_stock(XSTYPE_FALSE));
     acct = xs_dict_append(acct, "bot", xs_dict_get(snac.config, "bot"));
+    acct = xs_dict_append(acct, "emojis", xs_list_new());
 
-    xs *src = xs_json_loads("{\"privacy\":\"public\","
+    xs *src = xs_json_loads("{\"privacy\":\"public\", \"language\":\"en\","
+        "\"follow_requests_count\": 0,"
         "\"sensitive\":false,\"fields\":[],\"note\":\"\"}");
     /* some apps take the note from the source object */
     src = xs_dict_set(src, "note", xs_dict_get(snac.config, "bio"));
@@ -2377,6 +2376,14 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
         const char *name  = xs_dict_get(args, "client_name");
         const char *ruri  = xs_dict_get(args, "redirect_uris");
         const char *scope = xs_dict_get(args, "scope");
+
+        /* Ice Cubes sends these values as query parameters, so try these */
+        if (name == NULL && ruri == NULL && scope == NULL) {
+            args = xs_dup(xs_dict_get(req, "q_vars"));
+            name  = xs_dict_get(args, "client_name");
+            ruri  = xs_dict_get(args, "redirect_uris");
+            scope = xs_dict_get(args, "scope");
+        }
 
         if (xs_type(ruri) == XSTYPE_LIST)
             ruri = xs_dict_get(ruri, 0);
