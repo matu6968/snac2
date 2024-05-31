@@ -1446,9 +1446,27 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 if (strcmp(opt, "featured_tags") == 0) {
                     /* snac doesn't have features tags, yet? */
                     /* implement empty response so apps like Tokodon don't show an error */
-                    *body  = xs_dup("[]");
-                    *ctype = "application/json";
-                    status = HTTP_STATUS_OK;
+                    out = xs_list_new();
+                }
+                else
+                if (strcmp(opt, "following") == 0) {
+                    xs *wing = following_list(&snac1);
+                    out = xs_list_new();
+                    int c = 0;
+                    const char *v;
+
+                    while (xs_list_next(wing, &v, &c)) {
+                        xs *actor = NULL;
+
+                        if (valid_status(object_get(v, &actor))) {
+                            xs *acct = mastoapi_account(actor);
+                            out = xs_list_append(out, acct);
+                        }
+                    }
+                }
+                else
+                if (strcmp(opt, "followers") == 0) {
+                    out = xs_list_new();
                 }
 
                 user_free(&snac2);
@@ -1469,9 +1487,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     if (strcmp(opt, "featured_tags") == 0) {
                         /* snac doesn't have features tags, yet? */
                         /* implement empty response so apps like Tokodon don't show an error */
-                        *body  = xs_dup("[]");
-                        *ctype = "application/json";
-                        status = HTTP_STATUS_OK;
+                        out = xs_list_new();
                     }
                 }
             }
