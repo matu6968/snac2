@@ -2907,6 +2907,10 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             if (op && id && xs_is_hex(id)) {
                 if (strcmp(op, "accounts") == 0) {
                     const xs_list *accts = xs_dict_get(args, "account_ids[]");
+
+                    if (xs_is_null(accts))
+                        accts = xs_dict_get(args, "account_ids");
+
                     int c = 0;
                     const char *v;
 
@@ -2914,6 +2918,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                         list_content(&snac, id, v, 1);
                     }
 
+                    *ctype = "application/json";
                     status = HTTP_STATUS_OK;
                 }
             }
