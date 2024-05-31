@@ -3370,3 +3370,69 @@ void srv_archive_qitem(const char *prefix, xs_dict *q_item)
         fclose(f);
     }
 }
+
+
+t_announcement *announcement(const double after)
+/* returns announcement text or NULL if none exists or it is olde than "after" */
+{
+    static const long int MAX_SIZE = 2048;
+    static t_announcement a = {
+        .text = NULL,
+        .timestamp = 0.0,
+    };
+    static xs_str *fn = NULL;
+    if (fn == NULL)
+        fn = xs_fmt("%s/announcement.txt", srv_basedir);
+
+    const double ts = mtime(fn);
+
+    /* file does not exist or other than what was requested */
+    if (ts == 0.0 || ts <= after)
+        return NULL;
+
+    /* nothing changed, just return the current announcement */
+    if (a.text != NULL && ts <= a.timestamp)
+        return &a;
+
+    /* read and store new announcement */
+    FILE *f;
+
+    if ((f = fopen(fn, "r")) != NULL) {
+        fseek (f, 0, SEEK_END);
+        const long int length = ftell(f);
+
+        if (length > MAX_SIZE) {
+            /* this is probably unintentional */
+            srv_log(xs_fmt("announcement.txt too big: %ld bytes, max is %ld, ignoring.", length, MAX_SIZE));
+        }
+        else
+        if (length > 0) {
+            fseek (f, 0, SEEK_SET);
+            char *buffer = malloc(length + 1);
+            if (buffer) {
+                fread(buffer, 1, length, f);
+                buffer[length] = '\0';
+
+                free(a.text);
+                a.text = buffer;
+                a.timestamp = ts;
+            }
+            else {
+                srv_log("Error allocating memory for announcement");
+            }
+        }
+        else {
+            /* an empty file means no announcement */
+            free(a.text);
+            a.text = NULL;
+            a.timestamp = 0.0;
+        }
+
+        fclose (f);
+    }
+
+    if (a.text != NULL)
+        return &a;
+
+    return NULL;
+}
