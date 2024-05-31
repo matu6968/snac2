@@ -801,9 +801,9 @@ static xs_html *html_user_body(snac *user, int read_only)
             xs_html_attr("class", "snac-announcement"),
                 xs_html_text(an->text),
                 xs_html_text(" "),
-                xs_html_sctag("a",
-                        xs_html_attr("href", s)),
-                        xs_html_text("Dismiss")));
+                xs_html_tag("a",
+                        xs_html_attr("href", s),
+                        xs_html_text("Dismiss"))));
     }
 
     if (read_only) {
