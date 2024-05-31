@@ -373,6 +373,9 @@ void httpd_connection(FILE *f)
     }
     else
     if (strcmp(method, "OPTIONS") == 0) {
+        const char *methods = "OPTIONS, GET, HEAD, POST, PUT, DELETE";
+        headers = xs_dict_append(headers, "allow", methods);
+        headers = xs_dict_append(headers, "access-control-allow-methods", methods);
         status = HTTP_STATUS_OK;
     }
     else
