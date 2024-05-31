@@ -16,6 +16,8 @@ Mastodon API: fixed login problems with the official Mastodon API, IceCube and T
 
 The webfinger content-type response header is now RFC-compliant (contributed by steve-bate).
 
+Improved support for the HTTP OPTIONS method, allowing sites like https://mastodonlistmanager.org to work.
+
 ## 2.53
 
 New user feature to search by post content (using regular expressions) or tag.
