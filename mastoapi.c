@@ -2010,8 +2010,11 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             const t_announcement *annce = announcement(la);
             if (annce != NULL && annce->text != NULL) {
                 xs *an = xs_dict_new();
-                an = xs_dict_set(an, "id",           xs_fmt("%d", annce->timestamp));
-                an = xs_dict_set(an, "content",      xs_fmt("<p>%s</p>", annce->text));
+                xs *id = xs_fmt("%d", annce->timestamp);
+                xs *ct = xs_fmt("<p>%s</p>", annce->text);
+
+                an = xs_dict_set(an, "id",           id);
+                an = xs_dict_set(an, "content",      ct);
                 an = xs_dict_set(an, "starts_at",    xs_stock(XSTYPE_NULL));
                 an = xs_dict_set(an, "ends_at",      xs_stock(XSTYPE_NULL));
                 an = xs_dict_set(an, "all_day",      xs_stock(XSTYPE_TRUE));

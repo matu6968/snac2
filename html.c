@@ -795,12 +795,14 @@ static xs_html *html_user_body(snac *user, int read_only)
 
     const t_announcement *an = announcement(la);
     if (an != NULL && (an->text != NULL)) {
+        xs *s = xs_fmt("?da=%.0f", an->timestamp);
+
         xs_html_add(top_user,  xs_html_tag("div",
             xs_html_attr("class", "snac-announcement"),
                 xs_html_text(an->text),
                 xs_html_text(" "),
                 xs_html_sctag("a",
-                        xs_html_attr("href", xs_dup(xs_fmt("?da=%.0f", an->timestamp)))),
+                        xs_html_attr("href", s)),
                         xs_html_text("Dismiss")));
     }
 
