@@ -6,7 +6,7 @@ Markdown-style links are now supported.
 
 The alt text in attachments that have one is also shown in a dropdown just below it (useful for environments where mouseover is not available, i.e. for phones and tablets).
 
-Instance-wide notifications has been implemented (contributed by louis77). A small tweak to the default CSS was made to suit this change; please consider updating your style.css.
+Instance-wide notifications has been implemented (contributed by louis77). A small tweak to the default CSS was made to suit this change; please consider updating your style.css (see doc/style.css as an example).
 
 The avatar and/or the header images can now be deleted (contributed by louis77).
 
