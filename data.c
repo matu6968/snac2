@@ -326,9 +326,9 @@ int user_persist(snac *snac, int publish)
         xs *u_msg = msg_update(snac, a_msg);
 
         enqueue_message(snac, u_msg);
-    }
 
-    enqueue_verify_links(snac);
+        enqueue_verify_links(snac);
+    }
 
     return 0;
 }
