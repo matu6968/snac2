@@ -763,6 +763,8 @@ xs_dict *mastoapi_poll(snac *snac, const xs_dict *msg)
     xs *vc = xs_number_new(num_votes);
     poll = xs_dict_append(poll, "votes_count", vc);
 
+    poll = xs_dict_append(poll, "emojis", xs_stock(XSTYPE_LIST));
+
     poll = xs_dict_append(poll, "voted",
             (snac && was_question_voted(snac, xs_dict_get(msg, "id"))) ?
                 xs_stock(XSTYPE_TRUE) : xs_stock(XSTYPE_FALSE));
