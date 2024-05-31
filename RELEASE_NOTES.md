@@ -10,7 +10,7 @@ The avatar and/or the header images can now be deleted (contributed by louis77).
 
 Code cleaning: HTTP status codes use names instead of hardcoded integers (contributed by louis77).
 
-Mastodon API: some fixes for Mona and Tokodon apps, user credentials can now be edited from apps (contributed by louis77).
+Mastodon API: fixed login problems with the official Mastodon API, IceCube and Toot! on iOS, some fixes for Mona and Tokodon apps, user credentials can now be edited from apps (contributed by louis77).
 
 The webfinger content-type response header is now RFC-compliant (contributed by steve-bate).
 

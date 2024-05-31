@@ -1161,7 +1161,7 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     acct = xs_dict_append(acct, "url", snac.actor);
     acct = xs_dict_append(acct, "locked", xs_stock(XSTYPE_FALSE));
     acct = xs_dict_append(acct, "bot", xs_dict_get(snac.config, "bot"));
-    acct = xs_dict_append(acct, "emojis", xs_list_new());
+    acct = xs_dict_append(acct, "emojis", xs_stock(XSTYPE_LIST));
 
     xs *src = xs_json_loads("{\"privacy\":\"public\", \"language\":\"en\","
         "\"follow_requests_count\": 0,"
