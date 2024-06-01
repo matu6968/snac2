@@ -243,6 +243,9 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
     const char *i_ctype = xs_dict_get(req, "content-type");
     xs *args      = NULL;
 
+    if (i_ctype == NULL)
+        return 0;
+
     if (i_ctype && xs_startswith(i_ctype, "application/json")) {
         if (!xs_is_null(payload))
             args = xs_json_loads(payload);
@@ -2412,6 +2415,9 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     xs *args      = NULL;
     const char *i_ctype = xs_dict_get(req, "content-type");
 
+    if (i_ctype == NULL)
+        return 0;
+
     if (i_ctype && xs_startswith(i_ctype, "application/json")) {
         if (!xs_is_null(payload))
             args = xs_json_loads(payload);
@@ -3000,6 +3006,9 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
     xs *args      = NULL;
     const char *i_ctype = xs_dict_get(req, "content-type");
 
+    if (i_ctype == NULL)
+        return 0;
+
     if (i_ctype && xs_startswith(i_ctype, "application/json")) {
         if (!xs_is_null(payload))
             args = xs_json_loads(payload);
@@ -3087,6 +3096,9 @@ int mastoapi_put_handler(const xs_dict *req, const char *q_path,
     int status    = HTTP_STATUS_NOT_FOUND;
     xs *args      = NULL;
     const char *i_ctype = xs_dict_get(req, "content-type");
+
+    if (i_ctype == NULL)
+        return 0;
 
     if (i_ctype && xs_startswith(i_ctype, "application/json")) {
         if (!xs_is_null(payload))
@@ -3234,6 +3246,9 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
     int status    = HTTP_STATUS_NOT_FOUND;
     xs *args      = NULL;
     const char *i_ctype = xs_dict_get(req, "content-type");
+
+    if (i_ctype == NULL)
+        return 0;
 
     if (i_ctype && xs_startswith(i_ctype, "application/json")) {
         if (!xs_is_null(payload))
