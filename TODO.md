@@ -6,11 +6,13 @@ Unfollowing lemmy groups gets rejected with an http status of 400.
 
 Unfollowing guppe groups seems to work (http status of 200), but messages continue to arrive as if it didn't.
 
-Mastodon API: fix whatever the fuck is making the official app and Megalodon to crash.
-
 Important: deleting a follower should do more that just delete the object, see https://codeberg.org/grunfink/snac2/issues/43#issuecomment-956721
 
 Editing / Updating a post does not index newly added hashtags.
+
+The Mastodon official app crashes when hitting the reply button.
+
+The Mastodon official app crashes (or gives a ownVotes is null error) when trying to show polls.
 
 ## Wishlist
 
@@ -315,3 +317,5 @@ Integrate "Ability to federate with hidden networks" see https://codeberg.org/gr
 Consider adding milter-like support to reject posts to mitigate spam (discarded; 2024-04-20T22:46:35+0200).
 
 Implement support for 'Event' data types. Example: https://fediversity.site/item/e9bdb383-eeb9-4d7d-b2f7-c6401267cae0 (2024-05-12T08:56:27+0200)
+
+Mastodon API: fix whatever the fuck is making the official app and Megalodon to crash (2024-06-02T07:43:35+0200).
