@@ -1632,14 +1632,18 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     v = xs_dict_get(msg, "summary");
 
     /* is it sensitive? */
-    if (user && xs_type(xs_dict_get(msg, "sensitive")) == XSTYPE_TRUE) {
+    if (xs_type(xs_dict_get(msg, "sensitive")) == XSTYPE_TRUE) {
         if (xs_is_null(v) || *v == '\0')
             v = "...";
 
-        /* only show it when not in the public timeline and the config setting is "open" */
-        const char *cw = xs_dict_get(user->config, "cw");
-        if (xs_is_null(cw) || read_only)
-            cw = "";
+        const char *cw = "";
+
+        if (user) {
+            /* only show it when not in the public timeline and the config setting is "open" */
+            cw = xs_dict_get(user->config, "cw");
+            if (xs_is_null(cw) || read_only)
+                cw = "";
+        }
 
         snac_content = xs_html_tag("details",
             xs_html_attr(cw, NULL),
