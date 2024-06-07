@@ -1974,7 +1974,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                             d = xs_dict_append(d, "replies_policy", "list");
                             d = xs_dict_append(d, "exclusive", xs_stock(XSTYPE_FALSE));
 
-                            out = xs_list_append(out, d);
+                            out = xs_dup(d);
                             break;
                         }
                     }
@@ -2971,8 +2971,10 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                         list_content(&snac, id, v, 1);
                     }
 
-                    *ctype = "application/json";
-                    status = HTTP_STATUS_OK;
+                    xs *out = xs_dict_new();
+                    *body   = xs_json_dumps(out, 4);
+                    *ctype  = "application/json";
+                    status  = HTTP_STATUS_OK;
                 }
             }
         }
