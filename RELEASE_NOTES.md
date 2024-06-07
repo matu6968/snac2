@@ -12,11 +12,13 @@ The avatar and/or the header images can now be deleted (contributed by louis77).
 
 Code cleaning: HTTP status codes use names instead of hardcoded integers (contributed by louis77).
 
-Mastodon API: fixed login problems with the official Mastodon API, IceCube and Toot! on iOS, some fixes for Mona and Tokodon apps, user credentials can now be edited from apps (contributed by louis77).
+Mastodon API: fixed login problems with the official Mastodon API, IceCube and Toot! on iOS, some fixes for Mona and Tokodon apps, user credentials can now be edited from apps (all contributed by louis77), fixed crash on unset content-type header.
 
 The webfinger content-type response header is now RFC-compliant (contributed by steve-bate).
 
 Improved support for the HTTP OPTIONS method, allowing sites like https://mastodonlistmanager.org to work.
+
+Fixed non-working content warnings in the public instance timeline.
 
 ## 2.53
 
