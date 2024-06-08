@@ -2830,11 +2830,13 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *next = list_timeline(&snac, lid, skip + show, 1);
 
             if (list != NULL) {
+                xs *ttl = timeline_top_level(&snac, list);
+
                 xs *base = xs_fmt("/list/%s", lid);
                 xs *name = list_maint(&snac, lid, 3);
                 xs *title = xs_fmt(L("Showing timeline for list '%s'"), name);
 
-                *body = html_timeline(&snac, list, 0, skip, show,
+                *body = html_timeline(&snac, ttl, 0, skip, show,
                     xs_list_len(next), title, base, 1);
                 *b_size = strlen(*body);
                 status  = HTTP_STATUS_OK;
