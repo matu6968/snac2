@@ -2931,8 +2931,10 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             if (xs_type(title) == XSTYPE_STRING) {
                 /* add the list */
                 xs *out = xs_dict_new();
+                xs *lid = list_maint(&snac, title, 1);
 
-                if (xs_type(list_maint(&snac, title, 1)) == XSTYPE_TRUE) {
+                if (!xs_is_null(lid)) {
+                    out = xs_dict_append(out, "id", lid);
                     out = xs_dict_append(out, "title", title);
                     out = xs_dict_append(out, "replies_policy", xs_dict_get_def(args, "replies_policy", "list"));
                     out = xs_dict_append(out, "exclusive", xs_stock(XSTYPE_FALSE));

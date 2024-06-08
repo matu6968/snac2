@@ -1831,21 +1831,18 @@ xs_val *list_maint(snac *user, const char *list, int op)
             if (add) {
                 FILE *f;
                 xs *dir = xs_fmt("%s/list/", user->basedir);
-                xs *id  = xs_fmt("%010x", time(NULL));
+
+                l = xs_fmt("%010x", time(NULL));
 
                 mkdirx(dir);
 
-                xs *fn = xs_fmt("%s%s.id", dir, id);
+                xs *fn = xs_fmt("%s%s.id", dir, l);
 
                 if ((f = fopen(fn, "w")) != NULL) {
                     fprintf(f, "%s\n", list);
                     fclose(f);
                 }
-
-                l = xs_stock(XSTYPE_TRUE);
             }
-            else
-                l = xs_stock(XSTYPE_FALSE);
         }
 
         break;
