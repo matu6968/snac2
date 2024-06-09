@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.55
+
+Mastodon API: fixed a last-minute bug that prevented some API functions to work.
+
 ## 2.54
 
 Markdown-style links are now supported.
