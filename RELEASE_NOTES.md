@@ -2,7 +2,7 @@
 
 ## 2.55
 
-Mastodon API: fixed a last-minute bug that prevented some API functions to work.
+Mastodon API: fixed a last-minute bug that broke some API functions.
 
 ## 2.54
 
