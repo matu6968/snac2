@@ -406,7 +406,7 @@ void httpd_connection(FILE *f)
     if (status == HTTP_STATUS_SEE_OTHER)
         headers = xs_dict_append(headers, "location", body);
 
-    if (status == HTTP_STATUS_UNAUTHORIZED) {
+    if (status == HTTP_STATUS_UNAUTHORIZED && body) {
         xs *www_auth = xs_fmt("Basic realm=\"@%s@%s snac login\"",
                                 body, xs_dict_get(srv_config, "host"));
 
