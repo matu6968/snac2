@@ -1040,12 +1040,29 @@ xs_keyval *xs_keyval_make(xs_keyval *keyval, const xs_str *key, const xs_val *va
 
 /** dicts **/
 
+typedef struct {
+    int value_offset;   /* offset to value (from dict start) */
+    int next;           /* next node in sequential search */
+    int child[4];       /* child nodes in hashed search */
+    char key[];         /* C string key */
+} ditem_hdr;
+
+typedef struct {
+    int size;           /* size of full dict (_XS_TYPE_SIZE) */
+    int first;          /* first node for sequential search */
+    int root;           /* root node for hashed search */
+    ditem_hdr ditems[]; /* the ditems */
+} dict_hdr;
+
+
 xs_dict *xs_dict_new(void)
 /* creates a new dict */
 {
-    int sz = 1 + _XS_TYPE_SIZE + 1;
+    /* size of dict */
+    int sz = 1 + sizeof(dict_hdr);
+
     xs_dict *d = xs_realloc(NULL, sz);
-    memset(d, XSTYPE_EOM, sz);
+    memset(d, '\0', sz);
 
     d[0] = XSTYPE_DICT;
     _xs_put_size(d, sz);
@@ -1053,112 +1070,100 @@ xs_dict *xs_dict_new(void)
     return d;
 }
 
-
-xs_dict *_xs_dict_write_keyval(xs_dict *dict, int offset, const xs_str *key, const xs_val *value)
-/* adds a new keyval to the dict */
+static int *_xs_dict_locate(const xs_dict *dict, const char *key)
+/* locates a ditem */
 {
-    XS_ASSERT_TYPE(dict, XSTYPE_DICT);
-    XS_ASSERT_TYPE(key, XSTYPE_STRING);
+    unsigned int h = xs_hash_func(key, strlen(key));
 
+    /* start from the root */
+    dict_hdr *dh = (dict_hdr *)(dict + 1);
+    int *off = &dh->root;
+
+    while (*off) {
+        /* pointer to ditem */
+        ditem_hdr *di = (ditem_hdr *)(dict + *off);
+
+        /* pointer to the key */
+        const char *d_key = di->key;
+
+        if (strcmp(key, d_key) == 0)
+            break;
+
+        off = &di->child[h >> 30];
+        h <<= 2;
+    }
+
+    return off;
+}
+
+
+xs_dict *xs_dict_set(xs_dict *dict, const xs_str *key, const xs_val *value)
+/* sets a key/value pair */
+{
     if (value == NULL)
         value = xs_stock(XSTYPE_NULL);
 
-    dict = xs_expand(dict, offset, xs_keyval_size(key, value));
+    if (xs_type(dict) == XSTYPE_DICT) {
+        int *o = _xs_dict_locate(dict, key);
+        int end = xs_size(dict);
 
-    xs_keyval_make(&dict[offset], key, value);
+        if (!*o) {
+            /* ditem does not exist yet: append to the end */
+            *o = end;
 
-    return dict;
-}
+            int ksz = xs_size(key);
+            int vsz = xs_size(value);
+            int dsz = sizeof(ditem_hdr) + ksz + vsz;
 
+            /* open room in the dict for the full ditem */
+            dict = xs_expand(dict, end, dsz);
 
-xs_dict *xs_dict_append(xs_dict *dict, const xs_str *key, const xs_val *value)
-/* appends a memory block to the dict */
-{
-    return _xs_dict_write_keyval(dict, xs_size(dict) - 1, key, value);
-}
+            dict_hdr *dh = (dict_hdr *)(dict + 1);
 
+            /* build the ditem */
+            ditem_hdr *di = (ditem_hdr *)(dict + end);
+            memset(di, '\0', dsz);
 
-xs_dict *xs_dict_prepend(xs_dict *dict, const xs_str *key, const xs_val *value)
-/* prepends a memory block to the dict */
-{
-    return _xs_dict_write_keyval(dict, 1 + _XS_TYPE_SIZE, key, value);
-}
+            /* set the offset to the value */
+            di->value_offset = end + sizeof(ditem_hdr) + ksz;
 
+            /* copy the key */
+            memcpy(di->key, key, ksz);
 
-int xs_dict_next(const xs_dict *dict, const xs_str **key, const xs_val **value, int *ctxt)
-/* iterates a dict, with context */
-{
-    if (xs_type(dict) != XSTYPE_DICT)
-        return 0;
+            /* copy the value */
+            memcpy(dict + di->value_offset, value, vsz);
 
-    int goon = 1;
+            /* chain to the sequential list */
+            di->next = dh->first;
+            dh->first = end;
+        }
+        else {
+            /* ditem already exists */
+            ditem_hdr *di = (ditem_hdr *)(dict + *o);
 
-    char *p = (char *)dict;
+            /* get pointer to the value offset */
+            int *i = &di->value_offset;
 
-    /* skip the start of the list */
-    if (*ctxt == 0)
-        *ctxt = 1 + _XS_TYPE_SIZE;
+            /* deleted? recover offset */
+            if (*i < 0)
+                *i *= -1;
 
-    p += *ctxt;
+            /* get old value */
+            xs_val *o_value = dict + *i;
 
-    /* an element? */
-    if (xs_type(p) == XSTYPE_KEYVAL) {
-        p++;
+            /* will new value fit over the old one? */
+            if (xs_size(value) <= xs_size(o_value)) {
+                /* just overwrite */
+                /* (difference is leaked inside the dict) */
+                memcpy(o_value, value, xs_size(value));
+            }
+            else {
+                /* not enough room: new value will live at the end of the dict */
+                /* (old value is leaked inside the dict) */
+                *i = end;
 
-        *key = p;
-        p += xs_size(*key);
-
-        *value = p;
-        p += xs_size(*value);
-    }
-    else {
-        /* end of list */
-        goon = 0;
-    }
-
-    /* store back the pointer */
-    *ctxt = p - dict;
-
-    return goon;
-}
-
-
-const xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_val *def)
-/* returns the value directed by key, or the default value */
-{
-    XS_ASSERT_TYPE(dict, XSTYPE_DICT);
-    XS_ASSERT_TYPE(key, XSTYPE_STRING);
-
-    const xs_str *k;
-    const xs_val *v;
-    int c = 0;
-
-    while (xs_dict_next(dict, &k, &v, &c)) {
-        if (strcmp(k, key) == 0)
-            return v;
-    }
-
-    return (xs_val *)def;
-}
-
-
-xs_dict *xs_dict_del(xs_dict *dict, const xs_str *key)
-/* deletes a key */
-{
-    XS_ASSERT_TYPE(dict, XSTYPE_DICT);
-    XS_ASSERT_TYPE(key, XSTYPE_STRING);
-
-    const xs_str *k;
-    const xs_val *v;
-    int c = 0;
-
-    while (xs_dict_next(dict, &k, &v, &c)) {
-        if (strcmp(k, key) == 0) {
-            /* the address of the item is just behind the key */
-            char *i = (char *)k - 1;
-
-            dict = xs_collapse(dict, i - dict, xs_size(i));
-            break;
+                dict = xs_insert(dict, end, value);
+            }
         }
     }
 
@@ -1166,27 +1171,106 @@ xs_dict *xs_dict_del(xs_dict *dict, const xs_str *key)
 }
 
 
-xs_dict *xs_dict_set(xs_dict *dict, const xs_str *key, const xs_val *data)
-/* sets (replaces) a key */
+xs_dict *xs_dict_append(xs_dict *dict, const xs_str *key, const xs_val *value)
+/* just an alias (for this implementation it's the same) */
 {
-    XS_ASSERT_TYPE(dict, XSTYPE_DICT);
-    XS_ASSERT_TYPE(key, XSTYPE_STRING);
+    return xs_dict_set(dict, key, value);
+}
 
-    /* delete the possibly existing key */
-    dict = xs_dict_del(dict, key);
 
-    /* add the data */
-    dict = xs_dict_append(dict, key, data);
+xs_dict *xs_dict_prepend(xs_dict *dict, const xs_str *key, const xs_val *value)
+/* just an alias (for this implementation it's the same) */
+{
+    return xs_dict_set(dict, key, value);
+}
+
+
+xs_dict *xs_dict_del(xs_dict *dict, const xs_str *key)
+/* deletes a key/value pair */
+{
+    if (xs_type(dict) == XSTYPE_DICT) {
+        int *o = _xs_dict_locate(dict, key);
+
+        if (*o) {
+            /* found ditem */
+            ditem_hdr *di = (ditem_hdr *)(dict + *o);
+
+            /* deleted ditems have a negative value offset */
+            di->value_offset *= -1;
+        }
+    }
 
     return dict;
+}
+
+
+const xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_str *def)
+/* gets a value by key, or returns def */
+{
+    if (xs_type(dict) == XSTYPE_DICT) {
+        int *o = _xs_dict_locate(dict, key);
+
+        if (*o) {
+            /* found ditem */
+            ditem_hdr *di = (ditem_hdr *)(dict + *o);
+
+            if (di->value_offset > 0)
+                return dict + di->value_offset;
+        }
+    }
+
+    return def;
+}
+
+
+int xs_dict_next(const xs_dict *dict, const xs_str **key, const xs_val **value, int *ctxt)
+/* dict iterator, with context */
+{
+    if (xs_type(dict) != XSTYPE_DICT)
+        return 0;
+
+    if (*ctxt == 0) {
+        /* at the beginning: get the first sequential item */
+        const dict_hdr *dh = (dict_hdr *)(dict + 1);
+        *ctxt = dh->first;
+    }
+
+    *value = NULL;
+
+    while (*value == NULL && *ctxt > 0) {
+        const ditem_hdr *di = (ditem_hdr *)(dict + *ctxt);
+
+        /* get value */
+        if (di->value_offset > 0) {
+            *value = (xs_val *)(dict + di->value_offset);
+
+            /* get key */
+            *key = (xs_str *)&di->key;
+        }
+
+        /* get offset to next ditem */
+        *ctxt = di->next ? di->next : -1;
+    }
+
+    return *value != NULL;
 }
 
 
 xs_dict *xs_dict_gc(xs_dict *dict)
 /* collects garbage (leaked values) inside a dict */
 {
-    /* this kind of dicts does not get garbage */
-    return dict;
+    xs_dict *nd = xs_dict_new();
+    const xs_str *k;
+    const xs_val *v;
+    int c = 0;
+
+    /* shamelessly create a new dict with the same content */
+    while (xs_dict_next(dict, &k, &v, &c))
+        nd = xs_dict_set(nd, k, v);
+
+    xs_free(dict);
+
+    return nd;
 }
 
 
