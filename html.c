@@ -861,6 +861,7 @@ static xs_html *html_user_body(snac *user, int read_only)
                     else {
                         value = xs_html_tag("a",
                             xs_html_attr("href", v),
+                            xs_html_attr("rel", "me"),
                             xs_html_text(v));
                     }
                 }
