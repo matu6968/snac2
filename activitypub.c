@@ -2182,16 +2182,16 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
 
     if (strcmp(type, "message") == 0) {
         const xs_dict *msg = xs_dict_get(q_item, "message");
-        xs *rcpts    = recipient_list(snac, msg, 1);
+        xs *rcpts = recipient_list(snac, msg, 1);
         xs_set inboxes;
-        xs_list *p;
         const xs_str *actor;
+        int c;
 
         xs_set_init(&inboxes);
 
         /* iterate the recipients */
-        p = rcpts;
-        while (xs_list_iter(&p, &actor)) {
+        c = 0;
+        while (xs_list_next(rcpts, &actor, &c)) {
             xs *inbox = get_actor_inbox(actor);
 
             if (inbox != NULL) {
@@ -2203,14 +2203,14 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
                 snac_log(snac, xs_fmt("cannot find inbox for %s", actor));
         }
 
-        /* if it's public, send to the collected inboxes */
-        if (is_msg_public(msg)) {
+        /* if it's a public note or question, send to the collected inboxes */
+        if (xs_match(xs_dict_get_def(msg, "type", ""), "Create") && is_msg_public(msg)) {
             if (xs_type(xs_dict_get(srv_config, "disable_inbox_collection")) != XSTYPE_TRUE) {
                 xs *shibx = inbox_list();
                 const xs_str *inbox;
 
-                p = shibx;
-                while (xs_list_iter(&p, &inbox)) {
+                c = 0;
+                while (xs_list_next(shibx, &inbox, &c)) {
                     if (xs_set_add(&inboxes, inbox) == 1)
                         enqueue_output(snac, msg, inbox, 0, 0);
                 }
