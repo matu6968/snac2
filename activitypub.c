@@ -927,13 +927,6 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
     if (!xs_is_null(bot) && !xs_is_null(chat_id) && *bot && *chat_id)
         enqueue_telegram(body, bot, chat_id);
 
-    /* finally, store it in the notification folder */
-    if (strcmp(type, "Follow") == 0)
-        objid = id;
-    else
-    if (strcmp(utype, "Follow") == 0)
-        objid = actor;
-
     /* ntfy */
     const char *ntfy_server = xs_dict_get(snac->config, "ntfy_server");
     const char *ntfy_token  = xs_dict_get(snac->config, "ntfy_token");
