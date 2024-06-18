@@ -934,6 +934,14 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
     if (!xs_is_null(ntfy_server) && *ntfy_server)
         enqueue_ntfy(body, ntfy_server, ntfy_token);
 
+    /* auto boost */
+    if (xs_match(type, "Create") && xs_type(xs_dict_get(snac->config, "auto_boost")) == XSTYPE_TRUE) {
+        xs *msg = msg_admiration(snac, objid, "Announce");
+        enqueue_message(snac, msg);
+
+        snac_debug(snac, 1, xs_fmt("auto boosted %s", objid));
+    }
+
     /* finally, store it in the notification folder */
     if (strcmp(type, "Follow") == 0)
         objid = id;
