@@ -2204,7 +2204,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         }
 
         /* if it's a public note or question, send to the collected inboxes */
-        if (xs_match(xs_dict_get_def(msg, "type", ""), "Create") && is_msg_public(msg)) {
+        if (xs_match(xs_dict_get_def(msg, "type", ""), "Create|Update") && is_msg_public(msg)) {
             if (xs_type(xs_dict_get(srv_config, "disable_inbox_collection")) != XSTYPE_TRUE) {
                 xs *shibx = inbox_list();
                 const xs_str *inbox;
