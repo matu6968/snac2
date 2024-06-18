@@ -788,22 +788,24 @@ static xs_html *html_user_body(snac *user, int read_only)
 
     /** instance announcement **/
 
-    double la = 0.0;
-    xs *user_la = xs_dup(xs_dict_get(user->config, "last_announcement"));
-    if (user_la != NULL)
-        la = xs_number_get(user_la);
+    if (!read_only) {
+        double la = 0.0;
+        xs *user_la = xs_dup(xs_dict_get(user->config, "last_announcement"));
+        if (user_la != NULL)
+            la = xs_number_get(user_la);
 
-    const t_announcement *an = announcement(la);
-    if (an != NULL && (an->text != NULL)) {
-        xs *s = xs_fmt("?da=%.0f", an->timestamp);
+        const t_announcement *an = announcement(la);
+        if (an != NULL && (an->text != NULL)) {
+            xs *s = xs_fmt("?da=%.0f", an->timestamp);
 
-        xs_html_add(top_user,  xs_html_tag("div",
-            xs_html_attr("class", "snac-announcement"),
-                xs_html_text(an->text),
-                xs_html_text(" "),
-                xs_html_tag("a",
-                        xs_html_attr("href", s),
-                        xs_html_text("Dismiss"))));
+            xs_html_add(top_user,  xs_html_tag("div",
+                xs_html_attr("class", "snac-announcement"),
+                    xs_html_text(an->text),
+                    xs_html_text(" "),
+                    xs_html_tag("a",
+                            xs_html_attr("href", s),
+                            xs_html_text("Dismiss"))));
+        }
     }
 
     if (read_only) {
