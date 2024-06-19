@@ -6,6 +6,8 @@ Don't show instance announcements in public timelines.
 
 Added auto boosting. If an account has this flag enabled, all mentions to that account are automatically boosted to all its followers, behaving like a `Group` actor (contributed by sarahpw).
 
+Fixed typos in manpages (contributed by sergiodj).
+
 ## 2.55
 
 Mastodon API: fixed a last-minute bug that broke some API functions.
