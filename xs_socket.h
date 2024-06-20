@@ -6,7 +6,7 @@
 
 int xs_socket_timeout(int s, double rto, double sto);
 int xs_socket_server(const char *addr, const char *serv);
-FILE *xs_socket_accept(int rs);
+int xs_socket_accept(int rs);
 int _xs_socket_peername(int s, char *buf, int buf_size);
 int xs_socket_connect(const char *addr, const char *serv);
 
@@ -94,16 +94,13 @@ end:
 }
 
 
-FILE *xs_socket_accept(int rs)
+int xs_socket_accept(int rs)
 /* accepts an incoming connection */
 {
-    int cs = -1;
     struct sockaddr_storage addr;
     socklen_t l = sizeof(addr);
 
-    cs = accept(rs, (struct sockaddr *)&addr, &l);
-
-    return cs == -1 ? NULL : fdopen(cs, "r+");
+    return accept(rs, (struct sockaddr *)&addr, &l);
 }
 
 

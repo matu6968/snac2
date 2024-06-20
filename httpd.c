@@ -847,9 +847,10 @@ void httpd(void)
 
     if (setjmp(on_break) == 0) {
         for (;;) {
-            FILE *f = xs_socket_accept(rs);
+            int cs = xs_socket_accept(rs);
 
-            if (f != NULL) {
+            if (cs != -1) {
+                FILE *f = fdopen(cs, "r+");
                 xs *job = xs_data_new(&f, sizeof(FILE *));
                 job_post(job, 1);
             }
