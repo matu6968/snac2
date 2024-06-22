@@ -868,6 +868,13 @@ static xs_html *html_user_body(snac *user, int read_only)
                     }
                 }
                 else
+                if (xs_startswith(v, "gemini:/")) {
+                    value = xs_html_tag("a",
+                        xs_html_attr("rel", "me"),
+                        xs_html_attr("href", v),
+                        xs_html_text(v));
+                }
+                else
                     value = xs_html_text(v);
 
                 xs_html_add(snac_metadata,
