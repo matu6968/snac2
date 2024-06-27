@@ -143,8 +143,8 @@ static xs_str *format_line(const char *line, xs_list **attach)
             else
             if (*v == '[') {
                 /* markdown-like links [label](url) */
-                xs *w    = xs_strip_chars_i(xs_dup(v), "[)");
-                xs *l    = xs_split_n(w, "](", 1);
+                xs *w = xs_strip_chars_i(xs_replace(v, "#", "&#35;"), "[)");
+                xs *l = xs_split_n(w, "](", 1);
 
                 if (xs_list_len(l) == 2) {
                     xs *link = xs_fmt("<a href=\"%s\">%s</a>",
