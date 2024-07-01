@@ -149,6 +149,8 @@ unsigned int xs_hash_func(const char *data, int size);
 
 #define xs_return(v) xs_val *__r = v; v = NULL; return __r
 
+#define xs_is_true(v) (xs_type((v)) == XSTYPE_TRUE)
+#define xs_is_false(v) (xs_type((v)) == XSTYPE_FALSE)
 
 #ifdef XS_IMPLEMENTATION
 

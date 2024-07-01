@@ -935,7 +935,7 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
         enqueue_ntfy(body, ntfy_server, ntfy_token);
 
     /* auto boost */
-    if (xs_match(type, "Create") && xs_type(xs_dict_get(snac->config, "auto_boost")) == XSTYPE_TRUE) {
+    if (xs_match(type, "Create") && xs_is_true(xs_dict_get(snac->config, "auto_boost"))) {
         xs *msg = msg_admiration(snac, objid, "Announce");
         enqueue_message(snac, msg);
 
