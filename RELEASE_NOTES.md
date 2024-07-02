@@ -2,7 +2,7 @@
 
 ## 2.56
 
-Don't show instance announcements in public timelines.
+Don't show instance announcements in public timelines (contributed by sarahpw).
 
 Added auto boosting. If an account has this flag enabled, all mentions to that account are automatically boosted to all its followers, behaving like a `Group` actor (contributed by sarahpw).
 
