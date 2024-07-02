@@ -2634,7 +2634,9 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         cache = 0;
 
     int skip = 0;
-    int show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
+    int def_show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
+    int show = def_show;
+
     const xs_dict *q_vars = xs_dict_get(req, "q_vars");
     if ((v = xs_dict_get(q_vars, "skip")) != NULL)
         skip = atoi(v), cache = 0, save = 0;
@@ -2650,6 +2652,10 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             user_persist(&snac, 0);
         }
     }
+
+    /* a show of 0 has no sense */
+    if (show == 0)
+        show = def_show;
 
     if (p_path == NULL) { /** public timeline **/
         xs *h = xs_str_localtime(0, "%Y-%m.html");
@@ -2720,6 +2726,9 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                     xs *page = xs_fmt("/admin?q=%s&msecs=%d", q, msecs + 10);
                     int tl_len = xs_list_len(tl);
 
+                    if (to)
+                        title = xs_fmt(L("Search results for '%s' (may be more)"), q);
+                    else
                     if (tl_len)
                         title = xs_fmt(L("Search results for '%s'"), q);
                     else
