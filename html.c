@@ -1001,6 +1001,7 @@ xs_html *html_top_controls(snac *snac)
     const xs_val *d_dm_f_u  = xs_dict_get(snac->config, "drop_dm_from_unknown");
     const xs_val *bot       = xs_dict_get(snac->config, "bot");
     const xs_val *a_private = xs_dict_get(snac->config, "private");
+    const xs_val *auto_boost = xs_dict_get(snac->config, "auto_boost");
 
     xs *metadata = xs_str_new(NULL);
     const xs_dict *md = xs_dict_get(snac->config, "metadata");
@@ -1135,6 +1136,15 @@ xs_html *html_top_controls(snac *snac)
                     xs_html_tag("label",
                         xs_html_attr("for", "bot"),
                         xs_html_text(L("This account is a bot")))),
+                xs_html_tag("p",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "checkbox"),
+                        xs_html_attr("name", "auto_boost"),
+                        xs_html_attr("id", "auto_boost"),
+                        xs_html_attr(xs_is_true(auto_boost) ? "checked" : "", NULL)),
+                    xs_html_tag("label",
+                        xs_html_attr("for", "auto_boost"),
+                        xs_html_text(L("Auto-boost all mentions to this account")))),
                 xs_html_tag("p",
                     xs_html_sctag("input",
                         xs_html_attr("type", "checkbox"),
@@ -3337,6 +3347,11 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "private", xs_stock(XSTYPE_TRUE));
         else
             snac.config = xs_dict_set(snac.config, "private", xs_stock(XSTYPE_FALSE));
+        if ((v = xs_dict_get(p_vars, "auto_boost")) != NULL && strcmp(v, "on") == 0)
+            snac.config = xs_dict_set(snac.config, "auto_boost", xs_stock(XSTYPE_TRUE));
+        else
+            snac.config = xs_dict_set(snac.config, "auto_boost", xs_stock(XSTYPE_FALSE));
+
         if ((v = xs_dict_get(p_vars, "metadata")) != NULL) {
             /* split the metadata and store it as a dict */
             xs_dict *md = xs_dict_new();
