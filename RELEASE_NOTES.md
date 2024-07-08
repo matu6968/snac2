@@ -8,6 +8,8 @@ Added auto boosting. If an account has this flag enabled, all mentions to that a
 
 Fixed typos in manpages (contributed by sergiodj).
 
+Some minor performance improvements (contributed by Claire).
+
 ## 2.55
 
 Mastodon API: fixed a last-minute bug that broke some API functions.
