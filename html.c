@@ -1804,12 +1804,22 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 if (name) {
                     char *ti = (char *)xs_number_str(xs_dict_get(replies, "totalItems"));
 
-                    xs_html_add(form,
-                        xs_html_sctag("input",
-                            xs_html_attr("type", !xs_is_null(oo) ? "radio" : "checkbox"),
+                    xs_html *btn = xs_html_sctag("input",
                             xs_html_attr("id", name),
                             xs_html_attr("value", name),
-                            xs_html_attr("name", "question")),
+                            xs_html_attr("name", "question"));
+
+                    if (!xs_is_null(oo)) {
+                        xs_html_add(btn,
+                            xs_html_attr("type", "radio"),
+                            xs_html_attr("required", "required"));
+                    }
+                    else
+                        xs_html_add(btn,
+                            xs_html_attr("type", "checkbox"));
+
+                    xs_html_add(form,
+                        btn,
                         xs_html_text(" "),
                         xs_html_tag("span",
                             xs_html_attr("title", ti),
