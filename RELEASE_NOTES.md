@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.57
+
+Don't allow empty polls.
+
 ## 2.56
 
 Don't show instance announcements in public timelines (contributed by sarahpw).
