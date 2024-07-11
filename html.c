@@ -3442,15 +3442,16 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         /* multiple choices? */
         if (xs_type(opt) == XSTYPE_LIST)
             ls = xs_dup(opt);
-        else {
+        else
+        if (xs_type(opt) == XSTYPE_STRING) {
             ls = xs_list_new();
             ls = xs_list_append(ls, opt);
         }
 
-        xs_list *p = ls;
         const xs_str *v;
+        int c = 0;
 
-        while (xs_list_iter(&p, &v)) {
+        while (xs_list_next(ls, &v, &c)) {
             xs *msg = msg_note(&snac, "", actor, irt, NULL, 1);
 
             /* set the option */
@@ -3463,7 +3464,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             timeline_add(&snac, xs_dict_get(msg, "id"), msg);
         }
 
-        {
+        if (ls != NULL) {
             /* get the poll object */
             xs *poll = NULL;
 
