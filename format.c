@@ -88,9 +88,9 @@ static xs_str *format_line(const char *line, xs_list **attach)
     /* split by markup */
     xs *sm = xs_regex_split(line,
         "("
-            "`[^`]+`"                   "|"
-            "\\*\\*?[^\\*]+\\*?\\*"     "|"
-            "\\[[^]]+\\]\\([^\\)]+\\)"  "|"
+            "`[^`]+`"                           "|"
+            "\\*\\*?\\*?[^\\*]+\\*?\\*?\\*"     "|"
+            "\\[[^]]+\\]\\([^\\)]+\\)"          "|"
             "https?:/" "/[^[:space:]]+"
         ")");
     int n = 0;
@@ -103,6 +103,12 @@ static xs_str *format_line(const char *line, xs_list **attach)
                 xs *s1 = xs_crop_i(xs_dup(v), 1, -1);
                 xs *e1 = encode_html(s1);
                 xs *s2 = xs_fmt("<code>%s</code>", e1);
+                s = xs_str_cat(s, s2);
+            }
+            else
+            if (xs_startswith(v, "***")) {
+                xs *s1 = xs_crop_i(xs_dup(v), 3, -3);
+                xs *s2 = xs_fmt("<b><i>%s</i></b>", s1);
                 s = xs_str_cat(s, s2);
             }
             else

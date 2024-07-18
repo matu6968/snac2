@@ -2090,7 +2090,7 @@ xs_html *html_footer(void)
         xs_html_tag("a",
             xs_html_attr("href", WHAT_IS_SNAC_URL),
             xs_html_tag("abbr",
-                xs_html_attr("title", "Social Network Are Crap"),
+                xs_html_attr("title", "Social Networks Are Crap"),
                 xs_html_text("snac"))));
 }
 
