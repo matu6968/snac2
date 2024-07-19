@@ -91,6 +91,7 @@ static xs_str *format_line(const char *line, xs_list **attach)
             "`[^`]+`"                           "|"
             "~~[^~]+~~"                         "|"
             "\\*\\*?\\*?[^\\*]+\\*?\\*?\\*"     "|"
+            "!\\[[^]]+\\]\\([^\\)]+\\)"         "|"
             "\\[[^]]+\\]\\([^\\)]+\\)"          "|"
             "https?:/" "/[^[:space:]]+"
         ")");
@@ -165,6 +166,36 @@ static xs_str *format_line(const char *line, xs_list **attach)
                             xs_list_get(l, 1), xs_list_get(l, 0));
 
                     s = xs_str_cat(s, link);
+                }
+                else
+                    s = xs_str_cat(s, v);
+            }
+            else
+            if (*v == '!') {
+                /* markdown-like images ![alt text](url to image) */
+                xs *w = xs_strip_chars_i(xs_replace(v, "#", "&#35;"), "![)");
+                xs *l = xs_split_n(w, "](", 1);
+
+                if (xs_list_len(l) == 2) {
+                    const char *alt_text = xs_list_get(l, 0);
+                    const char *img_url  = xs_list_get(l, 1);
+                    const char *mime     = xs_mime_by_ext(img_url);
+
+                    if (attach != NULL && xs_startswith(mime, "image/")) {
+                        xs *d = xs_dict_new();
+
+                        d = xs_dict_append(d, "mediaType", mime);
+                        d = xs_dict_append(d, "url",       img_url);
+                        d = xs_dict_append(d, "name",      alt_text);
+                        d = xs_dict_append(d, "type",      "Image");
+
+                        *attach = xs_list_append(*attach, d);
+                    }
+                    else {
+                        xs *link = xs_fmt("<a href=\"%s\">%s</a>", img_url, alt_text);
+
+                        s = xs_str_cat(s, link);
+                    }
                 }
                 else
                     s = xs_str_cat(s, v);

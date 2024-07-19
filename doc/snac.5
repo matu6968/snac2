@@ -43,6 +43,11 @@ int main(int argc, char *argv[])
 Standalone URLs are converted to links. Also, from version 2.54,
 markdown-style links in the form of [link label](url) are also
 supported.
+.It attached images
+Standalone URLs for which the final extension is recognized as an
+image (.jpg, .gif, .png, etc), are converted to ActivityPub image
+attachments. Also, from version 2.57, markdown-style image links
+in the form of ![alt text](image url) are also supported.
 .It line separators
 Horizonal rules can be inserted by typing three minus symbols
 alone in a line.
