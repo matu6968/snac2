@@ -4,6 +4,8 @@
 
 Don't allow empty polls.
 
+Added support for Markdown-style images (converted to attachments) and strikethrough text.
+
 ## 2.56
 
 Don't show instance announcements in public timelines (contributed by sarahpw).
