@@ -25,6 +25,8 @@ A special subset of Markdown is allowed, including:
 **text between two pairs of asterisks**
 .It italic
 *text between a pair of asterisks*
+.It strikethrough text
+~~text between a pair of tildes~~
 .It code
 Text `between backticks` is formatted as code.
 .Bd -literal
@@ -41,16 +43,16 @@ int main(int argc, char *argv[])
 Standalone URLs are converted to links. Also, from version 2.54,
 markdown-style links in the form of [link label](url) are also
 supported.
-.It Line separators
+.It line separators
 Horizonal rules can be inserted by typing three minus symbols
 alone in a line.
 .It quoted text
 Lines starting with >.
-.It User Mentions
+.It user mentions
 Strings in the format @user@host are requested using the Webfinger
 protocol and converted to links and mentions if something reasonable
 is found.
-.It Emoticons / Smileys / Silly Symbols
+.It emoticons /emojis / smileys / silly symbols
 (Note: from version 2.51, these symbols are configurable by the
 instance administrator, so the available ones may differ).
 .Pp

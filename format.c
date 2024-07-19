@@ -89,6 +89,7 @@ static xs_str *format_line(const char *line, xs_list **attach)
     xs *sm = xs_regex_split(line,
         "("
             "`[^`]+`"                           "|"
+            "~~[^~]+~~"                         "|"
             "\\*\\*?\\*?[^\\*]+\\*?\\*?\\*"     "|"
             "\\[[^]]+\\]\\([^\\)]+\\)"          "|"
             "https?:/" "/[^[:space:]]+"
@@ -100,27 +101,34 @@ static xs_str *format_line(const char *line, xs_list **attach)
         if ((n & 0x1)) {
             /* markup */
             if (xs_startswith(v, "`")) {
-                xs *s1 = xs_crop_i(xs_dup(v), 1, -1);
+                xs *s1 = xs_strip_chars_i(xs_dup(v), "`");
                 xs *e1 = encode_html(s1);
                 xs *s2 = xs_fmt("<code>%s</code>", e1);
                 s = xs_str_cat(s, s2);
             }
             else
             if (xs_startswith(v, "***")) {
-                xs *s1 = xs_crop_i(xs_dup(v), 3, -3);
+                xs *s1 = xs_strip_chars_i(xs_dup(v), "*");
                 xs *s2 = xs_fmt("<b><i>%s</i></b>", s1);
                 s = xs_str_cat(s, s2);
             }
             else
             if (xs_startswith(v, "**")) {
-                xs *s1 = xs_crop_i(xs_dup(v), 2, -2);
+                xs *s1 = xs_strip_chars_i(xs_dup(v), "*");
                 xs *s2 = xs_fmt("<b>%s</b>", s1);
                 s = xs_str_cat(s, s2);
             }
             else
             if (xs_startswith(v, "*")) {
-                xs *s1 = xs_crop_i(xs_dup(v), 1, -1);
+                xs *s1 = xs_strip_chars_i(xs_dup(v), "*");
                 xs *s2 = xs_fmt("<i>%s</i>", s1);
+                s = xs_str_cat(s, s2);
+            }
+            else
+            if (xs_startswith(v, "~~")) {
+                xs *s1 = xs_strip_chars_i(xs_dup(v), "~");
+                xs *e1 = encode_html(s1);
+                xs *s2 = xs_fmt("<s>%s</s>", e1);
                 s = xs_str_cat(s, s2);
             }
             else
