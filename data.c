@@ -651,26 +651,16 @@ xs_list *index_list_desc(const char *fn, int skip, int show)
 {
     xs_list *list = xs_list_new();
     FILE *f;
-    int n = 0;
 
     if ((f = fopen(fn, "r")) != NULL) {
-        flock(fileno(f), LOCK_SH);
+        char md5[33];
 
-        char line[256];
+        if (index_desc_first(f, md5, skip)) {
+            int n = 1;
 
-        /* move to the end minus one entry (or more, if skipping entries) */
-        if (!fseek(f, 0, SEEK_END) && !fseek(f, (skip + 1) * -33, SEEK_CUR)) {
-            while (n < show && fgets(line, sizeof(line), f) != NULL) {
-                if (line[0] != '-') {
-                    line[32] = '\0';
-                    list = xs_list_append(list, line);
-                    n++;
-                }
-
-                /* move backwards 2 entries */
-                if (fseek(f, -66, SEEK_CUR) == -1)
-                    break;
-            }
+            do {
+                list = xs_list_append(list, md5);
+            } while (n++ < show && index_desc_next(f, md5));
         }
 
         fclose(f);
