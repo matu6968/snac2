@@ -373,7 +373,7 @@ double f_ctime(const char *fn)
 
 int is_md5_hex(const char *md5)
 {
-    return xs_is_hex(md5) && strlen(md5) == 32;
+    return xs_is_hex(md5) && strlen(md5) == MD5_HEX_SIZE - 1;
 }
 
 
@@ -433,13 +433,13 @@ int index_del_md5(const char *fn, const char *md5)
         char line[256];
 
         while (fgets(line, sizeof(line), f) != NULL) {
-            line[32] = '\0';
+            line[MD5_HEX_SIZE - 1] = '\0';
 
             if (strcmp(line, md5) == 0) {
                 /* found! just rewind, overwrite it with garbage
                    and an eventual call to index_gc() will clean it
                    [yes: this breaks index_len()] */
-                fseek(f, -33, SEEK_CUR);
+                fseek(f, -MD5_HEX_SIZE, SEEK_CUR);
                 fwrite("-", 1, 1, f);
                 status = HTTP_STATUS_OK;
 
@@ -482,7 +482,7 @@ int index_gc(const char *fn)
             gc = 0;
 
             while (fgets(line, sizeof(line), i) != NULL) {
-                line[32] = '\0';
+                line[MD5_HEX_SIZE - 1] = '\0';
 
                 if (line[0] != '-' && object_here_by_md5(line))
                     fprintf(o, "%s\n", line);
@@ -520,7 +520,7 @@ int index_in_md5(const char *fn, const char *md5)
         char line[256];
 
         while (!ret && fgets(line, sizeof(line), f) != NULL) {
-            line[32] = '\0';
+            line[MD5_HEX_SIZE - 1] = '\0';
 
             if (strcmp(line, md5) == 0)
                 ret = 1;
@@ -551,7 +551,7 @@ int index_first(const char *fn, char *line, int size)
         flock(fileno(f), LOCK_SH);
 
         if (fgets(line, size, f) != NULL) {
-            line[32] = '\0';
+            line[MD5_HEX_SIZE - 1] = '\0';
             ret = 1;
         }
 
@@ -569,7 +569,7 @@ int index_len(const char *fn)
     int len = 0;
 
     if (stat(fn, &st) != -1)
-        len = st.st_size / 33;
+        len = st.st_size / MD5_HEX_SIZE;
 
     return len;
 }
@@ -589,7 +589,7 @@ xs_list *index_list(const char *fn, int max)
 
         while (n < max && fgets(line, sizeof(line), f) != NULL) {
             if (line[0] != '-') {
-                line[32] = '\0';
+                line[MD5_HEX_SIZE - 1] = '\0';
                 list = xs_list_append(list, line);
                 n++;
             }
@@ -602,41 +602,41 @@ xs_list *index_list(const char *fn, int max)
 }
 
 
-int index_desc_next(FILE *f, char md5[33])
+int index_desc_next(FILE *f, char md5[MD5_HEX_SIZE])
 /* reads the next entry of a desc index */
 {
     for (;;) {
         /* move backwards 2 entries */
-        if (fseek(f, -66, SEEK_CUR) == -1)
+        if (fseek(f, MD5_HEX_SIZE * -2, SEEK_CUR) == -1)
             return 0;
 
         /* read and md5 */
-        if (!fread(md5, 33, 1, f))
+        if (!fread(md5, MD5_HEX_SIZE, 1, f))
             return 0;
 
         if (md5[0] != '-')
             break;
     }
 
-    md5[32] = '\0';
+    md5[MD5_HEX_SIZE - 1] = '\0';
 
     return 1;
 }
 
 
-int index_desc_first(FILE *f, char md5[33], int skip)
+int index_desc_first(FILE *f, char md5[MD5_HEX_SIZE], int skip)
 /* reads the first entry of a desc index */
 {
     /* try to position at the end and then back to the first element */
-    if (fseek(f, 0, SEEK_END) || fseek(f, (skip + 1) * -33, SEEK_CUR))
+    if (fseek(f, 0, SEEK_END) || fseek(f, (skip + 1) * -MD5_HEX_SIZE, SEEK_CUR))
         return 0;
 
     /* try to read an md5 */
-    if (!fread(md5, 33, 1, f))
+    if (!fread(md5, MD5_HEX_SIZE, 1, f))
         return 0;
 
     /* null-terminate */
-    md5[32] = '\0';
+    md5[MD5_HEX_SIZE - 1] = '\0';
 
     /* deleted? retry next */
     if (md5[0] == '-')
@@ -653,7 +653,7 @@ xs_list *index_list_desc(const char *fn, int skip, int show)
     FILE *f;
 
     if ((f = fopen(fn, "r")) != NULL) {
-        char md5[33];
+        char md5[MD5_HEX_SIZE];
 
         if (index_desc_first(f, md5, skip)) {
             int n = 1;
@@ -1145,7 +1145,7 @@ xs_str *timeline_fn_by_md5(snac *snac, const char *md5)
 {
     xs_str *fn = NULL;
 
-    if (xs_is_hex(md5) && strlen(md5) == 32) {
+    if (is_md5_hex(md5)) {
         fn = xs_fmt("%s/private/%s.json", snac->basedir, md5);
 
         if (mtime(fn) == 0.0) {

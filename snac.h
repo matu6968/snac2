@@ -20,6 +20,8 @@
 #define MAX_CONVERSATION_LEVELS 48
 #endif
 
+#define MD5_HEX_SIZE 33
+
 extern double disk_layout;
 extern xs_str *srv_basedir;
 extern xs_dict *srv_config;
@@ -101,8 +103,8 @@ int index_gc(const char *fn);
 int index_first(const char *fn, char *buf, int size);
 int index_len(const char *fn);
 xs_list *index_list(const char *fn, int max);
-int index_desc_next(FILE *f, char md5[33]);
-int index_desc_first(FILE *f, char md5[33], int skip);
+int index_desc_next(FILE *f, char md5[MD5_HEX_SIZE]);
+int index_desc_first(FILE *f, char md5[MD5_HEX_SIZE], int skip);
 xs_list *index_list_desc(const char *fn, int skip, int show);
 
 int object_add(const char *id, const xs_dict *obj);
