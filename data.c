@@ -602,6 +602,50 @@ xs_list *index_list(const char *fn, int max)
 }
 
 
+int index_desc_next(FILE *f, char md5[33])
+/* reads the next entry of a desc index */
+{
+    for (;;) {
+        /* move backwards 2 entries */
+        if (fseek(f, -66, SEEK_CUR) == -1)
+            return 0;
+
+        /* read and md5 */
+        if (!fread(md5, 33, 1, f))
+            return 0;
+
+        if (md5[0] != '-')
+            break;
+    }
+
+    md5[32] = '\0';
+
+    return 1;
+}
+
+
+int index_desc_first(FILE *f, char md5[33], int skip)
+/* reads the first entry of a desc index */
+{
+    /* try to position at the end and then back to the first element */
+    if (fseek(f, 0, SEEK_END) || fseek(f, (skip + 1) * -33, SEEK_CUR))
+        return 0;
+
+    /* try to read an md5 */
+    if (!fread(md5, 33, 1, f))
+        return 0;
+
+    /* null-terminate */
+    md5[32] = '\0';
+
+    /* deleted? retry next */
+    if (md5[0] == '-')
+        return index_desc_next(f, md5);
+
+    return 1;
+}
+
+
 xs_list *index_list_desc(const char *fn, int skip, int show)
 /* returns an index as a list, in reverse order */
 {
