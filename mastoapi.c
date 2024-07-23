@@ -2186,12 +2186,12 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         xs *des = xs_list_new();
                         xs_list *p;
                         const xs_str *v;
-                        char pid[64];
+                        char pid[MD5_HEX_SIZE];
 
                         /* build the [grand]parent list, moving up */
                         strncpy(pid, id, sizeof(pid));
 
-                        while (object_parent(pid, pid, sizeof(pid))) {
+                        while (object_parent(pid, pid)) {
                             xs *m2 = NULL;
 
                             if (valid_status(timeline_get_by_md5(&snac1, pid, &m2))) {

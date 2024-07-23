@@ -541,17 +541,15 @@ int index_in(const char *fn, const char *id)
 }
 
 
-int index_first(const char *fn, char *line, int size)
+int index_first(const char *fn, char md5[MD5_HEX_SIZE])
 /* reads the first entry of an index */
 {
     FILE *f;
     int ret = 0;
 
     if ((f = fopen(fn, "r")) != NULL) {
-        flock(fileno(f), LOCK_SH);
-
-        if (fgets(line, size, f) != NULL) {
-            line[MD5_HEX_SIZE - 1] = '\0';
+        if (fread(md5, MD5_HEX_SIZE, 1, f)) {
+            md5[MD5_HEX_SIZE - 1] = '\0';
             ret = 1;
         }
 
@@ -958,13 +956,13 @@ xs_list *object_announces(const char *id)
 }
 
 
-int object_parent(const char *md5, char *buf, int size)
+int object_parent(const char *md5, char parent[MD5_HEX_SIZE])
 /* returns the object parent, if any */
 {
     xs *fn = _object_fn_by_md5(md5, "object_parent");
 
     fn = xs_replace_i(fn, ".json", "_p.idx");
-    return index_first(fn, buf, size);
+    return index_first(fn, parent);
 }
 
 
@@ -1268,15 +1266,15 @@ xs_list *timeline_top_level(snac *snac, const xs_list *list)
 
     int c = 0;
     while (xs_list_next(list, &v, &c)) {
-        char line[256] = "";
+        char line[MD5_HEX_SIZE] = "";
 
         strncpy(line, v, sizeof(line));
 
         for (;;) {
-            char line2[256];
+            char line2[MD5_HEX_SIZE];
 
             /* if it doesn't have a parent, use this */
-            if (!object_parent(line, line2, sizeof(line2)))
+            if (!object_parent(line, line2))
                 break;
 
             /* well, there is a parent... but is it here? */

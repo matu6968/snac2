@@ -100,7 +100,7 @@ double f_ctime(const char *fn);
 int index_add_md5(const char *fn, const char *md5);
 int index_add(const char *fn, const char *id);
 int index_gc(const char *fn);
-int index_first(const char *fn, char *buf, int size);
+int index_first(const char *fn, char md5[MD5_HEX_SIZE]);
 int index_len(const char *fn);
 xs_list *index_list(const char *fn, int max);
 int index_desc_next(FILE *f, char md5[MD5_HEX_SIZE]);
@@ -130,7 +130,7 @@ int object_announces_len(const char *id);
 xs_list *object_children(const char *id);
 xs_list *object_likes(const char *id);
 xs_list *object_announces(const char *id);
-int object_parent(const char *id, char *buf, int size);
+int object_parent(const char *md5, char parent[MD5_HEX_SIZE]);
 
 int object_user_cache_add(snac *snac, const char *id, const char *cachedir);
 int object_user_cache_del(snac *snac, const char *id, const char *cachedir);
