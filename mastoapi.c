@@ -18,6 +18,8 @@
 
 #include "snac.h"
 
+#include <sys/time.h>
+
 static xs_str *random_str(void)
 /* just what is says in the tin */
 {
@@ -129,6 +131,17 @@ xs_dict *token_get(const char *id)
     if ((f = fopen(fn, "r")) != NULL) {
         token = xs_json_load(f);
         fclose(f);
+
+        /* 'touch' the file */
+        utimes(fn, NULL);
+
+        /* also 'touch' the app */
+        const char *app_id = xs_dict_get(token, "client_id");
+
+        if (app_id) {
+            xs *afn = xs_fmt("%s/app/%s.json", srv_basedir, app_id);
+            utimes(afn, NULL);
+        }
     }
 
     return token;
