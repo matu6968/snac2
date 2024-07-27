@@ -2347,6 +2347,9 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                                 xs *acct = mastoapi_account(actor_o);
 
                                 acl = xs_list_append(acl, acct);
+
+                                if (!object_here(actor))
+                                    object_add(actor, actor_o);
                             }
                         }
                     }
