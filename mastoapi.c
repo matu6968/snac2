@@ -600,7 +600,7 @@ xs_dict *mastoapi_account(const xs_dict *actor)
         header = xs_dup(xs_dict_get(hd, "url"));
 
     if (xs_is_null(header))
-        header = xs_fmt("%s/header.png", srv_baseurl);
+        header = xs_str_new(NULL);
 
     acct = xs_dict_append(acct, "header", header);
     acct = xs_dict_append(acct, "header_static", header);
@@ -1208,7 +1208,7 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     if (!xs_is_null(hd))
         header = xs_dup(hd);
     else
-        header = xs_fmt("%s/header.png", srv_baseurl);
+        header = xs_str_new(NULL);
 
     acct = xs_dict_append(acct, "header", header);
     acct = xs_dict_append(acct, "header_static", header);
