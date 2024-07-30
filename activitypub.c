@@ -2394,6 +2394,7 @@ void process_queue_item(xs_dict *q_item)
                 || status == HTTP_STATUS_NOT_FOUND
                 || status == HTTP_STATUS_METHOD_NOT_ALLOWED
                 || status == HTTP_STATUS_GONE
+                || status == HTTP_STATUS_UNPROCESSABLE_CONTENT
                 || status < 0)
                 /* explicit error: discard */
                 srv_log(xs_fmt("output message: fatal error %s %d", inbox, status));
