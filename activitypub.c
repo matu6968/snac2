@@ -2143,6 +2143,60 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 
         do_notify = 1;
     }
+    else
+    if (strcmp(type, "Move") == 0) { /** **/
+        const char *old_account = xs_dict_get(msg, "object");
+        const char *new_account = xs_dict_get(msg, "target");
+
+        if (!xs_is_null(old_account) && !xs_is_null(new_account)) {
+            if (following_check(snac, old_account)) {
+                xs *n_actor = NULL;
+
+                if (valid_status(object_get(new_account, &n_actor))) {
+                    const xs_list *aka = xs_dict_get(n_actor, "alsoKnownAs");
+
+                    if (xs_type(aka) == XSTYPE_LIST) {
+                        if (xs_list_in(aka, old_account) != -1) {
+                            /* all conditions met! */
+
+                            /* follow new account */
+                            xs *f_msg = msg_follow(snac, new_account);
+
+                            if (f_msg != NULL) {
+                                const char *new_actor = xs_dict_get(f_msg, "object");
+                                following_add(snac, new_actor, f_msg);
+                                enqueue_output_by_actor(snac, f_msg, new_actor, 0);
+
+                                snac_log(snac, xs_fmt("'Move': following %s", new_account));
+                            }
+
+                            /* unfollow old account */
+                            xs *of_msg = NULL;
+
+                            if (valid_status(following_get(snac, old_account, &of_msg))) {
+                                xs *uf_msg = msg_undo(snac, xs_dict_get(of_msg, "object"));
+                                following_del(snac, old_account);
+                                enqueue_output_by_actor(snac, uf_msg, old_account, 0);
+
+                                snac_log(snac, xs_fmt("'Move': unfollowing %s", old_account));
+                            }
+                        }
+                        else
+                            snac_log(snac, xs_fmt("'Move' error: old actor %s not found in %s 'alsoKnownAs'",
+                                old_account, new_account));
+                    }
+                    else
+                        snac_log(snac, xs_fmt("'Move' error: cannot get %s 'alsoKnownAs'", new_account));
+                }
+                else
+                    snac_log(snac, xs_fmt("'Move' error: cannot get new actor %s", new_account));
+            }
+            else
+                snac_log(snac, xs_fmt("'Move' error: actor %s is not being followed", old_account));
+        }
+        else
+            snac_log(snac, xs_fmt("'Move' error: malformed message from %s", actor));
+    }
     else {
         srv_archive_error("unsupported_type", "unsupported_type", req, msg);
 
