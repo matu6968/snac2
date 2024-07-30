@@ -2014,12 +2014,12 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         }
     }
     else
-    if (strcmp(type, "Like") == 0) { /** **/
+    if (strcmp(type, "Like") == 0 || strcmp(type, "EmojiReact") == 0) { /** **/
         if (xs_type(object) == XSTYPE_DICT)
             object = xs_dict_get(object, "id");
 
         if (timeline_admire(snac, object, actor, 1) == HTTP_STATUS_CREATED)
-            snac_log(snac, xs_fmt("new 'Like' %s %s", actor, object));
+            snac_log(snac, xs_fmt("new '%s' %s %s", type, actor, object));
         else
             snac_log(snac, xs_fmt("repeated 'Like' from %s to %s", actor, object));
 
