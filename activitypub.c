@@ -2194,8 +2194,10 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             else
                 snac_log(snac, xs_fmt("'Move' error: actor %s is not being followed", old_account));
         }
-        else
+        else {
             snac_log(snac, xs_fmt("'Move' error: malformed message from %s", actor));
+            srv_archive_error("move", "move", req, msg);
+        }
     }
     else {
         srv_archive_error("unsupported_type", "unsupported_type", req, msg);
