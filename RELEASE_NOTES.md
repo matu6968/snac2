@@ -6,6 +6,8 @@ Don't allow empty polls.
 
 Added support for Markdown-style images (converted to attachments) and strikethrough text.
 
+Blocks are also notified.
+
 Mastodon API: fixed a cache bug when following local users.
 
 ## 2.56
