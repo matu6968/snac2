@@ -2525,7 +2525,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_attr("title", date),
                     xs_html_text(s_date))));
 
-        if (strcmp(type, "Follow") == 0 || strcmp(utype, "Follow") == 0) {
+        if (strcmp(type, "Follow") == 0 || strcmp(utype, "Follow") == 0 || strcmp(type, "Block") == 0) {
             xs_html_add(entry,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post"),

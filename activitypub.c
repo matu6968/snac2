@@ -2134,6 +2134,15 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 
         enqueue_output_by_actor(snac, rsp, actor, 0);
     }
+    else
+    if (strcmp(type, "Block") == 0) { /** **/
+        snac_log(snac, xs_fmt("'Block' received from %s", actor));
+
+        /* should we MUTE the actor back? */
+        /* mute(snac, actor); */
+
+        do_notify = 1;
+    }
     else {
         srv_archive_error("unsupported_type", "unsupported_type", req, msg);
 
