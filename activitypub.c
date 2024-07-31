@@ -2145,6 +2145,8 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     }
     else
     if (strcmp(type, "Move") == 0) { /** **/
+        do_notify = 1;
+
         const char *old_account = xs_dict_get(msg, "object");
         const char *new_account = xs_dict_get(msg, "target");
 
@@ -2180,8 +2182,6 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 
                                 snac_log(snac, xs_fmt("'Move': unfollowing %s", old_account));
                             }
-
-                            do_notify = 1;
                         }
                         else
                             snac_log(snac, xs_fmt("'Move' error: old actor %s not found in %s 'alsoKnownAs'",
