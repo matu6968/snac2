@@ -6,6 +6,10 @@ Don't allow empty polls.
 
 Added support for Markdown-style images (converted to attachments) and strikethrough text.
 
+Added support for incoming `Move` messages: when received, the new account is followed and the old one is unfollowed.
+
+Incoming `EmojiReact` messages are internally converted to `Like` (more proper support will happen eventually).
+
 Blocks are also notified.
 
 Mastodon API: fixed a cache bug when following local users.
