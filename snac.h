@@ -207,7 +207,7 @@ void lastlog_write(snac *snac, const char *source);
 
 xs_str *notify_check_time(snac *snac, int reset);
 void notify_add(snac *snac, const char *type, const char *utype,
-                const char *actor, const char *objid);
+                const char *actor, const char *objid, const xs_dict *msg);
 xs_dict *notify_get(snac *snac, const char *id);
 int notify_new_num(snac *snac);
 xs_list *notify_list(snac *snac, int skip, int show);

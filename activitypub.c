@@ -949,7 +949,7 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
     if (strcmp(utype, "Follow") == 0)
         objid = actor;
 
-    notify_add(snac, type, utype, actor, objid != NULL ? objid : id);
+    notify_add(snac, type, utype, actor, objid != NULL ? objid : id, msg);
 }
 
 /** messages **/
@@ -2180,6 +2180,8 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 
                                 snac_log(snac, xs_fmt("'Move': unfollowing %s", old_account));
                             }
+
+                            do_notify = 1;
                         }
                         else
                             snac_log(snac, xs_fmt("'Move' error: old actor %s not found in %s 'alsoKnownAs'",

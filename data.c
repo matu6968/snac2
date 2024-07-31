@@ -2517,7 +2517,7 @@ xs_str *notify_check_time(snac *snac, int reset)
 
 
 void notify_add(snac *snac, const char *type, const char *utype,
-                const char *actor, const char *objid)
+                const char *actor, const char *objid, const xs_dict *msg)
 /* adds a new notification */
 {
     xs *ntid = tid(0);
@@ -2537,6 +2537,7 @@ void notify_add(snac *snac, const char *type, const char *utype,
     noti = xs_dict_append(noti, "utype", utype);
     noti = xs_dict_append(noti, "actor", actor);
     noti = xs_dict_append(noti, "date",  date);
+    noti = xs_dict_append(noti, "msg",   msg);
 
     if (!xs_is_null(objid))
         noti = xs_dict_append(noti, "objid", objid);
