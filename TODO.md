@@ -22,8 +22,6 @@ Implement "FEP-3b86: Activity Intents" https://codeberg.org/fediverse/fep/src/br
 
 Track "FEP-ef61: Portable Objects" https://codeberg.org/fediverse/fep/src/branch/main/fep/ef61/fep-ef61.md
 
-Implement `Group`-like accounts (i.e. an actor that boosts to their followers all posts that mention it).
-
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
 
 Consider adding Mastodon import functionality (for following_accounts.csv and outbox.json).
@@ -319,3 +317,5 @@ Consider adding milter-like support to reject posts to mitigate spam (discarded;
 Implement support for 'Event' data types. Example: https://fediversity.site/item/e9bdb383-eeb9-4d7d-b2f7-c6401267cae0 (2024-05-12T08:56:27+0200)
 
 Mastodon API: fix whatever the fuck is making the official app and Megalodon to crash (2024-06-02T07:43:35+0200).
+
+Implement `Group`-like accounts (i.e. an actor that boosts to their followers all posts that mention it) (2024-08-01T18:51:43+0200).
