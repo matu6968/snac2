@@ -2531,6 +2531,22 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_attr("class", "snac-post"),
                     html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0)));
         }
+        else
+        if (strcmp(type, "Move") == 0) {
+            const xs_dict *o_msg = xs_dict_get(noti, "msg");
+            const char *target;
+
+            if (xs_type(o_msg) == XSTYPE_DICT && (target = xs_dict_get(o_msg, "target"))) {
+                xs *old_actor = NULL;
+
+                if (valid_status(actor_get(target, &old_actor))) {
+                    xs_html_add(entry,
+                        xs_html_tag("div",
+                            xs_html_attr("class", "snac-post"),
+                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0)));
+                }
+            }
+        }
         else {
             xs *md5 = xs_md5_hex(id, strlen(id));
 
