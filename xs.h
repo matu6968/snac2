@@ -123,7 +123,12 @@ const xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_v
 #define xs_dict_get(dict, key) xs_dict_get_def(dict, key, NULL)
 xs_dict *xs_dict_del(xs_dict *dict, const xs_str *key);
 xs_dict *xs_dict_set(xs_dict *dict, const xs_str *key, const xs_val *data);
-xs_dict *xs_dict_gc(xs_dict *dict);
+xs_dict *xs_dict_gc(const xs_dict *dict);
+
+const xs_val *xs_dict_get_path_sep(const xs_dict *dict, const char *path, const char *sep);
+#define xs_dict_get_path(dict, path) xs_dict_get_path_sep(dict, path, ".")
+xs_dict *xs_dict_set_path_sep(xs_dict *dict, const char *path, const xs_val *value, const char *sep);
+#define xs_dict_set_path(dict, path, value) xs_dict_set_path_sep(dict, path, value, ".")
 
 xs_val *xs_val_new(xstype t);
 xs_number *xs_number_new(double f);
@@ -1258,21 +1263,77 @@ int xs_dict_next(const xs_dict *dict, const xs_str **key, const xs_val **value, 
 }
 
 
-xs_dict *xs_dict_gc(xs_dict *dict)
-/* collects garbage (leaked values) inside a dict */
+xs_dict *xs_dict_gc(const xs_dict *dict)
+/* creates a copy of dict, but garbage-collected */
 {
     xs_dict *nd = xs_dict_new();
     const xs_str *k;
     const xs_val *v;
     int c = 0;
 
-    /* shamelessly create a new dict with the same content */
-    while (xs_dict_next(dict, &k, &v, &c))
-        nd = xs_dict_set(nd, k, v);
-
-    xs_free(dict);
+    while (xs_dict_next(dict, &k, &v, &c)) {
+        if (xs_type(v) == XSTYPE_DICT) {
+            xs *sd = xs_dict_gc(v);
+            nd = xs_dict_set(nd, k, sd);
+        }
+        else
+            nd = xs_dict_set(nd, k, v);
+    }
 
     return nd;
+}
+
+
+const xs_val *xs_dict_get_path_sep(const xs_dict *dict, const char *path, const char *sep)
+/* gets a value from dict given a path separated by sep */
+{
+    /* split by the separator */
+    xs *l = xs_split_n(path, sep, 1);
+
+    /* only one part? just get */
+    if (xs_list_len(l) == 1)
+        return xs_dict_get(dict, path);
+
+    const char *prefix = xs_list_get(l, 0);
+    const char *rest   = xs_list_get(l, 1);
+    const xs_dict *sd  = xs_dict_get(dict, prefix);
+
+    if (xs_type(sd) == XSTYPE_DICT)
+        return xs_dict_get_path_sep(sd, rest, sep);
+
+    return NULL;
+}
+
+
+xs_dict *xs_dict_set_path_sep(xs_dict *dict, const char *path, const xs_val *value, const char *sep)
+/* sets a value into dict given a path separated by sep;
+   intermediate dicts are created if needed */
+{
+    /* split by the separator */
+    xs *l = xs_split_n(path, sep, 1);
+
+    /* only one part? just set */
+    if (xs_list_len(l) == 1)
+        return xs_dict_set(dict, path, value);
+
+    const char *prefix = xs_list_get(l, 0);
+    const char *rest   = xs_list_get(l, 1);
+
+    xs *nd = NULL;
+
+    /* does the first part of path exist? */
+    const xs_dict *cd = xs_dict_get(dict, prefix);
+
+    if (xs_type(cd) == XSTYPE_DICT)
+        nd = xs_dup(cd);
+    else
+        nd = xs_dict_new();
+
+    /* move down the path */
+    nd = xs_dict_set_path_sep(nd, rest, value, sep);
+
+    /* set */
+    return xs_dict_set(dict, prefix, nd);
 }
 
 

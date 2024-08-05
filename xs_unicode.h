@@ -4,7 +4,7 @@
 
 #define _XS_UNICODE_H
 
- int _xs_utf8_enc(char buf[4], unsigned int cpoint);
+ int xs_utf8_enc(char buf[4], unsigned int cpoint);
  int xs_is_utf8_cont_byte(char c);
  unsigned int xs_utf8_dec(const char **str);
  int xs_unicode_width(unsigned int cpoint);
@@ -22,7 +22,7 @@
  int xs_unicode_is_alpha(unsigned int cpoint);
 
 #ifdef _XS_H
- xs_str *xs_utf8_enc(xs_str *str, unsigned int cpoint);
+ xs_str *xs_utf8_cat(xs_str *str, unsigned int cpoint);
 #endif
 
 #ifdef XS_IMPLEMENTATION
@@ -31,7 +31,7 @@
 #define xs_countof(a) (sizeof((a)) / sizeof((*a)))
 #endif
 
-int _xs_utf8_enc(char buf[4], unsigned int cpoint)
+int xs_utf8_enc(char buf[4], unsigned int cpoint)
 /* encodes an Unicode codepoint to utf-8 into buf and returns the size in bytes */
 {
     char *p = buf;
@@ -172,12 +172,12 @@ unsigned int xs_surrogate_enc(unsigned int cpoint)
 
 #ifdef _XS_H
 
-xs_str *xs_utf8_enc(xs_str *str, unsigned int cpoint)
+xs_str *xs_utf8_cat(xs_str *str, unsigned int cpoint)
 /* encodes an Unicode codepoint to utf-8 into str */
 {
     char tmp[4];
 
-    int c = _xs_utf8_enc(tmp, cpoint);
+    int c = xs_utf8_enc(tmp, cpoint);
 
     return xs_append_m(str, tmp, c);
 }

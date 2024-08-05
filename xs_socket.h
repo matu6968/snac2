@@ -182,8 +182,10 @@ int xs_socket_connect(const char *addr, const char *serv)
             host.sin_port = htons(atoi(serv));
 
         if ((d = socket(AF_INET, SOCK_STREAM, 0)) != -1) {
-            if (connect(d, (struct sockaddr *)&host, sizeof(host)) == -1)
+            if (connect(d, (struct sockaddr *)&host, sizeof(host)) == -1) {
+                close(d);
                 d = -1;
+            }
         }
     }
 

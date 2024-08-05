@@ -274,7 +274,7 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
                     break;
                 }
 
-                v = xs_utf8_enc(v, cp);
+                v = xs_utf8_cat(v, cp);
             }
             else {
                 char cc = c;

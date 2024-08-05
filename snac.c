@@ -11,6 +11,7 @@
 #include "xs_curl.h"
 #include "xs_openssl.h"
 #include "xs_socket.h"
+#include "xs_unix_socket.h"
 #include "xs_url.h"
 #include "xs_httpd.h"
 #include "xs_mime.h"

@@ -5,6 +5,7 @@
 #include "xs_io.h"
 #include "xs_json.h"
 #include "xs_socket.h"
+#include "xs_unix_socket.h"
 #include "xs_httpd.h"
 #include "xs_mime.h"
 #include "xs_time.h"
@@ -761,8 +762,8 @@ srv_state *srv_state_op(xs_str **fname, int op)
 void httpd(void)
 /* starts the server */
 {
-    const char *address;
-    const char *port;
+    const char *address = NULL;
+    const char *port = NULL;
     xs *full_address = NULL;
     int rs;
     pthread_t threads[MAX_THREADS] = {0};
@@ -772,11 +773,19 @@ void httpd(void)
     sem_t anon_job_sem;
 
     address = xs_dict_get(srv_config, "address");
-    port    = xs_number_str(xs_dict_get(srv_config, "port"));
 
-    full_address = xs_fmt("%s:%s", address, port);
+    if (*address == '/') {
+        rs = xs_unix_socket_server(address, NULL);
+        full_address = xs_fmt("unix:%s", address);
+    }
+    else {
+        port = xs_number_str(xs_dict_get(srv_config, "port"));
+        full_address = xs_fmt("%s:%s", address, port);
 
-    if ((rs = xs_socket_server(address, port)) == -1) {
+        rs = xs_socket_server(address, port);
+    }
+
+    if (rs == -1) {
         srv_log(xs_fmt("cannot bind socket to %s", full_address));
         return;
     }
