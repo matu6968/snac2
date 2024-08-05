@@ -58,8 +58,11 @@ specially the host name it will run under, the local network address
 and port
 .Nm
 will listen to, the optional path prefix and possibly other things.
+.Pp
 Since version 2.57, if the 'network address' starts with /, it's
-assumed to be a UNIX-like socket.
+assumed to be a UNIX-like socket (please take note that the http proxy
+must have full read and write access to this socket; this is a common
+pitfall. Permissions will break your heart).
 .Pp
 You can launch the
 .Nm
