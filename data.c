@@ -114,13 +114,12 @@ int srv_open(const char *basedir, int auto_upgrade)
 #endif
 
 #ifdef __OpenBSD__
-    const char *v = xs_dict_get(srv_config, "disable_openbsd_security");
-
-    if (v && xs_type(v) == XSTYPE_TRUE) {
+    if (xs_is_true(xs_dict_get(srv_config, "disable_openbsd_security"))) {
         srv_debug(1, xs_dup("OpenBSD security disabled by admin"));
     }
     else {
-        int smail = xs_type(xs_dict_get(srv_config, "disable_email_notifications")) != XSTYPE_TRUE;
+        int smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
+        const char *address = xs_dict_get(srv_config, "address");
 
         srv_debug(1, xs_fmt("Calling unveil()"));
         unveil(basedir,                "rwc");
@@ -134,13 +133,22 @@ int srv_open(const char *basedir, int auto_upgrade)
         if (smail)
             unveil("/usr/sbin/sendmail",   "x");
 
+        if (*address == '/')
+            unveil(address, "rwc");
+
         unveil(NULL,                   NULL);
+
         srv_debug(1, xs_fmt("Calling pledge()"));
 
+        xs *p = xs_str_new("stdio rpath wpath cpath flock inet proc dns fattr");
+
         if (smail)
-            pledge("stdio rpath wpath cpath flock inet proc exec dns fattr", NULL);
-        else
-            pledge("stdio rpath wpath cpath flock inet proc dns fattr", NULL);
+            p = xs_str_cat(p, " exec");
+
+        if (*address == '/')
+            p = xs_str_cat(p, " unix");
+
+        pledge(p, NULL);
     }
 #endif /* __OpenBSD__ */
 
