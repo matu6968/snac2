@@ -763,6 +763,7 @@ void httpd(void)
 {
     const char *address;
     const char *port;
+    xs *full_address = NULL;
     int rs;
     pthread_t threads[MAX_THREADS] = {0};
     int n;
@@ -773,8 +774,10 @@ void httpd(void)
     address = xs_dict_get(srv_config, "address");
     port    = xs_number_str(xs_dict_get(srv_config, "port"));
 
+    full_address = xs_fmt("%s:%s", address, port);
+
     if ((rs = xs_socket_server(address, port)) == -1) {
-        srv_log(xs_fmt("cannot bind socket to %s:%s", address, port));
+        srv_log(xs_fmt("cannot bind socket to %s", full_address));
         return;
     }
 
@@ -791,13 +794,13 @@ void httpd(void)
     signal(SIGTERM, term_handler);
     signal(SIGINT,  term_handler);
 
-    srv_log(xs_fmt("httpd%s start %s:%s %s", p_state->use_fcgi ? " (FastCGI)" : "",
-                    address, port, USER_AGENT));
+    srv_log(xs_fmt("httpd%s start %s %s", p_state->use_fcgi ? " (FastCGI)" : "",
+                    full_address, USER_AGENT));
 
     /* show the number of usable file descriptors */
     struct rlimit r;
     getrlimit(RLIMIT_NOFILE, &r);
-    srv_debug(0, xs_fmt("available (rlimit) fds: %d (cur) / %d (max)",
+    srv_debug(1, xs_fmt("available (rlimit) fds: %d (cur) / %d (max)",
                         (int) r.rlim_cur, (int) r.rlim_max));
 
     /* initialize the job control engine */
@@ -876,7 +879,7 @@ void httpd(void)
 
     xs *uptime = xs_str_time_diff(time(NULL) - p_state->srv_start_time);
 
-    srv_log(xs_fmt("httpd%s stop %s:%s (run time: %s)",
+    srv_log(xs_fmt("httpd%s stop %s (run time: %s)",
                 p_state->use_fcgi ? " (FastCGI)" : "",
-                address, port, uptime));
+                full_address, uptime));
 }
