@@ -131,20 +131,32 @@ int snac_init(const char *basedir)
     xs *layout = xs_number_new(disk_layout);
     srv_config = xs_dict_set(srv_config, "layout", layout);
 
-    printf("Network address [%s]: ", xs_dict_get(srv_config, "address")); fflush(stdout);
-    {
-        xs *i = xs_strip_i(xs_readline(stdin));
-        if (*i)
-            srv_config = xs_dict_set(srv_config, "address", i);
-    }
+    int is_unix_socket = 0;
 
-    printf("Network port [%d]: ", (int)xs_number_get(xs_dict_get(srv_config, "port"))); fflush(stdout);
+    printf("Network address or full path to unix socket [%s]: ", xs_dict_get(srv_config, "address")); fflush(stdout);
     {
         xs *i = xs_strip_i(xs_readline(stdin));
         if (*i) {
-            xs *n = xs_number_new(atoi(i));
-            srv_config = xs_dict_set(srv_config, "port", n);
+            srv_config = xs_dict_set(srv_config, "address", i);
+
+            if (*i == '/')
+                is_unix_socket = 1;
         }
+    }
+
+    if (!is_unix_socket) {
+        printf("Network port [%d]: ", (int)xs_number_get(xs_dict_get(srv_config, "port"))); fflush(stdout);
+        {
+            xs *i = xs_strip_i(xs_readline(stdin));
+            if (*i) {
+                xs *n = xs_number_new(atoi(i));
+                srv_config = xs_dict_set(srv_config, "port", n);
+            }
+        }
+    }
+    else {
+        xs *n = xs_number_new(0);
+        srv_config = xs_dict_set(srv_config, "port", n);
     }
 
     printf("Host name: "); fflush(stdout);
