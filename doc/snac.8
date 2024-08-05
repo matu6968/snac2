@@ -58,6 +58,8 @@ specially the host name it will run under, the local network address
 and port
 .Nm
 will listen to, the optional path prefix and possibly other things.
+Since version 2.57, if the 'network address' starts with /, it's
+assumed to be a UNIX-like socket.
 .Pp
 You can launch the
 .Nm
@@ -66,9 +68,6 @@ process by running
 snac httpd $HOME/snac-data
 .Ed
 .Pp
-Use a web browser to connect to the specified address and port. You
-should see a greeting page.
-.Pp
 Log messages are sent to the standard error stream. By default, only
 relevant information is written there. You can increase the debugging
 level by editing the 'dbglevel' field in the
@@ -76,7 +75,7 @@ level by editing the 'dbglevel' field in the
 file or by setting a numeric value between 0 and 3 to the DEBUG
 environment variable, see below.
 .Pp
-If you operate a Linux systemd-enabled system, OpenBSD or FreeBSD, there are
+If you operate a Linux systemd-enabled system, OpenBSD, FreeBSD or NetBSD, there are
 startup scripts and configuration data in the
 .Pa examples
 directory.
@@ -128,9 +127,10 @@ The host name.
 .It Ic prefix
 The URL path prefix.
 .It Ic address
-The listen network address.
+The listen network address. If it starts with /, it's assumed to be
+a UNIX-like socket instead.
 .It Ic port
-The listen network port.
+The listen network port (unused if address is a UNIX socket).
 .It Ic dbglevel
 The debug level. An integer value, being 0 the less verbose (the default).
 .It Ic layout
@@ -551,7 +551,7 @@ fastcgi_pass localhost:8001;
 .Pp
 The only thing to change on
 .Nm
-size is to the set 'fastcgi' value to true in
+is to the set 'fastcgi' value to true in
 .Pa server.json .
 .Pp
 Further, using the FastCGI interface allows a much simpler configuration
