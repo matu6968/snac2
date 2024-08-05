@@ -3324,11 +3324,11 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
                     persist_image("avatar", v, payload, &snac);
                 }
                 else
-                if (xs_starts_and_ends("fields_attributes", k, "[name]")) {
+                if (xs_between("fields_attributes", k, "[name]")) {
                     field_name = strcmp(v, "") != 0 ? v : NULL;
                 }
                 else
-                if (xs_starts_and_ends("fields_attributes", k, "[value]")) {
+                if (xs_between("fields_attributes", k, "[value]")) {
                     if (field_name != NULL) {
                         new_fields = xs_dict_set(new_fields, field_name, v);
                         snac.config = xs_dict_set(snac.config, "metadata", new_fields);

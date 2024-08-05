@@ -80,9 +80,9 @@ xs_str *xs_replace_in(xs_str *str, const char *sfrom, const char *sto, int times
 #define xs_replace_n(str, sfrom, sto, times) xs_replace_in(xs_dup(str), sfrom, sto, times)
 xs_str *xs_fmt(const char *fmt, ...);
 int xs_str_in(const char *haystack, const char *needle);
-int xs_starts_and_ends(const char *prefix, const char *str, const char *suffix);
-#define xs_startswith(str, prefix) xs_starts_and_ends(prefix, str, NULL)
-#define xs_endswith(str, suffix) xs_starts_and_ends(NULL, str, suffix)
+int xs_between(const char *prefix, const char *str, const char *suffix);
+#define xs_startswith(str, prefix) xs_between(prefix, str, NULL)
+#define xs_endswith(str, suffix) xs_between(NULL, str, suffix)
 xs_str *xs_crop_i(xs_str *str, int start, int end);
 xs_str *xs_lstrip_chars_i(xs_str *str, const char *chars);
 xs_str *xs_rstrip_chars_i(xs_str *str, const char *chars);
@@ -586,7 +586,7 @@ int xs_str_in(const char *haystack, const char *needle)
 }
 
 
-int xs_starts_and_ends(const char *prefix, const char *str, const char *suffix)
+int xs_between(const char *prefix, const char *str, const char *suffix)
 /* returns true if str starts with prefix and ends with suffix */
 {
     int sz = strlen(str);
