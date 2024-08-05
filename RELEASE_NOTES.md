@@ -2,6 +2,8 @@
 
 ## 2.57
 
+Added support for listening on UNIX-like sockets.
+
 Don't allow empty polls.
 
 Added support for Markdown-style images (converted to attachments) and strikethrough text.
