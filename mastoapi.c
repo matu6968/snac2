@@ -1832,7 +1832,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     continue;
 
                 /* convert the type */
-                if (strcmp(type, "Like") == 0)
+                if (strcmp(type, "Like") == 0 || strcmp(type, "EmojiReact") == 0)
                     type = "favourite";
                 else
                 if (strcmp(type, "Announce") == 0)
