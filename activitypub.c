@@ -574,7 +574,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         return 0;
     }
 
-    if (xs_match(type, "Like|Announce")) {
+    if (xs_match(type, "Like|Announce|EmojiReact")) {
         const char *object = xs_dict_get(c_msg, "object");
 
         if (xs_type(object) == XSTYPE_DICT)
@@ -834,7 +834,7 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
     if (xs_type(objid) == XSTYPE_DICT)
         objid = xs_dict_get(objid, "id");
 
-    if (strcmp(type, "Like") == 0 || strcmp(type, "Announce") == 0) {
+    if (xs_match(type, "Like|Announce|EmojiReact")) {
         /* if it's not an admiration about something by us, done */
         if (xs_is_null(objid) || !xs_startswith(objid, snac->actor))
             return;
@@ -1901,10 +1901,10 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             }
         }
         else
-        if (strcmp(utype, "Like") == 0) { /** **/
+        if (strcmp(utype, "Like") == 0 || strcmp(utype, "EmojiReact") == 0) { /** **/
             int status = object_unadmire(id, actor, 1);
 
-            snac_log(snac, xs_fmt("Unlike for %s %d", id, status));
+            snac_log(snac, xs_fmt("Undo '%s' for %s %d", utype, id, status));
         }
         else
         if (strcmp(utype, "Announce") == 0) { /** **/
