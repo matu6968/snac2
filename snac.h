@@ -185,6 +185,7 @@ xs_str *tag_fn(const char *tag);
 xs_list *tag_search(const char *tag, int skip, int show);
 
 xs_val *list_maint(snac *user, const char *list, int op);
+xs_str *list_timeline_fn(snac *user, const char *list);
 xs_list *list_timeline(snac *user, const char *list, int skip, int show);
 xs_val *list_content(snac *user, const char *list_id, const char *actor_md5, int op);
 void list_distribute(snac *user, const char *who, const xs_dict *post);

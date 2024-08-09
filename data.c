@@ -1944,6 +1944,12 @@ xs_val *list_maint(snac *user, const char *list, int op)
 }
 
 
+xs_str *list_timeline_fn(snac *user, const char *list)
+{
+    return xs_fmt("%s/list/%s.idx", user->basedir, list);
+}
+
+
 xs_list *list_timeline(snac *user, const char *list, int skip, int show)
 /* returns the timeline of a list */
 {
@@ -1952,7 +1958,7 @@ xs_list *list_timeline(snac *user, const char *list, int skip, int show)
     if (!xs_is_hex(list))
         return NULL;
 
-    xs *fn = xs_fmt("%s/list/%s.idx", user->basedir, list);
+    xs *fn = list_timeline_fn(user, list);
 
     if (mtime(fn) > 0.0)
         l = index_list_desc(fn, skip, show);
