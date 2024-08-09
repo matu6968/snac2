@@ -1260,6 +1260,107 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     *status = HTTP_STATUS_OK;
 }
 
+
+xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index)
+{
+    xs_list *out         = xs_list_new();
+    const char *max_id   = xs_dict_get(args, "max_id");
+    const char *since_id = xs_dict_get(args, "since_id");
+    const char *min_id   = xs_dict_get(args, "min_id");
+    const char *limit_s  = xs_dict_get(args, "limit");
+    int limit = 0;
+    int cnt   = 0;
+
+    if (!xs_is_null(limit_s))
+        limit = atoi(limit_s);
+
+    if (limit == 0)
+        limit = 20;
+
+    xs *timeline = timeline_simple_list(user, index, 0, 2048);
+
+    xs_list *p   = timeline;
+    const xs_str *v;
+
+    while (xs_list_iter(&p, &v) && cnt < limit) {
+        xs *msg = NULL;
+
+        /* only return entries older that max_id */
+        if (max_id) {
+            if (strcmp(v, MID_TO_MD5(max_id)) == 0)
+                max_id = NULL;
+
+            continue;
+        }
+
+        /* only returns entries newer than since_id */
+        if (since_id) {
+            if (strcmp(v, MID_TO_MD5(since_id)) == 0)
+                break;
+        }
+
+        /* only returns entries newer than min_id */
+        /* what does really "Return results immediately newer than ID" mean? */
+        if (min_id) {
+            if (strcmp(v, MID_TO_MD5(min_id)) == 0)
+                break;
+        }
+
+        /* get the entry */
+        if (!valid_status(timeline_get_by_md5(user, v, &msg)))
+            continue;
+
+        /* discard non-Notes */
+        const char *id   = xs_dict_get(msg, "id");
+        const char *type = xs_dict_get(msg, "type");
+        if (!xs_match(type, POSTLIKE_OBJECT_TYPE))
+            continue;
+
+        const char *from = NULL;
+        if (strcmp(type, "Page") == 0)
+            from = xs_dict_get(msg, "audience");
+
+        if (from == NULL)
+            from = get_atto(msg);
+
+        if (from == NULL)
+            continue;
+
+        /* is this message from a person we don't follow? */
+        if (strcmp(from, user->actor) && !following_check(user, from)) {
+            /* discard if it was not boosted */
+            xs *idx = object_announces(id);
+
+            if (xs_list_len(idx) == 0)
+                continue;
+        }
+
+        /* discard notes from muted morons */
+        if (is_muted(user, from))
+            continue;
+
+        /* discard hidden notes */
+        if (is_hidden(user, id))
+            continue;
+
+        /* if it has a name and it's not a Page or a Video,
+           it's a poll vote, so discard it */
+        if (!xs_is_null(xs_dict_get(msg, "name")) && !xs_match(type, "Page|Video"))
+            continue;
+
+        /* convert the Note into a Mastodon status */
+        xs *st = mastoapi_status(user, msg);
+
+        if (st != NULL)
+            out = xs_list_append(out, st);
+
+        cnt++;
+    }
+
+    return out;
+}
+
+
 int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                          char **body, int *b_size, char **ctype)
 {
@@ -1518,99 +1619,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     if (strcmp(cmd, "/v1/timelines/home") == 0) { /** **/
         /* the private timeline */
         if (logged_in) {
-            const char *max_id   = xs_dict_get(args, "max_id");
-            const char *since_id = xs_dict_get(args, "since_id");
-            const char *min_id   = xs_dict_get(args, "min_id");
-            const char *limit_s  = xs_dict_get(args, "limit");
-            int limit = 0;
-            int cnt   = 0;
-
-            if (!xs_is_null(limit_s))
-                limit = atoi(limit_s);
-
-            if (limit == 0)
-                limit = 20;
-
-            xs *timeline = timeline_simple_list(&snac1, "private", 0, 2048);
-
-            xs *out      = xs_list_new();
-            xs_list *p   = timeline;
-            const xs_str *v;
-
-            while (xs_list_iter(&p, &v) && cnt < limit) {
-                xs *msg = NULL;
-
-                /* only return entries older that max_id */
-                if (max_id) {
-                    if (strcmp(v, MID_TO_MD5(max_id)) == 0)
-                        max_id = NULL;
-
-                    continue;
-                }
-
-                /* only returns entries newer than since_id */
-                if (since_id) {
-                    if (strcmp(v, MID_TO_MD5(since_id)) == 0)
-                        break;
-                }
-
-                /* only returns entries newer than min_id */
-                /* what does really "Return results immediately newer than ID" mean? */
-                if (min_id) {
-                    if (strcmp(v, MID_TO_MD5(min_id)) == 0)
-                        break;
-                }
-
-                /* get the entry */
-                if (!valid_status(timeline_get_by_md5(&snac1, v, &msg)))
-                    continue;
-
-                /* discard non-Notes */
-                const char *id   = xs_dict_get(msg, "id");
-                const char *type = xs_dict_get(msg, "type");
-                if (!xs_match(type, POSTLIKE_OBJECT_TYPE))
-                    continue;
-
-                const char *from = NULL;
-                if (strcmp(type, "Page") == 0)
-                    from = xs_dict_get(msg, "audience");
-
-                if (from == NULL)
-                    from = get_atto(msg);
-
-                if (from == NULL)
-                    continue;
-
-                /* is this message from a person we don't follow? */
-                if (strcmp(from, snac1.actor) && !following_check(&snac1, from)) {
-                    /* discard if it was not boosted */
-                    xs *idx = object_announces(id);
-
-                    if (xs_list_len(idx) == 0)
-                        continue;
-                }
-
-                /* discard notes from muted morons */
-                if (is_muted(&snac1, from))
-                    continue;
-
-                /* discard hidden notes */
-                if (is_hidden(&snac1, id))
-                    continue;
-
-                /* if it has a name and it's not a Page or a Video,
-                   it's a poll vote, so discard it */
-                if (!xs_is_null(xs_dict_get(msg, "name")) && !xs_match(type, "Page|Video"))
-                    continue;
-
-                /* convert the Note into a Mastodon status */
-                xs *st = mastoapi_status(&snac1, msg);
-
-                if (st != NULL)
-                    out = xs_list_append(out, st);
-
-                cnt++;
-            }
+            xs *out = mastoapi_timeline(&snac1, args, "private");
 
             *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
