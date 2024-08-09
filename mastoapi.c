@@ -1261,7 +1261,7 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
 }
 
 
-xs_list *mastoapi_timeline(snac *user, const xs_dict *args, int skip, const char *index_fn)
+xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn)
 {
     xs_list *out = xs_list_new();
     FILE *f;
@@ -1269,7 +1269,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, int skip, const char
 
     if (dbglevel) {
         xs *js = xs_json_dumps(args, 0);
-        srv_log(xs_fmt("mastoapi_timeline args: %s", js));
+        srv_debug(1, xs_fmt("mastoapi_timeline args: %s", js));
     }
 
     if ((f = fopen(index_fn, "r")) == NULL)
@@ -1288,7 +1288,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, int skip, const char
     if (limit == 0)
         limit = 20;
 
-    if (index_desc_first(f, md5, skip)) {
+    if (index_desc_first(f, md5, 0)) {
         do {
             xs *msg = NULL;
 
@@ -1314,8 +1314,14 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, int skip, const char
             }
 
             /* get the entry */
-            if (!valid_status(timeline_get_by_md5(user, md5, &msg)))
-                continue;
+            if (user) {
+                if (!valid_status(timeline_get_by_md5(user, md5, &msg)))
+                    continue;
+            }
+            else {
+                if (!valid_status(object_get_by_md5(md5, &msg)))
+                    continue;
+            }
 
             /* discard non-Notes */
             const char *id   = xs_dict_get(msg, "id");
@@ -1333,22 +1339,33 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, int skip, const char
             if (from == NULL)
                 continue;
 
-            /* is this message from a person we don't follow? */
-            if (strcmp(from, user->actor) && !following_check(user, from)) {
-                /* discard if it was not boosted */
-                xs *idx = object_announces(id);
+            if (user) {
+                /* is this message from a person we don't follow? */
+                if (strcmp(from, user->actor) && !following_check(user, from)) {
+                    /* discard if it was not boosted */
+                    xs *idx = object_announces(id);
 
-                if (xs_list_len(idx) == 0)
+                    if (xs_list_len(idx) == 0)
+                        continue;
+                }
+
+                /* discard notes from muted morons */
+                if (is_muted(user, from))
+                    continue;
+
+                /* discard hidden notes */
+                if (is_hidden(user, id))
                     continue;
             }
+            else {
+                /* skip non-public messages */
+                if (!is_msg_public(msg))
+                    continue;
 
-            /* discard notes from muted morons */
-            if (is_muted(user, from))
-                continue;
-
-            /* discard hidden notes */
-            if (is_hidden(user, id))
-                continue;
+                /* discard messages from private users */
+                if (is_msg_from_private_user(msg))
+                    continue;
+            }
 
             /* if it has a name and it's not a Page or a Video,
                it's a poll vote, so discard it */
@@ -1632,7 +1649,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         /* the private timeline */
         if (logged_in) {
             xs *ifn = user_index_fn(&snac1, "private");
-            xs *out = mastoapi_timeline(&snac1, args, 0, ifn);
+            xs *out = mastoapi_timeline(&snac1, args, ifn);
 
             *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
