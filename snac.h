@@ -145,13 +145,15 @@ int timeline_touch(snac *snac);
 int timeline_here(snac *snac, const char *md5);
 int timeline_get_by_md5(snac *snac, const char *md5, xs_dict **msg);
 int timeline_del(snac *snac, const char *id);
-xs_list *timeline_simple_list(snac *snac, const char *idx_name, int skip, int show);
+xs_str *user_index_fn(snac *user, const char *idx_name);
+xs_list *timeline_simple_list(snac *user, const char *idx_name, int skip, int show);
 xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show);
 int timeline_add(snac *snac, const char *id, const xs_dict *o_msg);
 int timeline_admire(snac *snac, const char *id, const char *admirer, int like);
 
 xs_list *timeline_top_level(snac *snac, const xs_list *list);
 xs_list *local_list(snac *snac, int max);
+xs_str *instance_index_fn(void);
 xs_list *timeline_instance_list(int skip, int show);
 
 int following_add(snac *snac, const char *actor, const xs_dict *msg);
@@ -179,6 +181,7 @@ void hide(snac *snac, const char *id);
 int is_hidden(snac *snac, const char *id);
 
 void tag_index(const char *id, const xs_dict *obj);
+xs_str *tag_fn(const char *tag);
 xs_list *tag_search(const char *tag, int skip, int show);
 
 xs_val *list_maint(snac *user, const char *list, int op);

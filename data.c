@@ -1300,10 +1300,17 @@ xs_list *timeline_top_level(snac *snac, const xs_list *list)
 }
 
 
-xs_list *timeline_simple_list(snac *snac, const char *idx_name, int skip, int show)
+xs_str *user_index_fn(snac *user, const char *idx_name)
+/* returns the filename of a user index */
+{
+    return xs_fmt("%s/%s.idx", user->basedir, idx_name);
+}
+
+
+xs_list *timeline_simple_list(snac *user, const char *idx_name, int skip, int show)
 /* returns a timeline (with all entries) */
 {
-    xs *idx = xs_fmt("%s/%s.idx", snac->basedir, idx_name);
+    xs *idx = user_index_fn(user, idx_name);
 
     return index_list_desc(idx, skip, show);
 }
@@ -1327,10 +1334,16 @@ xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show)
 }
 
 
+xs_str *instance_index_fn(void)
+{
+    return xs_fmt("%s/public.idx", srv_basedir);
+}
+
+
 xs_list *timeline_instance_list(int skip, int show)
 /* returns the timeline for the full instance */
 {
-    xs *idx = xs_fmt("%s/public.idx", srv_basedir);
+    xs *idx = instance_index_fn();
 
     return index_list_desc(idx, skip, show);
 }
@@ -1803,15 +1816,22 @@ void tag_index(const char *id, const xs_dict *obj)
 }
 
 
-xs_list *tag_search(const char *tag, int skip, int show)
-/* returns the list of posts tagged with tag */
+xs_str *tag_fn(const char *tag)
 {
     if (*tag == '#')
         tag++;
 
     xs *lw_tag = xs_tolower_i(xs_dup(tag));
     xs *md5    = xs_md5_hex(lw_tag, strlen(lw_tag));
-    xs *idx    = xs_fmt("%s/tag/%c%c/%s.idx", srv_basedir, md5[0], md5[1], md5);
+
+    return xs_fmt("%s/tag/%c%c/%s.idx", srv_basedir, md5[0], md5[1], md5);
+}
+
+
+xs_list *tag_search(const char *tag, int skip, int show)
+/* returns the list of posts tagged with tag */
+{
+    xs *idx = tag_fn(tag);
 
     return index_list_desc(idx, skip, show);
 }
