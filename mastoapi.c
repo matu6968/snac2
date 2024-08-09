@@ -1382,9 +1382,11 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
         } while (cnt < limit && index_desc_next(f, md5));
     }
 
+    int more = index_desc_next(f, md5);
+
     fclose(f);
 
-    srv_debug(1, xs_fmt("mastoapi_timeline: %d %d", cnt, xs_list_len(out)));
+    srv_debug(1, xs_fmt("mastoapi_timeline: %d %d %d", cnt, xs_list_len(out), more));
 
     return out;
 }
@@ -1664,50 +1666,12 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     else
     if (strcmp(cmd, "/v1/timelines/public") == 0) { /** **/
         /* the instance public timeline (public timelines for all users) */
-
-        const char *limit_s = xs_dict_get(args, "limit");
-        int limit = 0;
-        int cnt   = 0;
-
-        if (!xs_is_null(limit_s))
-            limit = atoi(limit_s);
-
-        if (limit == 0)
-            limit = 20;
-
-        xs *timeline = timeline_instance_list(0, limit);
-        xs *out      = xs_list_new();
-        xs_list *p   = timeline;
-        const xs_str *md5;
-
         snac *user = NULL;
         if (logged_in)
             user = &snac1;
 
-        while (xs_list_iter(&p, &md5) && cnt < limit) {
-            xs *msg = NULL;
-
-            /* get the entry */
-            if (!valid_status(object_get_by_md5(md5, &msg)))
-                continue;
-
-            /* discard non-Notes */
-            const char *type = xs_dict_get(msg, "type");
-            if (strcmp(type, "Note") != 0 && strcmp(type, "Question") != 0)
-                continue;
-
-            /* discard messages from private users */
-            if (is_msg_from_private_user(msg))
-                continue;
-
-            /* convert the Note into a Mastodon status */
-            xs *st = mastoapi_status(user, msg);
-
-            if (st != NULL) {
-                out = xs_list_append(out, st);
-                cnt++;
-            }
-        }
+        xs *ifn = instance_index_fn();
+        xs *out = mastoapi_timeline(user, args, ifn);
 
         *body  = xs_json_dumps(out, 4);
         *ctype = "application/json";
@@ -1715,48 +1679,12 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (xs_startswith(cmd, "/v1/timelines/tag/")) { /** **/
-        const char *limit_s = xs_dict_get(args, "limit");
-        int limit = 0;
-        int cnt   = 0;
-
-        if (!xs_is_null(limit_s))
-            limit = atoi(limit_s);
-
-        if (limit == 0)
-            limit = 20;
-
         /* get the tag */
         xs *l = xs_split(cmd, "/");
         const char *tag = xs_list_get(l, -1);
 
-        xs *timeline = tag_search(tag, 0, limit);
-        xs *out      = xs_list_new();
-        xs_list *p   = timeline;
-        const xs_str *md5;
-
-        while (xs_list_iter(&p, &md5) && cnt < limit) {
-            xs *msg = NULL;
-
-            /* get the entry */
-            if (!valid_status(object_get_by_md5(md5, &msg)))
-                continue;
-
-            /* skip non-public messages */
-            if (!is_msg_public(msg))
-                continue;
-
-            /* discard messages from private users */
-            if (is_msg_from_private_user(msg))
-                continue;
-
-            /* convert the Note into a Mastodon status */
-            xs *st = mastoapi_status(NULL, msg);
-
-            if (st != NULL) {
-                out = xs_list_append(out, st);
-                cnt++;
-            }
-        }
+        xs *ifn = tag_fn(tag);
+        xs *out = mastoapi_timeline(NULL, args, ifn);
 
         *body  = xs_json_dumps(out, 4);
         *ctype = "application/json";
