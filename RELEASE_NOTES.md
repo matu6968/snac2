@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.58
+
+Search by content also looks into alt-text from attachments (images, videos, etc.).
+
 ## 2.57
 
 Added support for listening on UNIX-like sockets.
