@@ -2486,12 +2486,14 @@ xs_list *content_search(snac *user, const char *regex,
         if (id == NULL || is_hidden(user, id))
             continue;
 
+        xs *c = xs_str_new(NULL);
         const char *content = xs_dict_get(post, "content");
+        const char *name    = xs_dict_get(post, "name");
 
-        if (xs_is_null(content))
-            continue;
-
-        xs *c = xs_dup(content);
+        if (!xs_is_null(content))
+            c = xs_str_cat(c, content);
+        if (!xs_is_null(name))
+            c = xs_str_cat(c, " ", name);
 
         /* add alt-texts from attachments */
         const xs_list *atts = xs_dict_get(post, "attachment");
