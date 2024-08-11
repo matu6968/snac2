@@ -60,6 +60,7 @@ xstype xs_type(const xs_val *data);
 int xs_size(const xs_val *data);
 int xs_is_null(const xs_val *data);
 int xs_cmp(const xs_val *v1, const xs_val *v2);
+const xs_val *xs_or(const xs_val *v1, const xs_val *v2);
 xs_val *xs_dup(const xs_val *data);
 xs_val *xs_expand(xs_val *data, int offset, int size);
 xs_val *xs_collapse(xs_val *data, int offset, int size);
@@ -119,8 +120,8 @@ xs_dict *xs_dict_new(void);
 xs_dict *xs_dict_append(xs_dict *dict, const xs_str *key, const xs_val *value);
 xs_dict *xs_dict_prepend(xs_dict *dict, const xs_str *key, const xs_val *value);
 int xs_dict_next(const xs_dict *dict, const xs_str **key, const xs_val **value, int *ctxt);
-const xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_val *def);
-#define xs_dict_get(dict, key) xs_dict_get_def(dict, key, NULL)
+const xs_val *xs_dict_get(const xs_dict *dict, const xs_str *key);
+#define xs_dict_get_def(dict, key, def) xs_or(xs_dict_get(dict, key), def)
 xs_dict *xs_dict_del(xs_dict *dict, const xs_str *key);
 xs_dict *xs_dict_set(xs_dict *dict, const xs_str *key, const xs_val *data);
 xs_dict *xs_dict_gc(const xs_dict *dict);
@@ -357,6 +358,13 @@ int xs_cmp(const xs_val *v1, const xs_val *v2)
     int d = s1 - s2;
 
     return d == 0 ? memcmp(v1, v2, s1) : d;
+}
+
+
+const xs_val *xs_or(const xs_val *v1, const xs_val *v2)
+/* returns v1 if it's not NULL, else v2 */
+{
+    return v1 == NULL ? v2 : v1;
 }
 
 
@@ -1211,8 +1219,8 @@ xs_dict *xs_dict_del(xs_dict *dict, const xs_str *key)
 }
 
 
-const xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_str *def)
-/* gets a value by key, or returns def */
+const xs_val *xs_dict_get(const xs_dict *dict, const xs_str *key)
+/* gets a value by key, or NULL */
 {
     if (xs_type(dict) == XSTYPE_DICT) {
         int *o = _xs_dict_locate(dict, key);
@@ -1226,7 +1234,7 @@ const xs_val *xs_dict_get_def(const xs_dict *dict, const xs_str *key, const xs_s
         }
     }
 
-    return def;
+    return NULL;
 }
 
 
