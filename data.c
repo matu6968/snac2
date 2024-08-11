@@ -2491,8 +2491,22 @@ xs_list *content_search(snac *user, const char *regex,
         if (xs_is_null(content))
             continue;
 
+        xs *c = xs_dup(content);
+
+        /* add alt-texts from attachments */
+        const xs_list *atts = xs_dict_get(post, "attachment");
+        int tc = 0;
+        const xs_dict *att;
+
+        while (xs_list_next(atts, &att, &tc)) {
+            const char *name = xs_dict_get(att, "name");
+
+            if (name != NULL)
+                c = xs_str_cat(c, " ", name);
+        }
+
         /* strip HTML */
-        xs *c = xs_regex_replace(content, "<[^>]+>", " ");
+        c = xs_regex_replace_i(c, "<[^>]+>", " ");
         c = xs_regex_replace_i(c, " {2,}", " ");
         c = xs_tolower_i(c);
 
