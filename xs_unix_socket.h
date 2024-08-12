@@ -20,15 +20,15 @@ int xs_unix_socket_server(const char *path, const char *grp)
     int rs = -1;
 
     if ((rs = socket(AF_UNIX, SOCK_STREAM, 0)) != -1) {
-        struct sockaddr_un sun = {0};
+        struct sockaddr_un su = {0};
         mode_t mode = 0666;
 
-        sun.sun_family = AF_UNIX;
-        strncpy(sun.sun_path, path, sizeof(sun.sun_path));
+        su.sun_family = AF_UNIX;
+        strncpy(su.sun_path, path, sizeof(su.sun_path));
 
         unlink(path);
 
-        if (bind(rs, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+        if (bind(rs, (struct sockaddr *)&su, sizeof(su)) == -1) {
             close(rs);
             return -1;
         }
@@ -58,12 +58,12 @@ int xs_unix_socket_connect(const char *path)
     int d = -1;
 
     if ((d = socket(AF_UNIX, SOCK_STREAM, 0)) != -1) {
-        struct sockaddr_un sun = {0};
+        struct sockaddr_un su = {0};
 
-        sun.sun_family = AF_UNIX;
-        strncpy(sun.sun_path, path, sizeof(sun.sun_path));
+        su.sun_family = AF_UNIX;
+        strncpy(su.sun_path, path, sizeof(su.sun_path));
 
-        if (connect(d, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+        if (connect(d, (struct sockaddr *)&su, sizeof(su)) == -1) {
             close(d);
             d = -1;
         }
