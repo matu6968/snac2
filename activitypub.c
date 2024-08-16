@@ -1721,7 +1721,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         type = "Note";
 
     /* reject uninteresting messages right now */
-    if (xs_match(type, "Add|View")) {
+    if (xs_match(type, "Add|View|Reject")) {
         srv_debug(0, xs_fmt("Ignored message of type '%s'", type));
         return -1;
     }
