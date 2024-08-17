@@ -16,6 +16,10 @@ The Mastodon official app crashes (or gives a ownVotes is null error) when tryin
 
 ## Wishlist
 
+Show pinned posts in the 'Actor' `featured` property (https://codeberg.org/grunfink/snac2/issues/191).
+
+Implement case-insensitive search all alphabets, not only latin (https://codeberg.org/grunfink/snac2/issues/192).
+
 Track 'Event' data types standardization; how to add plan-to-attend and similar activities (more info: https://event-federation.eu/)
 
 Implement "FEP-3b86: Activity Intents" https://codeberg.org/fediverse/fep/src/branch/main/fep/3b86/fep-3b86.md
