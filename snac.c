@@ -6,6 +6,7 @@
 #include "xs.h"
 #include "xs_hex.h"
 #include "xs_io.h"
+#include "xs_unicode_tbl.h"
 #include "xs_unicode.h"
 #include "xs_json.h"
 #include "xs_curl.h"

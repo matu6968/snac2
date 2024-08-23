@@ -11,6 +11,7 @@
 #include "xs_time.h"
 #include "xs_regex.h"
 #include "xs_match.h"
+#include "xs_unicode.h"
 
 #include "snac.h"
 
@@ -2414,7 +2415,7 @@ xs_list *content_search(snac *user, const char *regex,
     if (regex == NULL || *regex == '\0')
         return xs_list_new();
 
-    xs *i_regex = xs_tolower_i(xs_dup(regex));
+    xs *i_regex = xs_utf8_to_lower(regex);
 
     xs_set seen;
 
@@ -2510,10 +2511,12 @@ xs_list *content_search(snac *user, const char *regex,
         /* strip HTML */
         c = xs_regex_replace_i(c, "<[^>]+>", " ");
         c = xs_regex_replace_i(c, " {2,}", " ");
-        c = xs_tolower_i(c);
+
+        /* convert to lowercase */
+        xs *lc = xs_utf8_to_lower(c);
 
         /* apply regex */
-        if (xs_regex_match(c, i_regex)) {
+        if (xs_regex_match(lc, i_regex)) {
             if (xs_set_add(&seen, md5) == 1)
             show--;
         }
