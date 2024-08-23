@@ -4,6 +4,8 @@
 
 Search by content also looks into alt-text from attachments (images, videos, etc.).
 
+Search by content is case insensitive for all Unicode-supported alphabets (previously was only for ASCII characters).
+
 Fixed a failed compilation under Solaris/Illumos.
 
 ## 2.57
