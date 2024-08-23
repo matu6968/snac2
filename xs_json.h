@@ -208,6 +208,7 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
 {
     int c;
     xs_val *v = NULL;
+    int offset;
 
     *t = JS_ERROR;
 
@@ -236,6 +237,7 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
         *t = JS_STRING;
 
         v = xs_str_new(NULL);
+        offset = 0;
 
         while ((c = fgetc(f)) != '"' && c != EOF && *t != JS_ERROR) {
             if (c == '\\') {
@@ -274,11 +276,12 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
                     break;
                 }
 
-                v = xs_utf8_cat(v, cp);
+                v = xs_utf8_insert(v, cp, &offset);
             }
             else {
                 char cc = c;
-                v = xs_append_m(v, &cc, 1);
+                v = xs_insert_m(v, offset, &cc, 1);
+                offset++;
             }
         }
 

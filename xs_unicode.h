@@ -9,6 +9,7 @@
  unsigned int xs_utf8_dec(const char **str);
  int xs_unicode_width(unsigned int cpoint);
  int xs_is_surrogate(unsigned int cpoint);
+ int xs_is_diacritic(unsigned int cpoint);
  unsigned int xs_surrogate_dec(unsigned int p1, unsigned int p2);
  unsigned int xs_surrogate_enc(unsigned int cpoint);
  unsigned int *_xs_unicode_upper_search(unsigned int cpoint);
@@ -22,7 +23,12 @@
  int xs_unicode_is_alpha(unsigned int cpoint);
 
 #ifdef _XS_H
+ xs_str *xs_utf8_insert(xs_str *str, unsigned int cpoint, int *offset);
  xs_str *xs_utf8_cat(xs_str *str, unsigned int cpoint);
+ xs_str *xs_utf8_to_upper(const char *str);
+ xs_str *xs_utf8_to_lower(const char *str);
+ xs_str *xs_utf8_to_nfd(const char *str);
+ xs_str *xs_utf8_to_nfc(const char *str);
 #endif
 
 #ifdef XS_IMPLEMENTATION
@@ -144,6 +150,12 @@ int xs_unicode_width(unsigned int cpoint)
 }
 
 
+int xs_is_diacritic(unsigned int cpoint)
+{
+    return cpoint >= 0x300 && cpoint <= 0x36f;
+}
+
+
 /** surrogate pairs **/
 
 int xs_is_surrogate(unsigned int cpoint)
@@ -172,14 +184,27 @@ unsigned int xs_surrogate_enc(unsigned int cpoint)
 
 #ifdef _XS_H
 
-xs_str *xs_utf8_cat(xs_str *str, unsigned int cpoint)
+xs_str *xs_utf8_insert(xs_str *str, unsigned int cpoint, int *offset)
 /* encodes an Unicode codepoint to utf-8 into str */
 {
     char tmp[4];
 
     int c = xs_utf8_enc(tmp, cpoint);
 
-    return xs_append_m(str, tmp, c);
+    str = xs_insert_m(str, *offset, tmp, c);
+
+    *offset += c;
+
+    return str;
+}
+
+
+xs_str *xs_utf8_cat(xs_str *str, unsigned int cpoint)
+/* encodes an Unicode codepoint to utf-8 into str */
+{
+    int offset = strlen(str);
+
+    return xs_utf8_insert(str, cpoint, &offset);
 }
 
 #endif /* _XS_H */
@@ -232,6 +257,9 @@ unsigned int *_xs_unicode_lower_search(unsigned int cpoint)
 unsigned int xs_unicode_to_lower(unsigned int cpoint)
 /* returns the cpoint to lowercase */
 {
+    if (cpoint < 0x80)
+        return tolower(cpoint);
+
     unsigned int *p = _xs_unicode_upper_search(cpoint);
 
     return p == NULL ? cpoint : p[1];
@@ -241,6 +269,9 @@ unsigned int xs_unicode_to_lower(unsigned int cpoint)
 unsigned int xs_unicode_to_upper(unsigned int cpoint)
 /* returns the cpoint to uppercase */
 {
+    if (cpoint < 0x80)
+        return toupper(cpoint);
+
     unsigned int *p = _xs_unicode_lower_search(cpoint);
 
     return p == NULL ? cpoint : p[0];
@@ -316,6 +347,87 @@ int xs_unicode_is_alpha(unsigned int cpoint)
     return 0;
 }
 
+
+#ifdef _XS_H
+
+xs_str *xs_utf8_to_upper(const char *str)
+{
+    xs_str *s = xs_str_new(NULL);
+    unsigned int cpoint;
+    int offset = 0;
+
+    while ((cpoint = xs_utf8_dec(&str))) {
+        cpoint = xs_unicode_to_upper(cpoint);
+        s = xs_utf8_insert(s, cpoint, &offset);
+    }
+
+    return s;
+}
+
+
+xs_str *xs_utf8_to_lower(const char *str)
+{
+    xs_str *s = xs_str_new(NULL);
+    unsigned int cpoint;
+    int offset = 0;
+
+    while ((cpoint = xs_utf8_dec(&str))) {
+        cpoint = xs_unicode_to_lower(cpoint);
+        s = xs_utf8_insert(s, cpoint, &offset);
+    }
+
+    return s;
+}
+
+
+xs_str *xs_utf8_to_nfd(const char *str)
+{
+    xs_str *s = xs_str_new(NULL);
+    unsigned int cpoint;
+    int offset = 0;
+
+    while ((cpoint = xs_utf8_dec(&str))) {
+        unsigned int base;
+        unsigned int diac;
+
+        if (xs_unicode_nfd(cpoint, &base, &diac)) {
+            s = xs_utf8_insert(s, base, &offset);
+            s = xs_utf8_insert(s, diac, &offset);
+        }
+        else
+            s = xs_utf8_insert(s, cpoint, &offset);
+    }
+
+    return s;
+}
+
+
+xs_str *xs_utf8_to_nfc(const char *str)
+{
+    xs_str *s = xs_str_new(NULL);
+    unsigned int cpoint;
+    unsigned int base = 0;
+    int offset = 0;
+
+    while ((cpoint = xs_utf8_dec(&str))) {
+        if (xs_is_diacritic(cpoint)) {
+            if (xs_unicode_nfc(base, cpoint, &base))
+                continue;
+        }
+
+        if (base)
+            s = xs_utf8_insert(s, base, &offset);
+
+        base = cpoint;
+    }
+
+    if (base)
+        s = xs_utf8_insert(s, base, &offset);
+
+    return s;
+}
+
+#endif /* _XS_H */
 
 #endif /* _XS_UNICODE_TBL_H */
 
