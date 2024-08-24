@@ -48,7 +48,7 @@ int srv_open(const char *basedir, int auto_upgrade)
     cfg_file = xs_fmt("%s/server.json", basedir);
 
     if ((f = fopen(cfg_file, "r")) == NULL)
-        error = xs_fmt("ERROR: cannot opening '%s'", cfg_file);
+        error = xs_fmt("ERROR: cannot open '%s'", cfg_file);
     else {
         /* read full config file */
         srv_config = xs_json_load(f);
