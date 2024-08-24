@@ -2610,7 +2610,6 @@ void process_queue_item(xs_dict *q_item)
             unlink(tmpfn);
 
             if (cnt == 0) {
-                srv_archive_qitem("no_valid_recipients", q_item);
                 srv_debug(1, xs_fmt("no valid recipients for %s", xs_dict_get(msg, "id")));
             }
         }
