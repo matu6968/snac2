@@ -37,7 +37,8 @@ activitypub.o: activitypub.c xs.h xs_json.h xs_curl.h xs_mime.h \
  xs_openssl.h xs_regex.h xs_time.h xs_set.h xs_match.h snac.h \
  http_codes.h
 data.o: data.c xs.h xs_hex.h xs_io.h xs_json.h xs_openssl.h xs_glob.h \
- xs_set.h xs_time.h xs_regex.h xs_match.h snac.h http_codes.h
+ xs_set.h xs_time.h xs_regex.h xs_match.h xs_unicode.h snac.h \
+ http_codes.h
 format.o: format.c xs.h xs_regex.h xs_mime.h xs_html.h xs_json.h \
  xs_time.h snac.h http_codes.h
 html.o: html.c xs.h xs_io.h xs_json.h xs_regex.h xs_set.h xs_openssl.h \
@@ -52,10 +53,10 @@ main.o: main.c xs.h xs_io.h xs_json.h xs_time.h xs_openssl.h snac.h \
 mastoapi.o: mastoapi.c xs.h xs_hex.h xs_openssl.h xs_json.h xs_io.h \
  xs_time.h xs_glob.h xs_set.h xs_random.h xs_url.h xs_mime.h xs_match.h \
  snac.h http_codes.h
-snac.o: snac.c xs.h xs_hex.h xs_io.h xs_unicode.h xs_json.h xs_curl.h \
- xs_openssl.h xs_socket.h xs_unix_socket.h xs_url.h xs_httpd.h xs_mime.h \
- xs_regex.h xs_set.h xs_time.h xs_glob.h xs_random.h xs_match.h xs_fcgi.h \
- xs_html.h snac.h http_codes.h
+snac.o: snac.c xs.h xs_hex.h xs_io.h xs_unicode_tbl.h xs_unicode.h \
+ xs_json.h xs_curl.h xs_openssl.h xs_socket.h xs_unix_socket.h xs_url.h \
+ xs_httpd.h xs_mime.h xs_regex.h xs_set.h xs_time.h xs_glob.h xs_random.h \
+ xs_match.h xs_fcgi.h xs_html.h snac.h http_codes.h
 upgrade.o: upgrade.c xs.h xs_io.h xs_json.h xs_glob.h snac.h http_codes.h
 utils.o: utils.c xs.h xs_io.h xs_json.h xs_time.h xs_openssl.h \
  xs_random.h xs_glob.h xs_curl.h xs_regex.h snac.h http_codes.h
