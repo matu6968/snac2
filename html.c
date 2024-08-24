@@ -1692,7 +1692,14 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         /** build the content string **/
         const char *content = xs_dict_get(msg, "content");
 
-        xs *c = sanitize(xs_is_null(content) ? "" : content);
+        if (xs_type(content) != XSTYPE_STRING) {
+            srv_archive_error("unexpected_content_xstype",
+                "content field type", xs_stock(XSTYPE_DICT), msg);
+
+            content = "";
+        }
+
+        xs *c = sanitize(content);
 
         /* do some tweaks to the content */
         c = xs_replace_i(c, "\r", "");
