@@ -1163,7 +1163,7 @@ xs_dict *msg_actor(snac *snac)
     msg = xs_dict_set(msg, "summary", f_bio);
     msg = xs_dict_set(msg, "tag", tags);
 
-    char *folders[] = { "inbox", "outbox", "followers", "following", NULL };
+    char *folders[] = { "inbox", "outbox", "followers", "following", "featured", NULL };
     for (n = 0; folders[n]; n++) {
         xs *f = xs_fmt("%s/%s", snac->actor, folders[n]);
         msg = xs_dict_set(msg, folders[n], f);
@@ -2683,16 +2683,17 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         snac_debug(&snac, 0, xs_fmt("serving actor [%s]", ua ? ua : "No UA"));
     }
     else
-    if (strcmp(p_path, "outbox") == 0) {
-        xs *id = xs_fmt("%s/outbox", snac.actor);
-        xs *elems = timeline_simple_list(&snac, "public", 0, 20);
+    if (strcmp(p_path, "outbox") == 0 || strcmp(p_path, "featured") == 0) {
+        xs *id = xs_fmt("%s/%s", snac.actor, p_path);
         xs *list = xs_list_new();
         msg = msg_collection(&snac, id);
-        char *p;
         const char *v;
+        int tc = 0;
 
-        p = elems;
-        while (xs_list_iter(&p, &v)) {
+        /* get the public outbox or the pinned list */
+        xs *elems = *p_path == 'o' ? timeline_simple_list(&snac, "public", 0, 20) : pinned_list(&snac);
+
+        while (xs_list_next(elems, &v, &tc)) {
             xs *i = NULL;
 
             if (valid_status(object_get_by_md5(v, &i))) {
