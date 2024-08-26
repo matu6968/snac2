@@ -8,6 +8,8 @@ Search by content is case insensitive for all Unicode-supported alphabets (previ
 
 Fixed a failed compilation under Solaris/Illumos.
 
+The actor `Person` object now includes a `featured` property, that returns the list of pinned posts.
+
 ## 2.57
 
 Added support for listening on UNIX-like sockets.
