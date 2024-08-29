@@ -1013,13 +1013,19 @@ int object_unadmire(const char *id, const char *actor, int like)
 }
 
 
-int _object_user_cache(snac *snac, const char *id, const char *cachedir, int del)
+xs_str *object_user_cache_fn(snac *user, const char *id, const char *cachedir)
+{
+    xs *md5 = xs_md5_hex(id, strlen(id));
+    return xs_fmt("%s/%s/%s.json", user->basedir, cachedir, md5);
+}
+
+
+int _object_user_cache(snac *user, const char *id, const char *cachedir, int del)
 /* adds or deletes from a user cache */
 {
     xs *ofn = _object_fn(id);
-    xs *l   = xs_split(ofn, "/");
-    xs *cfn = xs_fmt("%s/%s/%s", snac->basedir, cachedir, xs_list_get(l, -1));
-    xs *idx = xs_fmt("%s/%s.idx", snac->basedir, cachedir);
+    xs *cfn = object_user_cache_fn(user, id, cachedir);
+    xs *idx = xs_fmt("%s/%s.idx", user->basedir, cachedir);
     int ret;
 
     if (del) {
@@ -1035,34 +1041,32 @@ int _object_user_cache(snac *snac, const char *id, const char *cachedir, int del
 }
 
 
-int object_user_cache_add(snac *snac, const char *id, const char *cachedir)
+int object_user_cache_add(snac *user, const char *id, const char *cachedir)
 /* caches an object into a user cache */
 {
-    return _object_user_cache(snac, id, cachedir, 0);
+    return _object_user_cache(user, id, cachedir, 0);
 }
 
 
-int object_user_cache_del(snac *snac, const char *id, const char *cachedir)
+int object_user_cache_del(snac *user, const char *id, const char *cachedir)
 /* deletes an object from a user cache */
 {
-    return _object_user_cache(snac, id, cachedir, 1);
+    return _object_user_cache(user, id, cachedir, 1);
 }
 
 
-int object_user_cache_in(snac *snac, const char *id, const char *cachedir)
+int object_user_cache_in(snac *user, const char *id, const char *cachedir)
 /* checks if an object is stored in a cache */
 {
-    xs *md5 = xs_md5_hex(id, strlen(id));
-    xs *cfn = xs_fmt("%s/%s/%s.json", snac->basedir, cachedir, md5);
-
+    xs *cfn = object_user_cache_fn(user, id, cachedir);
     return !!(mtime(cfn) != 0.0);
 }
 
 
-xs_list *object_user_cache_list(snac *snac, const char *cachedir, int max, int inv)
+xs_list *object_user_cache_list(snac *user, const char *cachedir, int max, int inv)
 /* returns the objects in a cache as a list */
 {
-    xs *idx = xs_fmt("%s/%s.idx", snac->basedir, cachedir);
+    xs *idx = xs_fmt("%s/%s.idx", user->basedir, cachedir);
     return inv ? index_list_desc(idx, 0, max) : index_list(idx, max);
 }
 
@@ -1535,6 +1539,44 @@ int is_muted(snac *snac, const char *actor)
 }
 
 
+/** bookmarking **/
+
+xs_str *_bookmark_fn(snac *user, const char *id)
+{
+    xs *md5 = xs_md5_hex(id, strlen(id));
+    return xs_fmt("%s/bookmark/%s.json", user->basedir, md5);
+}
+
+
+int is_bookmarked(snac *user, const char *id)
+/* returns true if this note is bookmarked */
+{
+    xs *fn = _bookmark_fn(user, id);
+    return !!(mtime(fn) != 0.0);
+}
+
+
+int bookmark(snac *user, const char *id)
+/* bookmarks a post */
+{
+    if (is_bookmarked(user, id))
+        return -3;
+
+    /* create the subfolder, if it does not exist */
+    xs *fn = xs_fmt("%s/bookmark/", user->basedir);
+    mkdirx(fn);
+
+    return object_user_cache_add(user, id, "bookmark");
+}
+
+
+int unbookmark(snac *user, const char *id)
+/* unbookmarks a post */
+{
+    return object_user_cache_del(user, id, "bookmark");
+}
+
+
 /** pinning **/
 
 xs_str *_pinned_fn(snac *user, const char *id)
@@ -1601,6 +1643,8 @@ xs_list *pinned_list(snac *user)
     return object_user_cache_list(user, "pinned", XS_ALL, 1);
 }
 
+
+/** hiding **/
 
 xs_str *_hidden_fn(snac *snac, const char *id)
 {
