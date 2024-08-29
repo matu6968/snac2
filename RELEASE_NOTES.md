@@ -6,6 +6,8 @@ Search by content also looks into alt-text from attachments (images, videos, etc
 
 Search by content is case insensitive for all Unicode-supported alphabets (previously was only for ASCII characters).
 
+Added support for bookmarking posts.
+
 Fixed a failed compilation under Solaris/Illumos.
 
 The actor `Person` object now includes a `featured` property, that returns the list of pinned posts.
