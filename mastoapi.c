@@ -1061,7 +1061,8 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     else
         st = xs_dict_append(st, "poll", xs_stock(XSTYPE_NULL));
 
-    st = xs_dict_append(st, "bookmarked", xs_stock(XSTYPE_FALSE));
+    st = xs_dict_append(st, "bookmarked",
+        (snac && is_bookmarked(snac, id)) ? xs_stock(XSTYPE_TRUE) : xs_stock(XSTYPE_FALSE));
 
     st = xs_dict_append(st, "pinned",
         (snac && is_pinned(snac, id)) ? xs_stock(XSTYPE_TRUE) : xs_stock(XSTYPE_FALSE));
@@ -2570,16 +2571,22 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                     }
                     else
                     if (strcmp(op, "bookmark") == 0) { /** **/
-                        /* snac does not support bookmarks */
+                        /* bookmark this message */
+                        if (bookmark(&snac, id) == 0)
+                            out = mastoapi_status(&snac, msg);
+                        else
+                            status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
                     }
                     else
                     if (strcmp(op, "unbookmark") == 0) { /** **/
-                        /* snac does not support bookmarks */
+                        /* unbookmark this message */
+                        unbookmark(&snac, id);
+                        out = mastoapi_status(&snac, msg);
                     }
                     else
                     if (strcmp(op, "pin") == 0) { /** **/
                         /* pin this message */
-                        if (pin(&snac, id))
+                        if (pin(&snac, id) == 0)
                             out = mastoapi_status(&snac, msg);
                         else
                             status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
