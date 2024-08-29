@@ -1033,6 +1033,10 @@ int _object_user_cache(snac *user, const char *id, const char *cachedir, int del
         index_del(idx, id);
     }
     else {
+        /* create the subfolder, if it does not exist */
+        xs *dir = xs_fmt("%s/%s/", user->basedir, cachedir);
+        mkdirx(dir);
+
         if ((ret = link(ofn, cfn)) != -1)
             index_add(idx, id);
     }
@@ -1541,18 +1545,10 @@ int is_muted(snac *snac, const char *actor)
 
 /** bookmarking **/
 
-xs_str *_bookmark_fn(snac *user, const char *id)
-{
-    xs *md5 = xs_md5_hex(id, strlen(id));
-    return xs_fmt("%s/bookmark/%s.json", user->basedir, md5);
-}
-
-
 int is_bookmarked(snac *user, const char *id)
 /* returns true if this note is bookmarked */
 {
-    xs *fn = _bookmark_fn(user, id);
-    return !!(mtime(fn) != 0.0);
+    return object_user_cache_in(user, "bookmark", id);
 }
 
 
@@ -1561,10 +1557,6 @@ int bookmark(snac *user, const char *id)
 {
     if (is_bookmarked(user, id))
         return -3;
-
-    /* create the subfolder, if it does not exist */
-    xs *fn = xs_fmt("%s/bookmark/", user->basedir);
-    mkdirx(fn);
 
     return object_user_cache_add(user, id, "bookmark");
 }
