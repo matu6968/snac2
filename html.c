@@ -2182,7 +2182,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 
         {
             /* show the list of pinned posts */
-            xs *url = xs_fmt("%s/list/pinned", user->actor);
+            xs *url = xs_fmt("%s/pinned", user->actor);
             xs_html_add(lol,
                 xs_html_tag("li",
                     xs_html_tag("a",
@@ -2194,7 +2194,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 
         {
             /* show the list of bookmarked posts */
-            xs *url = xs_fmt("%s/list/bookmarks", user->actor);
+            xs *url = xs_fmt("%s/bookmarks", user->actor);
             xs_html_add(lol,
                 xs_html_tag("li",
                     xs_html_tag("a",
@@ -2835,10 +2835,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                     xs *list = timeline_list(&snac, "private", skip, show);
                     xs *next = timeline_list(&snac, "private", skip + show, 1);
 
-                    xs *pins = pinned_list(&snac);
-                    pins = xs_list_cat(pins, list);
-
-                    *body = html_timeline(&snac, pins, 0, skip, show,
+                    *body = html_timeline(&snac, list, 0, skip, show,
                             xs_list_len(next), NULL, "/admin", 1);
 
                     *b_size = strlen(*body);
@@ -2910,7 +2907,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
     }
     else
-    if (strcmp(p_path, "list/pinned") == 0) { /** list of pinned posts **/
+    if (strcmp(p_path, "pinned") == 0) { /** list of pinned posts **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
             status = HTTP_STATUS_UNAUTHORIZED;
@@ -2925,7 +2922,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
     }
     else
-    if (strcmp(p_path, "list/bookmarks") == 0) { /** list of bookmarked posts **/
+    if (strcmp(p_path, "bookmarks") == 0) { /** list of bookmarked posts **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
             status = HTTP_STATUS_UNAUTHORIZED;
