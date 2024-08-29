@@ -1013,10 +1013,16 @@ int object_unadmire(const char *id, const char *actor, int like)
 }
 
 
+xs_str *object_user_cache_fn_by_md5(snac *user, const char *md5, const char *cachedir)
+{
+    return xs_fmt("%s/%s/%s.json", user->basedir, cachedir, md5);
+}
+
+
 xs_str *object_user_cache_fn(snac *user, const char *id, const char *cachedir)
 {
     xs *md5 = xs_md5_hex(id, strlen(id));
-    return xs_fmt("%s/%s/%s.json", user->basedir, cachedir, md5);
+    return object_user_cache_fn_by_md5(user, md5, cachedir);
 }
 
 
@@ -1063,6 +1069,14 @@ int object_user_cache_in(snac *user, const char *id, const char *cachedir)
 /* checks if an object is stored in a cache */
 {
     xs *cfn = object_user_cache_fn(user, id, cachedir);
+    return !!(mtime(cfn) != 0.0);
+}
+
+
+int object_user_cache_in_by_md5(snac *user, const char *md5, const char *cachedir)
+/* checks if an object is stored in a cache */
+{
+    xs *cfn = object_user_cache_fn_by_md5(user, md5, cachedir);
     return !!(mtime(cfn) != 0.0);
 }
 
@@ -1571,25 +1585,16 @@ int unbookmark(snac *user, const char *id)
 
 /** pinning **/
 
-xs_str *_pinned_fn(snac *user, const char *id)
-{
-    xs *md5 = xs_md5_hex(id, strlen(id));
-    return xs_fmt("%s/pinned/%s.json", user->basedir, md5);
-}
-
-
 int is_pinned(snac *user, const char *id)
 /* returns true if this note is pinned */
 {
-    xs *fn = _pinned_fn(user, id);
-    return !!(mtime(fn) != 0.0);
+    return object_user_cache_in(user, id, "pinned");
 }
 
 
 int is_pinned_by_md5(snac *user, const char *md5)
 {
-    xs *fn = xs_fmt("%s/pinned/%s.json", user->basedir, md5);
-    return !!(mtime(fn) != 0.0);
+    return object_user_cache_in_by_md5(user, md5, "pinned");
 }
 
 
@@ -1601,13 +1606,8 @@ int pin(snac *user, const char *id)
     if (xs_startswith(id, user->actor)) {
         if (is_pinned(user, id))
             ret = -3;
-        else {
-            /* create the subfolder, if it does not exist */
-            xs *fn = xs_fmt("%s/pinned/", user->basedir);
-            mkdirx(fn);
-
+        else
             ret = object_user_cache_add(user, id, "pinned");
-        }
     }
 
     return ret;
@@ -1617,15 +1617,7 @@ int pin(snac *user, const char *id)
 int unpin(snac *user, const char *id)
 /* unpin a message */
 {
-    int ret = object_user_cache_del(user, id, "pinned");
-
-    if (ret != -1) {
-        /* delete from the index */
-        xs *idx = xs_fmt("%s/pinned.idx", user->basedir);
-        index_del(idx, id);
-    }
-
-    return ret;
+    return object_user_cache_del(user, id, "pinned");
 }
 
 
