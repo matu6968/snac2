@@ -1232,6 +1232,9 @@ int timeline_del(snac *snac, const char *id)
     object_user_cache_del(snac, id, "public");
     object_user_cache_del(snac, id, "private");
 
+    unpin(snac, id);
+    unbookmark(snac, id);
+
     /* try to delete the object if it's not used elsewhere */
     return object_del_if_unref(id);
 }
