@@ -2157,29 +2157,51 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 
     /* show links to the available lists */
     if (user && !read_only) {
+        xs_html *lol = xs_html_tag("ul",
+            xs_html_attr("class", "snac-list-of-lists"));
+        xs_html_add(body, lol);
+
         xs *lists = list_maint(user, NULL, 0); /* get list of lists */
 
-        if (xs_list_len(lists)) {
-            int ct = 0;
-            const char *v;
+        int ct = 0;
+        const char *v;
 
-            xs_html *lol = xs_html_tag("ul",
-                xs_html_attr("class", "snac-list-of-lists"));
-            xs_html_add(body, lol);
+        while (xs_list_next(lists, &v, &ct)) {
+            const char *lname = xs_list_get(v, 1);
+            xs *url = xs_fmt("%s/list/%s", user->actor, xs_list_get(v, 0));
+            xs *ttl = xs_fmt(L("Timeline for list '%s'"), lname);
 
-            while (xs_list_next(lists, &v, &ct)) {
-                const char *lname = xs_list_get(v, 1);
-                xs *url = xs_fmt("%s/list/%s", user->actor, xs_list_get(v, 0));
-                xs *ttl = xs_fmt(L("Timeline for list '%s'"), lname);
+            xs_html_add(lol,
+                xs_html_tag("li",
+                    xs_html_tag("a",
+                        xs_html_attr("href", url),
+                        xs_html_attr("class", "snac-list-link"),
+                        xs_html_attr("title", ttl),
+                        xs_html_text(lname))));
+        }
 
-                xs_html_add(lol,
-                    xs_html_tag("li",
-                        xs_html_tag("a",
-                            xs_html_attr("href", url),
-                            xs_html_attr("class", "snac-list-link"),
-                            xs_html_attr("title", ttl),
-                            xs_html_text(lname))));
-            }
+        {
+            /* show the list of pinned posts */
+            xs *url = xs_fmt("%s/list/pinned", user->actor);
+            xs_html_add(lol,
+                xs_html_tag("li",
+                    xs_html_tag("a",
+                        xs_html_attr("href", url),
+                        xs_html_attr("class", "snac-list-link"),
+                        xs_html_attr("title", L("Pinned posts")),
+                        xs_html_text("pinned"))));
+        }
+
+        {
+            /* show the list of bookmarked posts */
+            xs *url = xs_fmt("%s/list/bookmarks", user->actor);
+            xs_html_add(lol,
+                xs_html_tag("li",
+                    xs_html_tag("a",
+                        xs_html_attr("href", url),
+                        xs_html_attr("class", "snac-list-link"),
+                        xs_html_attr("title", L("Bookmarked posts")),
+                        xs_html_text("bookmarks"))));
         }
     }
 
