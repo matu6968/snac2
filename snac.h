@@ -170,6 +170,7 @@ int is_bookmarked(snac *user, const char *id);
 int bookmark(snac *user, const char *id);
 int unbookmark(snac *user, const char *id);
 xs_list *bookmark_list(snac *user);
+xs_str *bookmark_index_fn(snac *user);
 
 int pin(snac *user, const char *id);
 int unpin(snac *user, const char *id);

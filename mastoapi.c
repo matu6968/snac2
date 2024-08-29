@@ -1822,10 +1822,16 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/bookmarks") == 0) { /** **/
-        /* snac does not support bookmarks */
-        *body  = xs_dup("[]");
-        *ctype = "application/json";
-        status = HTTP_STATUS_OK;
+        if (logged_in) {
+            xs *ifn = bookmark_index_fn(&snac1);
+            xs *out = mastoapi_timeline(&snac1, args, ifn);
+
+            *body  = xs_json_dumps(out, 4);
+            *ctype = "application/json";
+            status = HTTP_STATUS_OK;
+        }
+        else
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (strcmp(cmd, "/v1/lists") == 0) { /** list of lists **/
@@ -1850,6 +1856,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             *ctype = "application/json";
             status = HTTP_STATUS_OK;
         }
+        else
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (xs_startswith(cmd, "/v1/lists/")) { /** list information **/
@@ -1910,6 +1918,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 }
             }
         }
+        else
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (strcmp(cmd, "/v1/scheduled_statuses") == 0) { /** **/

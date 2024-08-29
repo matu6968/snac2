@@ -1026,12 +1026,18 @@ xs_str *object_user_cache_fn(snac *user, const char *id, const char *cachedir)
 }
 
 
+xs_str *object_user_cache_index_fn(snac *user, const char *cachedir)
+{
+    return xs_fmt("%s/%s.idx", user->basedir, cachedir);
+}
+
+
 int _object_user_cache(snac *user, const char *id, const char *cachedir, int del)
 /* adds or deletes from a user cache */
 {
     xs *ofn = _object_fn(id);
     xs *cfn = object_user_cache_fn(user, id, cachedir);
-    xs *idx = xs_fmt("%s/%s.idx", user->basedir, cachedir);
+    xs *idx = object_user_cache_index_fn(user, cachedir);
     int ret;
 
     if (del) {
@@ -1587,6 +1593,12 @@ xs_list *bookmark_list(snac *user)
 /* return the lists of bookmarked posts */
 {
     return object_user_cache_list(user, "bookmark", XS_ALL, 1);
+}
+
+
+xs_str *bookmark_index_fn(snac *user)
+{
+    return object_user_cache_index_fn(user, "bookmark");
 }
 
 
