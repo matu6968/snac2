@@ -1331,6 +1331,13 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
         }
     }
 
+    if (is_bookmarked(snac, id))
+            xs_html_add(form,
+                html_button("unbookmark", L("Unbookmark"), L("Delete this post from your bookmarks")));
+        else
+            xs_html_add(form,
+                html_button("bookmark", L("Bookmark"), L("Add this post to your bookmarks")));
+
     if (strcmp(actor, snac->actor) != 0) {
         /* controls for other actors than this one */
         if (following_check(snac, actor)) {
@@ -3385,6 +3392,16 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         else
         if (strcmp(action, L("Unpin")) == 0) { /** **/
             unpin(&snac, id);
+            timeline_touch(&snac);
+        }
+        else
+        if (strcmp(action, L("Bookmark")) == 0) { /** **/
+            bookmark(&snac, id);
+            timeline_touch(&snac);
+        }
+        else
+        if (strcmp(action, L("Unbookmark")) == 0) { /** **/
+            unbookmark(&snac, id);
             timeline_touch(&snac);
         }
         else
