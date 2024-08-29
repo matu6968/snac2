@@ -1562,7 +1562,7 @@ int is_muted(snac *snac, const char *actor)
 int is_bookmarked(snac *user, const char *id)
 /* returns true if this note is bookmarked */
 {
-    return object_user_cache_in(user, "bookmark", id);
+    return object_user_cache_in(user, id, "bookmark");
 }
 
 
