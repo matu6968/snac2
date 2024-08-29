@@ -2925,6 +2925,21 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
     }
     else
+    if (strcmp(p_path, "list/bookmarks") == 0) { /** list of bookmarked posts **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = HTTP_STATUS_UNAUTHORIZED;
+        }
+        else {
+            xs *list = bookmark_list(&snac);
+
+            *body = html_timeline(&snac, list, 0, skip, show,
+                0, L("Bookmarked posts"), "", 0);
+            *b_size = strlen(*body);
+            status  = HTTP_STATUS_OK;
+        }
+    }
+    else
     if (xs_startswith(p_path, "list/")) { /** list timelines **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);

@@ -1583,6 +1583,13 @@ int unbookmark(snac *user, const char *id)
 }
 
 
+xs_list *bookmark_list(snac *user)
+/* return the lists of bookmarked posts */
+{
+    return object_user_cache_list(user, "bookmark", XS_ALL, 1);
+}
+
+
 /** pinning **/
 
 int is_pinned(snac *user, const char *id)
