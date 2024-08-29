@@ -39,6 +39,8 @@ int usage(void)
     printf("webfinger_s {basedir} {uid} {actor}  Queries about an actor (@user@host or actor url)\n");
     printf("pin {basedir} {uid} {msg_url}        Pins a message\n");
     printf("unpin {basedir} {uid} {msg_url}      Unpins a message\n");
+    printf("bookmark {basedir} {uid} {msg_url}   Bookmarks a message\n");
+    printf("unbookmark {basedir} {uid} {msg_url} Unbookmarks a message\n");
     printf("block {basedir} {instance_url}       Blocks a full instance\n");
     printf("unblock {basedir} {instance_url}     Unblocks a full instance\n");
     printf("limit {basedir} {uid} {actor}        Limits an actor (drops their announces)\n");
@@ -436,6 +438,26 @@ int main(int argc, char *argv[])
         int ret = unpin(&snac, url);
         if (ret < 0) {
             fprintf(stderr, "error unpinning %s %d\n", url, ret);
+            return 1;
+        }
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "bookmark") == 0) { /** **/
+        int ret = bookmark(&snac, url);
+        if (ret < 0) {
+            fprintf(stderr, "error bookmarking %s %d\n", url, ret);
+            return 1;
+        }
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "unbookmark") == 0) { /** **/
+        int ret = unbookmark(&snac, url);
+        if (ret < 0) {
+            fprintf(stderr, "error unbookmarking %s %d\n", url, ret);
             return 1;
         }
 

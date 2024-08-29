@@ -166,6 +166,10 @@ void mute(snac *snac, const char *actor);
 void unmute(snac *snac, const char *actor);
 int is_muted(snac *snac, const char *actor);
 
+int is_bookmarked(snac *user, const char *id);
+int bookmark(snac *user, const char *id);
+int unbookmark(snac *user, const char *id);
+
 int pin(snac *user, const char *id);
 int unpin(snac *user, const char *id);
 int is_pinned(snac *user, const char *id);
