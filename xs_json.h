@@ -75,7 +75,6 @@ static void _xs_json_dump(const xs_val *data, int level, int indent, FILE *f)
 /* dumps partial data as JSON */
 {
     int c = 0;
-    int ct = 0;
     const xs_val *v;
 
     switch (xs_type(data)) {
@@ -98,7 +97,7 @@ static void _xs_json_dump(const xs_val *data, int level, int indent, FILE *f)
     case XSTYPE_LIST:
         fputc('[', f);
 
-        while (xs_list_next(data, &v, &ct)) {
+        xs_list_foreach(data, v) {
             if (c != 0)
                 fputc(',', f);
 
@@ -118,7 +117,7 @@ static void _xs_json_dump(const xs_val *data, int level, int indent, FILE *f)
 
         const xs_str *k;
 
-        while (xs_dict_next(data, &k, &v, &ct)) {
+        xs_dict_foreach(data, k, v) {
             if (c != 0)
                 fputc(',', f);
 

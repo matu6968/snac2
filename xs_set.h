@@ -95,8 +95,7 @@ int xs_set_add(xs_set *s, const xs_val *data)
         memset(s->hash, '\0', s->elems * sizeof(int));
 
         /* add the list elements back */
-        int ct = 0;
-        while (xs_list_next(s->list, &v, &ct))
+        xs_list_foreach(s->list, v)
             _store_hash(s, v, v - s->list);
     }
 

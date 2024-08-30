@@ -306,8 +306,7 @@ void xs_fcgi_response(FILE *f, int status, xs_dict *headers, xs_str *body, int b
         out = xs_str_cat(out, s1);
     }
 
-    int c = 0;
-    while (xs_dict_next(headers, &k, &v, &c)) {
+    xs_dict_foreach(headers, k, v) {
         xs *s1 = xs_fmt("%s: %s\r\n", k, v);
         out = xs_str_cat(out, s1);
     }

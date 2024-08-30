@@ -105,8 +105,7 @@ void xs_httpd_response(FILE *f, int status, const char *status_text, xs_dict *he
     proto = xs_fmt("HTTP/1.1 %d %s", status, status_text);
     fprintf(f, "%s\r\n", proto);
 
-    int c = 0;
-    while (xs_dict_next(headers, &k, &v, &c)) {
+    xs_dict_foreach(headers, k, v) {
         fprintf(f, "%s: %s\r\n", k, v);
     }
 

@@ -158,6 +158,10 @@ unsigned int xs_hash_func(const char *data, int size);
 #define xs_is_true(v) (xs_type((v)) == XSTYPE_TRUE)
 #define xs_is_false(v) (xs_type((v)) == XSTYPE_FALSE)
 
+#define xs_list_foreach(l, v) for (int ct_##__LINE__ = 0; xs_list_next(l, &v, &ct_##__LINE__); )
+#define xs_dict_foreach(l, k, v) for (int ct_##__LINE__ = 0; xs_dict_next(l, &k, &v, &ct_##__LINE__); )
+
+
 #ifdef XS_IMPLEMENTATION
 
 void *_xs_realloc(void *ptr, size_t size, const char *file, int line, const char *func)
@@ -813,10 +817,10 @@ int xs_list_len(const xs_list *list)
 {
     XS_ASSERT_TYPE_NULL(list, XSTYPE_LIST);
 
-    int c = 0, ct = 0;
+    int c = 0;
     const xs_val *v;
 
-    while (xs_list_next(list, &v, &ct))
+    xs_list_foreach(list, v)
         c++;
 
     return c;
@@ -831,10 +835,10 @@ const xs_val *xs_list_get(const xs_list *list, int num)
     if (num < 0)
         num = xs_list_len(list) + num;
 
-    int c = 0, ct = 0;
+    int c = 0;
     const xs_val *v;
 
-    while (xs_list_next(list, &v, &ct)) {
+    xs_list_foreach(list, v) {
         if (c == num)
             return v;
 
@@ -922,11 +926,10 @@ int xs_list_in(const xs_list *list, const xs_val *val)
     XS_ASSERT_TYPE_NULL(list, XSTYPE_LIST);
 
     int n = 0;
-    int ct = 0;
     const xs_val *v;
     int sz = xs_size(val);
 
-    while (xs_list_next(list, &v, &ct)) {
+    xs_list_foreach(list, v) {
         if (sz == xs_size(v) && memcmp(val, v, sz) == 0)
             return n;
 
@@ -945,11 +948,10 @@ xs_str *xs_join(const xs_list *list, const char *sep)
     xs_str *s = NULL;
     const xs_val *v;
     int c = 0;
-    int ct = 0;
     int offset = 0;
     int ssz = strlen(sep);
 
-    while (xs_list_next(list, &v, &ct)) {
+    xs_list_foreach(list, v) {
         /* refuse to join non-string values */
         if (xs_type(v) == XSTYPE_STRING) {
             int sz;
@@ -1277,9 +1279,8 @@ xs_dict *xs_dict_gc(const xs_dict *dict)
     xs_dict *nd = xs_dict_new();
     const xs_str *k;
     const xs_val *v;
-    int c = 0;
 
-    while (xs_dict_next(dict, &k, &v, &c)) {
+    xs_dict_foreach(dict, k, v) {
         if (xs_type(v) == XSTYPE_DICT) {
             xs *sd = xs_dict_gc(v);
             nd = xs_dict_set(nd, k, sd);

@@ -146,8 +146,7 @@ xs_dict *xs_http_request(const char *method, const char *url,
     }
 
     /* fill the request headers */
-    int c = 0;
-    while (xs_dict_next(headers, &k, &v, &c)) {
+    xs_dict_foreach(headers, k, v) {
         xs *h = xs_fmt("%s: %s", k, v);
 
         list = curl_slist_append(list, h);

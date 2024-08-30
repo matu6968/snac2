@@ -71,13 +71,12 @@ xs_list *xs_regex_select_n(const char *str, const char *rx, int count)
     xs *split = NULL;
     const xs_val *v;
     int n = 0;
-    int c = 0;
 
     /* split */
     split = xs_regex_split_n(str, rx, count);
 
     /* now iterate to get only the 'separators' (odd ones) */
-    while (xs_list_next(split, &v, &c)) {
+    xs_list_foreach(split, v) {
         if (n & 0x1)
             list = xs_list_append(list, v);
 
@@ -96,10 +95,9 @@ xs_list *xs_regex_replace_in(xs_str *str, const char *rx, const char *rep, int c
     xs *split = xs_regex_split_n(str, rx, count);
     const xs_val *v;
     int n = 0;
-    int c = 0;
     int pholder = !!strchr(rep, '&');
 
-    while (xs_list_next(split, &v, &c)) {
+    xs_list_foreach(split, v) {
         if (n & 0x1) {
             if (pholder) {
                 /* rep has a placeholder; process char by char */
