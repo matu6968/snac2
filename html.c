@@ -1367,8 +1367,11 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
                 L("Block any activity from this user forever")));
     }
 
+    if (!xs_is_true(xs_dict_get(srv_config, "hide_delete_post_button")))
+        xs_html_add(form,
+            html_button("delete", L("Delete"), L("Delete this post")));
+
     xs_html_add(form,
-        html_button("delete", L("Delete"), L("Delete this post")),
         html_button("hide",   L("Hide"), L("Hide this post and its children")));
 
     const char *prev_src = xs_dict_get(msg, "sourceContent");
