@@ -12,6 +12,8 @@ Fixed a failed compilation under Solaris/Illumos.
 
 The actor `Person` object now includes a `featured` property, that returns the list of pinned posts.
 
+The delete post button can now be hidden server-wise (it's not very useful and clutters the space).
+
 ## 2.57
 
 Added support for listening on UNIX-like sockets.
