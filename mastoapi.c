@@ -1270,7 +1270,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
 
     if (dbglevel) {
         xs *js = xs_json_dumps(args, 0);
-        srv_debug(1, xs_fmt("mastoapi_timeline args: %s", js));
+        srv_debug(1, xs_fmt("mastoapi_timeline args %s", js));
     }
 
     if ((f = fopen(index_fn, "r")) == NULL)
@@ -1388,7 +1388,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
 
     fclose(f);
 
-    srv_debug(1, xs_fmt("mastoapi_timeline: %d %d %d", cnt, xs_list_len(out), more));
+    srv_debug(1, xs_fmt("mastoapi_timeline ret %d%s", cnt, more ? " (+)" : ""));
 
     return out;
 }
