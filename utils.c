@@ -70,7 +70,7 @@ static const char *default_css =
     ".snac-footer { margin-top: 2em; font-size: 75% }\n"
     ".snac-poll-result { margin-left: auto; margin-right: auto; }\n"
     ".snac-list-of-lists { display: flex; list-style: none; padding-left: 0; }\n"
-    ".snac-list-link { border: 1px solid black; border-radius: 25px;\n"
+    ".snac-list-link { border: 1px solid #a0a0a0; border-radius: 25px;\n"
     "  margin-right: 0.5em; padding-left: 0.5em; padding-right: 0.5em; }\n"
     "@media (prefers-color-scheme: dark) { \n"
     "  body, input, textarea { background-color: #000; color: #fff; }\n"
