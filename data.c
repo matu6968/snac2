@@ -156,6 +156,14 @@ int srv_open(const char *basedir, int auto_upgrade)
     /* read (and drop) emojis.json, possibly creating it */
     xs_free(emojis());
 
+    /* if style.css does not exist, create it */
+    xs *css_fn = xs_fmt("%s/style.css", srv_basedir);
+
+    if (mtime(css_fn) == 0) {
+        srv_log(xs_fmt("Writing style.css"));
+        write_default_css();
+    }
+
     return ret;
 }
 

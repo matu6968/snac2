@@ -107,6 +107,22 @@ static const char *greeting_html =
     "<p>This site is powered by <abbr title=\"Social Networks Are Crap\">snac</abbr>.</p>\n"
     "</body></html>\n";
 
+
+int write_default_css(void)
+{
+    FILE *f;
+
+    xs *sfn = xs_fmt("%s/style.css", srv_basedir);
+    if ((f = fopen(sfn, "w")) == NULL)
+        return 1;
+
+    fwrite(default_css, strlen(default_css), 1, f);
+    fclose(f);
+
+    return 0;
+}
+
+
 int snac_init(const char *basedir)
 {
     FILE *f;
@@ -217,14 +233,10 @@ int snac_init(const char *basedir)
     fwrite(gh, strlen(gh), 1, f);
     fclose(f);
 
-    xs *sfn = xs_fmt("%s/style.css", srv_basedir);
-    if ((f = fopen(sfn, "w")) == NULL) {
-        printf("ERROR: cannot create '%s'\n", sfn);
+    if (write_default_css()) {
+        printf("ERROR: cannot create style.css\n");
         return 1;
     }
-
-    fwrite(default_css, strlen(default_css), 1, f);
-    fclose(f);
 
     xs *cfn = xs_fmt("%s/server.json", srv_basedir);
     if ((f = fopen(cfn, "w")) == NULL) {
