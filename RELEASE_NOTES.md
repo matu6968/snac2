@@ -14,6 +14,8 @@ The actor `Person` object now includes a `featured` property, that returns the l
 
 The delete post button can now be hidden server-wise (it's not very useful and clutters the space).
 
+The lists of pinned and bookmarked posts are directly accesible from the private timeline.
+
 ## 2.57
 
 Added support for listening on UNIX-like sockets.
