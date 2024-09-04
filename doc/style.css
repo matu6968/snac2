@@ -7,7 +7,7 @@ pre { overflow-x: scroll; }
 .snac-top-user-name { font-size: 200% }
 .snac-top-user-id { font-size: 150% }
 .snac-announcement { border: black 1px solid; padding: 0.5em }
-.snac-avatar { float: left; height: 2.5em; padding: 0.25em }
+.snac-avatar { float: left; height: 2.5em; width: 2.5em; padding: 0.25em }
 .snac-author { font-size: 90%; text-decoration: none }
 .snac-author-tag { font-size: 80% }
 .snac-pubdate { color: #a0a0a0; font-size: 90% }
@@ -26,6 +26,9 @@ pre { overflow-x: scroll; }
 .snac-btn-unlimit { float: right; margin-left: 0.5em }
 .snac-footer { margin-top: 2em; font-size: 75% }
 .snac-poll-result { margin-left: auto; margin-right: auto; }
+.snac-list-of-lists { display: flex; list-style: none; padding-left: 0; }
+.snac-list-link { border: 1px solid black; border-radius: 25px;
+  margin-right: 0.5em; padding-left: 0.5em; padding-right: 0.5em; }
 @media (prefers-color-scheme: dark) { 
   body, input, textarea { background-color: #000; color: #fff; }
   a { color: #7799dd }
