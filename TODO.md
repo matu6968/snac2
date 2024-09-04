@@ -16,6 +16,8 @@ The Mastodon official app crashes (or gives a ownVotes is null error) when tryin
 
 ## Wishlist
 
+Add post drafts.
+
 Track 'Event' data types standardization; how to add plan-to-attend and similar activities (more info: https://event-federation.eu/)
 
 Implement "FEP-3b86: Activity Intents" https://codeberg.org/fediverse/fep/src/branch/main/fep/3b86/fep-3b86.md
