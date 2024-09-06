@@ -2221,6 +2221,18 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_attr("title", L("Bookmarked posts")),
                         xs_html_text("bookmarks"))));
         }
+
+        {
+            /* show the list of drafts */
+            xs *url = xs_fmt("%s/drafts", user->actor);
+            xs_html_add(lol,
+                xs_html_tag("li",
+                    xs_html_tag("a",
+                        xs_html_attr("href", url),
+                        xs_html_attr("class", "snac-list-link"),
+                        xs_html_attr("title", L("Post drafts")),
+                        xs_html_text("drafts"))));
+        }
     }
 
     if (title) {
@@ -2955,6 +2967,21 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
     }
     else
+    if (strcmp(p_path, "drafts") == 0) { /** list of drafts **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = HTTP_STATUS_UNAUTHORIZED;
+        }
+        else {
+            xs *list = draft_list(&snac);
+
+            *body = html_timeline(&snac, list, 0, skip, show,
+                0, L("Post drafts"), "", 0);
+            *b_size = strlen(*body);
+            status  = HTTP_STATUS_OK;
+        }
+    }
+    else
     if (xs_startswith(p_path, "list/")) { /** list timelines **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
@@ -3117,7 +3144,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         const xs_str *edit_id      = xs_dict_get(p_vars, "edit_id");
         const xs_str *alt_text     = xs_dict_get(p_vars, "alt_text");
         int priv             = !xs_is_null(xs_dict_get(p_vars, "mentioned_only"));
-        int is_draft         = !xs_is_null(xs_dict_get(p_vars, "is_draft"));
+        int store_as_draft   = !xs_is_null(xs_dict_get(p_vars, "is_draft"));
         xs *attach_list      = xs_list_new();
 
         /* default alt text */
@@ -3196,9 +3223,9 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 msg = xs_dict_set(msg, "summary",   xs_is_null(summary) ? "..." : summary);
             }
 
-            if (is_draft) {
+            if (store_as_draft) {
                 /* don't send; just store for later */
-                draft_add(&snac, xs_dict_get(msg, "id"), msg);
+                draft_add(&snac, xs_is_null(edit_id) ? xs_dict_get(msg, "id") : edit_id, msg);
             }
             else
             if (xs_is_null(edit_id)) {
@@ -3210,6 +3237,13 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 /* an edition of a previous message */
                 xs *p_msg = NULL;
 
+                if (is_draft(&snac, edit_id)) {
+                    /* message was previously a draft; it's a create activity */
+                    c_msg = msg_create(&snac, msg);
+                    timeline_add(&snac, edit_id, msg);
+                    draft_del(&snac, edit_id);
+                }
+                else
                 if (valid_status(object_get(edit_id, &p_msg))) {
                     /* copy relevant fields from previous version */
                     char *fields[] = { "id", "context", "url", "published",
@@ -3383,7 +3417,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             }
             else {
                 /* delete an entry */
-                if (xs_startswith(id, snac.actor)) {
+                if (xs_startswith(id, snac.actor) && !is_draft(&snac, id)) {
                     /* it's a post by us: generate a delete */
                     xs *msg = msg_delete(&snac, id);
 
@@ -3393,6 +3427,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 }
 
                 timeline_del(&snac, id);
+
+                draft_del(&snac, id);
 
                 snac_log(&snac, xs_fmt("deleted entry %s", id));
             }

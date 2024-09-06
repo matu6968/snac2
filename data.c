@@ -1688,6 +1688,13 @@ void draft_add(snac *user, const char *id, const xs_dict *msg)
 }
 
 
+xs_list *draft_list(snac *user)
+/* return the lists of drafts */
+{
+    return object_user_cache_list(user, "draft", XS_ALL, 1);
+}
+
+
 /** hiding **/
 
 xs_str *_hidden_fn(snac *snac, const char *id)
