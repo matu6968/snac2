@@ -357,6 +357,14 @@ xs_html *html_note(snac *user, const char *summary,
                 xs_html_attr("name",     "in_reply_to"),
                 xs_html_attr("placeholder", "Optional URL to reply to")));
 
+    xs_html_add(form,
+        xs_html_tag("p", NULL),
+        xs_html_attr("title", L("Don't send, but store as a draft")),
+        xs_html_text(L("Draft:")),
+        xs_html_sctag("input",
+            xs_html_attr("type", "checkbox"),
+            xs_html_attr("name", "is_draft")));
+
     if (edit_id)
         xs_html_add(form,
             xs_html_sctag("input",
