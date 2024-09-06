@@ -26,8 +26,8 @@ pre { overflow-x: scroll; }
 .snac-btn-unlimit { float: right; margin-left: 0.5em }
 .snac-footer { margin-top: 2em; font-size: 75% }
 .snac-poll-result { margin-left: auto; margin-right: auto; }
-.snac-list-of-lists { display: flex; list-style: none; padding-left: 0; }
-.snac-list-link { border: 1px solid #a0a0a0; border-radius: 25px;
+.snac-list-of-lists { padding-left: 0; }
+.snac-list-of-lists li { display: inline; border: 1px solid #a0a0a0; border-radius: 25px;
   margin-right: 0.5em; padding-left: 0.5em; padding-right: 0.5em; }
 @media (prefers-color-scheme: dark) { 
   body, input, textarea { background-color: #000; color: #fff; }
