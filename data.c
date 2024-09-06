@@ -1658,6 +1658,36 @@ xs_list *pinned_list(snac *user)
 }
 
 
+/** drafts **/
+
+int is_draft(snac *user, const char *id)
+/* returns true if this note is a draft */
+{
+    return object_user_cache_in(user, id, "draft");
+}
+
+
+void draft_del(snac *user, const char *id)
+/* delete a message from the draft cache */
+{
+    object_user_cache_del(user, id, "draft");
+}
+
+
+void draft_add(snac *user, const char *id, const xs_dict *msg)
+/* store the message as a draft */
+{
+    /* delete from the index, in case it was already there */
+    draft_del(user, id);
+
+    /* overwrite object */
+    object_add_ow(id, msg);
+
+    /* [re]add to the index */
+    object_user_cache_add(user, id, "draft");
+}
+
+
 /** hiding **/
 
 xs_str *_hidden_fn(snac *snac, const char *id)

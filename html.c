@@ -3105,10 +3105,6 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
     p_vars = xs_dict_get(req, "p_vars");
 
-#if 0
-    xs_json_dump(p_vars, 4, stdout);
-#endif
-
     if (p_path && strcmp(p_path, "admin/note") == 0) { /** **/
         /* post note */
         const xs_str *content      = xs_dict_get(p_vars, "content");
@@ -3121,6 +3117,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         const xs_str *edit_id      = xs_dict_get(p_vars, "edit_id");
         const xs_str *alt_text     = xs_dict_get(p_vars, "alt_text");
         int priv             = !xs_is_null(xs_dict_get(p_vars, "mentioned_only"));
+        int is_draft         = !xs_is_null(xs_dict_get(p_vars, "is_draft"));
         xs *attach_list      = xs_list_new();
 
         /* default alt text */
@@ -3199,6 +3196,11 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 msg = xs_dict_set(msg, "summary",   xs_is_null(summary) ? "..." : summary);
             }
 
+            if (is_draft) {
+                /* don't send; just store for later */
+                draft_add(&snac, xs_dict_get(msg, "id"), msg);
+            }
+            else
             if (xs_is_null(edit_id)) {
                 /* new message */
                 c_msg = msg_create(&snac, msg);
