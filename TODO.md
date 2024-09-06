@@ -16,8 +16,6 @@ The Mastodon official app crashes (or gives a ownVotes is null error) when tryin
 
 ## Wishlist
 
-Add post drafts.
-
 Track 'Event' data types standardization; how to add plan-to-attend and similar activities (more info: https://event-federation.eu/)
 
 Implement "FEP-3b86: Activity Intents" https://codeberg.org/fediverse/fep/src/branch/main/fep/3b86/fep-3b86.md
@@ -325,3 +323,5 @@ Implement `Group`-like accounts (i.e. an actor that boosts to their followers al
 Show pinned posts in the 'Actor' `featured` property (https://codeberg.org/grunfink/snac2/issues/191) (2024-08-27T07:28:51+0200).
 
 Implement case-insensitive search all alphabets, not only latin (https://codeberg.org/grunfink/snac2/issues/192) (2024-08-27T07:29:10+0200).
+
+Add post drafts (2024-09-06T23:43:16+0200).
