@@ -3335,10 +3335,10 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         }
         else
         if (strcmp(action, L("Hide")) == 0) { /** **/
-            hide(&snac, id);
-
-            /* also delete from the draft list */
-            draft_del(&snac, id);
+            if (is_draft(&snac, id))
+                draft_del(&snac, id);
+            else
+                hide(&snac, id);
         }
         else
         if (strcmp(action, L("Limit")) == 0) { /** **/
