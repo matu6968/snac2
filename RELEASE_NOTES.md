@@ -1,5 +1,9 @@
 # Release Notes
 
+## 2.59
+
+Added post drafts.
+
 ## 2.58
 
 Search by content also looks into alt-text from attachments (images, videos, etc.).
