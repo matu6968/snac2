@@ -2552,11 +2552,13 @@ xs_str *html_notifications(snac *user, int skip, int show)
         const char *id    = xs_dict_get(noti, "objid");
         const char *date  = xs_dict_get(noti, "date");
 
-        if (xs_is_null(id) || !valid_status(object_get(id, &obj)))
+        if (xs_is_null(id))
             continue;
 
         if (is_hidden(user, id))
             continue;
+
+        object_get(id, &obj);
 
         const char *actor_id = xs_dict_get(noti, "actor");
         xs *actor = NULL;
@@ -2615,7 +2617,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
                 }
             }
         }
-        else {
+        else
+        if (obj != NULL) {
             xs *md5 = xs_md5_hex(id, strlen(id));
 
             xs_html *h = html_entry(user, obj, 0, 0, md5, 1);
