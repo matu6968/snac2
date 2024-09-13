@@ -158,17 +158,32 @@ This directory stores hard links to the actor objects in the object storage.
 This directory stores the users being followed as hard links to the 'Follow'
 or 'Accept' objects in the object storage. File names are the hashes of each
 actor Id.
-.It Pa private.idx
-This file contains the list of timeline entries as a list of hashed
-object identifiers.
 .It Pa private/
 This directory stores hard links to the timeline entries in the object storage.
-.It Pa public.idx
-This file contains the list of public timeline entries as a list of hashed
+.It Pa private.idx
+This file contains the list of timeline entries as a list of hashed
 object identifiers.
 .It Pa public/
 This directory stores hard links to the public timeline entries in the object
 storage.
+.It Pa public.idx
+This file contains the list of public timeline entries as a list of hashed
+object identifiers.
+.It Pa pinned/
+This directory stores hard links to pinned posts.
+.It Pa pinned.idx
+This file contains the list of pinned posts as a list of hashed
+object identifiers.
+.It Pa bookmark/
+This directory stores hard links to bookmarked posts.
+.It Pa bookmark.idx
+This file contains the list of pinned posts as a list of hashed
+object identifiers.
+.It Pa draft/
+This directory stores post drafts.
+.It Pa draft.idx
+This file contains the list of drafts as a list of hashed
+object identifiers.
 .It Pa muted/
 This directory contains files which names are hashes of muted actors. The
 content is a line containing the actor URL.
