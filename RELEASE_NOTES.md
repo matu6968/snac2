@@ -2,7 +2,9 @@
 
 ## 2.59
 
-Added post drafts.
+Added post drafts: new or edit post edition dialogs include a checkbox that will cause the message to not be posted, but stored in a list of drafts, directly accesible from the private timeline. From that list, drafts can be edited and definitely posted (or re-stored as a draft for later editing).
+
+Fixed a bug that caused `Block` notifications to not be shown properly.
 
 ## 2.58
 
