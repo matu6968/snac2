@@ -5792,7 +5792,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         if ((p1 = xs_dict_get(p_vars, "passwd1")) != NULL &&
             (p2 = xs_dict_get(p_vars, "passwd2")) != NULL &&
             *p1 && strcmp(p1, p2) == 0) {
-            xs *pw = hash_password(snac.uid, p1, NULL);
+            xs *pw = hash_password(p1, NULL);
             snac.config = xs_dict_set(snac.config, "passwd", pw);
         }
 

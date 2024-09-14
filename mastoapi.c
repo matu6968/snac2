@@ -343,6 +343,24 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
                         badlogin_inc(login, addr);
                     }
                 }
+                else {
+                    switch (errno) {
+                        case ENOSYS:
+                        case EOPNOTSUPP:
+                        case EINVAL:
+                            srv_debug(1, "Requests for an unsupported hashing method or invalid nounce pointer.");
+                        break;
+                        case ERANGE:
+                            srv_debug(1, "Password to long");
+                        break;
+                        case ENOMEM:
+                        case EIO:
+                        case EACCES:
+                            srv_debug(1, "Failed to allocate crypt's internal scratch memory.");
+                        break;
+                    }
+                    srv_debug(1, xs_fmt("oauth x-snac-login: login '%s' incorrect", login));
+                }
 
                 user_free(&snac);
             }

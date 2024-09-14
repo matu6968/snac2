@@ -102,7 +102,8 @@ int user_persist(snac *snac, int publish);
 
 int validate_uid(const char *uid);
 
-xs_str *hash_password(const char *uid, const char *passwd, const char *nonce);
+xs_str *hash_password(const char *passwd, const char *settings);
+xs_str *hash_password_old(const char *uid, const char *passwd, const char *nonce);
 int check_password(const char *uid, const char *passwd, const char *hash);
 
 int strip_media(const char *fn);

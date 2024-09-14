@@ -34,7 +34,9 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <crypt.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 xs_str *srv_basedir = NULL;
@@ -139,8 +141,8 @@ void snac_log(snac *snac, xs_str *str)
 }
 
 
-xs_str *hash_password(const char *uid, const char *passwd, const char *nonce)
-/* hashes a password */
+xs_str *hash_password_old(const char *uid, const char *passwd, const char *nonce)
+/* hashes a password with the legacy sha1 algorithm */
 {
     xs *d_nonce = NULL;
     xs *combi;
@@ -160,19 +162,57 @@ xs_str *hash_password(const char *uid, const char *passwd, const char *nonce)
 }
 
 
+
+xs_str *hash_password(const char *passwd, const char* settings)
+/* hashes a password with the crypt(3) function */
+{
+    if ( settings == NULL ){
+        // prefix, count, rbytes, nrbytes
+        // When settings is null, the best available hash is used
+        // When count is 0 a low default cost is selected
+        // if rbytes is 0, a random salt is generated and nrbytes is ignored
+        settings = crypt_gensalt(NULL, 0, NULL, 0);
+        if ( settings == NULL ){
+            return NULL;
+        }
+    }
+
+    if ( settings[0] != '$' ) { // Should never happen
+        return NULL;
+    }
+
+    char* res = NULL;
+    res = crypt(passwd, settings);
+    if (res != NULL) {
+        return xs_fmt("%s", res);
+    }
+    return NULL;
+}
+
+
 int check_password(const char *uid, const char *passwd, const char *hash)
 /* checks a password */
 {
-    int ret = 0;
-    xs *spl = xs_split_n(hash, ":", 1);
+    xs_str *n_hash;
+    switch (hash[0]) {
+        case '$':
+            n_hash = hash_password(passwd, hash);
+            if (n_hash == NULL){
+                return false;
+            }
+            break;
+        default: {
+            xs *spl = xs_split_n(hash, ":", 1);
+            if (xs_list_len(spl) == 2) {
+                n_hash = hash_password_old(uid, passwd, xs_list_get(spl, 0));
+            } else {
+                return false;
+            }
 
-    if (xs_list_len(spl) == 2) {
-        xs *n_hash = hash_password(uid, passwd, xs_list_get(spl, 0));
-
-        ret = (strcmp(hash, n_hash) == 0);
+        }
     }
-
-    return ret;
+	
+    return (strcmp(hash, n_hash) == 0);
 }
 
 

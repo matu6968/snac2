@@ -271,7 +271,7 @@ int snac_init(const char *basedir)
 }
 
 
-void new_password(const char *uid, xs_str **clear_pwd, xs_str **hashed_pwd)
+void new_password(xs_str **clear_pwd, xs_str **hashed_pwd)
 /* creates a random password */
 {
     int rndbuf[3];
@@ -279,7 +279,7 @@ void new_password(const char *uid, xs_str **clear_pwd, xs_str **hashed_pwd)
     xs_rnd_buf(rndbuf, sizeof(rndbuf));
 
     *clear_pwd  = xs_base64_enc((char *)rndbuf, sizeof(rndbuf));
-    *hashed_pwd = hash_password(uid, *clear_pwd, NULL);
+    *hashed_pwd = hash_password(*clear_pwd, NULL);
 }
 
 
@@ -309,7 +309,7 @@ int adduser(const char *uid)
         return 1;
     }
 
-    new_password(uid, &pwd, &pwd_f);
+    new_password(&pwd, &pwd_f);
 
     config = xs_dict_append(config, "uid",       uid);
     config = xs_dict_append(config, "name",      uid);
@@ -384,7 +384,7 @@ int resetpwd(snac *snac)
     FILE *f;
     int ret = 0;
 
-    new_password(snac->uid, &clear_pwd, &hashed_pwd);
+    new_password(&clear_pwd, &hashed_pwd);
 
     snac->config = xs_dict_set(snac->config, "passwd", hashed_pwd);
 
