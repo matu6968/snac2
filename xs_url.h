@@ -143,6 +143,11 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
             if (p[0] == 13 && p[1] == 10)
                 break;
             q = strchr(p, '\r');
+
+            /* unexpected formatting, fail immediately */
+            if (q == NULL)
+                return p_vars;
+
             s1 = xs_realloc(NULL, q - p + 1);
             memcpy(s1, p, q - p);
             s1[q - p] = '\0';
