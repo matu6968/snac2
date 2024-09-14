@@ -6,6 +6,8 @@ Added post drafts: new or edit post edition dialogs include a checkbox that will
 
 Fixed a bug that caused `Block` notifications to not be shown properly.
 
+Fixed crash in a corner case of the URL parameter parsing code.
+
 ## 2.58
 
 Search by content also looks into alt-text from attachments (images, videos, etc.).
