@@ -212,7 +212,7 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
     *t = JS_ERROR;
 
     /* skip blanks */
-    while ((c = fgetc(f)) == L' ' || c == L'\t' || c == L'\n' || c == L'\r');
+    while ((c = fgetc(f)) == ' ' || c == '\t' || c == '\n' || c == '\r');
 
     if (c == '{')
         *t = JS_OCURLY;

@@ -157,6 +157,7 @@ unsigned int xs_hash_func(const char *data, int size);
 
 #define xs_is_true(v) (xs_type((v)) == XSTYPE_TRUE)
 #define xs_is_false(v) (xs_type((v)) == XSTYPE_FALSE)
+#define xs_not(v) xs_stock(xs_is_true((v)) ? XSTYPE_FALSE : XSTYPE_TRUE)
 
 #define xs_list_foreach(l, v) for (int ct_##__LINE__ = 0; xs_list_next(l, &v, &ct_##__LINE__); )
 #define xs_dict_foreach(l, k, v) for (int ct_##__LINE__ = 0; xs_dict_next(l, &k, &v, &ct_##__LINE__); )
@@ -357,6 +358,9 @@ int xs_is_null(const xs_val *data)
 int xs_cmp(const xs_val *v1, const xs_val *v2)
 /* compares two values */
 {
+    if (xs_type(v1) == XSTYPE_STRING && xs_type(v2) == XSTYPE_STRING)
+        return strcmp(v1, v2);
+
     int s1 = xs_size(v1);
     int s2 = xs_size(v2);
     int d = s1 - s2;
