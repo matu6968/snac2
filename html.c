@@ -3136,6 +3136,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     p_vars = xs_dict_get(req, "p_vars");
 
     if (p_path && strcmp(p_path, "admin/note") == 0) { /** **/
+        snac_debug(&snac, 1, xs_fmt("web action '%s' received", p_path));
+
         /* post note */
         const xs_str *content      = xs_dict_get(p_vars, "content");
         const xs_str *in_reply_to  = xs_dict_get(p_vars, "in_reply_to");
@@ -3226,27 +3228,22 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 msg = xs_dict_set(msg, "summary",   xs_is_null(summary) ? "..." : summary);
             }
 
-            if (store_as_draft) {
-                /* don't send; just store for later */
-                draft_add(&snac, xs_is_null(edit_id) ? xs_dict_get(msg, "id") : edit_id, msg);
-            }
-            else
             if (xs_is_null(edit_id)) {
                 /* new message */
-                c_msg = msg_create(&snac, msg);
-                timeline_add(&snac, xs_dict_get(msg, "id"), msg);
+                const char *id = xs_dict_get(msg, "id");
+
+                if (store_as_draft) {
+                    draft_add(&snac, id, msg);
+                }
+                else {
+                    c_msg = msg_create(&snac, msg);
+                    timeline_add(&snac, id, msg);
+                }
             }
             else {
                 /* an edition of a previous message */
                 xs *p_msg = NULL;
 
-                if (is_draft(&snac, edit_id)) {
-                    /* message was previously a draft; it's a create activity */
-                    c_msg = msg_create(&snac, msg);
-                    timeline_add(&snac, edit_id, msg);
-                    draft_del(&snac, edit_id);
-                }
-                else
                 if (valid_status(object_get(edit_id, &p_msg))) {
                     /* copy relevant fields from previous version */
                     char *fields[] = { "id", "context", "url", "published",
@@ -3258,15 +3255,35 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                         msg = xs_dict_set(msg, fields[n], v);
                     }
 
-                    /* set the updated field */
-                    xs *updated = xs_str_utctime(0, ISO_DATE_SPEC);
-                    msg = xs_dict_set(msg, "updated", updated);
+                    if (store_as_draft) {
+                        draft_add(&snac, edit_id, msg);
+                    }
+                    else
+                    if (is_draft(&snac, edit_id)) {
+                        /* message was previously a draft; it's a create activity */
 
-                    /* overwrite object, not updating the indexes */
-                    object_add_ow(edit_id, msg);
+                        /* set the published field to now */
+                        xs *published = xs_str_utctime(0, ISO_DATE_SPEC);
+                        msg = xs_dict_set(msg, "published", published);
 
-                    /* update message */
-                    c_msg = msg_update(&snac, msg);
+                        /* overwrite object */
+                        object_add_ow(edit_id, msg);
+
+                        c_msg = msg_create(&snac, msg);
+                        timeline_add(&snac, edit_id, msg);
+                        draft_del(&snac, edit_id);
+                    }
+                    else {
+                        /* set the updated field */
+                        xs *updated = xs_str_utctime(0, ISO_DATE_SPEC);
+                        msg = xs_dict_set(msg, "updated", updated);
+
+                        /* overwrite object, not updating the indexes */
+                        object_add_ow(edit_id, msg);
+
+                        /* update message */
+                        c_msg = msg_update(&snac, msg);
+                    }
                 }
                 else
                     snac_log(&snac, xs_fmt("cannot get object '%s' for editing", edit_id));
