@@ -1411,7 +1411,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
                 "", prev_src,
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
-                xs_stock(XSTYPE_FALSE), redir,
+                xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
                 NULL, 0, att_file, att_alt_text)),
             xs_html_tag("p", NULL));
     }
@@ -1430,7 +1430,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
                 "", ct,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
-                xs_stock(XSTYPE_FALSE), redir,
+                xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
                 id, 0, "", "")),
             xs_html_tag("p", NULL));
     }
