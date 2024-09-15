@@ -36,7 +36,7 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
 
     {
         /* split the path with its optional variables */
-        xs *udp = xs_url_dec(xs_list_get(l2, 1));
+        const xs_val *udp = xs_list_get(l2, 1);
         xs *pnv = xs_split_n(udp, "?", 1);
 
         /* store the path */
@@ -75,8 +75,7 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
     v = xs_dict_get(req, "content-type");
 
     if (*payload && v && strcmp(v, "application/x-www-form-urlencoded") == 0) {
-        xs *upl = xs_url_dec(*payload);
-        p_vars  = xs_url_vars(upl);
+        p_vars  = xs_url_vars(*payload);
     }
     else
     if (*payload && v && xs_startswith(v, "multipart/form-data")) {
