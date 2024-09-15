@@ -1726,6 +1726,10 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             content = "";
         }
 
+        /* skip ugly line breaks at the beginning */
+        while (xs_startswith(content, "<br>"))
+            content += 4;
+
         xs *c = sanitize(content);
 
         /* do some tweaks to the content */
