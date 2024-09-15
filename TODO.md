@@ -16,6 +16,10 @@ The Mastodon official app crashes (or gives a ownVotes is null error) when tryin
 
 ## Wishlist
 
+Implement account migration from Mastodon to snac.
+
+Implement account migration from snac to Mastodon.
+
 Track 'Event' data types standardization; how to add plan-to-attend and similar activities (more info: https://event-federation.eu/)
 
 Implement "FEP-3b86: Activity Intents" https://codeberg.org/fediverse/fep/src/branch/main/fep/3b86/fep-3b86.md
@@ -23,8 +27,6 @@ Implement "FEP-3b86: Activity Intents" https://codeberg.org/fediverse/fep/src/br
 Track "FEP-ef61: Portable Objects" https://codeberg.org/fediverse/fep/src/branch/main/fep/ef61/fep-ef61.md
 
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
-
-Consider adding Mastodon import functionality (for following_accounts.csv and outbox.json).
 
 Do something about Akkoma and Misskey's quoted replies (they use the `quoteUrl` field instead of `inReplyTo`).
 
