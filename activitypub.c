@@ -2190,8 +2190,12 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                     else
                         snac_log(snac, xs_fmt("'Move' error: cannot get %s 'alsoKnownAs'", new_account));
                 }
-                else
+                else {
                     snac_log(snac, xs_fmt("'Move' error: cannot get new actor %s", new_account));
+
+                    /* may be a server hiccup, retry later */
+                    return 0;
+                }
             }
             else
                 snac_log(snac, xs_fmt("'Move' error: actor %s is not being followed", old_account));
