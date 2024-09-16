@@ -53,7 +53,8 @@ xs_dict *xs_url_vars(const char *str)
         const xs_val *v;
 
         xs_list_foreach(args, v) {
-            xs *kv = xs_split_n(xs_url_dec(v), "=", 1);
+            xs *dv = xs_url_dec(v);
+            xs *kv = xs_split_n(dv, "=", 1);
 
             if (xs_list_len(kv) == 2) {
                 const char *key = xs_list_get(kv, 0);
