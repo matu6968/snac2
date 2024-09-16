@@ -262,8 +262,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (i_ctype && xs_startswith(i_ctype, "application/x-www-form-urlencoded") && payload) {
-        xs *upl = xs_url_dec(payload);
-        args    = xs_url_vars(upl);
+        args    = xs_url_vars(payload);
     }
     else
         args = xs_dup(xs_dict_get(req, "p_vars"));
@@ -2361,8 +2360,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     {
         // Some apps send form data instead of json so we should cater for those
         if (!xs_is_null(payload)) {
-            xs *upl = xs_url_dec(payload);
-            args    = xs_url_vars(upl);
+            args    = xs_url_vars(payload);
         }
     }
     else
@@ -2959,8 +2957,7 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
     {
         // Some apps send form data instead of json so we should cater for those
         if (!xs_is_null(payload)) {
-            xs *upl = xs_url_dec(payload);
-            args    = xs_url_vars(upl);
+            args = xs_url_vars(payload);
         }
     }
     else
@@ -3194,8 +3191,7 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
     {
         // Some apps send form data instead of json so we should cater for those
         if (!xs_is_null(payload)) {
-            xs *upl = xs_url_dec(payload);
-            args    = xs_url_vars(upl);
+            args    = xs_url_vars(payload);
         }
     }
     else

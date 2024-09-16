@@ -179,8 +179,7 @@ xs_dict *xs_fcgi_request(FILE *f, xs_str **payload, int *p_size, int *fcgi_id)
                         req = xs_dict_append(req, "method", v);
                     else
                     if (strcmp(k, "REQUEST_URI") == 0) {
-                        xs *udp = xs_url_dec(v);
-                        xs *pnv = xs_split_n(udp, "?", 1);
+                        xs *pnv = xs_split_n(v, "?", 1);
 
                         /* store the path */
                         req = xs_dict_append(req, "path", xs_list_get(pnv, 0));
@@ -233,8 +232,7 @@ xs_dict *xs_fcgi_request(FILE *f, xs_str **payload, int *p_size, int *fcgi_id)
                 const char *ct = xs_dict_get(req, "content-type");
 
                 if (*payload && ct && strcmp(ct, "application/x-www-form-urlencoded") == 0) {
-                    xs *upl = xs_url_dec(*payload);
-                    p_vars  = xs_url_vars(upl);
+                    p_vars  = xs_url_vars(*payload);
                 }
                 else
                 if (*payload && ct && xs_startswith(ct, "multipart/form-data")) {
