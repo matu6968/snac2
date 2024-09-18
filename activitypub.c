@@ -1522,6 +1522,17 @@ xs_dict *msg_pong(snac *user, const char *rcpt, const char *object)
 }
 
 
+xs_dict *msg_move(snac *user, const char *new_account)
+/* creates a Move message (to move the user to new_account) */
+{
+    xs_dict *msg = msg_base(user, "Move", "@dummy", user->actor, NULL, user->actor);
+
+    msg = xs_dict_append(msg, "target", new_account);
+
+    return msg;
+}
+
+
 xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
                       const xs_list *opts, int multiple, int end_secs)
 /* creates a Question message */
@@ -2650,6 +2661,22 @@ int process_queue(void)
     }
 
     return cnt;
+}
+
+
+/** account migration **/
+
+int migrate_account(snac *user)
+/* migrates this account to a new one (stored in the 'aka' user field) */
+{
+    const char *new_account = xs_dict_get(user->config, "aka");
+
+    if (xs_type(new_account) != XSTYPE_STRING) {
+        snac_log(user, xs_fmt("Cannot migrate: 'aka' (new account) not defined"));
+        return 1;
+    }
+
+    return 0;
 }
 
 

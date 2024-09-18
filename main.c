@@ -273,6 +273,10 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "migrate") == 0) { /** **/
+        return migrate_account(&snac);
+    }
+
     if ((url = GET_ARGV()) == NULL)
         return usage();
 
