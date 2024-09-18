@@ -1574,6 +1574,29 @@ int is_muted(snac *snac, const char *actor)
 }
 
 
+xs_list *muted_list(snac *user)
+/* returns the list (actor URLs) of the muted morons */
+{
+    xs_list *l = xs_list_new();
+    xs *spec = xs_fmt("%s/muted/" "*", user->basedir);
+    xs *files = xs_glob(spec, 0, 0);
+    const char *fn;
+
+    xs_list_foreach(files, fn) {
+        FILE *f;
+
+        if ((f = fopen(fn, "r")) != NULL) {
+            xs *actor = xs_strip_i(xs_readline(f));
+            fclose(f);
+
+            l = xs_list_append(l, actor);
+        }
+    }
+
+    return l;
+}
+
+
 /** bookmarking **/
 
 int is_bookmarked(snac *user, const char *id)

@@ -267,6 +267,11 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "export_csv") == 0) { /** **/
+        export_csv(&snac);
+        return 0;
+    }
+
     if ((url = GET_ARGV()) == NULL)
         return usage();
 

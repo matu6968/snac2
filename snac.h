@@ -165,6 +165,7 @@ xs_list *following_list(snac *snac);
 void mute(snac *snac, const char *actor);
 void unmute(snac *snac, const char *actor);
 int is_muted(snac *snac, const char *actor);
+xs_list *muted_list(snac *user);
 
 int is_bookmarked(snac *user, const char *id);
 int bookmark(snac *user, const char *id);
@@ -387,6 +388,8 @@ void mastoapi_purge(void);
 
 void verify_links(snac *user);
 
+void export_csv(snac *user);
+void import_csv(snac *user);
 
 typedef enum {
 #define HTTP_STATUS(code, name, text) HTTP_STATUS_ ## name = code,

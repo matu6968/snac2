@@ -565,3 +565,64 @@ void verify_links(snac *user)
             rename(bfn, fn);
     }
 }
+
+
+void export_csv(snac *user)
+/* exports user data to current directory in a way that pleases Mastodon */
+{
+    FILE *f;
+    const char *fn;
+
+    fn = "bookmarks.csv";
+    if ((f = fopen(fn, "w")) != NULL) {
+        snac_log(user, xs_fmt("Creating %s...", fn));
+
+        xs *l = bookmark_list(user);
+        const char *md5;
+
+        xs_list_foreach(l, md5) {
+            xs *post = NULL;
+
+            if (valid_status(object_get_by_md5(md5, &post))) {
+                const char *id = xs_dict_get(post, "id");
+
+                if (xs_type(id) == XSTYPE_STRING)
+                    fprintf(f, "%s\n", id);
+            }
+        }
+
+        fclose(f);
+    }
+    else
+        snac_log(user, xs_fmt("Cannot create file %s", fn));
+
+    fn = "blocked_accounts.csv";
+    if ((f = fopen(fn, "w")) != NULL) {
+        snac_log(user, xs_fmt("Creating %s...", fn));
+
+        xs *l = muted_list(user);
+        const char *actor;
+
+        xs_list_foreach(l, actor) {
+            xs *uid = NULL;
+            int status;
+
+            if (valid_status((status = webfinger_request(actor, NULL, &uid)))) {
+                fprintf(f, "%s\n", uid);
+            }
+            else
+                snac_log(user, xs_fmt("Error resolving muted user %s %d", actor, status));
+        }
+
+        fclose(f);
+    }
+    else
+        snac_log(user, xs_fmt("Cannot create file %s", fn));
+}
+
+
+void import_csv(snac *user)
+/* import CSV files from Mastodon */
+{
+    (void)user;
+}
