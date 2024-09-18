@@ -133,9 +133,11 @@ int webfinger_request_fake(const char *qs, xs_str **actor, xs_str **user)
         if (xs_startswith(qs, "https:/") || xs_startswith(qs, "http:/")) {
             xs *l = xs_split(qs, "/");
 
-            /* i'll end up in hell for this */
-            *user = xs_fmt("%s@%s", xs_list_get(l, 2), xs_list_get(l, -1));
-            status = HTTP_STATUS_RESET_CONTENT;
+            if (xs_list_len(l) > 3) {
+                /* i'll end up in hell for this */
+                *user = xs_fmt("%s@%s", xs_list_get(l, -1), xs_list_get(l, 2));
+                status = HTTP_STATUS_RESET_CONTENT;
+            }
         }
     }
 

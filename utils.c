@@ -605,13 +605,9 @@ void export_csv(snac *user)
 
         xs_list_foreach(l, actor) {
             xs *uid = NULL;
-            int status;
 
-            if (valid_status((status = webfinger_request(actor, NULL, &uid)))) {
-                fprintf(f, "%s\n", uid);
-            }
-            else
-                snac_log(user, xs_fmt("Error resolving muted user %s %d", actor, status));
+            webfinger_request_fake(actor, NULL, &uid);
+            fprintf(f, "%s\n", uid);
         }
 
         fclose(f);
@@ -639,12 +635,9 @@ void export_csv(snac *user)
                 if (valid_status(object_get_by_md5(md5, &actor))) {
                     const char *id = xs_dict_get(actor, "id");
                     xs *uid = NULL;
-                    int status;
 
-                    if (valid_status((status = webfinger_request(id, NULL, &uid))))
-                        fprintf(f, "%s,%s\n", ltitle, uid);
-                    else
-                        snac_log(user, xs_fmt("Error resolving list member %s %d", id, status));
+                    webfinger_request_fake(id, NULL, &uid);
+                    fprintf(f, "%s,%s\n", ltitle, uid);
                 }
             }
         }
@@ -665,13 +658,9 @@ void export_csv(snac *user)
 
         xs_list_foreach(fwing, actor) {
             xs *uid = NULL;
-            int status;
 
-            if (valid_status((status = webfinger_request(actor, NULL, &uid)))) {
-                fprintf(f, "%s,%s,false,\n", uid, limited(user, actor, 0) ? "false" : "true");
-            }
-            else
-                snac_log(user, xs_fmt("Error resolving followed account %s %d", actor, status));
+            webfinger_request_fake(actor, NULL, &uid);
+            fprintf(f, "%s,%s,false,\n", uid, limited(user, actor, 0) ? "false" : "true");
         }
 
         fclose(f);
