@@ -653,6 +653,31 @@ void export_csv(snac *user)
     }
     else
         snac_log(user, xs_fmt("Cannot create file %s", fn));
+
+    fn = "following_accounts.csv";
+    if ((f = fopen(fn, "w")) != NULL) {
+        snac_log(user, xs_fmt("Creating %s...", fn));
+
+        fprintf(f, "Account address,Show boosts,Notify on new posts,Languages\n");
+
+        xs *fwing = following_list(user);
+        const char *actor;
+
+        xs_list_foreach(fwing, actor) {
+            xs *uid = NULL;
+            int status;
+
+            if (valid_status((status = webfinger_request(actor, NULL, &uid)))) {
+                fprintf(f, "%s,%s,false,\n", uid, limited(user, actor, 0) ? "false" : "true");
+            }
+            else
+                snac_log(user, xs_fmt("Error resolving followed account %s %d", actor, status));
+        }
+
+        fclose(f);
+    }
+    else
+        snac_log(user, xs_fmt("Cannot create file %s", fn));
 }
 
 
