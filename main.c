@@ -48,6 +48,7 @@ int usage(void)
     printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
     printf("search {basedir} {uid} {regex}       Searches posts by content\n");
     printf("aka {basedir} {uid} {actor}          Sets actor (@user@host or url) as an a.k.a.\n");
+    printf("export_csv {basedir} {uid}           Exports data as CSV files into current directory\n");
 
     return 1;
 }
