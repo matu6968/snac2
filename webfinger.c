@@ -8,7 +8,7 @@
 
 #include "snac.h"
 
-int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **user)
+int webfinger_request_signed(snac *snac, const char *qs, xs_str **actor, xs_str **user)
 /* queries the webfinger for qs and fills the required fields */
 {
     int status;
@@ -117,15 +117,34 @@ int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **us
 }
 
 
-int webfinger_request(const char *qs, char **actor, char **user)
+int webfinger_request(const char *qs, xs_str **actor, xs_str **user)
 /* queries the webfinger for qs and fills the required fields */
 {
     return webfinger_request_signed(NULL, qs, actor, user);
 }
 
 
-int webfinger_get_handler(xs_dict *req, char *q_path,
-                           char **body, int *b_size, char **ctype)
+int webfinger_request_fake(const char *qs, xs_str **actor, xs_str **user)
+/* queries the webfinger and, if it fails, a user is faked if possible */
+{
+    int status;
+
+    if (!valid_status(status = webfinger_request(qs, actor, user))) {
+        if (xs_startswith(qs, "https:/") || xs_startswith(qs, "http:/")) {
+            xs *l = xs_split(qs, "/");
+
+            /* i'll end up in hell for this */
+            *user = xs_fmt("%s@%s", xs_list_get(l, 2), xs_list_get(l, -1));
+            status = HTTP_STATUS_RESET_CONTENT;
+        }
+    }
+
+    return status;
+}
+
+
+int webfinger_get_handler(xs_dict *req, const char *q_path,
+                           xs_val **body, int *b_size, char **ctype)
 /* serves webfinger queries */
 {
     int status;

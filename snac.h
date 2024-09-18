@@ -284,10 +284,11 @@ int check_signature(const xs_dict *req, xs_str **err);
 srv_state *srv_state_op(xs_str **fname, int op);
 void httpd(void);
 
-int webfinger_request_signed(snac *snac, const char *qs, char **actor, char **user);
-int webfinger_request(const char *qs, char **actor, char **user);
-int webfinger_get_handler(xs_dict *req, char *q_path,
-                          char **body, int *b_size, char **ctype);
+int webfinger_request_signed(snac *snac, const char *qs, xs_str **actor, xs_str **user);
+int webfinger_request(const char *qs, xs_str **actor, xs_str **user);
+int webfinger_request_fake(const char *qs, xs_str **actor, xs_str **user);
+int webfinger_get_handler(xs_dict *req, const char *q_path,
+                          xs_val **body, int *b_size, char **ctype);
 
 const char *default_avatar_base64(void);
 
