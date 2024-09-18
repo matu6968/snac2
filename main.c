@@ -283,12 +283,7 @@ int main(int argc, char *argv[])
         if (valid_status(status)) {
             snac.config = xs_dict_set(snac.config, "aka", actor);
 
-            xs *fn = xs_fmt("%s/user.json", snac.basedir);
-            FILE *f;
-            if ((f = fopen(fn, "w")) != NULL) {
-                xs_json_dump(snac.config, 4, f);
-                fclose(f);
-            }
+            user_persist(&snac, 1);
         }
         else
             snac_log(&snac, xs_fmt("Webfinger error for %s %d", url, status));
