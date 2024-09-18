@@ -618,6 +618,41 @@ void export_csv(snac *user)
     }
     else
         snac_log(user, xs_fmt("Cannot create file %s", fn));
+
+    fn = "lists.csv";
+    if ((f = fopen(fn, "w")) != NULL) {
+        snac_log(user, xs_fmt("Creating %s...", fn));
+
+        xs *lol = list_maint(user, NULL, 0);
+        const xs_list *li;
+
+        xs_list_foreach(lol, li) {
+            const char *lid = xs_list_get(li, 0);
+            const char *ltitle = xs_list_get(li, 1);
+
+            xs *actors = list_content(user, lid, NULL, 0);
+            const char *md5;
+
+            xs_list_foreach(actors, md5) {
+                xs *actor = NULL;
+
+                if (valid_status(object_get_by_md5(md5, &actor))) {
+                    const char *id = xs_dict_get(actor, "id");
+                    xs *uid = NULL;
+                    int status;
+
+                    if (valid_status((status = webfinger_request(id, NULL, &uid))))
+                        fprintf(f, "%s,%s\n", ltitle, uid);
+                    else
+                        snac_log(user, xs_fmt("Error resolving list member %s %d", id, status));
+                }
+            }
+        }
+
+        fclose(f);
+    }
+    else
+        snac_log(user, xs_fmt("Cannot create file %s", fn));
 }
 
 
