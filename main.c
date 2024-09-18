@@ -47,6 +47,7 @@ int usage(void)
     printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
     printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
     printf("search {basedir} {uid} {regex}       Searches posts by content\n");
+    printf("aka {basedir} {uid} {actor}          Sets actor (@user@host or url) as an a.k.a.\n");
 
     return 1;
 }
@@ -268,6 +269,32 @@ int main(int argc, char *argv[])
 
     if ((url = GET_ARGV()) == NULL)
         return usage();
+
+    if (strcmp(cmd, "aka") == 0) { /** **/
+        xs *actor = NULL;
+        xs *uid = NULL;
+        int status = HTTP_STATUS_OK;
+
+        if (*url == '\0')
+            actor = xs_dup("");
+        else
+            status = webfinger_request(url, &actor, &uid);
+
+        if (valid_status(status)) {
+            snac.config = xs_dict_set(snac.config, "aka", actor);
+
+            xs *fn = xs_fmt("%s/user.json", snac.basedir);
+            FILE *f;
+            if ((f = fopen(fn, "w")) != NULL) {
+                xs_json_dump(snac.config, 4, f);
+                fclose(f);
+            }
+        }
+        else
+            snac_log(&snac, xs_fmt("Webfinger error for %s %d", url, status));
+
+        return 0;
+    }
 
     if (strcmp(cmd, "webfinger_s") == 0) { /** **/
         xs *actor = NULL;
