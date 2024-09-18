@@ -1241,6 +1241,14 @@ xs_dict *msg_actor(snac *snac)
         msg = xs_dict_set(msg, "endpoints", d);
     }
 
+    /* does this user have an aka? */
+    const char *aka = xs_dict_get(snac->config, "aka");
+    if (xs_type(aka) == XSTYPE_STRING && *aka) {
+        xs *loaka = xs_list_append(xs_list_new(), aka);
+
+        msg = xs_dict_set(msg, "alsoKnownAs", loaka);
+    }
+
     return msg;
 }
 
