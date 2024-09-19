@@ -1242,7 +1242,7 @@ xs_dict *msg_actor(snac *snac)
     }
 
     /* does this user have an aka? */
-    const char *aka = xs_dict_get(snac->config, "aka");
+    const char *aka = xs_dict_get(snac->config, "alias");
     if (xs_type(aka) == XSTYPE_STRING && *aka) {
         xs *loaka = xs_list_append(xs_list_new(), aka);
 
@@ -2669,10 +2669,10 @@ int process_queue(void)
 int migrate_account(snac *user)
 /* migrates this account to a new one (stored in the 'aka' user field) */
 {
-    const char *new_account = xs_dict_get(user->config, "aka");
+    const char *new_account = xs_dict_get(user->config, "alias");
 
     if (xs_type(new_account) != XSTYPE_STRING) {
-        snac_log(user, xs_fmt("Cannot migrate: 'aka' (new account) not defined"));
+        snac_log(user, xs_fmt("Cannot migrate: alias (destination account) not set"));
         return 1;
     }
 

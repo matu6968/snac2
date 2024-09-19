@@ -25,7 +25,7 @@ int usage(void)
     printf("httpd {basedir}                      Starts the HTTPD daemon\n");
     printf("purge {basedir}                      Purges old data\n");
     printf("state {basedir}                      Prints server state\n");
-    printf("webfinger {basedir} {actor}          Queries about an actor (@user@host or actor url)\n");
+    printf("webfinger {basedir} {account}        Queries about an account (@user@host or actor url)\n");
     printf("queue {basedir} {uid}                Processes a user queue\n");
     printf("follow {basedir} {uid} {actor}       Follows an actor\n");
     printf("unfollow {basedir} {uid} {actor}     Unfollows an actor\n");
@@ -36,7 +36,7 @@ int usage(void)
     printf("unboost {basedir} {uid} {url}        Unboosts a post\n");
     printf("resetpwd {basedir} {uid}             Resets the password of a user\n");
     printf("ping {basedir} {uid} {actor}         Pings an actor\n");
-    printf("webfinger_s {basedir} {uid} {actor}  Queries about an actor (@user@host or actor url)\n");
+    printf("webfinger_s {basedir} {uid} {account} Queries about an account (@user@host or actor url)\n");
     printf("pin {basedir} {uid} {msg_url}        Pins a message\n");
     printf("unpin {basedir} {uid} {msg_url}      Unpins a message\n");
     printf("bookmark {basedir} {uid} {msg_url}   Bookmarks a message\n");
@@ -47,9 +47,9 @@ int usage(void)
     printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
     printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
     printf("search {basedir} {uid} {regex}       Searches posts by content\n");
-    printf("aka {basedir} {uid} {actor}          Sets actor (@user@host or url) as the a.k.a.\n");
+    printf("alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n");
     printf("export_csv {basedir} {uid}           Exports data as CSV files into current directory\n");
-    printf("migrate {basedir} {uid}              Migrates the account to the one set as the a.k.a.\n");
+    printf("migrate {basedir} {uid}              Migrates to the account defined as the alias\n");
 
     return 1;
 }
@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
     if ((url = GET_ARGV()) == NULL)
         return usage();
 
-    if (strcmp(cmd, "aka") == 0) { /** **/
+    if (strcmp(cmd, "alias") == 0) { /** **/
         xs *actor = NULL;
         xs *uid = NULL;
         int status = HTTP_STATUS_OK;
@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
             status = webfinger_request(url, &actor, &uid);
 
         if (valid_status(status)) {
-            snac.config = xs_dict_set(snac.config, "aka", actor);
+            snac.config = xs_dict_set(snac.config, "alias", actor);
 
             user_persist(&snac, 1);
         }
