@@ -2667,12 +2667,32 @@ int process_queue(void)
 /** account migration **/
 
 int migrate_account(snac *user)
-/* migrates this account to a new one (stored in the 'aka' user field) */
+/* migrates this account to a new one (stored in the 'alias' user field) */
 {
     const char *new_account = xs_dict_get(user->config, "alias");
 
     if (xs_type(new_account) != XSTYPE_STRING) {
         snac_log(user, xs_fmt("Cannot migrate: alias (destination account) not set"));
+        return 1;
+    }
+
+    xs *new_actor = NULL;
+    int status;
+
+    if (!valid_status(status = actor_request(user, new_account, &new_actor))) {
+        snac_log(user, xs_fmt("Cannot migrate: error requesting actor %s %d", new_account, status));
+        return 1;
+    }
+
+    const char *loaka = xs_dict_get(new_actor, "alsoKnownAs");
+
+    if (xs_type(loaka) != XSTYPE_LIST) {
+        snac_log(user, xs_fmt("Cannot migrate: destination account doesn't have any aliases"));
+        return 1;
+    }
+
+    if (xs_list_in(loaka, user->actor) == -1) {
+        snac_log(user, xs_fmt("Cannot migrate: destination account doesn't have this one as an alias"));
         return 1;
     }
 
