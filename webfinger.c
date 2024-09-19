@@ -134,9 +134,12 @@ int webfinger_request_fake(const char *qs, xs_str **actor, xs_str **user)
             xs *l = xs_split(qs, "/");
 
             if (xs_list_len(l) > 3) {
+                srv_debug(1, xs_fmt("webfinger error querying %s %d -- faking it", qs, status));
+
                 /* i'll end up in hell for this */
                 *user = xs_fmt("%s@%s", xs_list_get(l, -1), xs_list_get(l, 2));
                 status = HTTP_STATUS_RESET_CONTENT;
+
             }
         }
     }
