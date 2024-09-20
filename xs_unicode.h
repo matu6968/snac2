@@ -33,6 +33,8 @@
 
 #ifdef XS_IMPLEMENTATION
 
+#include <ctype.h>
+
 #ifndef xs_countof
 #define xs_countof(a) (sizeof((a)) / sizeof((*a)))
 #endif

@@ -47,8 +47,8 @@ int usage(void)
     printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
     printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
     printf("search {basedir} {uid} {regex}       Searches posts by content\n");
-    printf("alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n");
     printf("export_csv {basedir} {uid}           Exports data as CSV files into current directory\n");
+    printf("alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n");
     printf("migrate {basedir} {uid}              Migrates to the account defined as the alias\n");
 
     return 1;
@@ -292,12 +292,20 @@ int main(int argc, char *argv[])
             status = webfinger_request(url, &actor, &uid);
 
         if (valid_status(status)) {
-            snac.config = xs_dict_set(snac.config, "alias", actor);
+            if (strcmp(actor, snac.actor) == 0) {
+                snac_log(&snac, xs_fmt("You can't be your own alias"));
+                return 1;
+            }
+            else {
+                snac.config = xs_dict_set(snac.config, "alias", actor);
 
-            user_persist(&snac, 1);
+                user_persist(&snac, 1);
+            }
         }
-        else
+        else {
             snac_log(&snac, xs_fmt("Webfinger error for %s %d", url, status));
+            return 1;
+        }
 
         return 0;
     }

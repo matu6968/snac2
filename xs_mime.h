@@ -1,8 +1,8 @@
 /* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
 
-#ifndef _XS_MIME
+#ifndef _XS_MIME_H
 
-#define _XS_MIME
+#define _XS_MIME_H
 
 const char *xs_mime_by_ext(const char *file);
 
@@ -81,4 +81,4 @@ const char *xs_mime_by_ext(const char *file)
 
 #endif /* XS_IMPLEMENTATION */
 
-#endif /* XS_MIME */
+#endif /* XS_MIME_H */

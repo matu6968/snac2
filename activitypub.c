@@ -2696,6 +2696,14 @@ int migrate_account(snac *user)
         return 1;
     }
 
+    xs *move = msg_move(user, new_account);
+    xs *fwers = follower_list(user);
+
+    xs_json_dump(move, 4, stdout);
+    printf("\n");
+    xs_json_dump(fwers, 4, stdout);
+    printf("\n");
+
     return 0;
 }
 

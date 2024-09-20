@@ -47,7 +47,7 @@ xs_list *xs_set_result(xs_set *s)
 void xs_set_free(xs_set *s)
 /* frees a set, dropping the list */
 {
-    free(xs_set_result(s));
+    xs_free(xs_set_result(s));
 }
 
 

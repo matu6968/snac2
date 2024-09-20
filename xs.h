@@ -23,7 +23,6 @@ typedef enum {
     XSTYPE_LITEM  = 0x1f,       /* Element of a list (any type) */
     XSTYPE_DICT   = 0x1c,       /* Sequence of KEYVALs up to EOM (with size) */
     XSTYPE_KEYVAL = 0x1e,       /* key + value (STRING key + any type) */
-    XSTYPE_EOM    = 0x19,       /* End of Multiple (LIST or DICT) */
     XSTYPE_DATA   = 0x10        /* A block of anonymous data */
 } xstype;
 
@@ -170,7 +169,7 @@ void *_xs_realloc(void *ptr, size_t size, const char *file, int line, const char
     xs_val *ndata = realloc(ptr, size);
 
     if (ndata == NULL) {
-        fprintf(stderr, "**OUT OF MEMORY**\n");
+        fprintf(stderr, "ERROR: out of memory at %s:%d: %s()\n", file, line, func);
         abort();
     }
 
@@ -266,7 +265,6 @@ xstype xs_type(const xs_val *data)
     case XSTYPE_DICT:
     case XSTYPE_KEYVAL:
     case XSTYPE_NUMBER:
-    case XSTYPE_EOM:
     case XSTYPE_DATA:
         t = data[0];
         break;
@@ -696,7 +694,7 @@ xs_list *xs_list_new(void)
 {
     int sz = 1 + _XS_TYPE_SIZE + 1;
     xs_list *l = xs_realloc(NULL, sz);
-    memset(l, XSTYPE_EOM, sz);
+    memset(l, '\0', sz);
 
     l[0] = XSTYPE_LIST;
     _xs_put_size(l, sz);
