@@ -278,7 +278,9 @@ xs_html *html_note(snac *user, const char *summary,
                    const xs_val *cw_yn, const char *cw_text,
                    const xs_val *mnt_only, const char *redir,
                    const char *in_reply_to, int poll,
-                   const char *att_file, const char *att_alt_text)
+                   const char *att_file, const char *att_alt_text,
+                   int is_draft)
+/* Yes, this is a FUCKTON of arguments and I'm a bit embarrased */
 {
     xs *action = xs_fmt("%s/admin/note", user->actor);
 
@@ -363,7 +365,8 @@ xs_html *html_note(snac *user, const char *summary,
         xs_html_text(L("Draft:")),
         xs_html_sctag("input",
             xs_html_attr("type", "checkbox"),
-            xs_html_attr("name", "is_draft")));
+            xs_html_attr("name", "is_draft"),
+            xs_html_attr(is_draft ? "checked" : "", NULL)));
 
     if (edit_id)
         xs_html_add(form,
@@ -924,7 +927,7 @@ xs_html *html_top_controls(snac *snac)
             NULL, NULL,
             xs_stock(XSTYPE_FALSE), "",
             xs_stock(XSTYPE_FALSE), NULL,
-            NULL, 1, "", ""),
+            NULL, 1, "", "", 0),
 
         /** operations **/
         xs_html_tag("details",
@@ -1412,7 +1415,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                NULL, 0, att_file, att_alt_text)),
+                NULL, 0, att_file, att_alt_text, is_draft(snac, id))),
             xs_html_tag("p", NULL));
     }
 
@@ -1431,7 +1434,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                id, 0, "", "")),
+                id, 0, "", "", 0)),
             xs_html_tag("p", NULL));
     }
 
@@ -2484,7 +2487,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
                     NULL, actor_id,
                     xs_stock(XSTYPE_FALSE), "",
                     xs_stock(XSTYPE_FALSE), NULL,
-                    NULL, 0, "", ""),
+                    NULL, 0, "", "", 0),
                 xs_html_tag("p", NULL));
 
             xs_html_add(snac_post, snac_controls);
