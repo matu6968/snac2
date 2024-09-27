@@ -2699,10 +2699,14 @@ int migrate_account(snac *user)
     xs *move = msg_move(user, new_account);
     xs *fwers = follower_list(user);
 
+/*
     xs_json_dump(move, 4, stdout);
     printf("\n");
     xs_json_dump(fwers, 4, stdout);
     printf("\n");
+*/
+
+    printf("WORK IN PROGRESS - NOT YET USABLE (BUT HARMLESS)\n");
 
     return 0;
 }
