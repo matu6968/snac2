@@ -14,11 +14,15 @@ The Mastodon official app crashes when hitting the reply button.
 
 The Mastodon official app crashes (or gives a ownVotes is null error) when trying to show polls.
 
+Wrong level of message visibility when using the Mastodon API: https://codeberg.org/grunfink/snac2/issues/200#issuecomment-2351042
+
 ## Wishlist
 
 Implement account migration from Mastodon to snac.
 
 Implement account migration from snac to Mastodon.
+
+Implement following of hashtags (this is not trivial).
 
 Track 'Event' data types standardization; how to add plan-to-attend and similar activities (more info: https://event-federation.eu/)
 
