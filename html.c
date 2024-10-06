@@ -2783,6 +2783,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
     /* get a possible error message */
     const char *error = xs_dict_get(q_vars, "error");
+    if (error != NULL)
+        cache = 0;
 
     /* a show of 0 has no sense */
     if (show == 0)
