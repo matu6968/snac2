@@ -577,7 +577,7 @@ static xs_html *html_instance_body(void)
 }
 
 
-xs_html *html_user_head(snac *user, char *desc, char *url)
+xs_html *html_user_head(snac *user, const char *desc, const char *url)
 {
     xs_html *head = html_base_head();
 
@@ -2138,7 +2138,8 @@ xs_html *html_footer(void)
 
 xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                       int skip, int show, int show_more,
-                      char *title, char *page, int utl)
+                      const char *title, const char *page,
+                      int utl, const char *error)
 /* returns the HTML for the timeline */
 {
     xs_list *p = (xs_list *)list;
@@ -2179,6 +2180,19 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     if (user && !read_only)
         xs_html_add(body,
             html_top_controls(user));
+
+    if (error != NULL) {
+        xs_html_add(body,
+            xs_html_tag("dialog",
+                xs_html_attr("open", NULL),
+                xs_html_tag("p",
+                    xs_html_text(error)),
+                xs_html_tag("form",
+                    xs_html_attr("method", "dialog"),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "submit"),
+                        xs_html_attr("value", L("Dismiss"))))));
+    }
 
     /* show links to the available lists */
     if (user && !read_only) {
@@ -2767,6 +2781,9 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
     }
 
+    /* get a possible error message */
+    const char *error = xs_dict_get(q_vars, "error");
+
     /* a show of 0 has no sense */
     if (show == 0)
         show = def_show;
@@ -2776,7 +2793,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE) {
             /** empty public timeline for private users **/
-            *body = html_timeline(&snac, NULL, 1, 0, 0, 0, NULL, "", 1);
+            *body = html_timeline(&snac, NULL, 1, 0, 0, 0, NULL, "", 1, error);
             *b_size = strlen(*body);
             status  = HTTP_STATUS_OK;
         }
@@ -2794,7 +2811,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *pins = pinned_list(&snac);
             pins = xs_list_cat(pins, list);
 
-            *body = html_timeline(&snac, pins, 1, skip, show, xs_list_len(next), NULL, "", 1);
+            *body = html_timeline(&snac, pins, 1, skip, show, xs_list_len(next), NULL, "", 1, error);
 
             *b_size = strlen(*body);
             status  = HTTP_STATUS_OK;
@@ -2827,7 +2844,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                     xs *title = xs_fmt(xs_list_len(tl) ?
                         L("Search results for tag %s") : L("Nothing found for tag %s"), q);
 
-                    *body = html_timeline(&snac, tl, 0, skip, show, more, title, page, 0);
+                    *body = html_timeline(&snac, tl, 0, skip, show, more, title, page, 0, error);
                     *b_size = strlen(*body);
                     status  = HTTP_STATUS_OK;
                 }
@@ -2851,7 +2868,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                     else
                         title = xs_fmt(L("Nothing found for '%s'"), q);
 
-                    *body   = html_timeline(&snac, tl, 0, skip, tl_len, to || tl_len == show, title, page, 0);
+                    *body   = html_timeline(&snac, tl, 0, skip, tl_len, to || tl_len == show,
+                                            title, page, 0, error);
                     *b_size = strlen(*body);
                     status  = HTTP_STATUS_OK;
                 }
@@ -2876,7 +2894,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                     xs *next = timeline_list(&snac, "private", skip + show, 1);
 
                     *body = html_timeline(&snac, list, 0, skip, show,
-                            xs_list_len(next), NULL, "/admin", 1);
+                            xs_list_len(next), NULL, "/admin", 1, error);
 
                     *b_size = strlen(*body);
                     status  = HTTP_STATUS_OK;
@@ -2900,7 +2918,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             if (md5 && *md5 && timeline_here(&snac, md5)) {
                 xs *list = xs_list_append(xs_list_new(), md5);
 
-                *body   = html_timeline(&snac, list, 0, 0, 0, 0, NULL, "/admin", 1);
+                *body   = html_timeline(&snac, list, 0, 0, 0, 0, NULL, "/admin", 1, error);
                 *b_size = strlen(*body);
                 status  = HTTP_STATUS_OK;
             }
@@ -2941,7 +2959,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *next = timeline_instance_list(skip + show, 1);
 
             *body = html_timeline(&snac, list, 0, skip, show,
-                xs_list_len(next), L("Showing instance timeline"), "/instance", 0);
+                xs_list_len(next), L("Showing instance timeline"), "/instance", 0, error);
             *b_size = strlen(*body);
             status  = HTTP_STATUS_OK;
         }
@@ -2956,7 +2974,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *list = pinned_list(&snac);
 
             *body = html_timeline(&snac, list, 0, skip, show,
-                0, L("Pinned posts"), "", 0);
+                0, L("Pinned posts"), "", 0, error);
             *b_size = strlen(*body);
             status  = HTTP_STATUS_OK;
         }
@@ -2971,7 +2989,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *list = bookmark_list(&snac);
 
             *body = html_timeline(&snac, list, 0, skip, show,
-                0, L("Bookmarked posts"), "", 0);
+                0, L("Bookmarked posts"), "", 0, error);
             *b_size = strlen(*body);
             status  = HTTP_STATUS_OK;
         }
@@ -2986,7 +3004,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *list = draft_list(&snac);
 
             *body = html_timeline(&snac, list, 0, skip, show,
-                0, L("Post drafts"), "", 0);
+                0, L("Post drafts"), "", 0, error);
             *b_size = strlen(*body);
             status  = HTTP_STATUS_OK;
         }
@@ -3012,7 +3030,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 xs *title = xs_fmt(L("Showing timeline for list '%s'"), name);
 
                 *body = html_timeline(&snac, ttl, 0, skip, show,
-                    xs_list_len(next), title, base, 1);
+                    xs_list_len(next), title, base, 1, error);
                 *b_size = strlen(*body);
                 status  = HTTP_STATUS_OK;
             }
@@ -3032,7 +3050,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
             list = xs_list_append(list, md5);
 
-            *body   = html_timeline(&snac, list, 1, 0, 0, 0, NULL, "", 1);
+            *body   = html_timeline(&snac, list, 1, 0, 0, 0, NULL, "", 1, error);
             *b_size = strlen(*body);
             status  = HTTP_STATUS_OK;
         }

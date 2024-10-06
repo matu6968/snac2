@@ -204,7 +204,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
             else {
                 xs *page = xs_fmt("?t=%s", t);
                 xs *title = xs_fmt(L("Search results for tag #%s"), t);
-                *body = html_timeline(NULL, tl, 0, skip, show, more, title, page, 0);
+                *body = html_timeline(NULL, tl, 0, skip, show, more, title, page, 0, NULL);
             }
         }
         else
@@ -212,7 +212,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
             /** instance timeline **/
             xs *tl = timeline_instance_list(0, 30);
             *body = html_timeline(NULL, tl, 0, 0, 0, 0,
-                L("Recent posts by users in this instance"), NULL, 0);
+                L("Recent posts by users in this instance"), NULL, 0, NULL);
         }
         else
             *body = greeting_html();

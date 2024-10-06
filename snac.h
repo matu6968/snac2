@@ -346,7 +346,7 @@ xs_str *encode_html(const char *str);
 
 xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                       int skip, int show, int show_more,
-                      char *title, char *page, int utl);
+                      const char *title, const char *page, int utl, const char *error);
 
 int html_get_handler(const xs_dict *req, const char *q_path,
                      char **body, int *b_size, char **ctype, xs_str **etag);
