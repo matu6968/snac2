@@ -1,6 +1,6 @@
 # Test Procedure - Account migration from snac to Mastodon
 
-## Prerrequisites
+## Prerequisites
 
 - A snac account in your server (from now, the *origin* account).
 - A Mastodon account, already created on any public server (from now, the *destination* account).
