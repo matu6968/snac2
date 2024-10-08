@@ -384,9 +384,9 @@ paths return empty lists.
 .Ss Migrating from snac to Mastodon
 Since version 2.60, you can migrate your
 .Nm
-account to other ActivityPub instances. I will describe the process to do it from
+account to other ActivityPub instances. What is described here is the process to do it from
 .Nm
-to Mastodon; on other software implementations, it will surely be very different. All
+to Mastodon; on other software implementations, it will surely be somewhat different. All
 the steps regarding your
 .Nm
 account must be done from the command line. For the sake of the example, let's
@@ -428,9 +428,9 @@ then click on
 .Vt Create an account alias
 and follow the instructions. (When it asks you to
 write your old account’s handle, it needs to include the @ at the start
-as well as the @ in the middle, in our example, @origin@snac.example.org).
-According to the link above, you must wait at least five minutes for
-this to be effective.
+as well as the @ in the middle; as of our example, @origin@snac.example.org).
+It seems this step is not performed immediately, you must wait an unspecified
+number of minutes for this to be effective.
 .Pp
 4. Meanwhile, you must tell
 .Nm
@@ -447,14 +447,15 @@ snac alias $SNAC_BASEDIR origin "@destination@mastodon.example.com"
 to start the migration process, that will consist in iterating all the
 people that follows your account and sending them a
 .Vt Move
-message, notifying all of them that they must unfollow your old account
+message, that acts as a suggestion to unfollow your old account
 and follow the new one. The command is
 .Bd -literal -offset indent
 snac migrate $SNAC_BASEDIR origin
 .Ed
 .Pp
-This process can be very long and unreliable. I recommend you to read
-the document I linked above to know how heartbreaking it can be.
+This process can be very long and unreliable; any destination server may be down,
+too busy, disconnected or gone. I recommend you to read the document I linked
+above to know about all the sorrows awaiting. 
 .Ss Migrating from Mastodon to snac
 User migration from different Fediverse instances is a pain in the ass
 that has been implemented everywhere as a kludgy afterthought. There is
