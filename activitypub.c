@@ -1158,7 +1158,7 @@ xs_dict *msg_actor(snac *snac)
     msg = xs_dict_set(msg, "preferredUsername", snac->uid);
     msg = xs_dict_set(msg, "published",         xs_dict_get(snac->config, "published"));
 
-    xs *f_bio_2 = not_really_markdown(xs_dict_get(snac->config, "bio"), NULL, NULL);
+    xs *f_bio_2 = not_really_markdown(xs_dict_get(snac->config, "bio"), NULL, &tags);
     f_bio = process_tags(snac, f_bio_2, &tags);
     msg = xs_dict_set(msg, "summary", f_bio);
     msg = xs_dict_set(msg, "tag", tags);

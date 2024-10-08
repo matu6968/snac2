@@ -821,9 +821,11 @@ static xs_html *html_user_body(snac *user, int read_only)
 
     if (read_only) {
         xs *es1  = encode_html(xs_dict_get(user->config, "bio"));
-        xs *bio1 = not_really_markdown(es1, NULL, NULL);
         xs *tags = xs_list_new();
+        xs *bio1 = not_really_markdown(es1, NULL, &tags);
         xs *bio2 = process_tags(user, bio1, &tags);
+
+        bio2 = replace_shortnames(bio2, tags, 2);
 
         xs_html *top_user_bio = xs_html_tag("div",
             xs_html_attr("class", "p-note snac-top-user-bio"),
