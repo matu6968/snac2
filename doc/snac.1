@@ -246,6 +246,22 @@ the
 .Nm
 user url that also contains a rel="me" attribute. These links are specially
 marked as verified in the user's public timeline and also via the Mastodon API.
+.It Cm export_csv Ar basedir Ar uid
+Exports some account data as Mastodon-compatible CSV files. After executing
+this command, the following files will be written to the current directory:
+.Pa bookmarks.csv ,
+.Pa blocked_accounts.csv ,
+.Pa lists.csv , and
+.Pa following_accounts.csv .
+.It Cm alias Ar basedir Ar uid Ar "@account@remotehost"
+Sets an account as an alias of this one. This is a necessary step to migrate
+an account to a remote Mastodon instance (see
+.Xr snac 8 ,
+section 'Migrating from snac to Mastodon').
+.It Cm migrate Ar basedir Ar uid
+Starts a migration from this account to the one set as an alias (see
+.Xr snac 8 ,
+section 'Migrating from snac to Mastodon').
 .It Cm state Ar basedir
 Dumps the current state of the server and its threads. For example:
 .Bd -literal -offset indent
