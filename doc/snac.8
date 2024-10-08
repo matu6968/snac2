@@ -366,7 +366,7 @@ objects on input, and for
 .Vt Note
 objects on output.
 .It Vt Move
-For actor-like objects, on input.
+For actor-like objects, for input and output.
 .El
 .Pp
 The rest of activities and objects are dropped on input.
@@ -456,6 +456,12 @@ snac migrate $SNAC_BASEDIR origin
 This process can be very long and unreliable; any destination server may be down,
 too busy, disconnected or gone. I recommend you to read the document I linked
 above to know about all the sorrows awaiting. 
+.Pp
+Also, please take note that the
+.Nm
+account you migrated from is not disabled nor changed in any way, so can still
+use it as it no migration was done. This behaviour may or may not match what other
+ActivityPub do.
 .Ss Migrating from Mastodon to snac
 User migration from different Fediverse instances is a pain in the ass
 that has been implemented everywhere as a kludgy afterthought. There is
