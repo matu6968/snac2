@@ -2948,7 +2948,7 @@ void enqueue_output_by_actor(snac *snac, const xs_dict *msg,
                             const xs_str *actor, int retries)
 /* enqueues an output message for an actor */
 {
-    xs *inbox = get_actor_inbox(actor);
+    xs *inbox = get_actor_inbox(actor, 1);
 
     if (!xs_is_null(inbox))
         enqueue_output(snac, msg, inbox, retries, 0);

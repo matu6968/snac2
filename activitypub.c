@@ -419,7 +419,7 @@ int send_to_inbox(snac *snac, const xs_str *inbox, const xs_dict *msg,
 }
 
 
-xs_str *get_actor_inbox(const char *actor)
+xs_str *get_actor_inbox(const char *actor, int shared)
 /* gets an actor's inbox */
 {
     xs *data = NULL;
@@ -427,7 +427,7 @@ xs_str *get_actor_inbox(const char *actor)
 
     if (valid_status(actor_request(NULL, actor, &data))) {
         /* try first endpoints/sharedInbox */
-        if ((v = xs_dict_get(data, "endpoints")))
+        if (shared && (v = xs_dict_get(data, "endpoints")))
             v = xs_dict_get(v, "sharedInbox");
 
         /* try then the regular inbox */
@@ -444,7 +444,7 @@ int send_to_actor(snac *snac, const char *actor, const xs_dict *msg,
 /* sends a message to an actor */
 {
     int status = HTTP_STATUS_BAD_REQUEST;
-    xs *inbox = get_actor_inbox(actor);
+    xs *inbox = get_actor_inbox(actor, 1);
 
     if (!xs_is_null(inbox))
         status = send_to_inbox(snac, inbox, msg, payload, p_size, timeout);
@@ -2290,7 +2290,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         /* iterate the recipients */
         c = 0;
         while (xs_list_next(rcpts, &actor, &c)) {
-            xs *inbox = get_actor_inbox(actor);
+            xs *inbox = get_actor_inbox(actor, 1);
 
             if (inbox != NULL) {
                 /* add to the set and, if it's not there, send message */
@@ -2699,14 +2699,18 @@ int migrate_account(snac *user)
     xs *move = msg_move(user, new_account);
     xs *fwers = follower_list(user);
 
-/*
-    xs_json_dump(move, 4, stdout);
-    printf("\n");
-    xs_json_dump(fwers, 4, stdout);
-    printf("\n");
-*/
+    snac_log(user, xs_fmt("WORK IN PROGRESS - ANYTHING CAN HAPPEN"));
 
-    printf("WORK IN PROGRESS - NOT YET USABLE (BUT HARMLESS)\n");
+    const char *actor;
+    xs_list_foreach(fwers, actor) {
+        /* get the actor inbox, excluding the shared one */
+        xs *inbox = get_actor_inbox(actor, 0);
+
+        if (xs_is_null(inbox))
+            snac_log(user, xs_fmt("migrate_account: cannot get inbox for actor %s", actor));
+        else
+            enqueue_output(user, move, inbox, 0, 0);
+    }
 
     return 0;
 }
