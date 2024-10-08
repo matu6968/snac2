@@ -1,6 +1,6 @@
 PREFIX=/usr/local
 PREFIX_MAN=$(PREFIX)/man
-CFLAGS?=-g -Wall -Wextra
+CFLAGS?=-g -Wall -Wextra -pedantic
 
 all: snac
 

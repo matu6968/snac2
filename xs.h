@@ -1070,7 +1070,7 @@ typedef struct {
     int size;           /* size of full dict (_XS_TYPE_SIZE) */
     int first;          /* first node for sequential search */
     int root;           /* root node for hashed search */
-    ditem_hdr ditems[]; /* the ditems */
+    /* a bunch of ditem_hdr and value follows */
 } dict_hdr;
 
 

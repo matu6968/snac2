@@ -66,7 +66,8 @@ void *xs_rnd_buf(void *buf, int size)
         /* fill with full integers */
         while (n--) {
             xs_rnd_int32_d(&s);
-            p = memcpy(p, &s, sizeof(s)) + sizeof(s);
+            memcpy(p, &s, sizeof(s));
+            p += sizeof(s);
         }
 
         if ((n = size % sizeof(s))) {

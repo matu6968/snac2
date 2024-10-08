@@ -17,7 +17,7 @@ xs_str *xs_url_dec(const char *str)
 
     while (*str) {
         if (*str == '%') {
-            int i;
+            unsigned int i;
 
             if (sscanf(str + 1, "%02x", &i) == 1) {
                 unsigned char uc = i;
