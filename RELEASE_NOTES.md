@@ -2,7 +2,7 @@
 
 ## 2.60
 
-New command-line option `export_csv`, that exports user data in a format suitable to be imported into Mastodon (specifically, `blocked_accounts.csv`, `bookmarks.csv`, `following_accounts.csv` and `lists.csv`).
+Migration from a snac account to a Mastodon one has been implemented. Please see `snac(8)` (the Administator Manual) for more information.
 
 Fixed a bug in argument parsing regarding some special characters (contributed by ndagestad).
 
