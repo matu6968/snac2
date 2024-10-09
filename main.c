@@ -298,6 +298,7 @@ int main(int argc, char *argv[])
             }
             else {
                 snac.config = xs_dict_set(snac.config, "alias", actor);
+                snac.config = xs_dict_set(snac.config, "alias_raw", url);
 
                 user_persist(&snac, 1);
             }

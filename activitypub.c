@@ -2701,8 +2701,6 @@ int migrate_account(snac *user)
     xs *move = msg_move(user, new_account);
     xs *fwers = follower_list(user);
 
-    snac_log(user, xs_fmt("WORK IN PROGRESS - ANYTHING CAN HAPPEN"));
-
     const char *actor;
     xs_list_foreach(fwers, actor) {
         /* get the actor inbox, excluding the shared one */
