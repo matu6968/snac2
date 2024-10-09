@@ -2,7 +2,7 @@
 
 ## 2.60
 
-Migration from a snac account to a Mastodon one has been implemented. Please see `snac(8)` (the Administator Manual) for more information.
+Migration from a snac account to a Mastodon one has been implemented. Please see `snac(8)` (the administrator manual) for more information.
 
 Fixed a bug in argument parsing regarding some special characters (contributed by ndagestad).
 
