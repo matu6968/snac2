@@ -2679,10 +2679,12 @@ int migrate_account(snac *user)
     xs *new_actor = NULL;
     int status;
 
-    if (!valid_status(status = actor_request(user, new_account, &new_actor))) {
+    if (!valid_status(status = activitypub_request(user, new_account, &new_actor))) {
         snac_log(user, xs_fmt("Cannot migrate: error requesting actor %s %d", new_account, status));
         return 1;
     }
+
+    actor_add(new_account, new_actor);
 
     const char *loaka = xs_dict_get(new_actor, "alsoKnownAs");
 
