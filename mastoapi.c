@@ -1667,12 +1667,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     else
     if (strcmp(cmd, "/v1/timelines/public") == 0) { /** **/
         /* the instance public timeline (public timelines for all users) */
-        snac *user = NULL;
-        if (logged_in)
-            user = &snac1;
-
         xs *ifn = instance_index_fn();
-        xs *out = mastoapi_timeline(user, args, ifn);
+        xs *out = mastoapi_timeline(NULL, args, ifn);
 
         *body  = xs_json_dumps(out, 4);
         *ctype = "application/json";
