@@ -18,9 +18,9 @@ Wrong level of message visibility when using the Mastodon API: https://codeberg.
 
 ## Wishlist
 
-Implement account migration from Mastodon to snac.
+Mastoapi: implement /v1/conversations.
 
-Implement account migration from snac to Mastodon.
+Implement account migration from Mastodon to snac.
 
 Implement following of hashtags (this is not trivial).
 
@@ -331,3 +331,7 @@ Show pinned posts in the 'Actor' `featured` property (https://codeberg.org/grunf
 Implement case-insensitive search all alphabets, not only latin (https://codeberg.org/grunfink/snac2/issues/192) (2024-08-27T07:29:10+0200).
 
 Add post drafts (2024-09-06T23:43:16+0200).
+
+Implement account migration from snac to Mastodon (2.60, 2024-10-11T04:25:54+0200).
+
+Fix mastoapi timelines/public, it only shows posts by the user (2.61, 2024-10-11T04:25:54+0200).
