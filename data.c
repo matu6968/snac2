@@ -337,6 +337,7 @@ int user_persist(snac *snac, int publish)
         rename(bfn, fn);
 
     history_del(snac, "timeline.html_");
+    timeline_touch(snac);
 
     if (publish) {
         xs *a_msg = msg_actor(snac);
