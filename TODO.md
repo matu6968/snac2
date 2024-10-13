@@ -335,3 +335,5 @@ Add post drafts (2024-09-06T23:43:16+0200).
 Implement account migration from snac to Mastodon (2.60, 2024-10-11T04:25:54+0200).
 
 Fix mastoapi timelines/public, it only shows posts by the user (2.61, 2024-10-11T04:25:54+0200).
+
+Fix over-zealous caching in /public after changing the bio (2.61, 2024-10-13T06:50:03+0200).
