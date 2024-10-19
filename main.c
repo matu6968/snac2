@@ -50,6 +50,7 @@ int usage(void)
     printf("export_csv {basedir} {uid}           Exports data as CSV files into current directory\n");
     printf("alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n");
     printf("migrate {basedir} {uid}              Migrates to the account defined as the alias\n");
+    printf("import_csv {basedir} {uid}           Imports data from CSV files into current directory\n");
 
     return 1;
 }
