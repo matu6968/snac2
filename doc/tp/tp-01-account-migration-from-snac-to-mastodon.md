@@ -1,4 +1,4 @@
-# Test Procedure - Account migration from snac to Mastodon
+# Test Procedure - 01. Account migration from snac to Mastodon
 
 ## Prerequisites
 
