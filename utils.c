@@ -745,6 +745,10 @@ void import_csv(snac *user)
                         limit(user, actor);
                         snac_log(user, xs_fmt("Limiting boosts from actor %s", actor));
                     }
+                    else {
+                        unlimit(user, actor);
+                        snac_log(user, xs_fmt("Unlimiting boosts from actor %s", actor));
+                    }
                 }
             }
         }
@@ -778,6 +782,30 @@ void import_csv(snac *user)
             xs *l = xs_strip_i(xs_readline(f));
 
             if (*l) {
+                xs *post = NULL;
+
+                if (!object_get(l, &post)) {
+                    if (!valid_status(activitypub_request(user, l, &post))) {
+                        snac_log(user, xs_fmt("Error getting object %s for bookmarking", l));
+                        continue;
+                    }
+                }
+
+                if (post == NULL)
+                    continue;
+
+                /* request the actor that created the post */
+                const char *actor = get_atto(post);
+
+                if (xs_type(actor) == XSTYPE_STRING)
+                    actor_request(user, actor, NULL);
+
+                object_add_ow(l, post);
+                timeline_add(user, l, post);
+
+                bookmark(user, l);
+
+                snac_log(user, xs_fmt("Bookmarked %s", l));
             }
         }
 
@@ -785,5 +813,4 @@ void import_csv(snac *user)
     }
     else
         snac_log(user, xs_fmt("Cannot open file %s", fn));
-
 }
