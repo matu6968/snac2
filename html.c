@@ -2662,7 +2662,9 @@ xs_str *html_notifications(snac *user, int skip, int show)
                         xs_html_text(L("New"))));
 
                 xs_html_add(body,
-                    noti_new);
+                    xs_html_tag("div",
+                        xs_html_attr("class", "snac-posts"),
+                        noti_new));
             }
 
             xs_html_add(noti_new,
@@ -2677,7 +2679,9 @@ xs_str *html_notifications(snac *user, int skip, int show)
                         xs_html_text(L("Already seen"))));
 
                 xs_html_add(body,
-                    noti_seen);
+                    xs_html_tag("div",
+                        xs_html_attr("class", "snac-posts"),
+                        noti_seen));
             }
 
             xs_html_add(noti_seen,
