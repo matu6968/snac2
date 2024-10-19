@@ -2085,6 +2085,8 @@ xs_list *list_timeline(snac *user, const char *list, int skip, int show)
 
     if (mtime(fn) > 0.0)
         l = index_list_desc(fn, skip, show);
+    else
+        l = xs_list_new();
 
     return l;
 }
