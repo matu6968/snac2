@@ -378,6 +378,9 @@ int timeline_request(snac *snac, const char **id, xs_str **wrk, int level)
                             /* store */
                             timeline_add(snac, nid, object);
 
+                            /* redistribute to lists for this user */
+                            list_distribute(snac, actor, object);
+
                             /* recurse! */
                             timeline_request(snac, &in_reply_to, NULL, level + 1);
                         }
