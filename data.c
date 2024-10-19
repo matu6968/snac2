@@ -2004,6 +2004,9 @@ xs_val *list_maint(snac *user, const char *list, int op)
             while (xs_list_next(lol, &v, &c)) {
                 if (strcmp(xs_list_get(v, 1), list) == 0) {
                     add = 0;
+
+                    l = xs_dup(xs_list_get(v, 0));
+
                     break;
                 }
             }

@@ -766,6 +766,26 @@ void import_csv(snac *user)
             xs *l = xs_strip_i(xs_readline(f));
 
             if (*l) {
+                xs *l2 = xs_split(l, ",");
+                const char *lname = xs_list_get(l2, 0);
+                const char *acct  = xs_list_get(l2, 1);
+
+                if (lname && acct) {
+                    /* create the list */
+                    xs *list_id = list_maint(user, lname, 1);
+
+                    xs *url = NULL;
+                    xs *uid = NULL;
+
+                    if (valid_status(webfinger_request(acct, &url, &uid))) {
+                        xs *actor_md5 = xs_md5_hex(url, strlen(url));
+
+                        list_content(user, list_id, actor_md5, 1);
+                        snac_log(user, xs_fmt("Added %s to list %s", url, lname));
+                    }
+                    else
+                        snac_log(user, xs_fmt("Webfinger error while adding %s to list %s", acct, lname));
+                }
             }
         }
 
