@@ -274,6 +274,11 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "import_csv") == 0) { /** **/
+        import_csv(&snac);
+        return 0;
+    }
+
     if (strcmp(cmd, "migrate") == 0) { /** **/
         return migrate_account(&snac);
     }

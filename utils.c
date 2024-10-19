@@ -673,5 +673,117 @@ void export_csv(snac *user)
 void import_csv(snac *user)
 /* import CSV files from Mastodon */
 {
-    (void)user;
+    FILE *f;
+    const char *fn;
+
+    fn = "blocked_accounts.csv";
+    if ((f = fopen(fn, "r")) != NULL) {
+        snac_log(user, xs_fmt("Importing from %s...", fn));
+
+        while (!feof(f)) {
+            xs *l = xs_strip_i(xs_readline(f));
+
+            if (*l) {
+                xs *url = NULL;
+                xs *uid = NULL;
+
+                if (valid_status(webfinger_request(l, &url, &uid))) {
+                    if (is_muted(user, url))
+                        snac_log(user, xs_fmt("Actor %s already MUTEd", url));
+                    else {
+                        mute(user, url);
+                        snac_log(user, xs_fmt("MUTEd actor %s", url));
+                    }
+                }
+                else
+                    snac_log(user, xs_fmt("Webfinger error for account %s", l));
+            }
+        }
+
+        fclose(f);
+    }
+    else
+        snac_log(user, xs_fmt("Cannot open file %s", fn));
+
+    fn = "following_accounts.csv";
+    if ((f = fopen(fn, "r")) != NULL) {
+        snac_log(user, xs_fmt("Importing from %s...", fn));
+
+        while (!feof(f)) {
+            xs *l = xs_strip_i(xs_readline(f));
+
+            if (*l) {
+                xs *l2 = xs_split(l, ",");
+                const char *acct = xs_list_get(l2, 0);
+                const char *show = xs_list_get(l2, 1);
+
+                if (acct) {
+                    /* not a valid account? skip (probably the CSV header) */
+                    if (strchr(acct, '@') == NULL)
+                        continue;
+
+                    xs *msg = msg_follow(user, acct);
+
+                    if (msg == NULL) {
+                        snac_log(user, xs_fmt("Cannot follow %s -- server down?", acct));
+                        continue;
+                    }
+
+                    const char *actor = xs_dict_get(msg, "object");
+
+                    if (following_check(user, actor))
+                        snac_log(user, xs_fmt("Actor %s already followed", actor));
+                    else {
+                        following_add(user, actor, msg);
+
+                        enqueue_output_by_actor(user, msg, actor, 0);
+
+                        snac_log(user, xs_fmt("Following %s", actor));
+                    }
+
+                    if (show && strcmp(show, "false") == 0) {
+                        limit(user, actor);
+                        snac_log(user, xs_fmt("Limiting boosts from actor %s", actor));
+                    }
+                }
+            }
+        }
+
+        fclose(f);
+    }
+    else
+        snac_log(user, xs_fmt("Cannot open file %s", fn));
+
+    fn = "lists.csv";
+    if ((f = fopen(fn, "r")) != NULL) {
+        snac_log(user, xs_fmt("Importing from %s...", fn));
+
+        while (!feof(f)) {
+            xs *l = xs_strip_i(xs_readline(f));
+
+            if (*l) {
+            }
+        }
+
+        fclose(f);
+    }
+    else
+        snac_log(user, xs_fmt("Cannot open file %s", fn));
+
+    fn = "bookmarks.csv";
+    if ((f = fopen(fn, "r")) != NULL) {
+        snac_log(user, xs_fmt("Importing from %s...", fn));
+
+        while (!feof(f)) {
+            xs *l = xs_strip_i(xs_readline(f));
+
+            if (*l) {
+            }
+        }
+
+        fclose(f);
+    }
+    else
+        snac_log(user, xs_fmt("Cannot open file %s", fn));
+
 }
