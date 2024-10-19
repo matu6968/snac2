@@ -1894,6 +1894,7 @@ void tag_index(const char *id, const xs_dict *obj)
 /* update the tag indexes for this object */
 {
     const xs_list *tags = xs_dict_get(obj, "tag");
+    xs *md5_id = xs_md5_hex(id, strlen(id));
 
     if (is_msg_public(obj) && xs_type(tags) == XSTYPE_LIST && xs_list_len(tags) > 0) {
         xs *g_tag_dir = xs_fmt("%s/tag", srv_basedir);
@@ -1920,7 +1921,9 @@ void tag_index(const char *id, const xs_dict *obj)
                 mkdirx(tag_dir);
 
                 xs *g_tag_idx = xs_fmt("%s/%s.idx", tag_dir, md5_tag);
-                index_add(g_tag_idx, id);
+
+                if (!index_in_md5(g_tag_idx, md5_id))
+                    index_add_md5(g_tag_idx, md5_id);
 
                 FILE *f;
                 xs *g_tag_name = xs_replace(g_tag_idx, ".idx", ".tag");
