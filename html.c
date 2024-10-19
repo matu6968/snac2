@@ -2259,19 +2259,19 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
         }
     }
 
-    if (title) {
-        xs_html_add(body,
-            xs_html_tag("h2",
-                xs_html_attr("class", "snac-header"),
-                xs_html_text(title)));
-    }
-
     xs_html_add(body,
         xs_html_tag("a",
             xs_html_attr("name", "snac-posts")));
 
     xs_html *posts = xs_html_tag("div",
         xs_html_attr("class", "snac-posts"));
+
+    if (title) {
+        xs_html_add(posts,
+            xs_html_tag("h2",
+                xs_html_attr("class", "snac-header"),
+                xs_html_text(title)));
+    }
 
     xs_html_add(body,
         posts);
