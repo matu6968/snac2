@@ -1772,7 +1772,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         if (xs_type(obj_id) == XSTYPE_DICT)
             obj_id = xs_dict_get(obj_id, "id");
 
-        if (!object_here(obj_id)) {
+        if (xs_is_null(obj_id) || !object_here(obj_id)) {
             srv_debug(1, xs_fmt("dropped 'Delete' message from unknown object '%s'", obj_id));
             return -1;
         }
@@ -1871,6 +1871,12 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     }
 
     if (strcmp(type, "Follow") == 0) { /** **/
+        const char *id = xs_dict_get(msg, "id");
+
+        if (xs_is_null(id)) {
+            snac_log(snac, xs_fmt("malformed message: no 'id' field"));
+        }
+        else
         if (!follower_check(snac, actor)) {
             /* ensure the actor object is here */
             if (!object_here(actor)) {
@@ -1890,7 +1896,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                 f_msg = xs_dict_set(f_msg, "published", date);
             }
 
-            timeline_add(snac, xs_dict_get(f_msg, "id"), f_msg);
+            timeline_add(snac, id, f_msg);
 
             follower_add(snac, actor);
 
@@ -1988,6 +1994,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         if (strcmp(utype, "Question") == 0) { /**  **/
             const char *id = xs_dict_get(object, "id");
 
+            if (xs_is_null(id))
+                snac_log(snac, xs_fmt("malformed message: no 'id' field"));
+            else
             if (timeline_add(snac, id, object))
                 snac_log(snac, xs_fmt("new 'Question' %s %s", actor, id));
         }
@@ -1995,6 +2004,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         if (strcmp(utype, "Video") == 0) { /** **/
             const char *id = xs_dict_get(object, "id");
 
+            if (xs_is_null(id))
+                snac_log(snac, xs_fmt("malformed message: no 'id' field"));
+            else
             if (timeline_add(snac, id, object))
                 snac_log(snac, xs_fmt("new 'Video' %s %s", actor, id));
         }
@@ -2037,10 +2049,13 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         if (xs_type(object) == XSTYPE_DICT)
             object = xs_dict_get(object, "id");
 
+        if (xs_is_null(object))
+            snac_log(snac, xs_fmt("malformed message: no 'id' field"));
+        else
         if (timeline_admire(snac, object, actor, 1) == HTTP_STATUS_CREATED)
             snac_log(snac, xs_fmt("new '%s' %s %s", type, actor, object));
         else
-            snac_log(snac, xs_fmt("repeated 'Like' from %s to %s", actor, object));
+            snac_log(snac, xs_fmt("repeated '%s' from %s to %s", type, actor, object));
 
         do_notify = 1;
     }
@@ -2049,6 +2064,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         if (xs_type(object) == XSTYPE_DICT)
             object = xs_dict_get(object, "id");
 
+        if (xs_is_null(object))
+            snac_log(snac, xs_fmt("malformed message: no 'id' field"));
+        else
         if (is_muted(snac, actor) && !xs_startswith(object, snac->actor))
             snac_log(snac, xs_fmt("dropped 'Announce' from muted actor %s", actor));
         else
@@ -2101,6 +2119,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         if (xs_match(utype, "Note|Page|Article|Video")) { /** **/
             const char *id = xs_dict_get(object, "id");
 
+            if (xs_is_null(id))
+                snac_log(snac, xs_fmt("malformed message: no 'id' field"));
+            else
             if (object_here(id)) {
                 object_add_ow(id, object);
                 timeline_touch(snac);
@@ -2115,13 +2136,17 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             const char *id     = xs_dict_get(object, "id");
             const char *closed = xs_dict_get(object, "closed");
 
-            object_add_ow(id, object);
-            timeline_touch(snac);
+            if (xs_is_null(id))
+                snac_log(snac, xs_fmt("malformed message: no 'id' field"));
+            else {
+                object_add_ow(id, object);
+                timeline_touch(snac);
 
-            snac_log(snac, xs_fmt("%s poll %s", closed == NULL ? "updated" : "closed", id));
+                snac_log(snac, xs_fmt("%s poll %s", closed == NULL ? "updated" : "closed", id));
 
-            if (closed != NULL)
-                do_notify = 1;
+                if (closed != NULL)
+                    do_notify = 1;
+            }
         }
         else {
             srv_archive_error("unsupported_update", "unsupported_update", req, msg);
@@ -2134,6 +2159,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         if (xs_type(object) == XSTYPE_DICT)
             object = xs_dict_get(object, "id");
 
+        if (xs_is_null(object))
+            snac_log(snac, xs_fmt("malformed message: no 'id' field"));
+        else
         if (object_here(object)) {
             timeline_del(snac, object);
             snac_debug(snac, 1, xs_fmt("new 'Delete' %s %s", actor, object));
@@ -2147,11 +2175,15 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     }
     else
     if (strcmp(type, "Ping") == 0) { /** **/
+        const char *id = xs_dict_get(msg, "id");
+
         snac_log(snac, xs_fmt("'Ping' requested from %s", actor));
 
-        xs *rsp = msg_pong(snac, actor, xs_dict_get(msg, "id"));
+        if (!xs_is_null(id)) {
+            xs *rsp = msg_pong(snac, actor, id);
 
-        enqueue_output_by_actor(snac, rsp, actor, 0);
+            enqueue_output_by_actor(snac, rsp, actor, 0);
+        }
     }
     else
     if (strcmp(type, "Block") == 0) { /** **/
