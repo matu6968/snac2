@@ -361,12 +361,13 @@ xs_html *html_note(snac *user, const char *summary,
 
     xs_html_add(form,
         xs_html_tag("p", NULL),
-        xs_html_attr("title", L("Don't send, but store as a draft")),
-        xs_html_text(L("Draft:")),
-        xs_html_sctag("input",
-            xs_html_attr("type", "checkbox"),
-            xs_html_attr("name", "is_draft"),
-            xs_html_attr(is_draft ? "checked" : "", NULL)));
+        xs_html_tag("span",
+            xs_html_attr("title", L("Don't send, but store as a draft")),
+            xs_html_text(L("Draft:")),
+            xs_html_sctag("input",
+                xs_html_attr("type", "checkbox"),
+                xs_html_attr("name", "is_draft"),
+                xs_html_attr(is_draft ? "checked" : "", NULL))));
 
     if (edit_id)
         xs_html_add(form,
