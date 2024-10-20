@@ -461,33 +461,78 @@ Also, please take note that the
 .Nm
 account you migrated from is not disabled nor changed in any way, so can still
 use it as it no migration was done. This behaviour may or may not match what other
-ActivityPub do.
+ActivityPub implementations do.
 .Ss Migrating from Mastodon to snac
-User migration from different Fediverse instances is a pain in the ass
-that has been implemented everywhere as a kludgy afterthought. There is
-not much that can be done, other than importing the list of people you
-follow to your new
+Since version 2.61, you can migrate accounts on other ActivityPub instances to your
 .Nm
-account.
+one. What is described here is the process to do it from
+Mastodon; on other software implementations, it will surely be somewhat different. All
+the steps regarding your
+.Nm
+account must be done from the command line. For the sake of the example, let's
+say that you want to migrate from an account named @origin@mastodon.example.com to
+another one named @destination@snac.example.org and that both of them
+already exist. I've used this very informative page as a guideline:
 .Pp
-To do this, download the user's list of accounts being followed (in CSV
-format) from the Mastodon web interface and execute this:
+.Lk https://fedi.tips/transferring-your-mastodon-account-to-another-server/
+.Pp
+
+1. On the web interface of your origin Mastodon account, click on
+.Vt Preferences
+>
+.Vt Import and Export
+>
+.Vt Export
+and download the CSV files under the "Follows", "Lists", "You Block" and "Bookmarks"
+labels. After being downloaded, you should find the following files on your download
+directory:
+.Pa bookmarks.csv ,
+.Pa blocked_accounts.csv ,
+.Pa lists.csv , and
+.Pa following_accounts.csv .
+.Pp
+2. From the directory where those files are stored, run
 .Bd -literal -offset indent
-awk -F, 'NR > 1 { print $1 }' /path/to/following_accounts.csv | \\
-xargs -n 1 snac follow $SNAC_BASEDIR $SNAC_USER
+snac import_csv $SNAC_BASEDIR destination
 .Ed
+.Pp
+This process may take some time because it depends on the availability / responsiveness
+of all the ActivityPub servers involved (webfinger, accounts, posts, etc.). Also, if
+.Nm
+complains that it can't find any of these files, please check that they really are
+in the current directory and that their names match exactly. Some of them may be empty
+(for example, if you didn't create any list) and that's fine.
+.Pp
+3. Again on your
+.Nm
+server, run
+.Bd -literal -offset indent
+snac alias $SNAC_BASEDIR destination "@origin@mastodon.example.com"
+.Ed
+.Pp
+Check that no errors were shown. If they do, the origin Mastodon server may be
+busy or down. Try again later.
+.Pp
+4. Move back to the web interface of the origin Mastodon account, go to
+.Vt Preferences
+>
+.Vt Account
+>
+.Vt Move To A Different Account ,
+and follow the instructions there. Set the handle of the new account to your
+.Nm
+one; as of our example, @destination@snac.example.org. This will start the migration
+process: it's the duty of your old Mastodon instance to send an automatic
+.Vt Move
+message to all your followers in their respective instances. According to the great
+document I linked above, this process may or may not start immediately, and its
+success may depend heavily on how all the servers involved behave. Just cross your
+fingers and hope for the best.
+.Pp
 .Ss Instance blocking
 Full instances can be blocked. This operation must be done from
 the command-line tool. See
 .Xr snac 1 .
-.Ss Other Considerations
-.Nm
-stores all the messages it receives as JSON files, which are usually
-bloated and filled with redundant information. Using a filesystem with
-file compression enabled (like btrfs or zfs) will probably be a good
-choice to store the
-.Nm
-data storage into.
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev DEBUG

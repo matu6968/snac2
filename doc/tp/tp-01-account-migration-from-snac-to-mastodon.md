@@ -4,7 +4,7 @@
 
 - A snac account in your server (from now, the *origin* account).
 - A Mastodon account, already created on any public server (from now, the *destination* account).
-- 3 other Fediverse accounts, already created on public servers (from now, the *followers* accounts). These accounts must be from Mastodon instances (or, optionally, from other implementations where the `Move` activity is known to be supported).
+- 3 other Fediverse accounts, already created on public servers (from now, the *follower* accounts). These accounts must be from Mastodon instances (or, optionally, from other implementations where the `Move` activity is known to be supported).
 
 ## Steps
 
