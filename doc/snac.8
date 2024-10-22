@@ -497,11 +497,12 @@ snac import_csv $SNAC_BASEDIR destination
 .Ed
 .Pp
 This process may take some time because it depends on the availability / responsiveness
-of all the ActivityPub servers involved (webfinger, accounts, posts, etc.). Also, if
+of all the ActivityPub servers involved (webfinger, accounts, posts, etc.). Some errors
+may be transient and retried later. Also, if
 .Nm
-complains that it can't find any of these files, please check that they really are
-in the current directory and that their names match exactly. Some of them may be empty
-(for example, if you didn't create any list) and that's fine.
+complains that it can't find any of these files, please check that they are really
+stored in the current directory and that their names match exactly. Some of them may be
+empty (for example, if you didn't create any list) and that's fine.
 .Pp
 3. Again on your
 .Nm
@@ -511,7 +512,7 @@ snac alias $SNAC_BASEDIR destination "@origin@mastodon.example.com"
 .Ed
 .Pp
 Check that no errors were shown. If they do, the origin Mastodon server may be
-busy or down. Try again later.
+busy or down; try again later.
 .Pp
 4. Move back to the web interface of the origin Mastodon account, go to
 .Vt Preferences
@@ -524,10 +525,11 @@ and follow the instructions there. Set the handle of the new account to your
 one; as of our example, @destination@snac.example.org. This will start the migration
 process: it's the duty of your old Mastodon instance to send an automatic
 .Vt Move
-message to all your followers in their respective instances. According to the great
-document I linked above, this process may or may not start immediately, and its
-success may depend heavily on how all the servers involved behave. Just cross your
-fingers and hope for the best.
+message to every one of your followers. Eventually, you will start receiving follow notifications to your
+.Nm
+account from all accounts that followed the Mastodon one. According to the great document
+I linked above, this process may or may not start immediately, and its success may depend
+heavily on how all the servers involved behave. Just cross your fingers and hope for the best.
 .Pp
 .Ss Instance blocking
 Full instances can be blocked. This operation must be done from
