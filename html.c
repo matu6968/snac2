@@ -2562,6 +2562,10 @@ xs_str *html_notifications(snac *user, int skip, int show)
     xs_html *noti_new = NULL;
     xs_html *noti_seen = NULL;
 
+    xs_html *posts = xs_html_tag("div",
+        xs_html_attr("name", "snac-posts"));
+    xs_html_add(body, posts);
+
     xs_list *p = n_list;
     const xs_str *v;
     while (xs_list_iter(&p, &v)) {
@@ -2661,10 +2665,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
                         xs_html_attr("class", "snac-header"),
                         xs_html_text(L("New"))));
 
-                xs_html_add(body,
-                    xs_html_tag("div",
-                        xs_html_attr("class", "snac-posts"),
-                        noti_new));
+                xs_html_add(posts,
+                    noti_new);
             }
 
             xs_html_add(noti_new,
@@ -2678,10 +2680,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
                         xs_html_attr("class", "snac-header"),
                         xs_html_text(L("Already seen"))));
 
-                xs_html_add(body,
-                    xs_html_tag("div",
-                        xs_html_attr("class", "snac-posts"),
-                        noti_seen));
+                xs_html_add(posts,
+                    noti_seen);
             }
 
             xs_html_add(noti_seen,
