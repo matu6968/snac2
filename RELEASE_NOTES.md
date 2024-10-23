@@ -1,5 +1,15 @@
 # Release Notes
 
+## 2.61
+
+Migration from a Mastodon account to a snac one has been implemented. Please see `snac(8)` (the administrator manual) for more information.
+
+Mastodon API: fixed `timelines/public` (it was showing less posts that it should).
+
+Fixed over-zealous caching to the public timeline.
+
+Some HTML tweaks and fixes to the web interface.
+
 ## 2.60
 
 Migration from a snac account to a Mastodon one has been implemented. Please see `snac(8)` (the administrator manual) for more information.
