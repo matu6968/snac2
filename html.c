@@ -2563,7 +2563,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
     xs_html *noti_seen = NULL;
 
     xs_html *posts = xs_html_tag("div",
-        xs_html_attr("name", "snac-posts"));
+        xs_html_attr("class", "snac-posts"));
     xs_html_add(body, posts);
 
     xs_list *p = n_list;
