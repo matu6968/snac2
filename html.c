@@ -2579,6 +2579,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
         const char *utype = xs_dict_get(noti, "utype");
         const char *id    = xs_dict_get(noti, "objid");
         const char *date  = xs_dict_get(noti, "date");
+        xs *wrk = NULL;
 
         if (xs_is_null(id))
             continue;
@@ -2605,6 +2606,15 @@ xs_str *html_notifications(snac *user, int skip, int show)
         else
         if (strcmp(type, "Undo") == 0 && strcmp(utype, "Follow") == 0)
             label = L("Unfollow");
+        else
+        if (strcmp(type, "EmojiReact") == 0) {
+            const char *content = xs_dict_get_path(noti, "msg.content");
+
+            if (xs_type(content) == XSTYPE_STRING) {
+                wrk = xs_fmt("%s (%s)", type, content);
+                label = wrk;
+            }
+        }
 
         xs *s_date = xs_crop_i(xs_dup(date), 0, 10);
 
