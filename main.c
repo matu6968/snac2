@@ -30,6 +30,7 @@ int usage(void)
     printf("follow {basedir} {uid} {actor}       Follows an actor\n");
     printf("unfollow {basedir} {uid} {actor}     Unfollows an actor\n");
     printf("request {basedir} {uid} {url}        Requests an object\n");
+    printf("insert {basedir} {uid} {url}         Requests an object and inserts it into the timeline\n");
     printf("actor {basedir} [{uid}] {url}        Requests an actor\n");
     printf("note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n");
     printf("boost|announce {basedir} {uid} {url} Boosts (announces) a post\n");
@@ -541,6 +542,23 @@ int main(int argc, char *argv[])
 
         if (data != NULL) {
             xs_json_dump(data, 4, stdout);
+        }
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "insert") == 0) { /** **/
+        int status;
+        xs *data = NULL;
+
+        status = activitypub_request(&snac, url, &data);
+
+        printf("status: %d\n", status);
+
+        if (data != NULL) {
+            xs_json_dump(data, 4, stdout);
+            enqueue_actor_refresh(&snac, xs_dict_get(data, "attributedTo"), 0);
+            timeline_add(&snac, url, data);
         }
 
         return 0;
