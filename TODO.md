@@ -18,9 +18,9 @@ Wrong level of message visibility when using the Mastodon API: https://codeberg.
 
 ## Wishlist
 
-Mastoapi: implement /v1/conversations.
+The instance timeline should also show boosts from users.
 
-Implement account migration from Mastodon to snac.
+Mastoapi: implement /v1/conversations.
 
 Implement following of hashtags (this is not trivial).
 
@@ -337,5 +337,7 @@ Implement account migration from snac to Mastodon (2.60, 2024-10-11T04:25:54+020
 Fix mastoapi timelines/public, it only shows posts by the user (2.61, 2024-10-11T04:25:54+0200).
 
 Fix over-zealous caching in /public after changing the bio (2.61, 2024-10-13T06:50:03+0200).
+
+Implement account migration from Mastodon to snac (2.61, 2024-10-13T06:50:03+0200).
 
 Don't show image attachments which URLs are already in the post content (2.62, 2024-10-27T09:03:49+0100).
