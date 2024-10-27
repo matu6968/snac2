@@ -1934,6 +1934,8 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         xs_html_add(snac_content,
             content_attachments);
 
+        const char *content = xs_dict_get(msg, "content");
+
         int c = 0;
         const xs_dict *a;
         while (xs_list_next(attach, &a, &c)) {
@@ -1942,6 +1944,11 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             const char *name = xs_dict_get(a, "name");
 
             if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0) {
+
+                /* if this image is already in the post content, skip */
+                if (xs_str_in(content, href) != -1)
+                    continue;
+
                 xs_html_add(content_attachments,
                     xs_html_tag("a",
                         xs_html_attr("href", href),
