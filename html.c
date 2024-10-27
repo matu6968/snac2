@@ -1943,12 +1943,11 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             const char *href = xs_dict_get(a, "href");
             const char *name = xs_dict_get(a, "name");
 
+            /* if this image is already in the post content, skip */
+            if (xs_str_in(content, href) != -1)
+                continue;
+
             if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0) {
-
-                /* if this image is already in the post content, skip */
-                if (xs_str_in(content, href) != -1)
-                    continue;
-
                 xs_html_add(content_attachments,
                     xs_html_tag("a",
                         xs_html_attr("href", href),
