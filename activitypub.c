@@ -760,7 +760,7 @@ xs_str *process_tags(snac *snac, const char *content, xs_list **tag)
 
                     tl = xs_list_append(tl, d);
 
-                    link = xs_fmt("<a href=\"%s\" class=\"u-url h-card mention\">%s</a>", actor, n);
+                    link = xs_fmt("<span class=\"h-card\"><a href=\"%s\" class=\"u-url mention\">%s</a></span>", actor, n);
                 }
 
                 if (!xs_is_null(link))
