@@ -1016,6 +1016,7 @@ xs_html *html_top_controls(snac *snac)
     const xs_val *bot       = xs_dict_get(snac->config, "bot");
     const xs_val *a_private = xs_dict_get(snac->config, "private");
     const xs_val *auto_boost = xs_dict_get(snac->config, "auto_boost");
+    const xs_val *coll_thrds = xs_dict_get(snac->config, "collapse_threads");
 
     xs *metadata = xs_str_new(NULL);
     const xs_dict *md = xs_dict_get(snac->config, "metadata");
@@ -1169,6 +1170,15 @@ xs_html *html_top_controls(snac *snac)
                         xs_html_attr("for", "private"),
                         xs_html_text(L("This account is private "
                             "(posts are not shown through the web)")))),
+                xs_html_tag("p",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "checkbox"),
+                        xs_html_attr("name", "collapse_threads"),
+                        xs_html_attr("id",   "collapse_threads"),
+                        xs_html_attr(xs_is_true(coll_thrds) ? "checked" : "", NULL)),
+                    xs_html_tag("label",
+                        xs_html_attr("for", "collapse_threads"),
+                        xs_html_text(L("Collapse top threads by default")))),
                 xs_html_tag("p",
                     xs_html_text(L("Profile metadata (key=value pairs in each line):")),
                     xs_html_sctag("br", NULL),
