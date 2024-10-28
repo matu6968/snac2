@@ -1453,6 +1453,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     const char *actor;
     const char *v;
     int has_title = 0;
+    int collapse_threads = 0;
 
     /* do not show non-public messages in the public timeline */
     if ((read_only || !user) && !is_msg_public(msg))
@@ -2053,7 +2054,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
         if (left) {
             xs_html *ch_details = xs_html_tag("details",
-                xs_html_attr("open", NULL),
+                xs_html_attr(collapse_threads ? "" : "open", NULL),
                 xs_html_tag("summary",
                     xs_html_text("...")));
 
