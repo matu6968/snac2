@@ -3595,6 +3595,10 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "auto_boost", xs_stock(XSTYPE_TRUE));
         else
             snac.config = xs_dict_set(snac.config, "auto_boost", xs_stock(XSTYPE_FALSE));
+        if ((v = xs_dict_get(p_vars, "collapse_threads")) != NULL && strcmp(v, "on") == 0)
+            snac.config = xs_dict_set(snac.config, "collapse_threads", xs_stock(XSTYPE_TRUE));
+        else
+            snac.config = xs_dict_set(snac.config, "collapse_threads", xs_stock(XSTYPE_FALSE));
 
         if ((v = xs_dict_get(p_vars, "metadata")) != NULL) {
             /* split the metadata and store it as a dict */
