@@ -341,3 +341,5 @@ Fix over-zealous caching in /public after changing the bio (2.61, 2024-10-13T06:
 Implement account migration from Mastodon to snac (2.61, 2024-10-13T06:50:03+0200).
 
 Don't show image attachments which URLs are already in the post content (2.62, 2024-10-27T09:03:49+0100).
+
+Add a user option to always collapse first level threads (2.62, 2024-10-28T14:50:42+0100).
