@@ -1944,7 +1944,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             const char *name = xs_dict_get(a, "name");
 
             /* if this image is already in the post content, skip */
-            if (xs_str_in(content, href) != -1)
+            if (content && xs_str_in(content, href) != -1)
                 continue;
 
             if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0) {
