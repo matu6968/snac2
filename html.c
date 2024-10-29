@@ -355,7 +355,7 @@ xs_html *html_note(snac *user, const char *summary,
             xs_html_tag("p", NULL),
             xs_html_text(L("Reply to (URL): ")),
             xs_html_sctag("input",
-                xs_html_attr("type",     "text"),
+                xs_html_attr("type",     "url"),
                 xs_html_attr("name",     "in_reply_to"),
                 xs_html_attr("placeholder", "Optional URL to reply to")));
 
@@ -959,7 +959,7 @@ xs_html *html_top_controls(snac *snac)
                 xs_html_attr("method",       "post"),
                 xs_html_attr("action",       ops_action),
                 xs_html_sctag("input",
-                    xs_html_attr("type",     "text"),
+                    xs_html_attr("type",     "url"),
                     xs_html_attr("name",     "id"),
                     xs_html_attr("required", "required"),
                     xs_html_attr("placeholder", "https:/" "/fedi.example.com/bob/...")),
