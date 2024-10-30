@@ -2190,12 +2190,13 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     }
     else
     if (strcmp(type, "Block") == 0) { /** **/
-        snac_log(snac, xs_fmt("'Block' received from %s", actor));
+        snac_debug(snac, 1, xs_fmt("'Block' received from %s", actor));
 
         /* should we MUTE the actor back? */
         /* mute(snac, actor); */
 
-        do_notify = 1;
+        if (!xs_is_true(xs_dict_get(srv_config, "disable_block_notifications")))
+            do_notify = 1;
     }
     else
     if (strcmp(type, "Move") == 0) { /** **/
