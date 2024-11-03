@@ -10,13 +10,13 @@ Important: deleting a follower should do more that just delete the object, see h
 
 Editing / Updating a post does not index newly added hashtags.
 
-The Mastodon official app crashes when hitting the reply button.
-
-The Mastodon official app crashes (or gives a ownVotes is null error) when trying to show polls.
-
 Wrong level of message visibility when using the Mastodon API: https://codeberg.org/grunfink/snac2/issues/200#issuecomment-2351042
 
+Investigate the problem with boosts inside the same instance (see https://codeberg.org/grunfink/snac2/issues/214).
+
 ## Wishlist
+
+Add support for subscribing and posting to relays (see https://codeberg.org/grunfink/snac2/issues/216 for more information).
 
 The instance timeline should also show boosts from users.
 
@@ -40,9 +40,9 @@ Add support for /authorize_interaction (whatever it is).
 
 Add a list of hashtags to drop.
 
-The 'history' pages are just monthly HTML snapshots of the local timeline. This is ok and cheap and easy, but is problematic if you e.g. intentionally delete a post because it will remain there in the history forever. If you activate local timeline purging, purged entries will remain in the history as 'ghosts', which may or may not be what the user wants.
+Take a look at crashes in the brittle Mastodon official app (crashes when hitting the reply button, crashes or 'ownVotes is null' errors when trying to show polls).
 
-Implement bulleted lists. Mastodon is crap and won't show them, but other implementations (Friendica, Pleroma) will do.
+The 'history' pages are just monthly HTML snapshots of the local timeline. This is ok and cheap and easy, but is problematic if you e.g. intentionally delete a post because it will remain there in the history forever. If you activate local timeline purging, purged entries will remain in the history as 'ghosts', which may or may not be what the user wants.
 
 The actual storage system wastes too much disk space (lots of small files that really consume 4k of storage). Consider alternatives.
 
