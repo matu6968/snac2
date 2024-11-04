@@ -16,6 +16,8 @@ Investigate the problem with boosts inside the same instance (see https://codebe
 
 ## Wishlist
 
+Implement Proxying for Media Links to Enhance User Privacy (see https://codeberg.org/grunfink/snac2/issues/219 for more information).
+
 Add support for subscribing and posting to relays (see https://codeberg.org/grunfink/snac2/issues/216 for more information).
 
 The instance timeline should also show boosts from users.
