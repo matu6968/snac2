@@ -2,17 +2,17 @@
 
 ## Open
 
-Unfollowing lemmy groups gets rejected with an http status of 400.
-
-Unfollowing guppe groups seems to work (http status of 200), but messages continue to arrive as if it didn't.
-
-Important: deleting a follower should do more that just delete the object, see https://codeberg.org/grunfink/snac2/issues/43#issuecomment-956721
+Investigate the problem with boosts inside the same instance (see https://codeberg.org/grunfink/snac2/issues/214).
 
 Editing / Updating a post does not index newly added hashtags.
 
 Wrong level of message visibility when using the Mastodon API: https://codeberg.org/grunfink/snac2/issues/200#issuecomment-2351042
 
-Investigate the problem with boosts inside the same instance (see https://codeberg.org/grunfink/snac2/issues/214).
+Unfollowing lemmy groups gets rejected with an http status of 400.
+
+Unfollowing guppe groups seems to work (http status of 200), but messages continue to arrive as if it didn't.
+
+Important: deleting a follower should do more that just delete the object, see https://codeberg.org/grunfink/snac2/issues/43#issuecomment-956721
 
 ## Wishlist
 
