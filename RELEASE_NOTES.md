@@ -6,6 +6,8 @@ Added a new user option to collapse top level threads by default.
 
 Added a new `disable_block_notifications` boolean field to `server.json` to disable the notifications of Block activities.
 
+Added a new `strict_public_timelines` boolean field to `server.json` to only show an account's posts and boosts (no trees) in public timelines.
+
 Fixed repeated images in posts from some implementations (those that include an image both as an attachment and as an `<img>` tag inside the post content).
 
 Added a small HTML/CSS tweak to improve post previews from some implementations (contributed by nyanide).
