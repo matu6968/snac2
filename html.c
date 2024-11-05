@@ -2168,6 +2168,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     xs_list *p = (xs_list *)list;
     const char *v;
     double t = ftime();
+    int hide_children = xs_is_true(xs_dict_get(srv_config, "strict_public_timelines"));
 
     xs *desc = NULL;
     xs *alternate = NULL;
@@ -2329,7 +2330,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
             }
         }
 
-        xs_html *entry = html_entry(user, msg, read_only, 0, v, user ? 0 : 1);
+        xs_html *entry = html_entry(user, msg, read_only, 0, v, (user && !hide_children) ? 0 : 1);
 
         if (entry != NULL)
             xs_html_add(posts,
@@ -2844,8 +2845,17 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                         xs_dict_get(req, "if-none-match"), etag);
         }
         else {
-            xs *list = timeline_list(&snac, "public", skip, show);
-            xs *next = timeline_list(&snac, "public", skip + show, 1);
+            xs *list = NULL;
+            xs *next = NULL;
+
+            if (xs_is_true(xs_dict_get(srv_config, "strict_public_timelines"))) {
+                list = timeline_simple_list(&snac, "public", skip, show);
+                next = timeline_simple_list(&snac, "public", skip + show, 1);
+            }
+            else {
+                list = timeline_list(&snac, "public", skip, show);
+                next = timeline_list(&snac, "public", skip + show, 1);
+            }
 
             xs *pins = pinned_list(&snac);
             pins = xs_list_cat(pins, list);
