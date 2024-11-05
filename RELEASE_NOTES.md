@@ -1,5 +1,21 @@
 # Release Notes
 
+## 2.62
+
+Added a new user option to collapse top level threads by default.
+
+Added a new `disable_block_notifications` boolean field to `server.json` to disable the notifications of Block activities.
+
+Fixed repeated images in posts from some implementations (those that include an image both as an attachment and as an `<img>` tag inside the post content).
+
+Added a small HTML/CSS tweak to improve post previews from some implementations (contributed by nyanide).
+
+Notifications for `EmojiReact` activities now show the emoji.
+
+New command-line action `insert`, to insert a post by its URL in a user's timeline.
+
+Fixed bad processing/rendering of URLs with two or more @ symbols.
+
 ## 2.61
 
 Migration from a Mastodon account to a snac one has been implemented. Please see `snac(8)` (the administrator manual) for more information.
