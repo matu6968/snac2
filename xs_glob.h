@@ -4,21 +4,22 @@
 
 #define _XS_GLOB_H
 
-xs_list *xs_glob_n(const char *spec, int basename, int reverse, int max);
-#define xs_glob(spec, basename, reverse) xs_glob_n(spec, basename, reverse, XS_ALL)
+xs_list *xs_glob_n(const char *spec, int basename, int reverse, int mark, int max);
+#define xs_glob(spec, basename, reverse) xs_glob_n(spec, basename, reverse, 0, XS_ALL)
+#define xs_glob_m(spec, basename, reverse) xs_glob_n(spec, basename, reverse, 1, XS_ALL)
 
 
 #ifdef XS_IMPLEMENTATION
 
 #include <glob.h>
 
-xs_list *xs_glob_n(const char *spec, int basename, int reverse, int max)
+xs_list *xs_glob_n(const char *spec, int basename, int reverse, int mark, int max)
 /* does a globbing and returns the found files */
 {
     glob_t globbuf;
     xs_list *list = xs_list_new();
 
-    if (glob(spec, 0, NULL, &globbuf) == 0) {
+    if (glob(spec, mark ? GLOB_MARK : 0, NULL, &globbuf) == 0) {
         int n;
 
         if (max > (int) globbuf.gl_pathc)

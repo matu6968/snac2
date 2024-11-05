@@ -9,6 +9,7 @@
 xs_str *xs_str_time(time_t t, const char *fmt, int local);
 #define xs_str_localtime(t, fmt) xs_str_time(t, fmt, 1)
 #define xs_str_utctime(t, fmt)   xs_str_time(t, fmt, 0)
+#define xs_str_iso_date(t) xs_str_time(t, "%Y-%m-%dT%H:%M:%SZ", 0)
 time_t xs_parse_iso_date(const char *iso_date, int local);
 time_t xs_parse_time(const char *str, const char *fmt, int local);
 #define xs_parse_localtime(str, fmt) xs_parse_time(str, fmt, 1)
