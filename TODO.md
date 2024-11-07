@@ -348,4 +348,6 @@ Don't show image attachments which URLs are already in the post content (2.62, 2
 
 Add a user option to always collapse first level threads (2.62, 2024-10-28T14:50:42+0100).
 
-Add a 'disable_block_notifications' flag to server settings (2.62, 2024-10-30T16:58:16+0100).
+Add a `disable_block_notifications` flag to server settings (2.62, 2024-10-30T16:58:16+0100).
+
+The `strict_public_timelines` is broken, as it also applies to the private timeline (2.63, 2024-11-07T21:44:52+0100).
