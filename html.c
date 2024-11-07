@@ -42,22 +42,6 @@ int login(snac *snac, const xs_dict *headers)
 }
 
 
-xs_str *make_url(const char *href, const char *proxy)
-/* makes an URL, possibly including proxying */
-{
-    xs_str *url = NULL;
-
-    if (proxy && !xs_startswith(href, srv_baseurl)) {
-        xs *p = xs_str_cat(xs_dup(proxy), "/proxy/");
-        url = xs_replace(href, "https:/" "/", p);
-    }
-    else
-        url = xs_dup(href);
-
-    return url;
-}
-
-
 xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *proxy)
 /* replaces all the :shortnames: with the emojis in tag */
 {
