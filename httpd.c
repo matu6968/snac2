@@ -278,6 +278,7 @@ void httpd_connection(FILE *f)
     xs *q_path   = NULL;
     xs *payload  = NULL;
     xs *etag     = NULL;
+    xs *last_modified = NULL;
     int p_size   = 0;
     const char *p;
     int fcgi_id;
@@ -329,7 +330,7 @@ void httpd_connection(FILE *f)
 #endif /* NO_MASTODON_API */
 
         if (status == 0)
-            status = html_get_handler(req, q_path, &body, &b_size, &ctype, &etag);
+            status = html_get_handler(req, q_path, &body, &b_size, &ctype, &etag, &last_modified);
     }
     else
     if (strcmp(method, "POST") == 0) {
@@ -423,6 +424,8 @@ void httpd_connection(FILE *f)
 
     if (!xs_is_null(etag))
         headers = xs_dict_append(headers, "etag", etag);
+    if (!xs_is_null(last_modified))
+        headers = xs_dict_append(headers, "last-modified", last_modified);
 
     /* if there are any additional headers, add them */
     const xs_dict *more_headers = xs_dict_get(srv_config, "http_headers");

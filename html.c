@@ -2796,7 +2796,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
 
 int html_get_handler(const xs_dict *req, const char *q_path,
-                     char **body, int *b_size, char **ctype, xs_str **etag)
+                     char **body, int *b_size, char **ctype,
+                     xs_str **etag, xs_str **last_modified)
 {
     const char *accept = xs_dict_get(req, "accept");
     int status = HTTP_STATUS_NOT_FOUND;
@@ -3227,6 +3228,11 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
             if (valid_status(status)) {
                 const char *ct = xs_dict_get(rsp, "content-type");
+                const char *lm = xs_dict_get(rsp, "last-modified");
+                const char *et = xs_dict_get(rsp, "etag");
+
+                if (lm) *last_modified = xs_dup(lm);
+                if (et) *etag = xs_dup(et);
 
                 /* find the content-type in the static mime types,
                    and return that value instead of ct, which will
