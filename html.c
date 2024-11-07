@@ -3221,6 +3221,12 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
             hdrs = xs_dict_append(hdrs, "user-agent", USER_AGENT);
 
+            const char *ims = xs_dict_get(req, "if-modified-since");
+            const char *inm = xs_dict_get(req, "if-none-match");
+
+            if (ims) hdrs = xs_dict_append(hdrs, "if-modified-since", ims);
+            if (inm) hdrs = xs_dict_append(hdrs, "if-none-match", inm);
+
             xs *rsp = xs_http_request("GET", url, hdrs,
                         NULL, 0, &status, body, b_size, 0);
 
