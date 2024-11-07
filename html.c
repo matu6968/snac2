@@ -11,6 +11,7 @@
 #include "xs_mime.h"
 #include "xs_match.h"
 #include "xs_html.h"
+#include "xs_curl.h"
 
 #include "snac.h"
 
@@ -38,6 +39,24 @@ int login(snac *snac, const xs_dict *headers)
         lastlog_write(snac, "web");
 
     return logged_in;
+}
+
+
+xs_str *make_url(snac *user, int proxy_media, const char *href)
+/* makes an URL, possibly including proxying */
+{
+    xs_str *url = NULL;
+
+    if (user && proxy_media) {
+        xs *h = xs_replace(href, "https:/" "/", "");
+        url = xs_fmt("%s/proxy/%s", user->actor, h);
+
+        snac_debug(user, 1, xs_fmt("Proxying %s %s", href, url));
+    }
+    else
+        url = xs_dup(href);
+
+    return url;
 }
 
 
@@ -1464,6 +1483,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     const char *v;
     int has_title = 0;
     int collapse_threads = 0;
+    int proxy_media = xs_is_true(xs_dict_get(srv_config, "proxy_media"));
 
     /* do not show non-public messages in the public timeline */
     if ((read_only || !user) && !is_msg_public(msg))
@@ -1954,12 +1974,14 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         const xs_dict *a;
         while (xs_list_next(attach, &a, &c)) {
             const char *type = xs_dict_get(a, "type");
-            const char *href = xs_dict_get(a, "href");
+            const char *o_href = xs_dict_get(a, "href");
             const char *name = xs_dict_get(a, "name");
 
             /* if this image is already in the post content, skip */
-            if (content && xs_str_in(content, href) != -1)
+            if (content && xs_str_in(content, o_href) != -1)
                 continue;
+
+            xs *href = make_url(user, proxy_media && !read_only, o_href);
 
             if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0) {
                 xs_html_add(content_attachments,
@@ -2762,6 +2784,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     const char *p_path;
     int cache = 1;
     int save = 1;
+    int proxy_media = xs_is_true(xs_dict_get(srv_config, "proxy_media"));
     const char *v;
 
     xs *l = xs_split_n(q_path, "/", 2);
@@ -3162,6 +3185,34 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         status  = HTTP_STATUS_OK;
 
         snac_debug(&snac, 1, xs_fmt("serving RSS"));
+    }
+    else
+    if (xs_startswith(p_path, "proxy/") && proxy_media) { /** remote media by proxy **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = HTTP_STATUS_UNAUTHORIZED;
+        }
+        else {
+            xs *url = xs_replace(p_path, "proxy/", "https:/" "/");
+            xs *hdrs = xs_dict_new();
+
+            xs *rsp = xs_http_request("GET", url, hdrs,
+                        NULL, 0, &status, body, b_size, 0);
+
+            if (valid_status(status)) {
+                const char *ct = xs_dict_get(rsp, "content-type");
+
+                /* find the content-type in the static mime types,
+                   and return that value instead of ct, which will
+                   be destroyed when out of scope */
+                for (int n = 0; xs_mime_types[n]; n += 2) {
+                    if (strcmp(ct, xs_mime_types[n + 1]) == 0) {
+                        *ctype = (char *)xs_mime_types[n + 1];
+                        break;
+                    }
+                }
+            }
+        }
     }
     else
         status = HTTP_STATUS_NOT_FOUND;
