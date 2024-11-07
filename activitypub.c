@@ -202,7 +202,7 @@ xs_list *get_attachments(const xs_dict *msg)
         else
             attach = xs_dup(p);
 
-        if (xs_type(attach) == XSTYPE_LIST) {
+        if (xs_type(attach) == XSTYPE_LIST && xs_list_len(attach) == 0) {
             /* does the message have an image? */
             const xs_dict *d = xs_dict_get(msg, "image");
             if (xs_type(d) == XSTYPE_DICT) {

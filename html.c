@@ -50,8 +50,6 @@ xs_str *make_url(const char *href, const char *proxy)
     if (proxy) {
         xs *p = xs_str_cat(xs_dup(proxy), "/proxy/");
         url = xs_replace(href, "https:/" "/", p);
-
-        srv_debug(1, xs_fmt("Proxying %s %s", href, url));
     }
     else
         url = xs_dup(href);
@@ -3244,6 +3242,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                     }
                 }
             }
+
+            snac_debug(&snac, 1, xs_fmt("Proxy for %s %d", url, status));
         }
     }
     else
