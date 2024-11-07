@@ -409,3 +409,5 @@ typedef struct {
     char   *text;
 } t_announcement;
 t_announcement *announcement(double after);
+
+xs_str *make_url(const char *href, const char *proxy);
