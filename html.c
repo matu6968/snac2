@@ -2037,7 +2037,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 xs_html_add(content_attachments,
                     xs_html_tag("p",
                         xs_html_tag("a",
-                            xs_html_attr("href", href),
+                            xs_html_attr("href", o_href),
                             xs_html_text(href))));
 
                 /* do not generate an Alt... */
@@ -2047,10 +2047,10 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 xs_html_add(content_attachments,
                     xs_html_tag("p",
                         xs_html_tag("a",
-                            xs_html_attr("href", href),
+                            xs_html_attr("href", o_href),
                             xs_html_text(L("Attachment")),
                             xs_html_text(": "),
-                            xs_html_text(href))));
+                            xs_html_text(o_href))));
 
                 /* do not generate an Alt... */
                 name = NULL;
