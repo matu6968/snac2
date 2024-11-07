@@ -120,7 +120,7 @@ xs_str *actor_name(xs_dict *actor)
 
 
 xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
-                        const char *udate, const char *url, int priv, int in_people)
+                        const char *udate, const char *url, int priv, int in_people, int proxy)
 {
     xs_html *actor_icon = xs_html_tag("p", NULL);
 
@@ -138,7 +138,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             v = xs_list_get(v, 0);
 
         if ((v = xs_dict_get(v, "url")) != NULL)
-            avatar = xs_dup(v);
+            avatar = make_url(user, proxy, v);
     }
 
     if (avatar == NULL)
@@ -263,7 +263,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
 }
 
 
-xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg)
+xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, int proxy)
 {
     xs *actor = NULL;
     xs_html *actor_icon = NULL;
@@ -283,7 +283,7 @@ xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg)
         date  = xs_dict_get(msg, "published");
         udate = xs_dict_get(msg, "updated");
 
-        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0);
+        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0, proxy);
     }
 
     return actor_icon;
@@ -1515,7 +1515,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-origin"),
                     xs_html_text(L("follows you"))),
-                html_msg_icon(read_only ? NULL : user, xs_dict_get(msg, "actor"), msg)));
+                html_msg_icon(read_only ? NULL : user, xs_dict_get(msg, "actor"), msg, proxy_media)));
     }
     else
     if (!xs_match(type, POSTLIKE_OBJECT_TYPE)) {
@@ -1694,7 +1694,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     }
 
     xs_html_add(post_header,
-        html_msg_icon(read_only ? NULL : user, actor, msg));
+        html_msg_icon(read_only ? NULL : user, actor, msg, proxy_media));
 
     /** post content **/
 
@@ -2435,6 +2435,8 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 
 xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
 {
+    int proxy_media = xs_is_true(xs_dict_get(srv_config, "proxy_media"));
+
     xs_html *snac_posts;
     xs_html *people = xs_html_tag("div",
         xs_html_tag("h2",
@@ -2459,7 +2461,8 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t)
                     xs_html_attr("name", md5)),
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post-header"),
-                    html_actor_icon(snac, actor, xs_dict_get(actor, "published"), NULL, NULL, 0, 1)));
+                    html_actor_icon(snac, actor, xs_dict_get(actor, "published"),
+                                    NULL, NULL, 0, 1, proxy_media)));
 
             /* content (user bio) */
             const char *c = xs_dict_get(actor, "summary");
@@ -2580,6 +2583,8 @@ xs_str *html_people(snac *user)
 
 xs_str *html_notifications(snac *user, int skip, int show)
 {
+    int proxy_media = xs_is_true(xs_dict_get(srv_config, "proxy_media"));
+
     xs *n_list = notify_list(user, skip, show);
     xs *n_time = notify_check_time(user, 0);
 
@@ -2680,7 +2685,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
             xs_html_add(entry,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post"),
-                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0)));
+                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy_media)));
         }
         else
         if (strcmp(type, "Move") == 0) {
@@ -2694,7 +2699,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_add(entry,
                         xs_html_tag("div",
                             xs_html_attr("class", "snac-post"),
-                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0)));
+                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0, proxy_media)));
                 }
             }
         }
@@ -3195,6 +3200,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         else {
             xs *url = xs_replace(p_path, "proxy/", "https:/" "/");
             xs *hdrs = xs_dict_new();
+
+            hdrs = xs_dict_append(hdrs, "user-agent", USER_AGENT);
 
             xs *rsp = xs_http_request("GET", url, hdrs,
                         NULL, 0, &status, body, b_size, 0);
