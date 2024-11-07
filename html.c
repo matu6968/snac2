@@ -2198,7 +2198,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     xs_list *p = (xs_list *)list;
     const char *v;
     double t = ftime();
-    int hide_children = xs_is_true(xs_dict_get(srv_config, "strict_public_timelines"));
+    int hide_children = xs_is_true(xs_dict_get(srv_config, "strict_public_timelines")) && read_only;
 
     xs *desc = NULL;
     xs *alternate = NULL;
