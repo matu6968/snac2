@@ -60,7 +60,7 @@ xs_str *make_url(const char *href, const char *proxy)
 }
 
 
-xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems)
+xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *proxy)
 /* replaces all the :shortnames: with the emojis in tag */
 {
     if (!xs_is_null(tag)) {
@@ -88,9 +88,11 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems)
 
                 if (n && i) {
                     const char *u = xs_dict_get(i, "url");
+                    xs *url = make_url(u, proxy);
+
                     xs_html *img = xs_html_sctag("img",
                         xs_html_attr("loading", "lazy"),
-                        xs_html_attr("src", u),
+                        xs_html_attr("src", url),
                         xs_html_attr("style", style));
 
                     xs *s1 = xs_html_render(img);
@@ -104,7 +106,7 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems)
 }
 
 
-xs_str *actor_name(xs_dict *actor)
+xs_str *actor_name(xs_dict *actor, const char *proxy)
 /* gets the actor name */
 {
     const char *v;
@@ -115,7 +117,7 @@ xs_str *actor_name(xs_dict *actor)
         }
     }
 
-    return replace_shortnames(xs_html_encode(v), xs_dict_get(actor, "tag"), 1);
+    return replace_shortnames(xs_html_encode(v), xs_dict_get(actor, "tag"), 1, proxy);
 }
 
 
@@ -129,7 +131,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
     int fwing = 0;
     int fwer = 0;
 
-    xs *name = actor_name(actor);
+    xs *name = actor_name(actor, proxy);
 
     /* get the avatar */
     if ((v = xs_dict_get(actor, "icon")) != NULL) {
@@ -700,6 +702,11 @@ xs_html *html_user_head(snac *user, const char *desc, const char *url)
 
 static xs_html *html_user_body(snac *user, int read_only)
 {
+    const char *proxy = NULL;
+
+    if (user && !read_only && xs_is_true(xs_dict_get(srv_config, "proxy_media")))
+        proxy = user->actor;
+
     xs_html *body = xs_html_tag("body", NULL);
 
     /* top nav */
@@ -845,7 +852,7 @@ static xs_html *html_user_body(snac *user, int read_only)
         xs *bio1 = not_really_markdown(es1, NULL, &tags);
         xs *bio2 = process_tags(user, bio1, &tags);
 
-        bio2 = replace_shortnames(bio2, tags, 2);
+        bio2 = replace_shortnames(bio2, tags, 2, proxy);
 
         xs_html *top_user_bio = xs_html_tag("div",
             xs_html_attr("class", "p-note snac-top-user-bio"),
@@ -1648,7 +1655,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         }
         else
         if (valid_status(object_get_by_md5(p, &actor_r))) {
-            xs *name = actor_name(actor_r);
+            xs *name = actor_name(actor_r, proxy);
 
             if (!xs_is_null(name)) {
                 xs *href = NULL;
@@ -1786,7 +1793,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         c = xs_str_cat(c, "<p>");
 
         /* replace the :shortnames: */
-        c = replace_shortnames(c, xs_dict_get(msg, "tag"), 2);
+        c = replace_shortnames(c, xs_dict_get(msg, "tag"), 2, proxy);
 
         /* Peertube videos content is in markdown */
         const char *mtype = xs_dict_get(msg, "mediaType");
@@ -2652,7 +2659,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
         if (!valid_status(actor_get(actor_id, &actor)))
             continue;
 
-        xs *a_name = actor_name(actor);
+        xs *a_name = actor_name(actor, proxy);
         const char *label = type;
 
         if (strcmp(type, "Create") == 0)
