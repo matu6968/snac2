@@ -179,6 +179,8 @@ xs_dict *xs_fcgi_request(FILE *f, xs_str **payload, int *p_size, int *fcgi_id)
                         req = xs_dict_append(req, "method", v);
                     else
                     if (strcmp(k, "REQUEST_URI") == 0) {
+                        req = xs_dict_append(req, "raw_path", v);
+
                         xs *pnv = xs_split_n(v, "?", 1);
 
                         /* store the path */

@@ -32,6 +32,7 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
     xs_dict *req = xs_dict_new();
 
     req = xs_dict_append(req, "method", xs_list_get(l2, 0));
+    req = xs_dict_append(req, "raw_path", xs_list_get(l2, 1));
     req = xs_dict_append(req, "proto",  xs_list_get(l2, 2));
 
     {

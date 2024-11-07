@@ -3216,7 +3216,13 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             status = HTTP_STATUS_UNAUTHORIZED;
         }
         else {
-            xs *url = xs_replace(p_path, "proxy/", "https:/" "/");
+            /* pick the raw path (including optional ? arguments) */
+            const char *raw_path = xs_dict_get(req, "raw_path");
+
+            /* skip to where the proxy/ string starts */
+            raw_path += xs_str_in(raw_path, "proxy/");
+
+            xs *url = xs_replace(raw_path, "proxy/", "https:/" "/");
             xs *hdrs = xs_dict_new();
 
             hdrs = xs_dict_append(hdrs, "user-agent", USER_AGENT);
