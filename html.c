@@ -47,7 +47,7 @@ xs_str *make_url(const char *href, const char *proxy)
 {
     xs_str *url = NULL;
 
-    if (proxy) {
+    if (proxy && !xs_startswith(href, srv_baseurl)) {
         xs *p = xs_str_cat(xs_dup(proxy), "/proxy/");
         url = xs_replace(href, "https:/" "/", p);
     }
