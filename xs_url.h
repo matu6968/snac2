@@ -196,7 +196,7 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
         if (fn != NULL) {
             /* p_var value is a list */
             /* if filename has no extension and content-type is image, attach extension to the filename */
-            if (strchr(fn, '.') == NULL && xs_startswith(ct, "image/")) {
+            if (strchr(fn, '.') == NULL && ct && xs_startswith(ct, "image/")) {
                 char *ext = strchr(ct, '/');
                 ext++;
                 fn = xs_str_cat(xs_str_new(""), fn, ".", ext);
