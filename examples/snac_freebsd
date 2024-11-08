@@ -12,8 +12,16 @@ load_rc_config $name
 : ${snac_enable:=NO}
 : ${snac_user:="snac"}
 : ${snac_args:="httpd SNAC_DATA_PATH"}
+: ${snac_pidfile:="/var/run/snac/snac.pid"}
+: ${snac_rundir:="/var/run/snac"}
 
-command="/usr/local/bin/snac"
-command_args="${snac_args} > /var/log/snac.log 2>&1 &"
+start_precmd="snac_precmd"
+command="/usr/sbin/daemon"
+command_args="-P ${snac_pidfile} -r -f /usr/local/bin/snac ${snac_args}"
+
+snac_precmd()
+{
+    install -d -m 755 -o ${snac_user} -g ${snac_user} ${snac_rundir}
+}
 
 run_rc_command "$1"
