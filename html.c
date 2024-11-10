@@ -3221,7 +3221,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                         NULL, 0, &status, body, b_size, 0);
 
             if (valid_status(status)) {
-                const char *ct = xs_dict_get(rsp, "content-type");
+                const char *ct = xs_or(xs_dict_get(rsp, "content-type"), "");
                 const char *lm = xs_dict_get(rsp, "last-modified");
                 const char *et = xs_dict_get(rsp, "etag");
 
