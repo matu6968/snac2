@@ -3178,7 +3178,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             return HTTP_STATUS_FORBIDDEN;
 
         xs *elems = timeline_simple_list(&snac, "public", 0, 20);
-        xs *bio   = not_really_markdown(xs_dict_get(snac.config, "bio"), NULL, NULL);
+        xs *bio   = xs_dup(xs_dict_get(snac.config, "bio"));
 
         xs *rss_title = xs_fmt("%s (@%s@%s)",
             xs_dict_get(snac.config, "name"),
