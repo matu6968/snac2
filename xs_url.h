@@ -153,7 +153,7 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
             memcpy(s1, p, q - p);
             s1[q - p] = '\0';
 
-            if (xs_startswith(s1, "Content-Disposition")) {
+            if (xs_startswith(s1, "Content-Disposition") || xs_startswith(s1, "content-disposition")) {
                 /* split by " like a primitive man */
                 l1 = xs_split(s1, "\"");
 
@@ -167,7 +167,7 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
                 }
             }
             else
-            if (xs_startswith(s1, "Content-Type")) {
+            if (xs_startswith(s1, "Content-Type") || xs_startswith(s1, "content-type")) {
                 l1 = xs_split(s1, ":");
 
                 if (xs_list_len(l1) >= 2) {
