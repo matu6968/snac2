@@ -866,11 +866,12 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
         while (xs_list_iter(&p, &v)) {
             const char *type = xs_dict_get(v, "type");
-            const char *href = xs_dict_get(v, "href");
+            const char *o_href = xs_dict_get(v, "href");
             const char *name = xs_dict_get(v, "name");
 
             if (xs_match(type, "image/*|video/*|Image|Video")) { /* */
                 xs *matteid = xs_fmt("%s_%d", id, xs_list_len(matt));
+                xs *href = make_url(o_href, snac->actor, 1);
 
                 xs *d = xs_dict_new();
 
@@ -957,9 +958,10 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
                 const xs_dict *icon = xs_dict_get(v, "icon");
 
                 if (!xs_is_null(name) && !xs_is_null(icon)) {
-                    const char *url = xs_dict_get(icon, "url");
+                    const char *o_url = xs_dict_get(icon, "url");
 
-                    if (!xs_is_null(url)) {
+                    if (!xs_is_null(o_url)) {
+                        xs *url = make_url(o_url, snac->actor, 1);
                         xs *nm = xs_strip_chars_i(xs_dup(name), ":");
 
                         d1 = xs_dict_append(d1, "shortcode", nm);
