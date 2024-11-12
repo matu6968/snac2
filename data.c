@@ -3676,7 +3676,17 @@ xs_str *make_url(const char *href, const char *proxy, int by_token)
     xs_str *url = NULL;
 
     if (proxy && !xs_startswith(href, srv_baseurl)) {
-        xs *p = xs_str_cat(xs_dup(proxy), "/x/");
+        xs *p = NULL;
+
+        if (by_token) {
+            xs *tks = xs_fmt("%s:%s", xs_dict_get(srv_config, "proxy_token_seed"), proxy);
+            xs *tk = xs_md5_hex(tks, strlen(tks));
+
+            p = xs_fmt("y/%s/", tk);
+        }
+        else
+            p = xs_str_cat(xs_dup(proxy), "/x/");
+
         url = xs_replace(href, "https:/" "/", p);
     }
     else
