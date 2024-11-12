@@ -12,6 +12,7 @@
 #include "xs_regex.h"
 #include "xs_match.h"
 #include "xs_unicode.h"
+#include "xs_random.h"
 
 #include "snac.h"
 
@@ -162,6 +163,23 @@ int srv_open(const char *basedir, int auto_upgrade)
     if (mtime(css_fn) == 0) {
         srv_log(xs_fmt("Writing style.css"));
         write_default_css();
+    }
+
+    /* if proxy_media is set but there is no token seed, create one */
+    if (xs_is_true(xs_dict_get(srv_config, "proxy_media")) &&
+        xs_is_null(xs_dict_get(srv_config, "proxy_token_seed"))) {
+        char rnd[16];
+        xs_rnd_buf(rnd, sizeof(rnd));
+        xs *pts = xs_hex_enc(rnd, sizeof(rnd));
+
+        xs_dict_set(srv_config, "proxy_token_seed", pts);
+
+        if ((f = fopen(cfg_file, "w")) != NULL) {
+            xs_json_dump(srv_config, 4, f);
+            fclose(f);
+
+            srv_log(xs_fmt("Created proxy_token_seed"));
+        }
     }
 
     return ret;
@@ -3652,13 +3670,13 @@ t_announcement *announcement(const double after)
 }
 
 
-xs_str *make_url(const char *href, const char *proxy)
+xs_str *make_url(const char *href, const char *proxy, int by_token)
 /* makes an URL, possibly including proxying */
 {
     xs_str *url = NULL;
 
     if (proxy && !xs_startswith(href, srv_baseurl)) {
-        xs *p = xs_str_cat(xs_dup(proxy), "/proxy/");
+        xs *p = xs_str_cat(xs_dup(proxy), "/x/");
         url = xs_replace(href, "https:/" "/", p);
     }
     else

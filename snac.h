@@ -411,4 +411,4 @@ typedef struct {
 } t_announcement;
 t_announcement *announcement(double after);
 
-xs_str *make_url(const char *href, const char *proxy);
+xs_str *make_url(const char *href, const char *proxy, int by_token);

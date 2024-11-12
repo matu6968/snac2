@@ -70,7 +70,7 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
 
                 if (n && i) {
                     const char *u = xs_dict_get(i, "url");
-                    xs *url = make_url(u, proxy);
+                    xs *url = make_url(u, proxy, 0);
 
                     xs_html *img = xs_html_sctag("img",
                         xs_html_attr("loading", "lazy"),
@@ -122,7 +122,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             v = xs_list_get(v, 0);
 
         if ((v = xs_dict_get(v, "url")) != NULL)
-            avatar = make_url(v, proxy);
+            avatar = make_url(v, proxy, 0);
     }
 
     if (avatar == NULL)
@@ -1973,7 +1973,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             if (content && xs_str_in(content, o_href) != -1)
                 continue;
 
-            xs *href = make_url(o_href, proxy);
+            xs *href = make_url(o_href, proxy, 0);
 
             if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0) {
                 xs_html_add(content_attachments,
@@ -2788,7 +2788,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     const char *p_path;
     int cache = 1;
     int save = 1;
-    const char *proxy = NULL;
+    int proxy = 0;
     const char *v;
 
     xs *l = xs_split_n(q_path, "/", 2);
@@ -2816,7 +2816,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     }
 
     if (xs_is_true(xs_dict_get(srv_config, "proxy_media")))
-        proxy = snac.actor;
+        proxy = 1;
 
     /* return the RSS if requested by Accept header */
     if (accept != NULL) {
@@ -3194,19 +3194,36 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         snac_debug(&snac, 1, xs_fmt("serving RSS"));
     }
     else
-    if (xs_startswith(p_path, "proxy/") && proxy) { /** remote media by proxy **/
-        if (!login(&snac, req)) {
-            *body  = xs_dup(uid);
-            status = HTTP_STATUS_UNAUTHORIZED;
+    if (proxy && (xs_startswith(p_path, "x/") || xs_startswith(p_path, "y/"))) { /** remote media by proxy **/
+        xs *proxy_prefix = NULL;
+
+        if (xs_startswith(p_path, "x/")) {
+            /* proxy usage authorized by http basic auth */
+            if (login(&snac, req))
+                proxy_prefix = xs_str_new("x/");
+            else {
+                *body  = xs_dup(uid);
+                status = HTTP_STATUS_UNAUTHORIZED;
+            }
         }
         else {
+            /* proxy usage authorized by proxy_token */
+            xs *tks = xs_fmt("%s:%s", xs_dict_get(srv_config, "proxy_token_seed"), snac.actor);
+            xs *tk = xs_md5_hex(tks, strlen(tks));
+            xs *p = xs_fmt("y/%s/", tk);
+
+            if (xs_startswith(p_path, p))
+                proxy_prefix = xs_dup(p);
+        }
+
+        if (proxy_prefix) {
             /* pick the raw path (including optional ? arguments) */
             const char *raw_path = xs_dict_get(req, "raw_path");
 
             /* skip to where the proxy/ string starts */
-            raw_path += xs_str_in(raw_path, "proxy/");
+            raw_path += xs_str_in(raw_path, proxy_prefix);
 
-            xs *url = xs_replace(raw_path, "proxy/", "https:/" "/");
+            xs *url = xs_replace(raw_path, proxy_prefix, "https:/" "/");
             xs *hdrs = xs_dict_new();
 
             hdrs = xs_dict_append(hdrs, "user-agent", USER_AGENT);
