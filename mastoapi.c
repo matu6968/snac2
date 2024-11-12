@@ -517,14 +517,18 @@ xs_str *mastoapi_id(const xs_dict *msg)
 #define MID_TO_MD5(id) (id + 10)
 
 
-xs_dict *mastoapi_account(const xs_dict *actor)
+xs_dict *mastoapi_account(snac *logged, const xs_dict *actor)
 /* converts an ActivityPub actor to a Mastodon account */
 {
     const char *id  = xs_dict_get(actor, "id");
     const char *pub = xs_dict_get(actor, "published");
+    const char *proxy = NULL;
 
     if (xs_type(id) != XSTYPE_STRING)
         return NULL;
+
+    if (logged && xs_is_true(xs_dict_get(srv_config, "proxy_media")))
+        proxy = logged->actor;
 
     const char *prefu = xs_dict_get(actor, "preferredUsername");
 
@@ -583,7 +587,7 @@ xs_dict *mastoapi_account(const xs_dict *actor)
         const char *url = xs_dict_get(av, "url");
 
         if (url != NULL)
-            avatar = xs_dup(url);
+            avatar = make_url(url, proxy, 1);
     }
 
     if (avatar == NULL)
@@ -596,7 +600,7 @@ xs_dict *mastoapi_account(const xs_dict *actor)
     const xs_dict *hd = xs_dict_get(actor, "image");
 
     if (xs_type(hd) == XSTYPE_DICT)
-        header = xs_dup(xs_dict_get(hd, "url"));
+        header = make_url(xs_dict_get(hd, "url"), proxy, 1);
 
     if (xs_is_null(header))
         header = xs_str_new(NULL);
@@ -619,9 +623,10 @@ xs_dict *mastoapi_account(const xs_dict *actor)
                 const xs_dict *icon = xs_dict_get(v, "icon");
 
                 if (!xs_is_null(name) && !xs_is_null(icon)) {
-                    const char *url = xs_dict_get(icon, "url");
+                    const char *o_url = xs_dict_get(icon, "url");
 
-                    if (!xs_is_null(url)) {
+                    if (!xs_is_null(o_url)) {
+                        xs *url = make_url(o_url, proxy, 1);
                         xs *nm = xs_strip_chars_i(xs_dup(name), ":");
                         xs *d1 = xs_dict_new();
 
@@ -790,10 +795,14 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 {
     xs *actor = NULL;
     actor_get_refresh(snac, get_atto(msg), &actor);
+    const char *proxy = NULL;
 
     /* if the author is not here, discard */
     if (actor == NULL)
         return NULL;
+
+    if (snac && xs_is_true(xs_dict_get(srv_config, "proxy_media")))
+        proxy = snac->actor;
 
     const char *type = xs_dict_get(msg, "type");
     const char *id   = xs_dict_get(msg, "id");
@@ -802,7 +811,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     if (xs_is_null(type) || xs_is_null(id))
         return NULL;
 
-    xs *acct = mastoapi_account(actor);
+    xs *acct = mastoapi_account(snac, actor);
     if (acct == NULL)
         return NULL;
 
@@ -871,7 +880,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
 
             if (xs_match(type, "image/*|video/*|Image|Video")) { /* */
                 xs *matteid = xs_fmt("%s_%d", id, xs_list_len(matt));
-                xs *href = make_url(o_href, snac->actor, 1);
+                xs *href = make_url(o_href, proxy, 1);
 
                 xs *d = xs_dict_new();
 
@@ -1075,7 +1084,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
         xs *b_actor = NULL;
 
         if (valid_status(object_get_by_md5(boosted_by_md5, &b_actor))) {
-            xs *b_acct   = mastoapi_account(b_actor);
+            xs *b_acct   = mastoapi_account(snac, b_actor);
             xs *fake_uri = NULL;
 
             if (snac)
@@ -1463,7 +1472,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                 if (user_open(&user, uid)) {
                     xs *actor = msg_actor(&user);
-                    xs *macct = mastoapi_account(actor);
+                    xs *macct = mastoapi_account(NULL, actor);
 
                     *body  = xs_json_dumps(macct, 4);
                     *ctype = "application/json";
@@ -1521,7 +1530,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                                     xs *luname = xs_tolower_i(xs_dup(uname));
 
                                     if (xs_startswith(luname, q)) {
-                                        xs *acct = mastoapi_account(actor);
+                                        xs *acct = mastoapi_account(&snac1, actor);
 
                                         out = xs_list_append(out, acct);
                                     }
@@ -1548,7 +1557,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                             /* if it's not already seen, add it */
                             if (xs_set_add(&seen, user.actor) == 1) {
                                 xs *actor = msg_actor(&user);
-                                xs *acct  = mastoapi_account(actor);
+                                xs *acct  = mastoapi_account(&snac1, actor);
 
                                 out = xs_list_append(out, acct);
                             }
@@ -1566,7 +1575,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 if (opt == NULL) {
                     /* account information */
                     actor = msg_actor(&snac2);
-                    out   = mastoapi_account(actor);
+                    out   = mastoapi_account(NULL, actor);
                 }
                 else
                 if (strcmp(opt, "statuses") == 0) { /** **/
@@ -1609,7 +1618,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         xs *actor = NULL;
 
                         if (valid_status(object_get(v, &actor))) {
-                            xs *acct = mastoapi_account(actor);
+                            xs *acct = mastoapi_account(NULL, actor);
                             out = xs_list_append(out, acct);
                         }
                     }
@@ -1626,7 +1635,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 if (logged_in && valid_status(object_get_by_md5(uid, &actor))) {
                     if (opt == NULL) {
                         /* account information */
-                        out = mastoapi_account(actor);
+                        out = mastoapi_account(&snac1, actor);
                     }
                     else
                     if (strcmp(opt, "statuses") == 0) {
@@ -1774,7 +1783,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                 mn = xs_dict_append(mn, "created_at", xs_dict_get(noti, "date"));
 
-                xs *acct = mastoapi_account(actor);
+                xs *acct = mastoapi_account(&snac1, actor);
                 mn = xs_dict_append(mn, "account", acct);
 
                 if (strcmp(type, "follow") != 0 && !xs_is_null(objid)) {
@@ -1876,7 +1885,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                             xs *actor = NULL;
 
                             if (valid_status(object_get_by_md5(v, &actor))) {
-                                xs *acct = mastoapi_account(actor);
+                                xs *acct = mastoapi_account(&snac1, actor);
                                 out = xs_list_append(out, acct);
                             }
                         }
@@ -2080,7 +2089,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
             if (user_open(&admin, admin_account)) {
                 xs *actor = msg_actor(&admin);
-                xs *acct  = mastoapi_account(actor);
+                xs *acct  = mastoapi_account(NULL, actor);
 
                 ins = xs_dict_append(ins, "contact_account", acct);
 
@@ -2180,7 +2189,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                             xs *actor2 = NULL;
 
                             if (valid_status(object_get_by_md5(v, &actor2))) {
-                                xs *acct2 = mastoapi_account(actor2);
+                                xs *acct2 = mastoapi_account(&snac1, actor2);
 
                                 out = xs_list_append(out, acct2);
                             }
@@ -2266,7 +2275,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                             xs *actor_o = NULL;
 
                             if (valid_status(actor_request(&snac1, actor, &actor_o))) {
-                                xs *acct = mastoapi_account(actor_o);
+                                xs *acct = mastoapi_account(NULL, actor_o);
 
                                 acl = xs_list_append(acl, acct);
 
