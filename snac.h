@@ -26,6 +26,7 @@ extern double disk_layout;
 extern xs_str *srv_basedir;
 extern xs_dict *srv_config;
 extern xs_str *srv_baseurl;
+extern xs_str *srv_proxy_token_seed;
 
 extern int dbglevel;
 

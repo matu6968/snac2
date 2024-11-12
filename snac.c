@@ -33,6 +33,7 @@
 xs_str *srv_basedir = NULL;
 xs_dict *srv_config = NULL;
 xs_str *srv_baseurl = NULL;
+xs_str *srv_proxy_token_seed = NULL;
 
 int dbglevel = 0;
 

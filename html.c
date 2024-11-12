@@ -3208,7 +3208,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
         else {
             /* proxy usage authorized by proxy_token */
-            xs *tks = xs_fmt("%s:%s", xs_dict_get(srv_config, "proxy_token_seed"), snac.actor);
+            xs *tks = xs_fmt("%s:%s", srv_proxy_token_seed, snac.actor);
             xs *tk = xs_md5_hex(tks, strlen(tks));
             xs *p = xs_fmt("y/%s/", tk);
 
