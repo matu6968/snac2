@@ -235,6 +235,13 @@ If set to true, notifications about 'Block' activities are never sent.
 .It Ic strict_public_timelines
 If set to true, public timelines only show posts and boosts originating
 from an account (no conversation trees).
+.It Ic proxy_media
+If set to true, links to all image, audio or video media from other accounts'
+posts will not be direct ones, but proxied by
+.Nm .
+This way, remote media servers will not see the user's IP, but the server one,
+improving privacy. Please take note that this will increase the server's incoming
+and outgoing traffic.
 .El
 .Pp
 You must restart the server to make effective these changes.
