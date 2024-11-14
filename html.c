@@ -3223,7 +3223,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             /* skip to where the proxy/ string starts */
             raw_path += xs_str_in(raw_path, proxy_prefix);
 
-            xs *url = xs_replace(raw_path, proxy_prefix, "https:/" "/");
+            xs *url = xs_replace_n(raw_path, proxy_prefix, "https:/" "/", 1);
             xs *hdrs = xs_dict_new();
 
             hdrs = xs_dict_append(hdrs, "user-agent", USER_AGENT);
