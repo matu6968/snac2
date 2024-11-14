@@ -1,5 +1,21 @@
 # Release Notes
 
+## 2.63
+
+The server can now act as a proxy for all image, audio or video media coming from other account's posts (both from the Web UI and the Mastodon API). This way, other servers will see media requests coming from the server IP, not the user's, improving privacy. This is controlled by setting the `proxy_media` boolean field to `server.json` to true.
+
+The `strict_public_timelines` option introduced in the previous release now works correctly.
+
+Fixed a crash when posting from the links browser.
+
+Fixed some repeated images from Lemmy posts.
+
+Fixed a crash when posting an image from the tooot mobile app.
+
+Updated FreeBSD rc script: the server process is now managed by the daemon(8) utility (contributed by @stefano@bsd.cafe).
+
+RSS feeds are now in 2.0 version instead of 0.91.
+
 ## 2.62
 
 Added a new user option to collapse top level threads by default.
