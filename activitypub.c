@@ -724,7 +724,7 @@ xs_str *process_tags(snac *snac, const char *content, xs_list **tag)
         /* use this same server */
         def_srv = xs_dup(xs_dict_get(srv_config, "host"));
 
-    split = xs_regex_split(content, "(@[A-Za-z0-9_]+(@[A-Za-z0-9\\.-]+)?|&#[0-9]+;|#[^[:punct:][:space:]]+)");
+    split = xs_regex_split(content, "(@[A-Za-z0-9_]+(@[A-Za-z0-9\\.-]+)?|&#[0-9]+;|#(_|[^[:punct:][:space:]])+)");
 
     p = split;
     while (xs_list_iter(&p, &v)) {
