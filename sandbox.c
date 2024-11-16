@@ -7,11 +7,10 @@
 #if defined (__linux__)
 #   define __USE_GNU
 #   include <linux/landlock.h>
-#   include <linux/prctl.h>
 #   include <sys/syscall.h>
 #   include <sys/prctl.h>
+#   include <stdint.h>
 #   include <fcntl.h>
-#   include <arpa/inet.h>
 #endif
 
 void sbox_enter(const char *basedir)
