@@ -113,13 +113,16 @@ void sbox_enter(const char *basedir)
 
 #define LL_R LANDLOCK_ACCESS_FS_READ_FILE
 #define LL_X LANDLOCK_ACCESS_FS_EXECUTE
-#define LL_RWC (LL_R | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_MAKE_REG | LANDLOCK_ACCESS_FS_TRUNCATE)
-#define LL_UNX (LL_R | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_MAKE_SOCK)
-#define LL_CON LANDLOCK_ACCESS_NET_CONNECT_TCP
-#define LL_BND LANDLOCK_ACCESS_NET_BIND_TCP
+#define LL_RWCF (LL_R | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_MAKE_REG | LANDLOCK_ACCESS_FS_TRUNCATE | LANDLOCK_ACCESS_FS_REMOVE_FILE | LANDLOCK_ACCESS_FS_REFER)
+#define LL_RWCD (LL_RWCF | LANDLOCK_ACCESS_FS_MAKE_DIR | LANDLOCK_ACCESS_FS_REMOVE_DIR)
+#define LL_UNIX (LL_R | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_MAKE_SOCK)
+#define LL_CONN LANDLOCK_ACCESS_NET_CONNECT_TCP
+#define LL_BIND LANDLOCK_ACCESS_NET_BIND_TCP
 
 #define LANDLOCK_PATH(p, r) do {\
     path.allowed_access = r;\
+    if (abi < 2)\
+        path.allowed_access &= ~LANDLOCK_ACCESS_FS_REFER;\
     if (abi < 3)\
         path.allowed_access &= ~LANDLOCK_ACCESS_FS_TRUNCATE;\
     path.parent_fd = open(p, O_PATH | O_CLOEXEC);\
@@ -145,9 +148,9 @@ void sbox_enter(const char *basedir)
     }\
 } while (0)
 
-    LANDLOCK_PATH(basedir,                LL_RWC);
-    LANDLOCK_PATH("/tmp",                 LL_RWC);
-    LANDLOCK_PATH("/dev/shm",             LL_RWC);
+    LANDLOCK_PATH(basedir,                LL_RWCD);
+    LANDLOCK_PATH("/tmp",                 LL_RWCD);
+    LANDLOCK_PATH("/dev/shm",             LL_RWCF);
     LANDLOCK_PATH("/etc/resolv.conf",     LL_R  );
     LANDLOCK_PATH("/etc/hosts",           LL_R  );
     LANDLOCK_PATH("/etc/ssl/openssl.cnf", LL_R  );
@@ -155,16 +158,16 @@ void sbox_enter(const char *basedir)
     LANDLOCK_PATH("/usr/share/zoneinfo",  LL_R  );
 
     if (*address == '/')
-        LANDLOCK_PATH(address, LL_UNX);
+        LANDLOCK_PATH(address, LL_UNIX);
 
     if (abi > 3) {
         if (*address != '/') {
             LANDLOCK_PORT(
-                (uint16_t)xs_number_get(xs_dict_get(srv_config, "port")), LL_BND);
+                (uint16_t)xs_number_get(xs_dict_get(srv_config, "port")), LL_BIND);
         }
 
-        LANDLOCK_PORT(80,  LL_CON);
-        LANDLOCK_PORT(443, LL_CON);
+        LANDLOCK_PORT(80,  LL_CONN);
+        LANDLOCK_PORT(443, LL_CONN);
     }
     
     if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
