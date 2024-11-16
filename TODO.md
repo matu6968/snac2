@@ -357,3 +357,7 @@ Fix a crash when posting from the links browser (2.63, 2024-11-08T15:57:25+0100)
 Fix some repeated images in Lemmy posts (2.63, 2024-11-08T15:57:25+0100).
 
 Fix a crash when posting an image from the tooot mobile app (2.63, 2024-11-11T19:42:11+0100).
+
+Fix some URL proxying (2.64, 2024-11-16T07:26:23+0100).
+
+Allow underscores in hashtags (2.64, 2024-11-16T07:26:23+0100).
