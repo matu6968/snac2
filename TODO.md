@@ -16,8 +16,6 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
-Add a pidfile.
-
 Implement Proxying for Media Links to Enhance User Privacy (see https://codeberg.org/grunfink/snac2/issues/219 for more information).
 
 Consider showing only posts by the account owner (not full trees) (see https://codeberg.org/grunfink/snac2/issues/217 for more information).
@@ -363,3 +361,5 @@ Fix a crash when posting an image from the tooot mobile app (2.63, 2024-11-11T19
 Fix some URL proxying (2.64, 2024-11-16T07:26:23+0100).
 
 Allow underscores in hashtags (2.64, 2024-11-16T07:26:23+0100).
+
+Add a pidfile (2.64, 2024-11-17T10:21:29+0100).
