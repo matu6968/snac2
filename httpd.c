@@ -774,6 +774,7 @@ void httpd(void)
     xs *sem_name = NULL;
     xs *shm_name = NULL;
     sem_t anon_job_sem;
+    xs *pidfile = xs_fmt("%s/server.pid", srv_basedir);
 
     address = xs_dict_get(srv_config, "address");
 
@@ -808,6 +809,17 @@ void httpd(void)
 
     srv_log(xs_fmt("httpd%s start %s %s", p_state->use_fcgi ? " (FastCGI)" : "",
                     full_address, USER_AGENT));
+
+    {
+        FILE *f;
+
+        if ((f = fopen(pidfile, "w")) != NULL) {
+            fprintf(f, "%d\n", getpid());
+            fclose(f);
+        }
+        else
+            srv_log(xs_fmt("Cannot create %s: %s", pidfile, strerror(errno)));
+    }
 
     /* show the number of usable file descriptors */
     struct rlimit r;
@@ -894,4 +906,6 @@ void httpd(void)
     srv_log(xs_fmt("httpd%s stop %s (run time: %s)",
                 p_state->use_fcgi ? " (FastCGI)" : "",
                 full_address, uptime));
+
+    unlink(pidfile);
 }
