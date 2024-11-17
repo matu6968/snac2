@@ -1784,6 +1784,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 mn = xs_dict_append(mn, "created_at", xs_dict_get(noti, "date"));
 
                 xs *acct = mastoapi_account(&snac1, actor);
+
+                if (acct == NULL)
+                    continue;
+
                 mn = xs_dict_append(mn, "account", acct);
 
                 if (strcmp(type, "follow") != 0 && !xs_is_null(objid)) {
