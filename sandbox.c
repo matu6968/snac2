@@ -149,7 +149,9 @@ void sbox_enter(const char *basedir)
 
     LANDLOCK_PATH(basedir,                LL_RWCD);
     LANDLOCK_PATH("/tmp",                 LL_RWCD);
+#ifndef WITHOUT_SHM
     LANDLOCK_PATH("/dev/shm",             LL_RWCF);
+#endif
     LANDLOCK_PATH("/etc/resolv.conf",     LL_R  );
     LANDLOCK_PATH("/etc/hosts",           LL_R  );
     LANDLOCK_PATH("/etc/ssl/openssl.cnf", LL_R  );
