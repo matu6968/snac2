@@ -171,7 +171,7 @@ const char *login_page = ""
 "<body><h1>%s OAuth identify</h1>\n"
 "<div style=\"background-color: red; color: white\">%s</div>\n"
 "<form method=\"post\" action=\"%s:/" "/%s/%s\">\n"
-"<p>Login: <input type=\"text\" name=\"login\"></p>\n"
+"<p>Login: <input type=\"text\" name=\"login\" autocapitalize=\"off\"></p>\n"
 "<p>Password: <input type=\"password\" name=\"passwd\"></p>\n"
 "<input type=\"hidden\" name=\"redir\" value=\"%s\">\n"
 "<input type=\"hidden\" name=\"cid\" value=\"%s\">\n"
@@ -1024,7 +1024,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     st = xs_dict_append(st, "in_reply_to_id",         xs_stock(XSTYPE_NULL));
     st = xs_dict_append(st, "in_reply_to_account_id", xs_stock(XSTYPE_NULL));
 
-    tmp = xs_dict_get(msg, "inReplyTo");
+    tmp = get_in_reply_to(msg);
     if (!xs_is_null(tmp)) {
         xs *irto = NULL;
 
@@ -1727,11 +1727,11 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         if (logged_in) {
             xs *l      = notify_list(&snac1, 0, 64);
             xs *out    = xs_list_new();
-            xs_list *p = l;
             const xs_dict *v;
             const xs_list *excl = xs_dict_get(args, "exclude_types[]");
+            const char *max_id = xs_dict_get(args, "max_id");
 
-            while (xs_list_iter(&p, &v)) {
+            xs_list_foreach(l, v) {
                 xs *noti = notify_get(&snac1, v);
 
                 if (noti == NULL)
@@ -1740,6 +1740,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 const char *type  = xs_dict_get(noti, "type");
                 const char *utype = xs_dict_get(noti, "utype");
                 const char *objid = xs_dict_get(noti, "objid");
+                const char *id    = xs_dict_get(noti, "id");
+                xs *fid = xs_replace(id, ".", "");
                 xs *actor = NULL;
                 xs *entry = NULL;
 
@@ -1751,6 +1753,13 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                 if (is_hidden(&snac1, objid))
                     continue;
+
+                if (max_id) {
+                    if (strcmp(fid, max_id) == 0)
+                        max_id = NULL;
+
+                    continue;
+                }
 
                 /* convert the type */
                 if (strcmp(type, "Like") == 0 || strcmp(type, "EmojiReact") == 0)
@@ -1778,12 +1787,15 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                 mn = xs_dict_append(mn, "type", type);
 
-                xs *id = xs_replace(xs_dict_get(noti, "id"), ".", "");
-                mn = xs_dict_append(mn, "id", id);
+                mn = xs_dict_append(mn, "id", fid);
 
                 mn = xs_dict_append(mn, "created_at", xs_dict_get(noti, "date"));
 
                 xs *acct = mastoapi_account(&snac1, actor);
+
+                if (acct == NULL)
+                    continue;
+
                 mn = xs_dict_append(mn, "account", acct);
 
                 if (strcmp(type, "follow") != 0 && !xs_is_null(objid)) {

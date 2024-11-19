@@ -1670,7 +1670,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     if (strcmp(type, "Note") == 0) {
         if (level == 0) {
             /* is the parent not here? */
-            const char *parent = xs_dict_get(msg, "inReplyTo");
+            const char *parent = get_in_reply_to(msg);
 
             if (user && !xs_is_null(parent) && *parent && !timeline_here(user, parent)) {
                 xs_html_add(post_header,
@@ -2329,7 +2329,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 
         /* is this message a non-public reply? */
         if (user != NULL && !is_msg_public(msg)) {
-            const char *irt = xs_dict_get(msg, "inReplyTo");
+            const char *irt = get_in_reply_to(msg);
 
             /* is it a reply to something not in the storage? */
             if (!xs_is_null(irt) && !object_here(irt)) {

@@ -558,7 +558,11 @@ int main(int argc, char *argv[])
         if (data != NULL) {
             xs_json_dump(data, 4, stdout);
             enqueue_actor_refresh(&snac, xs_dict_get(data, "attributedTo"), 0);
-            timeline_add(&snac, url, data);
+
+            if (!timeline_here(&snac, url))
+                timeline_add(&snac, url, data);
+            else
+                printf("Post %s already here\n", url);
         }
 
         return 0;
