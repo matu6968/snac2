@@ -183,6 +183,18 @@ const char *get_atto(const xs_dict *msg)
 }
 
 
+const char *get_in_reply_to(const xs_dict *msg)
+/* gets the inReplyTo id */
+{
+    const xs_val *in_reply_to = xs_dict_get(msg, "inReplyTo");
+
+    if (xs_type(in_reply_to) == XSTYPE_DICT)
+        in_reply_to = xs_dict_get(in_reply_to, "id");
+
+    return in_reply_to;
+}
+
+
 xs_list *get_attachments(const xs_dict *msg)
 /* unify the garbage fire that are the attachments */
 {
@@ -373,7 +385,7 @@ int timeline_request(snac *snac, const char **id, xs_str **wrk, int level)
                             }
 
                             /* does it have an ancestor? */
-                            const char *in_reply_to = xs_dict_get(object, "inReplyTo");
+                            const char *in_reply_to = get_in_reply_to(object);
 
                             /* store */
                             timeline_add(snac, nid, object);
@@ -671,7 +683,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         return 3;
 
     /* is this message a reply to another? */
-    const char *irt = xs_dict_get(msg, "inReplyTo");
+    const char *irt = get_in_reply_to(msg);
     if (!xs_is_null(irt)) {
         xs *r_msg = NULL;
 
@@ -1957,7 +1969,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 
         if (xs_match(utype, "Note|Article")) { /** **/
             const char *id          = xs_dict_get(object, "id");
-            const char *in_reply_to = xs_dict_get(object, "inReplyTo");
+            const char *in_reply_to = get_in_reply_to(object);
             const char *atto        = get_atto(object);
             xs *wrk           = NULL;
 

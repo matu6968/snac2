@@ -1024,7 +1024,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     st = xs_dict_append(st, "in_reply_to_id",         xs_stock(XSTYPE_NULL));
     st = xs_dict_append(st, "in_reply_to_account_id", xs_stock(XSTYPE_NULL));
 
-    tmp = xs_dict_get(msg, "inReplyTo");
+    tmp = get_in_reply_to(msg);
     if (!xs_is_null(tmp)) {
         xs *irto = NULL;
 

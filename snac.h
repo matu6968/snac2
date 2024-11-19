@@ -296,6 +296,7 @@ const char *default_avatar_base64(void);
 xs_str *process_tags(snac *snac, const char *content, xs_list **tag);
 
 const char *get_atto(const xs_dict *msg);
+const char *get_in_reply_to(const xs_dict *msg);
 xs_list *get_attachments(const xs_dict *msg);
 
 xs_dict *msg_admiration(snac *snac, const char *object, const char *type);
