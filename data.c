@@ -799,7 +799,7 @@ int _object_add(const char *id, const xs_dict *obj, int ow)
         fclose(f);
 
         /* does this object has a parent? */
-        const char *in_reply_to = xs_dict_get(obj, "inReplyTo");
+        const char *in_reply_to = get_in_reply_to(obj);
 
         if (!xs_is_null(in_reply_to) && *in_reply_to) {
             /* update the children index of the parent */
