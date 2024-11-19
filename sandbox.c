@@ -26,9 +26,9 @@ void sbox_enter(const char *basedir)
 
     const char *address = xs_dict_get(srv_config, "address");
 
-#if defined (__OpenBSD__)
     int smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
 
+#if defined (__OpenBSD__)
     srv_debug(1, xs_fmt("Calling unveil()"));
     unveil(basedir,                "rwc");
     unveil("/tmp",                 "rwc");
@@ -160,6 +160,9 @@ void sbox_enter(const char *basedir)
 
     if (*address == '/')
         LANDLOCK_PATH(address, LL_UNIX);
+
+    if (smail)
+        LANDLOCK_PATH("/usr/sbin/sendmail", LL_X);
 
     if (abi > 3) {
         if (*address != '/') {
