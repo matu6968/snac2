@@ -1,4 +1,4 @@
-PREFIX=/usr/local
+PREFIX?=/usr/local
 PREFIX_MAN=$(PREFIX)/man
 CFLAGS?=-g -Wall -Wextra -pedantic
 
@@ -6,16 +6,16 @@ all: snac
 
 snac: snac.o main.o data.o http.o httpd.o webfinger.o \
     activitypub.o html.o utils.o format.o upgrade.o mastoapi.o
-	$(CC) $(CFLAGS) -L/usr/local/lib *.o -lcurl -lcrypto $(LDFLAGS) -pthread -o $@
+	$(CC) $(CFLAGS) -L$(PREFIX)/lib *.o -lcurl -lcrypto $(LDFLAGS) -pthread -o $@
 
 .c.o:
-	$(CC) $(CFLAGS) $(CPPFLAGS) -I/usr/local/include -c $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -I$(PREFIX)/include -c $<
 
 clean:
 	rm -rf *.o *.core snac makefile.depend
 
 dep:
-	$(CC) -I/usr/local/include -MM *.c > makefile.depend
+	$(CC) -I$(PREFIX)/include -MM *.c > makefile.depend
 
 install:
 	mkdir -p -m 755 $(PREFIX)/bin
