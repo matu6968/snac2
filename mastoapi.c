@@ -827,7 +827,16 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
     st = xs_dict_append(st, "url",          id);
     st = xs_dict_append(st, "account",      acct);
 
-    xs *fd = mastoapi_date(xs_dict_get(msg, "published"));
+    const char *published = xs_dict_get(msg, "published");
+    xs *fd = NULL;
+
+    if (published)
+        fd = mastoapi_date(published);
+    else {
+        xs *p = xs_str_iso_date(0);
+        fd = mastoapi_date(p);
+    }
+
     st = xs_dict_append(st, "created_at", fd);
 
     {
