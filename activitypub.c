@@ -1226,7 +1226,7 @@ xs_dict *msg_actor(snac *snac)
     else
     if (xs_type(md) == XSTYPE_STRING) {
         metadata = xs_dict_new();
-        xs *l = xs_split(md, "\r\n");
+        xs *l = xs_split(md, "\n");
         const char *ll;
 
         xs_list_foreach(l, ll) {

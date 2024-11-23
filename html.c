@@ -852,7 +852,7 @@ static xs_html *html_user_body(snac *user, int read_only)
         if (xs_type(md) == XSTYPE_STRING) {
             /* convert to dict for easier iteration */
             metadata = xs_dict_new();
-            xs *l = xs_split(md, "\r\n");
+            xs *l = xs_split(md, "\n");
             const char *ll;
 
             xs_list_foreach(l, ll) {
