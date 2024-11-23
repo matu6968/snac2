@@ -1,5 +1,17 @@
 # Release Notes
 
+## 2.64
+
+Some tweaks for better integration with https://bsky.brid.gy (the BlueSky bridge by brid.gy).
+
+A corner case bug in the media proxying code has been fixed.
+
+Hashtags can now include underscores.
+
+The server now creates a pidfile inside the data directory.
+
+Mastodon API: fixed a crash in the notification code, fixed autocapitalization in the OAuth login field (contributed by fkooman).
+
 ## 2.63
 
 The server can now act as a proxy for all image, audio or video media coming from other account's posts (both from the Web UI and the Mastodon API). This way, other servers will see media requests coming from the server IP, not the user's, improving privacy. This is controlled by setting the `proxy_media` boolean field to `server.json` to true.
