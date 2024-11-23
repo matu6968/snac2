@@ -843,7 +843,31 @@ static xs_html *html_user_body(snac *user, int read_only)
         xs_html_add(top_user,
             top_user_bio);
 
-        const xs_dict *metadata = xs_dict_get(user->config, "metadata");
+        xs *metadata = NULL;
+        const xs_dict *md = xs_dict_get(user->config, "metadata");
+
+        if (xs_type(md) == XSTYPE_DICT)
+            metadata = xs_dup(md);
+        else
+        if (xs_type(md) == XSTYPE_STRING) {
+            /* convert to dict for easier iteration */
+            metadata = xs_dict_new();
+            xs *l = xs_split(md, "\r\n");
+            const char *ll;
+
+            xs_list_foreach(l, ll) {
+                xs *kv = xs_split_n(ll, "=", 1);
+                const char *k = xs_list_get(kv, 0);
+                const char *v = xs_list_get(kv, 1);
+
+                if (k && v) {
+                    xs *kk = xs_strip_i(xs_dup(k));
+                    xs *vv = xs_strip_i(xs_dup(v));
+                    metadata = xs_dict_set(metadata, kk, vv);
+                }
+            }
+        }
+
         if (xs_type(metadata) == XSTYPE_DICT) {
             const xs_str *k;
             const xs_str *v;
@@ -1026,19 +1050,28 @@ xs_html *html_top_controls(snac *snac)
     const xs_val *auto_boost = xs_dict_get(snac->config, "auto_boost");
     const xs_val *coll_thrds = xs_dict_get(snac->config, "collapse_threads");
 
-    xs *metadata = xs_str_new(NULL);
+    xs *metadata = NULL;
     const xs_dict *md = xs_dict_get(snac->config, "metadata");
-    const xs_str *k;
-    const xs_str *v;
 
-    int c = 0;
-    while (xs_dict_next(md, &k, &v, &c)) {
-        xs *kp = xs_fmt("%s=%s", k, v);
+    if (xs_type(md) == XSTYPE_DICT) {
+        const xs_str *k;
+        const xs_str *v;
 
-        if (*metadata)
-            metadata = xs_str_cat(metadata, "\n");
-        metadata = xs_str_cat(metadata, kp);
+        metadata = xs_str_new(NULL);
+
+        xs_dict_foreach(md, k, v) {
+            xs *kp = xs_fmt("%s=%s", k, v);
+
+            if (*metadata)
+                metadata = xs_str_cat(metadata, "\n");
+            metadata = xs_str_cat(metadata, kp);
+        }
     }
+    else
+    if (xs_type(md) == XSTYPE_STRING)
+        metadata = xs_dup(md);
+    else
+        metadata = xs_str_new(NULL);
 
     xs *user_setup_action = xs_fmt("%s/admin/user-setup", snac->actor);
 
@@ -3706,25 +3739,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         else
             snac.config = xs_dict_set(snac.config, "collapse_threads", xs_stock(XSTYPE_FALSE));
 
-        if ((v = xs_dict_get(p_vars, "metadata")) != NULL) {
-            /* split the metadata and store it as a dict */
-            xs_dict *md = xs_dict_new();
-            xs *l = xs_split(v, "\n");
-            xs_list *p = l;
-            const xs_str *kp;
-
-            while (xs_list_iter(&p, &kp)) {
-                xs *kpl = xs_split_n(kp, "=", 1);
-                if (xs_list_len(kpl) == 2) {
-                    xs *k2 = xs_strip_i(xs_dup(xs_list_get(kpl, 0)));
-                    xs *v2 = xs_strip_i(xs_dup(xs_list_get(kpl, 1)));
-
-                    md = xs_dict_set(md, k2, v2);
-                }
-            }
-
-            snac.config = xs_dict_set(snac.config, "metadata", md);
-        }
+        if ((v = xs_dict_get(p_vars, "metadata")) != NULL)
+            snac.config = xs_dict_set(snac.config, "metadata", v);
 
         /* uploads */
         const char *uploads[] = { "avatar", "header", NULL };
