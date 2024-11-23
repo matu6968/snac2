@@ -336,6 +336,32 @@ int user_persist(snac *snac, int publish)
     xs *bfn = xs_fmt("%s.bak", fn);
     FILE *f;
 
+    if (publish) {
+        /* check if any of the relevant fields have really changed */
+        if ((f = fopen(fn, "r")) != NULL) {
+            xs *old = xs_json_load(f);
+            fclose(f);
+
+            if (old != NULL) {
+                int nw = 0;
+                const char *fields[] = { "header", "avatar", "name", "bio", "metadata", NULL };
+
+                for (int n = 0; fields[n]; n++) {
+                    const char *of = xs_dict_get(old, fields[n]);
+                    const char *nf = xs_dict_get(snac->config, fields[n]);
+
+                    if (xs_type(of) != XSTYPE_STRING || xs_type(nf) != XSTYPE_STRING || strcmp(of, nf)) {
+                        nw = 1;
+                        break;
+                    }
+                }
+
+                if (!nw)
+                    publish = 0;
+            }
+        }
+    }
+
     rename(fn, bfn);
 
     if ((f = fopen(fn, "w")) != NULL) {
