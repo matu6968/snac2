@@ -1224,6 +1224,44 @@ int pending_add(snac *user, const char *actor, const xs_dict *msg)
 }
 
 
+xs_dict *pending_get(snac *user, const char *actor)
+/* returns the pending follow confirmation for the actor */
+{
+    xs *md5 = xs_md5_hex(actor, strlen(actor));
+    xs *fn = xs_fmt("%s/pending/%s.json", user->basedir, md5);
+    xs_dict *msg = NULL;
+    FILE *f;
+
+    if ((f = fopen(fn, "r")) != NULL) {
+        msg = xs_json_load(f);
+        fclose(f);
+    }
+
+    return msg;
+}
+
+
+xs_list *pending_list(snac *user)
+/* returns a list of pending follow confirmations */
+{
+    xs *spec = xs_fmt("%s/pending/""*.json", user->basedir);
+    xs *l = xs_glob(spec, 0, 0);
+    xs_list *r = xs_list_new();
+    const char *v;
+
+    xs_list_foreach(l, v) {
+        const char *actor = xs_dict_get(v, "actor");
+
+        if (xs_type(actor) == XSTYPE_STRING) {
+            xs *md5 = xs_md5_hex(actor, strlen(actor));
+            r = xs_list_append(r, md5);
+        }
+    }
+
+    return r;
+}
+
+
 /** timeline **/
 
 double timeline_mtime(snac *snac)
