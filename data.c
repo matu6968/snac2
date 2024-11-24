@@ -350,6 +350,9 @@ int user_persist(snac *snac, int publish)
                     const char *of = xs_dict_get(old, fields[n]);
                     const char *nf = xs_dict_get(snac->config, fields[n]);
 
+                    if (of == NULL && nf == NULL)
+                        continue;
+
                     if (xs_type(of) != XSTYPE_STRING || xs_type(nf) != XSTYPE_STRING || strcmp(of, nf)) {
                         nw = 1;
                         break;
