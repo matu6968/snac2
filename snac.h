@@ -141,6 +141,8 @@ int follower_del(snac *snac, const char *actor);
 int follower_check(snac *snac, const char *actor);
 xs_list *follower_list(snac *snac);
 
+int pending_add(snac *user, const char *actor, const xs_dict *msg);
+
 double timeline_mtime(snac *snac);
 int timeline_touch(snac *snac);
 int timeline_here(snac *snac, const char *md5);

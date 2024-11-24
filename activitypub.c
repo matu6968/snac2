@@ -1927,22 +1927,31 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                 object_add(actor, actor_obj);
             }
 
-            xs *f_msg = xs_dup(msg);
-            xs *reply = msg_accept(snac, f_msg, actor);
+            if (xs_is_true(xs_dict_get(snac->config, "approve_followers"))) {
+                pending_add(snac, actor, msg);
 
-            post_message(snac, actor, reply);
+                snac_log(snac, xs_fmt("new pending follower approval %s", actor));
+            }
+            else {
+                /* automatic following */
+                xs *f_msg = xs_dup(msg);
+                xs *reply = msg_accept(snac, f_msg, actor);
 
-            if (xs_is_null(xs_dict_get(f_msg, "published"))) {
-                /* add a date if it doesn't include one (Mastodon) */
-                xs *date = xs_str_utctime(0, ISO_DATE_SPEC);
-                f_msg = xs_dict_set(f_msg, "published", date);
+                post_message(snac, actor, reply);
+
+                if (xs_is_null(xs_dict_get(f_msg, "published"))) {
+                    /* add a date if it doesn't include one (Mastodon) */
+                    xs *date = xs_str_utctime(0, ISO_DATE_SPEC);
+                    f_msg = xs_dict_set(f_msg, "published", date);
+                }
+
+                timeline_add(snac, id, f_msg);
+
+                follower_add(snac, actor);
+
+                snac_log(snac, xs_fmt("new follower %s", actor));
             }
 
-            timeline_add(snac, id, f_msg);
-
-            follower_add(snac, actor);
-
-            snac_log(snac, xs_fmt("new follower %s", actor));
             do_notify = 1;
         }
         else

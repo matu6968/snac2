@@ -1202,6 +1202,28 @@ xs_list *follower_list(snac *snac)
 }
 
 
+/** pending followers **/
+
+int pending_add(snac *user, const char *actor, const xs_dict *msg)
+/* stores the follow message for later confirmation */
+{
+    xs *dir = xs_fmt("%s/pending", user->basedir);
+    xs *md5 = xs_md5_hex(actor, strlen(actor));
+    xs *fn  = xs_fmt("%s/%s.json", dir, md5);
+    FILE *f;
+
+    mkdirx(dir);
+
+    if ((f = fopen(fn, "w")) == NULL)
+        return -1;
+
+    xs_json_dump(msg, 4, f);
+    fclose(f);
+
+    return 0;
+}
+
+
 /** timeline **/
 
 double timeline_mtime(snac *snac)
