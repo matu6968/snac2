@@ -1,5 +1,9 @@
 # Release Notes
 
+## UNRELEASED
+
+Added a new user option to disable automatic follow confirmations (follow requests must be manually approved from the people page).
+
 ## 2.64
 
 Some tweaks for better integration with https://bsky.brid.gy (the BlueSky bridge by brid.gy).
