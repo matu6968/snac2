@@ -129,6 +129,24 @@ Just what it says in the tin. This is to mitigate spammers
 coming from Fediverse instances with lax / open registration
 processes. Please take note that this also avoids possibly
 legitimate people trying to contact you.
+.It This account is a bot
+Set this checkbox if this account behaves like a bot (i.e.
+posts are automatically generated).
+.It Auto-boost all mentions to this account
+If this toggle is set, all mentions to this account are boosted
+to all followers. This can be used to create groups.
+.It This account is private
+If this toggle is set, posts are not published via the public
+web interface, only via the ActivityPub protocol.
+.It Collapse top threads by default
+If this toggle is set, the private timeline will always show
+conversations collapsed by default. This allows easier navigation
+through long threads.
+.It Follow requests must be approved
+If this toggle is set, follow requests are not automatically
+accepted, but notified and stored for later review. Pending
+follow requests will be shown in the people page to be
+approved or discarded.
 .It Password
 Write the same string in these two fields to change your
 password. Don't write anything if you don't want to do this.
@@ -349,4 +367,4 @@ See the LICENSE file for details.
 .Sh CAVEATS
 Use the Fediverse sparingly. Don't fear the MUTE button.
 .Sh BUGS
-Probably plenty. Some issues may be even documented in the TODO.md file.
+Probably many. Some issues may be even documented in the TODO.md file.
