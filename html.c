@@ -2972,6 +2972,48 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             const char *q = xs_dict_get(q_vars, "q");
 
             if (q && *q) {
+                if (xs_regex_match(q, "^@?[a-zA-Z0-9_]+@[a-zA-Z0-9-]+\\.")) {
+                    /** search account **/
+                    xs *actor = NULL;
+                    xs *acct = NULL;
+                    xs *l = xs_list_new();
+                    xs_html *page = NULL;
+
+                    if (valid_status(webfinger_request(q, &actor, &acct))) {
+                        xs *actor_obj = NULL;
+
+                        if (valid_status(actor_request(&snac, actor, &actor_obj))) {
+                            actor_add(actor, actor_obj);
+
+                            /* create a people list with only one element */
+                            l = xs_list_append(xs_list_new(), actor);
+
+                            xs *title = xs_fmt(L("Search results for account %s"), q);
+
+                            page = html_people_list(&snac, l, title, "wf", NULL);
+                        }
+                    }
+
+                    if (page == NULL) {
+                        xs *title = xs_fmt(L("Account %s not found"), q);
+
+                        page = xs_html_tag("div",
+                            xs_html_tag("h2",
+                                xs_html_attr("class", "snac-header"),
+                                xs_html_text(title)));
+                    }
+
+                    xs_html *html = xs_html_tag("html",
+                        html_user_head(&snac, NULL, NULL),
+                        xs_html_add(html_user_body(&snac, 0),
+                        page,
+                        html_footer()));
+
+                    *body = xs_html_render_s(html, "<!DOCTYPE html>\n");
+                    *b_size = strlen(*body);
+                    status = HTTP_STATUS_OK;
+                }
+                else
                 if (*q == '#') {
                     /** search by tag **/
                     xs *tl = tag_search(q, skip, show + 1);
