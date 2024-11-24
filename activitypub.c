@@ -1287,6 +1287,10 @@ xs_dict *msg_actor(snac *snac)
         msg = xs_dict_set(msg, "alsoKnownAs", loaka);
     }
 
+    const xs_val *manually = xs_dict_get(snac->config, "approve_followers");
+    msg = xs_dict_set(msg, "manuallyApprovesFollowers",
+        xs_stock(xs_is_true(manually) ? XSTYPE_TRUE : XSTYPE_FALSE));
+
     return msg;
 }
 
