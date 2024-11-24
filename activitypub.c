@@ -1973,6 +1973,11 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                     do_notify = 1;
                 }
                 else
+                if (pending_check(snac, actor)) {
+                    pending_del(snac, actor);
+                    snac_log(snac, xs_fmt("cancelled pending follow from %s", actor));
+                }
+                else
                     snac_log(snac, xs_fmt("error deleting follower %s", actor));
             }
         }
