@@ -2711,6 +2711,9 @@ xs_str *html_notifications(snac *user, int skip, int show)
                 label = wrk;
             }
         }
+        else
+        if (strcmp(type, "Follow") == 0 && pending_check(user, actor_id))
+            label = L("Follow Request");
 
         xs *s_date = xs_crop_i(xs_dup(date), 0, 10);
 
