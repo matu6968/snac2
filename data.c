@@ -1224,6 +1224,16 @@ int pending_add(snac *user, const char *actor, const xs_dict *msg)
 }
 
 
+int pending_check(snac *user, const char *actor)
+/* checks if there is a pending follow confirmation for the actor */
+{
+    xs *md5 = xs_md5_hex(actor, strlen(actor));
+    xs *fn = xs_fmt("%s/pending/%s.json", user->basedir, md5);
+
+    return mtime(fn) != 0;
+}
+
+
 xs_dict *pending_get(snac *user, const char *actor)
 /* returns the pending follow confirmation for the actor */
 {
@@ -1238,6 +1248,16 @@ xs_dict *pending_get(snac *user, const char *actor)
     }
 
     return msg;
+}
+
+
+void pending_del(snac *user, const char *actor)
+/* deletes a pending follow confirmation for the actor */
+{
+    xs *md5 = xs_md5_hex(actor, strlen(actor));
+    xs *fn = xs_fmt("%s/pending/%s.json", user->basedir, md5);
+
+    unlink(fn);
 }
 
 

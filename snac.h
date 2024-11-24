@@ -142,7 +142,9 @@ int follower_check(snac *snac, const char *actor);
 xs_list *follower_list(snac *snac);
 
 int pending_add(snac *user, const char *actor, const xs_dict *msg);
+int pending_check(snac *user, const char *actor);
 xs_dict *pending_get(snac *user, const char *actor);
+void pending_del(snac *user, const char *actor);
 xs_list *pending_list(snac *user);
 
 double timeline_mtime(snac *snac);
