@@ -3700,6 +3700,34 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             timeline_touch(&snac);
         }
         else
+        if (strcmp(action, L("Approve")) == 0) { /** **/
+            xs *fwreq = pending_get(&snac, actor);
+
+            if (fwreq != NULL) {
+                xs *reply = msg_accept(&snac, fwreq, actor);
+
+                enqueue_message(&snac, reply);
+
+                if (xs_is_null(xs_dict_get(fwreq, "published"))) {
+                    /* add a date if it doesn't include one (Mastodon) */
+                    xs *date = xs_str_utctime(0, ISO_DATE_SPEC);
+                    fwreq = xs_dict_set(fwreq, "published", date);
+                }
+
+                timeline_add(&snac, xs_dict_get(fwreq, "id"), fwreq);
+
+                follower_add(&snac, actor);
+
+                pending_del(&snac, actor);
+
+                snac_log(&snac, xs_fmt("new follower %s", actor));
+            }
+        }
+        else
+        if (strcmp(action, L("Discard")) == 0) { /** **/
+            pending_del(&snac, actor);
+        }
+        else
             status = HTTP_STATUS_NOT_FOUND;
 
         /* delete the cached timeline */

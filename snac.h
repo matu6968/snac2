@@ -320,6 +320,7 @@ xs_dict *msg_update(snac *snac, const xs_dict *object);
 xs_dict *msg_ping(snac *user, const char *rcpt);
 xs_dict *msg_pong(snac *user, const char *rcpt, const char *object);
 xs_dict *msg_move(snac *user, const char *new_account);
+xs_dict *msg_accept(snac *snac, const xs_val *object, const char *to);
 xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
                       const xs_list *opts, int multiple, int end_secs);
 
