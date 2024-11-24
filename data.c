@@ -1270,12 +1270,22 @@ xs_list *pending_list(snac *user)
     const char *v;
 
     xs_list_foreach(l, v) {
-        const char *actor = xs_dict_get(v, "actor");
+        FILE *f;
+        xs *msg = NULL;
 
-        if (xs_type(actor) == XSTYPE_STRING) {
-            xs *md5 = xs_md5_hex(actor, strlen(actor));
-            r = xs_list_append(r, md5);
-        }
+        if ((f = fopen(v, "r")) == NULL)
+            continue;
+
+        msg = xs_json_load(f);
+        fclose(f);
+
+        if (msg == NULL)
+            continue;
+
+        const char *actor = xs_dict_get(msg, "actor");
+
+        if (xs_type(actor) == XSTYPE_STRING)
+            r = xs_list_append(r, actor);
     }
 
     return r;

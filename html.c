@@ -2470,10 +2470,9 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                 xs_html_tag("summary",
                     xs_html_text("..."))));
 
-    xs_list *p = list;
     const char *actor_id;
 
-    while (xs_list_iter(&p, &actor_id)) {
+    xs_list_foreach(list, actor_id) {
         xs *md5 = xs_md5_hex(actor_id, strlen(actor_id));
         xs *actor = NULL;
 
@@ -2542,6 +2541,14 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                         html_button("limit", L("Limit"),
                                 L("Block announces (boosts) from this user")));
             }
+            if (pending_check(snac, actor_id)) {
+                xs_html_add(form,
+                    html_button("approve", L("Approve"),
+                                L("Approve this follow request")));
+
+                xs_html_add(form,
+                    html_button("discard", L("Discard"), L("Discard this follow request")));
+            }
             else {
                 xs_html_add(form,
                     html_button("follow", L("Follow"),
@@ -2596,13 +2603,23 @@ xs_str *html_people(snac *user)
     xs *wing = following_list(user);
     xs *wers = follower_list(user);
 
+    xs_html *lists = xs_html_tag("div",
+        xs_html_attr("class", "snac-posts"));
+
+    if (xs_is_true(xs_dict_get(user->config, "approve_followers"))) {
+        xs *pending = pending_list(user);
+        xs_html_add(lists,
+            html_people_list(user, pending, L("Pending follow confirmations"), "p", proxy));
+    }
+
+    xs_html_add(lists,
+        html_people_list(user, wing, L("People you follow"), "i", proxy),
+        html_people_list(user, wers, L("People that follow you"), "e", proxy));
+
     xs_html *html = xs_html_tag("html",
         html_user_head(user, NULL, NULL),
         xs_html_add(html_user_body(user, 0),
-            xs_html_tag("div",
-                xs_html_attr("class", "snac-posts"),
-                html_people_list(user, wing, L("People you follow"), "i", proxy),
-                html_people_list(user, wers, L("People that follow you"), "e", proxy)),
+            lists,
             html_footer()));
 
     return xs_html_render_s(html, "<!DOCTYPE html>\n");
