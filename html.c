@@ -2551,6 +2551,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                         html_button("limit", L("Limit"),
                                 L("Block announces (boosts) from this user")));
             }
+            else
             if (pending_check(snac, actor_id)) {
                 xs_html_add(form,
                     html_button("approve", L("Approve"),
