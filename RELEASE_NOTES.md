@@ -6,6 +6,8 @@ Added a new user option to disable automatic follow confirmations (follow reques
 
 The search box also searches for accounts (via webfinger).
 
+The list CSV import process now follows all accounts in the list (so that [Mastodon Follow Packs](https://mastodonmigration.wordpress.com/?p=995) can be directly used).
+
 ## 2.64
 
 Some tweaks for better integration with https://bsky.brid.gy (the BlueSky bridge by brid.gy).
