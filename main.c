@@ -52,6 +52,8 @@ int usage(void)
     printf("alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n");
     printf("migrate {basedir} {uid}              Migrates to the account defined as the alias\n");
     printf("import_csv {basedir} {uid}           Imports data from CSV files into current directory\n");
+    printf("import_list {basedir} {uid} {file}   Imports a Mastodon CSV list file\n");
+    printf("import_block_list {basedir} {uid} {file} Imports a Mastodon CSV block list file\n");
 
     return 1;
 }
@@ -585,6 +587,18 @@ int main(int argc, char *argv[])
         if (valid_status(status)) {
             xs_json_dump(data, 4, stdout);
         }
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "import_list") == 0) { /** **/
+        import_list_csv(&snac, url);
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "import_block_list") == 0) { /** **/
+        import_blocked_accounts_csv(&snac, url);
 
         return 0;
     }

@@ -681,7 +681,7 @@ void import_blocked_accounts_csv(snac *user, const char *fn)
         while (!feof(f)) {
             xs *l = xs_strip_i(xs_readline(f));
 
-            if (*l) {
+            if (*l && strchr(l, '@') != NULL) {
                 xs *url = NULL;
                 xs *uid = NULL;
 
