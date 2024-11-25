@@ -6,7 +6,9 @@ Added a new user option to disable automatic follow confirmations (follow reques
 
 The search box also searches for accounts (via webfinger).
 
-The list CSV import process now follows all accounts in the list (so that [Mastodon Follow Packs](https://mastodonmigration.wordpress.com/?p=995) can be directly used).
+New command-line action `import_list`, to import a Mastodon list in CSV format (so that [Mastodon Follow Packs](https://mastodonmigration.wordpress.com/?p=995) can be directly used).
+
+New command-line action `import_block_list`, to import a Mastodon list of accounts to be blocked in CSV format.
 
 ## 2.64
 
