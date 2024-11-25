@@ -782,6 +782,21 @@ void import_csv(snac *user)
 
                         list_content(user, list_id, actor_md5, 1);
                         snac_log(user, xs_fmt("Added %s to list %s", url, lname));
+
+                        if (!following_check(user, url)) {
+                            xs *msg = msg_follow(user, url);
+
+                            if (msg == NULL) {
+                                snac_log(user, xs_fmt("Cannot follow %s -- server down?", acct));
+                                continue;
+                            }
+
+                            following_add(user, url, msg);
+
+                            enqueue_output_by_actor(user, msg, url, 0);
+
+                            snac_log(user, xs_fmt("Following %s", url));
+                        }
                     }
                     else
                         snac_log(user, xs_fmt("Webfinger error while adding %s to list %s", acct, lname));
