@@ -280,6 +280,13 @@ section 'Migrating from snac to Mastodon').
 Starts a migration from this account to the one set as an alias (see
 .Xr snac 8 ,
 section 'Migrating from snac to Mastodon').
+.It Cm import_csv Ar basedir Ar uid
+Imports CSV data files from a Mastodon export. This command expects the
+following files to be in the current directory:
+.Pa bookmarks.csv ,
+.Pa blocked_accounts.csv ,
+.Pa lists.csv , and
+.Pa following_accounts.csv .
 .It Cm state Ar basedir
 Dumps the current state of the server and its threads. For example:
 .Bd -literal -offset indent
@@ -302,6 +309,11 @@ in-memory job queue. The thread state can be: waiting (idle waiting
 for a job to be assigned), input or output (processing I/O packets)
 or stopped (not running, only to be seen while starting or stopping
 the server).
+.It Cm import_list Ar basedir Ar uid Ar file
+Imports a Mastodon list in CSV format. This option can be used to
+import "Mastodon Follow Packs".
+.It Cm import_block_list Ar basedir Ar uid Ar file
+Imports a Mastodon list of accounts to be blocked in CSV format.
 .El
 .Ss Migrating an account to/from Mastodon
 See 
