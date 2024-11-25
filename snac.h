@@ -404,6 +404,10 @@ void verify_links(snac *user);
 
 void export_csv(snac *user);
 int migrate_account(snac *user);
+
+void import_blocked_accounts_csv(snac *user, const char *fn);
+void import_following_accounts_csv(snac *user, const char *fn);
+void import_list_csv(snac *user, const char *fn);
 void import_csv(snac *user);
 
 typedef enum {
