@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.65
 
 Added a new user option to disable automatic follow confirmations (follow requests must be manually approved from the people page).
 
