@@ -1524,7 +1524,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     if ((read_only || !user) && !is_msg_public(msg))
         return NULL;
 
-    if (is_instance_blocked(id))
+    if (id && is_instance_blocked(id))
         return NULL;
 
     if (user && level == 0 && xs_is_true(xs_dict_get(user->config, "collapse_threads")))

@@ -1349,7 +1349,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
             if (!xs_match(type, POSTLIKE_OBJECT_TYPE))
                 continue;
 
-            if (is_instance_blocked(id))
+            if (id && is_instance_blocked(id))
                 continue;
 
             const char *from = NULL;
