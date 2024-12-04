@@ -2836,6 +2836,8 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
 
     *ctype  = "application/activity+json";
 
+    int show_contact_metrics = xs_is_true(xs_dict_get(snac.config, "show_contact_metrics"));
+
     if (p_path == NULL) {
         /* if there was no component after the user, it's an actor request */
         msg = msg_actor(&snac);
@@ -2875,13 +2877,27 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(p_path, "followers") == 0) {
+        int total = 0;
+
+        if (show_contact_metrics) {
+            xs *l = follower_list(&snac);
+            total = xs_list_len(l);
+        }
+
         xs *id = xs_fmt("%s/%s", snac.actor, p_path);
-        msg = msg_collection(&snac, id, 0);
+        msg = msg_collection(&snac, id, total);
     }
     else
     if (strcmp(p_path, "following") == 0) {
+        int total = 0;
+
+        if (show_contact_metrics) {
+            xs *l = following_list(&snac);
+            total = xs_list_len(l);
+        }
+
         xs *id = xs_fmt("%s/%s", snac.actor, p_path);
-        msg = msg_collection(&snac, id, 0);
+        msg = msg_collection(&snac, id, total);
     }
     else
     if (xs_startswith(p_path, "p/")) {
