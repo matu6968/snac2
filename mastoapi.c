@@ -1286,6 +1286,17 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     acct = xs_dict_append(acct, "following_count", xs_stock(0));
     acct = xs_dict_append(acct, "statuses_count", xs_stock(0));
 
+    /* does this user want to publish their contact metrics? */
+    if (xs_is_true(xs_dict_get(snac.config, "show_contact_metrics"))) {
+        xs *fwing = following_list(&snac);
+        xs *fwers = follower_list(&snac);
+        xs *ni = xs_number_new(xs_list_len(fwing));
+        xs *ne = xs_number_new(xs_list_len(fwers));
+
+        acct = xs_dict_append(acct, "followers_count", ne);
+        acct = xs_dict_append(acct, "following_count", ni);
+    }
+
     *body = xs_json_dumps(acct, 4);
     *ctype = "application/json";
     *status = HTTP_STATUS_OK;
