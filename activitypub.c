@@ -1038,15 +1038,14 @@ xs_dict *msg_base(snac *snac, const char *type, const char *id,
 }
 
 
-xs_dict *msg_collection(snac *snac, const char *id)
+xs_dict *msg_collection(snac *snac, const char *id, int items)
 /* creates an empty OrderedCollection message */
 {
     xs_dict *msg = msg_base(snac, "OrderedCollection", id, NULL, NULL, NULL);
-    xs *ol = xs_list_new();
+    xs *n = xs_number_new(items);
 
     msg = xs_dict_append(msg, "attributedTo", snac->actor);
-    msg = xs_dict_append(msg, "orderedItems", ol);
-    msg = xs_dict_append(msg, "totalItems",   xs_stock(0));
+    msg = xs_dict_append(msg, "totalItems",   n);
 
     return msg;
 }
@@ -2850,7 +2849,6 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
     if (strcmp(p_path, "outbox") == 0 || strcmp(p_path, "featured") == 0) {
         xs *id = xs_fmt("%s/%s", snac.actor, p_path);
         xs *list = xs_list_new();
-        msg = msg_collection(&snac, id);
         const char *v;
         int tc = 0;
 
@@ -2872,14 +2870,18 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         }
 
         /* replace the 'orderedItems' with the latest posts */
-        xs *items = xs_number_new(xs_list_len(list));
+        msg = msg_collection(&snac, id, xs_list_len(list));
         msg = xs_dict_set(msg, "orderedItems", list);
-        msg = xs_dict_set(msg, "totalItems",   items);
     }
     else
-    if (strcmp(p_path, "followers") == 0 || strcmp(p_path, "following") == 0) {
+    if (strcmp(p_path, "followers") == 0) {
         xs *id = xs_fmt("%s/%s", snac.actor, p_path);
-        msg = msg_collection(&snac, id);
+        msg = msg_collection(&snac, id, 0);
+    }
+    else
+    if (strcmp(p_path, "following") == 0) {
+        xs *id = xs_fmt("%s/%s", snac.actor, p_path);
+        msg = msg_collection(&snac, id, 0);
     }
     else
     if (xs_startswith(p_path, "p/")) {
