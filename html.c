@@ -938,6 +938,18 @@ static xs_html *html_user_body(snac *user, int read_only)
             xs_html_add(top_user,
                 snac_metadata);
         }
+
+        if (xs_is_true(xs_dict_get(user->config, "show_contact_metrics"))) {
+            xs *fwers = follower_list(user);
+            xs *fwing = following_list(user);
+
+            xs *s1 = xs_fmt(L("%d following %d followers"),
+                xs_list_len(fwing), xs_list_len(fwers));
+
+            xs_html_add(top_user,
+                xs_html_tag("p",
+                    xs_html_text(s1)));
+        }
     }
 
     xs_html_add(body,
