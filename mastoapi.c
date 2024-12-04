@@ -663,6 +663,17 @@ xs_dict *mastoapi_account(snac *logged, const xs_dict *actor)
         if (user_open(&user, prefu)) {
             val_links = user.links;
             metadata  = xs_dict_get_def(user.config, "metadata", xs_stock(XSTYPE_DICT));
+
+            /* does this user want to publish their contact metrics? */
+            if (xs_is_true(xs_dict_get(user.config, "show_contact_metrics"))) {
+                xs *fwing = following_list(&user);
+                xs *fwers = follower_list(&user);
+                xs *ni = xs_number_new(xs_list_len(fwing));
+                xs *ne = xs_number_new(xs_list_len(fwers));
+
+                acct = xs_dict_append(acct, "followers_count", ne);
+                acct = xs_dict_append(acct, "following_count", ni);
+            }
         }
     }
 
