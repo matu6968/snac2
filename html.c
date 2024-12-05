@@ -1062,6 +1062,7 @@ xs_html *html_top_controls(snac *snac)
     const xs_val *auto_boost = xs_dict_get(snac->config, "auto_boost");
     const xs_val *coll_thrds = xs_dict_get(snac->config, "collapse_threads");
     const xs_val *pending    = xs_dict_get(snac->config, "approve_followers");
+    const xs_val *show_foll  = xs_dict_get(snac->config, "show_contact_metrics");
 
     xs *metadata = NULL;
     const xs_dict *md = xs_dict_get(snac->config, "metadata");
@@ -1242,6 +1243,15 @@ xs_html *html_top_controls(snac *snac)
                     xs_html_tag("label",
                         xs_html_attr("for", "approve_followers"),
                         xs_html_text(L("Follow requests must be approved")))),
+                xs_html_tag("p",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "checkbox"),
+                        xs_html_attr("name", "show_contact_metrics"),
+                        xs_html_attr("id",   "show_contact_metrics"),
+                        xs_html_attr(xs_is_true(show_foll) ? "checked" : "", NULL)),
+                    xs_html_tag("label",
+                        xs_html_attr("for", "show_contact_metrics"),
+                        xs_html_text(L("Publish follower and following metrics")))),
                 xs_html_tag("p",
                     xs_html_text(L("Profile metadata (key=value pairs in each line):")),
                     xs_html_sctag("br", NULL),
@@ -3858,6 +3868,10 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "approve_followers", xs_stock(XSTYPE_TRUE));
         else
             snac.config = xs_dict_set(snac.config, "approve_followers", xs_stock(XSTYPE_FALSE));
+        if ((v = xs_dict_get(p_vars, "show_contact_metrics")) != NULL && strcmp(v, "on") == 0)
+            snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_TRUE));
+        else
+            snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_FALSE));
 
         if ((v = xs_dict_get(p_vars, "metadata")) != NULL)
             snac.config = xs_dict_set(snac.config, "metadata", v);
