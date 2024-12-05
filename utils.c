@@ -670,20 +670,18 @@ void export_csv(snac *user)
 }
 
 
-void import_csv(snac *user)
-/* import CSV files from Mastodon */
+void import_blocked_accounts_csv(snac *user, const char *fn)
+/* imports a Mastodon CSV file of blocked accounts */
 {
     FILE *f;
-    const char *fn;
 
-    fn = "blocked_accounts.csv";
     if ((f = fopen(fn, "r")) != NULL) {
         snac_log(user, xs_fmt("Importing from %s...", fn));
 
         while (!feof(f)) {
             xs *l = xs_strip_i(xs_readline(f));
 
-            if (*l) {
+            if (*l && strchr(l, '@') != NULL) {
                 xs *url = NULL;
                 xs *uid = NULL;
 
@@ -704,8 +702,14 @@ void import_csv(snac *user)
     }
     else
         snac_log(user, xs_fmt("Cannot open file %s", fn));
+}
 
-    fn = "following_accounts.csv";
+
+void import_following_accounts_csv(snac *user, const char *fn)
+/* imports a Mastodon CSV file of accounts to follow */
+{
+    FILE *f;
+
     if ((f = fopen(fn, "r")) != NULL) {
         snac_log(user, xs_fmt("Importing from %s...", fn));
 
@@ -757,8 +761,14 @@ void import_csv(snac *user)
     }
     else
         snac_log(user, xs_fmt("Cannot open file %s", fn));
+}
 
-    fn = "lists.csv";
+
+void import_list_csv(snac *user, const char *fn)
+/* imports a Mastodon CSV file list */
+{
+    FILE *f;
+
     if ((f = fopen(fn, "r")) != NULL) {
         snac_log(user, xs_fmt("Importing from %s...", fn));
 
@@ -782,6 +792,21 @@ void import_csv(snac *user)
 
                         list_content(user, list_id, actor_md5, 1);
                         snac_log(user, xs_fmt("Added %s to list %s", url, lname));
+
+                        if (!following_check(user, url)) {
+                            xs *msg = msg_follow(user, url);
+
+                            if (msg == NULL) {
+                                snac_log(user, xs_fmt("Cannot follow %s -- server down?", acct));
+                                continue;
+                            }
+
+                            following_add(user, url, msg);
+
+                            enqueue_output_by_actor(user, msg, url, 0);
+
+                            snac_log(user, xs_fmt("Following %s", url));
+                        }
                     }
                     else
                         snac_log(user, xs_fmt("Webfinger error while adding %s to list %s", acct, lname));
@@ -793,6 +818,20 @@ void import_csv(snac *user)
     }
     else
         snac_log(user, xs_fmt("Cannot open file %s", fn));
+}
+
+
+void import_csv(snac *user)
+/* import CSV files from Mastodon */
+{
+    FILE *f;
+    const char *fn;
+
+    import_blocked_accounts_csv(user, "blocked_accounts.csv");
+
+    import_following_accounts_csv(user, "following_accounts.csv");
+
+    import_list_csv(user, "lists.csv");
 
     fn = "bookmarks.csv";
     if ((f = fopen(fn, "r")) != NULL) {

@@ -106,13 +106,13 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
         if (xs_list_len(l1) != 2)
             return NULL;
 
-        boundary = xs_dup(xs_list_get(l1, 1));
+        xs *t_boundary = xs_dup(xs_list_get(l1, 1));
 
         /* Tokodon sends the boundary header with double quotes surrounded */
-        if (xs_between("\"", boundary, "\"") != 0)
-            boundary = xs_strip_chars_i(boundary, "\"");
+        if (xs_between("\"", t_boundary, "\"") != 0)
+            t_boundary = xs_strip_chars_i(t_boundary, "\"");
 
-        boundary = xs_fmt("--%s", boundary);
+        boundary = xs_fmt("--%s", t_boundary);
     }
 
     bsz = strlen(boundary);

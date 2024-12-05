@@ -663,6 +663,17 @@ xs_dict *mastoapi_account(snac *logged, const xs_dict *actor)
         if (user_open(&user, prefu)) {
             val_links = user.links;
             metadata  = xs_dict_get_def(user.config, "metadata", xs_stock(XSTYPE_DICT));
+
+            /* does this user want to publish their contact metrics? */
+            if (xs_is_true(xs_dict_get(user.config, "show_contact_metrics"))) {
+                xs *fwing = following_list(&user);
+                xs *fwers = follower_list(&user);
+                xs *ni = xs_number_new(xs_list_len(fwing));
+                xs *ne = xs_number_new(xs_list_len(fwers));
+
+                acct = xs_dict_append(acct, "followers_count", ne);
+                acct = xs_dict_append(acct, "following_count", ni);
+            }
         }
     }
 
@@ -1275,6 +1286,17 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     acct = xs_dict_append(acct, "following_count", xs_stock(0));
     acct = xs_dict_append(acct, "statuses_count", xs_stock(0));
 
+    /* does this user want to publish their contact metrics? */
+    if (xs_is_true(xs_dict_get(snac.config, "show_contact_metrics"))) {
+        xs *fwing = following_list(&snac);
+        xs *fwers = follower_list(&snac);
+        xs *ni = xs_number_new(xs_list_len(fwing));
+        xs *ne = xs_number_new(xs_list_len(fwers));
+
+        acct = xs_dict_append(acct, "followers_count", ne);
+        acct = xs_dict_append(acct, "following_count", ni);
+    }
+
     *body = xs_json_dumps(acct, 4);
     *ctype = "application/json";
     *status = HTTP_STATUS_OK;
@@ -1347,6 +1369,9 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
             const char *id   = xs_dict_get(msg, "id");
             const char *type = xs_dict_get(msg, "type");
             if (!xs_match(type, POSTLIKE_OBJECT_TYPE))
+                continue;
+
+            if (id && is_instance_blocked(id))
                 continue;
 
             const char *from = NULL;

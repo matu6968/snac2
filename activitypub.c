@@ -1038,15 +1038,14 @@ xs_dict *msg_base(snac *snac, const char *type, const char *id,
 }
 
 
-xs_dict *msg_collection(snac *snac, const char *id)
+xs_dict *msg_collection(snac *snac, const char *id, int items)
 /* creates an empty OrderedCollection message */
 {
     xs_dict *msg = msg_base(snac, "OrderedCollection", id, NULL, NULL, NULL);
-    xs *ol = xs_list_new();
+    xs *n = xs_number_new(items);
 
     msg = xs_dict_append(msg, "attributedTo", snac->actor);
-    msg = xs_dict_append(msg, "orderedItems", ol);
-    msg = xs_dict_append(msg, "totalItems",   xs_stock(0));
+    msg = xs_dict_append(msg, "totalItems",   n);
 
     return msg;
 }
@@ -1218,7 +1217,30 @@ xs_dict *msg_actor(snac *snac)
     }
 
     /* add the metadata as attachments of PropertyValue */
-    const xs_dict *metadata = xs_dict_get(snac->config, "metadata");
+    xs *metadata = NULL;
+    const xs_dict *md = xs_dict_get(snac->config, "metadata");
+
+    if (xs_type(md) == XSTYPE_DICT)
+        metadata = xs_dup(md);
+    else
+    if (xs_type(md) == XSTYPE_STRING) {
+        metadata = xs_dict_new();
+        xs *l = xs_split(md, "\n");
+        const char *ll;
+
+        xs_list_foreach(l, ll) {
+            xs *kv = xs_split_n(ll, "=", 1);
+            const char *k = xs_list_get(kv, 0);
+            const char *v = xs_list_get(kv, 1);
+
+            if (k && v) {
+                xs *kk = xs_strip_i(xs_dup(k));
+                xs *vv = xs_strip_i(xs_dup(v));
+                metadata = xs_dict_set(metadata, kk, vv);
+            }
+        }
+    }
+
     if (xs_type(metadata) == XSTYPE_DICT) {
         xs *attach = xs_list_new();
         const xs_str *k;
@@ -1263,6 +1285,10 @@ xs_dict *msg_actor(snac *snac)
 
         msg = xs_dict_set(msg, "alsoKnownAs", loaka);
     }
+
+    const xs_val *manually = xs_dict_get(snac->config, "approve_followers");
+    msg = xs_dict_set(msg, "manuallyApprovesFollowers",
+        xs_stock(xs_is_true(manually) ? XSTYPE_TRUE : XSTYPE_FALSE));
 
     return msg;
 }
@@ -1900,22 +1926,31 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                 object_add(actor, actor_obj);
             }
 
-            xs *f_msg = xs_dup(msg);
-            xs *reply = msg_accept(snac, f_msg, actor);
+            if (xs_is_true(xs_dict_get(snac->config, "approve_followers"))) {
+                pending_add(snac, actor, msg);
 
-            post_message(snac, actor, reply);
+                snac_log(snac, xs_fmt("new pending follower approval %s", actor));
+            }
+            else {
+                /* automatic following */
+                xs *f_msg = xs_dup(msg);
+                xs *reply = msg_accept(snac, f_msg, actor);
 
-            if (xs_is_null(xs_dict_get(f_msg, "published"))) {
-                /* add a date if it doesn't include one (Mastodon) */
-                xs *date = xs_str_utctime(0, ISO_DATE_SPEC);
-                f_msg = xs_dict_set(f_msg, "published", date);
+                post_message(snac, actor, reply);
+
+                if (xs_is_null(xs_dict_get(f_msg, "published"))) {
+                    /* add a date if it doesn't include one (Mastodon) */
+                    xs *date = xs_str_utctime(0, ISO_DATE_SPEC);
+                    f_msg = xs_dict_set(f_msg, "published", date);
+                }
+
+                timeline_add(snac, id, f_msg);
+
+                follower_add(snac, actor);
+
+                snac_log(snac, xs_fmt("new follower %s", actor));
             }
 
-            timeline_add(snac, id, f_msg);
-
-            follower_add(snac, actor);
-
-            snac_log(snac, xs_fmt("new follower %s", actor));
             do_notify = 1;
         }
         else
@@ -1935,6 +1970,11 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                 if (valid_status(follower_del(snac, actor))) {
                     snac_log(snac, xs_fmt("no longer following us %s", actor));
                     do_notify = 1;
+                }
+                else
+                if (pending_check(snac, actor)) {
+                    pending_del(snac, actor);
+                    snac_log(snac, xs_fmt("cancelled pending follow from %s", actor));
                 }
                 else
                     snac_log(snac, xs_fmt("error deleting follower %s", actor));
@@ -2796,6 +2836,8 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
 
     *ctype  = "application/activity+json";
 
+    int show_contact_metrics = xs_is_true(xs_dict_get(snac.config, "show_contact_metrics"));
+
     if (p_path == NULL) {
         /* if there was no component after the user, it's an actor request */
         msg = msg_actor(&snac);
@@ -2809,7 +2851,6 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
     if (strcmp(p_path, "outbox") == 0 || strcmp(p_path, "featured") == 0) {
         xs *id = xs_fmt("%s/%s", snac.actor, p_path);
         xs *list = xs_list_new();
-        msg = msg_collection(&snac, id);
         const char *v;
         int tc = 0;
 
@@ -2831,14 +2872,32 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         }
 
         /* replace the 'orderedItems' with the latest posts */
-        xs *items = xs_number_new(xs_list_len(list));
+        msg = msg_collection(&snac, id, xs_list_len(list));
         msg = xs_dict_set(msg, "orderedItems", list);
-        msg = xs_dict_set(msg, "totalItems",   items);
     }
     else
-    if (strcmp(p_path, "followers") == 0 || strcmp(p_path, "following") == 0) {
+    if (strcmp(p_path, "followers") == 0) {
+        int total = 0;
+
+        if (show_contact_metrics) {
+            xs *l = follower_list(&snac);
+            total = xs_list_len(l);
+        }
+
         xs *id = xs_fmt("%s/%s", snac.actor, p_path);
-        msg = msg_collection(&snac, id);
+        msg = msg_collection(&snac, id, total);
+    }
+    else
+    if (strcmp(p_path, "following") == 0) {
+        int total = 0;
+
+        if (show_contact_metrics) {
+            xs *l = following_list(&snac);
+            total = xs_list_len(l);
+        }
+
+        xs *id = xs_fmt("%s/%s", snac.actor, p_path);
+        msg = msg_collection(&snac, id, total);
     }
     else
     if (xs_startswith(p_path, "p/")) {

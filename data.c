@@ -299,6 +299,35 @@ int user_persist(snac *snac, int publish)
     xs *bfn = xs_fmt("%s.bak", fn);
     FILE *f;
 
+    if (publish) {
+        /* check if any of the relevant fields have really changed */
+        if ((f = fopen(fn, "r")) != NULL) {
+            xs *old = xs_json_load(f);
+            fclose(f);
+
+            if (old != NULL) {
+                int nw = 0;
+                const char *fields[] = { "header", "avatar", "name", "bio", "metadata", NULL };
+
+                for (int n = 0; fields[n]; n++) {
+                    const char *of = xs_dict_get(old, fields[n]);
+                    const char *nf = xs_dict_get(snac->config, fields[n]);
+
+                    if (of == NULL && nf == NULL)
+                        continue;
+
+                    if (xs_type(of) != XSTYPE_STRING || xs_type(nf) != XSTYPE_STRING || strcmp(of, nf)) {
+                        nw = 1;
+                        break;
+                    }
+                }
+
+                if (!nw)
+                    publish = 0;
+            }
+        }
+    }
+
     rename(fn, bfn);
 
     if ((f = fopen(fn, "w")) != NULL) {
@@ -1136,6 +1165,96 @@ xs_list *follower_list(snac *snac)
     }
 
     return fwers;
+}
+
+
+/** pending followers **/
+
+int pending_add(snac *user, const char *actor, const xs_dict *msg)
+/* stores the follow message for later confirmation */
+{
+    xs *dir = xs_fmt("%s/pending", user->basedir);
+    xs *md5 = xs_md5_hex(actor, strlen(actor));
+    xs *fn  = xs_fmt("%s/%s.json", dir, md5);
+    FILE *f;
+
+    mkdirx(dir);
+
+    if ((f = fopen(fn, "w")) == NULL)
+        return -1;
+
+    xs_json_dump(msg, 4, f);
+    fclose(f);
+
+    return 0;
+}
+
+
+int pending_check(snac *user, const char *actor)
+/* checks if there is a pending follow confirmation for the actor */
+{
+    xs *md5 = xs_md5_hex(actor, strlen(actor));
+    xs *fn = xs_fmt("%s/pending/%s.json", user->basedir, md5);
+
+    return mtime(fn) != 0;
+}
+
+
+xs_dict *pending_get(snac *user, const char *actor)
+/* returns the pending follow confirmation for the actor */
+{
+    xs *md5 = xs_md5_hex(actor, strlen(actor));
+    xs *fn = xs_fmt("%s/pending/%s.json", user->basedir, md5);
+    xs_dict *msg = NULL;
+    FILE *f;
+
+    if ((f = fopen(fn, "r")) != NULL) {
+        msg = xs_json_load(f);
+        fclose(f);
+    }
+
+    return msg;
+}
+
+
+void pending_del(snac *user, const char *actor)
+/* deletes a pending follow confirmation for the actor */
+{
+    xs *md5 = xs_md5_hex(actor, strlen(actor));
+    xs *fn = xs_fmt("%s/pending/%s.json", user->basedir, md5);
+
+    unlink(fn);
+}
+
+
+xs_list *pending_list(snac *user)
+/* returns a list of pending follow confirmations */
+{
+    xs *spec = xs_fmt("%s/pending/""*.json", user->basedir);
+    xs *l = xs_glob(spec, 0, 0);
+    xs_list *r = xs_list_new();
+    const char *v;
+
+    xs_list_foreach(l, v) {
+        FILE *f;
+        xs *msg = NULL;
+
+        if ((f = fopen(v, "r")) == NULL)
+            continue;
+
+        msg = xs_json_load(f);
+        fclose(f);
+
+        if (msg == NULL)
+            continue;
+
+        const char *actor = xs_dict_get(msg, "actor");
+
+        if (xs_type(actor) == XSTYPE_STRING)
+            r = xs_list_append(r, actor);
+    }
+
+    return r;
 }
 
 

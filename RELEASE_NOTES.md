@@ -1,5 +1,21 @@
 # Release Notes
 
+## UNRELEASED
+
+As many users have asked for it, there is now an option to make the number of followed and following accounts public (still disabled by default). These are only the numbers; the lists themselves are never published.
+
+Some fixes to blocked instances code (posts from them were sometimes shown).
+
+## 2.65
+
+Added a new user option to disable automatic follow confirmations (follow requests must be manually approved from the people page).
+
+The search box also searches for accounts (via webfinger).
+
+New command-line action `import_list`, to import a Mastodon list in CSV format (so that [Mastodon Follow Packs](https://mastodonmigration.wordpress.com/?p=995) can be directly used).
+
+New command-line action `import_block_list`, to import a Mastodon list of accounts to be blocked in CSV format.
+
 ## 2.64
 
 Some tweaks for better integration with https://bsky.brid.gy (the BlueSky bridge by brid.gy).
