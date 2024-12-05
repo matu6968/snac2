@@ -37,7 +37,8 @@ activitypub.o: activitypub.c xs.h xs_json.h xs_curl.h xs_mime.h \
  xs_openssl.h xs_regex.h xs_time.h xs_set.h xs_match.h snac.h \
  http_codes.h
 sandbox.o: sandbox.c xs.h xs_hex.h xs_io.h xs_json.h xs_openssl.h \
- xs_glob.h xs_set.h xs_time.h xs_regex.h xs_match.h xs_unicode.h snac.h
+ xs_glob.h xs_set.h xs_time.h xs_regex.h xs_match.h xs_unicode.h \
+ landloc.h snac.h
 data.o: data.c xs.h xs_hex.h xs_io.h xs_json.h xs_openssl.h xs_glob.h \
  xs_set.h xs_time.h xs_regex.h xs_match.h xs_unicode.h xs_random.h snac.h \
  http_codes.h
