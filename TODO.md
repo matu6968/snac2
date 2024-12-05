@@ -16,10 +16,6 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
-Implement Proxying for Media Links to Enhance User Privacy (see https://codeberg.org/grunfink/snac2/issues/219 for more information).
-
-Consider showing only posts by the account owner (not full trees) (see https://codeberg.org/grunfink/snac2/issues/217 for more information).
-
 Add support for subscribing and posting to relays (see https://codeberg.org/grunfink/snac2/issues/216 for more information).
 
 The instance timeline should also show boosts from users.
@@ -357,3 +353,13 @@ Fix a crash when posting from the links browser (2.63, 2024-11-08T15:57:25+0100)
 Fix some repeated images in Lemmy posts (2.63, 2024-11-08T15:57:25+0100).
 
 Fix a crash when posting an image from the tooot mobile app (2.63, 2024-11-11T19:42:11+0100).
+
+Fix some URL proxying (2.64, 2024-11-16T07:26:23+0100).
+
+Allow underscores in hashtags (2.64, 2024-11-16T07:26:23+0100).
+
+Add a pidfile (2.64, 2024-11-17T10:21:29+0100).
+
+Implement Proxying for Media Links to Enhance User Privacy (see https://codeberg.org/grunfink/snac2/issues/219 for more information) (2024-11-18T20:36:39+0100).
+
+Consider showing only posts by the account owner (not full trees) (see https://codeberg.org/grunfink/snac2/issues/217 for more information) (2024-11-18T20:36:39+0100).

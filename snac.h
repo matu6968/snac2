@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
 
-#define VERSION "2.63"
+#define VERSION "2.66-dev"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -140,6 +140,12 @@ int follower_add(snac *snac, const char *actor);
 int follower_del(snac *snac, const char *actor);
 int follower_check(snac *snac, const char *actor);
 xs_list *follower_list(snac *snac);
+
+int pending_add(snac *user, const char *actor, const xs_dict *msg);
+int pending_check(snac *user, const char *actor);
+xs_dict *pending_get(snac *user, const char *actor);
+void pending_del(snac *user, const char *actor);
+xs_list *pending_list(snac *user);
 
 double timeline_mtime(snac *snac);
 int timeline_touch(snac *snac);
@@ -296,6 +302,7 @@ const char *default_avatar_base64(void);
 xs_str *process_tags(snac *snac, const char *content, xs_list **tag);
 
 const char *get_atto(const xs_dict *msg);
+const char *get_in_reply_to(const xs_dict *msg);
 xs_list *get_attachments(const xs_dict *msg);
 
 xs_dict *msg_admiration(snac *snac, const char *object, const char *type);
@@ -313,6 +320,7 @@ xs_dict *msg_update(snac *snac, const xs_dict *object);
 xs_dict *msg_ping(snac *user, const char *rcpt);
 xs_dict *msg_pong(snac *user, const char *rcpt, const char *object);
 xs_dict *msg_move(snac *user, const char *new_account);
+xs_dict *msg_accept(snac *snac, const xs_val *object, const char *to);
 xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
                       const xs_list *opts, int multiple, int end_secs);
 
@@ -396,6 +404,10 @@ void verify_links(snac *user);
 
 void export_csv(snac *user);
 int migrate_account(snac *user);
+
+void import_blocked_accounts_csv(snac *user, const char *fn);
+void import_following_accounts_csv(snac *user, const char *fn);
+void import_list_csv(snac *user, const char *fn);
 void import_csv(snac *user);
 
 typedef enum {

@@ -21,6 +21,7 @@
  int xs_unicode_nfd(unsigned int cpoint, unsigned int *base, unsigned int *diac);
  int xs_unicode_nfc(unsigned int base, unsigned int diac, unsigned int *cpoint);
  int xs_unicode_is_alpha(unsigned int cpoint);
+ int xs_unicode_is_right_to_left(unsigned int cpoint);
 
 #ifdef _XS_H
  xs_str *xs_utf8_insert(xs_str *str, unsigned int cpoint, int *offset);
@@ -336,6 +337,29 @@ int xs_unicode_is_alpha(unsigned int cpoint)
     while (t >= b) {
         int n = (b + t) / 2;
         unsigned int *p = &xs_unicode_alpha_table[n * 2];
+
+        if (cpoint < p[0])
+            t = n - 1;
+        else
+        if (cpoint > p[1])
+            b = n + 1;
+        else
+            return 1;
+    }
+
+    return 0;
+}
+
+
+int xs_unicode_is_right_to_left(unsigned int cpoint)
+/* checks if a codepoint is a right-to-left letter */
+{
+    int b = 0;
+    int t = xs_countof(xs_unicode_right_to_left_table) / 2 - 1;
+
+    while (t >= b) {
+        int n = (b + t) / 2;
+        unsigned int *p = &xs_unicode_right_to_left_table[n * 2];
 
         if (cpoint < p[0])
             t = n - 1;

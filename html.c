@@ -770,7 +770,7 @@ static xs_html *html_user_body(snac *user, int read_only)
                     xs_html_sctag("input",
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "q"),
-                        xs_html_attr("title", L("Search posts by content (regular expression) or #tag")),
+                        xs_html_attr("title", L("Search posts by content (regular expression), @user@host accounts, or #tag")),
                         xs_html_attr("placeholder", L("Content search")))));
     }
 
@@ -829,21 +829,45 @@ static xs_html *html_user_body(snac *user, int read_only)
     }
 
     if (read_only) {
-        xs *es1  = encode_html(xs_dict_get(user->config, "bio"));
         xs *tags = xs_list_new();
-        xs *bio1 = not_really_markdown(es1, NULL, &tags);
+        xs *bio1 = not_really_markdown(xs_dict_get(user->config, "bio"), NULL, &tags);
         xs *bio2 = process_tags(user, bio1, &tags);
+        xs *bio3 = sanitize(bio2);
 
-        bio2 = replace_shortnames(bio2, tags, 2, proxy);
+        bio3 = replace_shortnames(bio3, tags, 2, proxy);
 
         xs_html *top_user_bio = xs_html_tag("div",
             xs_html_attr("class", "p-note snac-top-user-bio"),
-            xs_html_raw(bio2)); /* already sanitized */
+            xs_html_raw(bio3)); /* already sanitized */
 
         xs_html_add(top_user,
             top_user_bio);
 
-        const xs_dict *metadata = xs_dict_get(user->config, "metadata");
+        xs *metadata = NULL;
+        const xs_dict *md = xs_dict_get(user->config, "metadata");
+
+        if (xs_type(md) == XSTYPE_DICT)
+            metadata = xs_dup(md);
+        else
+        if (xs_type(md) == XSTYPE_STRING) {
+            /* convert to dict for easier iteration */
+            metadata = xs_dict_new();
+            xs *l = xs_split(md, "\n");
+            const char *ll;
+
+            xs_list_foreach(l, ll) {
+                xs *kv = xs_split_n(ll, "=", 1);
+                const char *k = xs_list_get(kv, 0);
+                const char *v = xs_list_get(kv, 1);
+
+                if (k && v) {
+                    xs *kk = xs_strip_i(xs_dup(k));
+                    xs *vv = xs_strip_i(xs_dup(v));
+                    metadata = xs_dict_set(metadata, kk, vv);
+                }
+            }
+        }
+
         if (xs_type(metadata) == XSTYPE_DICT) {
             const xs_str *k;
             const xs_str *v;
@@ -913,6 +937,18 @@ static xs_html *html_user_body(snac *user, int read_only)
 
             xs_html_add(top_user,
                 snac_metadata);
+        }
+
+        if (xs_is_true(xs_dict_get(user->config, "show_contact_metrics"))) {
+            xs *fwers = follower_list(user);
+            xs *fwing = following_list(user);
+
+            xs *s1 = xs_fmt(L("%d following %d followers"),
+                xs_list_len(fwing), xs_list_len(fwers));
+
+            xs_html_add(top_user,
+                xs_html_tag("p",
+                    xs_html_text(s1)));
         }
     }
 
@@ -1025,20 +1061,31 @@ xs_html *html_top_controls(snac *snac)
     const xs_val *a_private = xs_dict_get(snac->config, "private");
     const xs_val *auto_boost = xs_dict_get(snac->config, "auto_boost");
     const xs_val *coll_thrds = xs_dict_get(snac->config, "collapse_threads");
+    const xs_val *pending    = xs_dict_get(snac->config, "approve_followers");
+    const xs_val *show_foll  = xs_dict_get(snac->config, "show_contact_metrics");
 
-    xs *metadata = xs_str_new(NULL);
+    xs *metadata = NULL;
     const xs_dict *md = xs_dict_get(snac->config, "metadata");
-    const xs_str *k;
-    const xs_str *v;
 
-    int c = 0;
-    while (xs_dict_next(md, &k, &v, &c)) {
-        xs *kp = xs_fmt("%s=%s", k, v);
+    if (xs_type(md) == XSTYPE_DICT) {
+        const xs_str *k;
+        const xs_str *v;
 
-        if (*metadata)
-            metadata = xs_str_cat(metadata, "\n");
-        metadata = xs_str_cat(metadata, kp);
+        metadata = xs_str_new(NULL);
+
+        xs_dict_foreach(md, k, v) {
+            xs *kp = xs_fmt("%s=%s", k, v);
+
+            if (*metadata)
+                metadata = xs_str_cat(metadata, "\n");
+            metadata = xs_str_cat(metadata, kp);
+        }
     }
+    else
+    if (xs_type(md) == XSTYPE_STRING)
+        metadata = xs_dup(md);
+    else
+        metadata = xs_str_new(NULL);
 
     xs *user_setup_action = xs_fmt("%s/admin/user-setup", snac->actor);
 
@@ -1187,6 +1234,24 @@ xs_html *html_top_controls(snac *snac)
                     xs_html_tag("label",
                         xs_html_attr("for", "collapse_threads"),
                         xs_html_text(L("Collapse top threads by default")))),
+                xs_html_tag("p",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "checkbox"),
+                        xs_html_attr("name", "approve_followers"),
+                        xs_html_attr("id",   "approve_followers"),
+                        xs_html_attr(xs_is_true(pending) ? "checked" : "", NULL)),
+                    xs_html_tag("label",
+                        xs_html_attr("for", "approve_followers"),
+                        xs_html_text(L("Follow requests must be approved")))),
+                xs_html_tag("p",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "checkbox"),
+                        xs_html_attr("name", "show_contact_metrics"),
+                        xs_html_attr("id",   "show_contact_metrics"),
+                        xs_html_attr(xs_is_true(show_foll) ? "checked" : "", NULL)),
+                    xs_html_tag("label",
+                        xs_html_attr("for", "show_contact_metrics"),
+                        xs_html_text(L("Publish follower and following metrics")))),
                 xs_html_tag("p",
                     xs_html_text(L("Profile metadata (key=value pairs in each line):")),
                     xs_html_sctag("br", NULL),
@@ -1481,6 +1546,9 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     if ((read_only || !user) && !is_msg_public(msg))
         return NULL;
 
+    if (id && is_instance_blocked(id))
+        return NULL;
+
     if (user && level == 0 && xs_is_true(xs_dict_get(user->config, "collapse_threads")))
         collapse_threads = 1;
 
@@ -1670,7 +1738,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     if (strcmp(type, "Note") == 0) {
         if (level == 0) {
             /* is the parent not here? */
-            const char *parent = xs_dict_get(msg, "inReplyTo");
+            const char *parent = get_in_reply_to(msg);
 
             if (user && !xs_is_null(parent) && *parent && !timeline_here(user, parent)) {
                 xs_html_add(post_header,
@@ -2329,7 +2397,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 
         /* is this message a non-public reply? */
         if (user != NULL && !is_msg_public(msg)) {
-            const char *irt = xs_dict_get(msg, "inReplyTo");
+            const char *irt = get_in_reply_to(msg);
 
             /* is it a reply to something not in the storage? */
             if (!xs_is_null(irt) && !object_here(irt)) {
@@ -2437,10 +2505,9 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                 xs_html_tag("summary",
                     xs_html_text("..."))));
 
-    xs_list *p = list;
     const char *actor_id;
 
-    while (xs_list_iter(&p, &actor_id)) {
+    xs_list_foreach(list, actor_id) {
         xs *md5 = xs_md5_hex(actor_id, strlen(actor_id));
         xs *actor = NULL;
 
@@ -2509,6 +2576,15 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                         html_button("limit", L("Limit"),
                                 L("Block announces (boosts) from this user")));
             }
+            else
+            if (pending_check(snac, actor_id)) {
+                xs_html_add(form,
+                    html_button("approve", L("Approve"),
+                                L("Approve this follow request")));
+
+                xs_html_add(form,
+                    html_button("discard", L("Discard"), L("Discard this follow request")));
+            }
             else {
                 xs_html_add(form,
                     html_button("follow", L("Follow"),
@@ -2563,13 +2639,23 @@ xs_str *html_people(snac *user)
     xs *wing = following_list(user);
     xs *wers = follower_list(user);
 
+    xs_html *lists = xs_html_tag("div",
+        xs_html_attr("class", "snac-posts"));
+
+    if (xs_is_true(xs_dict_get(user->config, "approve_followers"))) {
+        xs *pending = pending_list(user);
+        xs_html_add(lists,
+            html_people_list(user, pending, L("Pending follow confirmations"), "p", proxy));
+    }
+
+    xs_html_add(lists,
+        html_people_list(user, wing, L("People you follow"), "i", proxy),
+        html_people_list(user, wers, L("People that follow you"), "e", proxy));
+
     xs_html *html = xs_html_tag("html",
         html_user_head(user, NULL, NULL),
         xs_html_add(html_user_body(user, 0),
-            xs_html_tag("div",
-                xs_html_attr("class", "snac-posts"),
-                html_people_list(user, wing, L("People you follow"), "i", proxy),
-                html_people_list(user, wers, L("People that follow you"), "e", proxy)),
+            lists,
             html_footer()));
 
     return xs_html_render_s(html, "<!DOCTYPE html>\n");
@@ -2661,6 +2747,9 @@ xs_str *html_notifications(snac *user, int skip, int show)
                 label = wrk;
             }
         }
+        else
+        if (strcmp(type, "Follow") == 0 && pending_check(user, actor_id))
+            label = L("Follow Request");
 
         xs *s_date = xs_crop_i(xs_dup(date), 0, 10);
 
@@ -2909,6 +2998,48 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             const char *q = xs_dict_get(q_vars, "q");
 
             if (q && *q) {
+                if (xs_regex_match(q, "^@?[a-zA-Z0-9_]+@[a-zA-Z0-9-]+\\.")) {
+                    /** search account **/
+                    xs *actor = NULL;
+                    xs *acct = NULL;
+                    xs *l = xs_list_new();
+                    xs_html *page = NULL;
+
+                    if (valid_status(webfinger_request(q, &actor, &acct))) {
+                        xs *actor_obj = NULL;
+
+                        if (valid_status(actor_request(&snac, actor, &actor_obj))) {
+                            actor_add(actor, actor_obj);
+
+                            /* create a people list with only one element */
+                            l = xs_list_append(xs_list_new(), actor);
+
+                            xs *title = xs_fmt(L("Search results for account %s"), q);
+
+                            page = html_people_list(&snac, l, title, "wf", NULL);
+                        }
+                    }
+
+                    if (page == NULL) {
+                        xs *title = xs_fmt(L("Account %s not found"), q);
+
+                        page = xs_html_tag("div",
+                            xs_html_tag("h2",
+                                xs_html_attr("class", "snac-header"),
+                                xs_html_text(title)));
+                    }
+
+                    xs_html *html = xs_html_tag("html",
+                        html_user_head(&snac, NULL, NULL),
+                        xs_html_add(html_user_body(&snac, 0),
+                        page,
+                        html_footer()));
+
+                    *body = xs_html_render_s(html, "<!DOCTYPE html>\n");
+                    *b_size = strlen(*body);
+                    status = HTTP_STATUS_OK;
+                }
+                else
                 if (*q == '#') {
                     /** search by tag **/
                     xs *tl = tag_search(q, skip, show + 1);
@@ -3647,6 +3778,34 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             timeline_touch(&snac);
         }
         else
+        if (strcmp(action, L("Approve")) == 0) { /** **/
+            xs *fwreq = pending_get(&snac, actor);
+
+            if (fwreq != NULL) {
+                xs *reply = msg_accept(&snac, fwreq, actor);
+
+                enqueue_message(&snac, reply);
+
+                if (xs_is_null(xs_dict_get(fwreq, "published"))) {
+                    /* add a date if it doesn't include one (Mastodon) */
+                    xs *date = xs_str_utctime(0, ISO_DATE_SPEC);
+                    fwreq = xs_dict_set(fwreq, "published", date);
+                }
+
+                timeline_add(&snac, xs_dict_get(fwreq, "id"), fwreq);
+
+                follower_add(&snac, actor);
+
+                pending_del(&snac, actor);
+
+                snac_log(&snac, xs_fmt("new follower %s", actor));
+            }
+        }
+        else
+        if (strcmp(action, L("Discard")) == 0) { /** **/
+            pending_del(&snac, actor);
+        }
+        else
             status = HTTP_STATUS_NOT_FOUND;
 
         /* delete the cached timeline */
@@ -3705,26 +3864,17 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "collapse_threads", xs_stock(XSTYPE_TRUE));
         else
             snac.config = xs_dict_set(snac.config, "collapse_threads", xs_stock(XSTYPE_FALSE));
+        if ((v = xs_dict_get(p_vars, "approve_followers")) != NULL && strcmp(v, "on") == 0)
+            snac.config = xs_dict_set(snac.config, "approve_followers", xs_stock(XSTYPE_TRUE));
+        else
+            snac.config = xs_dict_set(snac.config, "approve_followers", xs_stock(XSTYPE_FALSE));
+        if ((v = xs_dict_get(p_vars, "show_contact_metrics")) != NULL && strcmp(v, "on") == 0)
+            snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_TRUE));
+        else
+            snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_FALSE));
 
-        if ((v = xs_dict_get(p_vars, "metadata")) != NULL) {
-            /* split the metadata and store it as a dict */
-            xs_dict *md = xs_dict_new();
-            xs *l = xs_split(v, "\n");
-            xs_list *p = l;
-            const xs_str *kp;
-
-            while (xs_list_iter(&p, &kp)) {
-                xs *kpl = xs_split_n(kp, "=", 1);
-                if (xs_list_len(kpl) == 2) {
-                    xs *k2 = xs_strip_i(xs_dup(xs_list_get(kpl, 0)));
-                    xs *v2 = xs_strip_i(xs_dup(xs_list_get(kpl, 1)));
-
-                    md = xs_dict_set(md, k2, v2);
-                }
-            }
-
-            snac.config = xs_dict_set(snac.config, "metadata", md);
-        }
+        if ((v = xs_dict_get(p_vars, "metadata")) != NULL)
+            snac.config = xs_dict_set(snac.config, "metadata", v);
 
         /* uploads */
         const char *uploads[] = { "avatar", "header", NULL };
