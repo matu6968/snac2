@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-As many users have asked for it, there is now an option to make the number of followed and following accounts public (still disabled by default).
+As many users have asked for it, there is now an option to make the number of followed and following accounts public (still disabled by default). These are only the numbers; the lists themselves are never published.
 
 Some fixes to blocked instances code (posts from them were sometimes shown).
 
