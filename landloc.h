@@ -18,15 +18,29 @@
  */
 
 /**
- * Usage example:
- *
+ * Repository: https://git.sr.ht/~shtrophic/landloc.h
+ */
 
+/**
+ * Usage:
+ *
+ * Define a sandboxing function using the LL_BEGIN(...) and LL_END macros.
+ * the arguments of LL_BEGIN are the function's signature.
+ * Between those macros, implement your sandbox using LL_PATH() and LL_PORT() macros.
+ * Calling LL_PATH() and LL_PORT() anywhere else will not work.
+ * You may prepend `static` before LL_BEGIN to make the function static.
+ * You need (should) wrap your sandboxing code in another set of braces:
+ *
 LL_BEGIN(my_sandbox_function, const char *rw_path) {
 
     LL_PATH(rw_path, LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR | LANDLOCK_ACCESS_FS_EXECUTE);
     LL_PORT(443, LANDLOCK_ACCESS_NET_CONNECT_TCP);
 
 } LL_END
+
+ *
+ * Then, call it in your application's code.
+ *
 
 int main(void) {
 
@@ -37,6 +51,14 @@ int main(void) {
     }
 
 }
+
+ *
+ * You may define LL_PRINTERR(fmt, ...) before including this header to enable debug output:
+ *
+
+#define LL_PRINTERR(fmt, ...) fprintf(stderr, fmt "\n", __VA_ARGS__)
+#include "landloc.h"
+
  */
 
 #ifndef __LANDLOC_H__
@@ -138,9 +160,9 @@ int main(void) {
 } while (0)
 
 #define LL_PORT(p, rules) do {\
+    unsigned short __port = (p);\
+    __nattr.allowed_access = (rules);\
     if (ll_abi > 3) {\
-        unsigned short __port = (p);\
-        __nattr.allowed_access = (rules);\
         __nattr.port = __port;\
         __err = (int)syscall(SYS_landlock_add_rule, ll_rule_fd, LANDLOCK_RULE_NET_PORT, &__nattr, 0);\
         if (__err) {\
