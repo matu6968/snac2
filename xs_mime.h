@@ -11,11 +11,12 @@ extern const char *xs_mime_types[];
 #ifdef XS_IMPLEMENTATION
 
 /* intentionally brain-dead simple */
-/* CAUTION: sorted */
+/* CAUTION: sorted by extension */
 
 const char *xs_mime_types[] = {
     "3gp",      "video/3gpp",
     "aac",      "audio/aac",
+    "avif",     "image/avif",
     "css",      "text/css",
     "flac",     "audio/flac",
     "flv",      "video/flv",
