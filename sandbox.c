@@ -13,30 +13,30 @@ static
 LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail) {
 
     const unsigned long long
-        r = LANDLOCK_ACCESS_FS_READ_DIR    |
-            LANDLOCK_ACCESS_FS_READ_FILE,
-        w = LANDLOCK_ACCESS_FS_WRITE_FILE  |
-            LANDLOCK_ACCESS_FS_TRUNCATE,
-        c = LANDLOCK_ACCESS_FS_MAKE_DIR    |
-            LANDLOCK_ACCESS_FS_MAKE_REG    |
-            LANDLOCK_ACCESS_FS_TRUNCATE    |
-            LANDLOCK_ACCESS_FS_MAKE_SYM    |
-            LANDLOCK_ACCESS_FS_REMOVE_DIR  |
-            LANDLOCK_ACCESS_FS_REMOVE_FILE |
-            LANDLOCK_ACCESS_FS_REFER,
-        s = LANDLOCK_ACCESS_FS_MAKE_SOCK,
-        x = LANDLOCK_ACCESS_FS_EXECUTE;
+        rd = LANDLOCK_ACCESS_FS_READ_DIR,
+        rf = LANDLOCK_ACCESS_FS_READ_FILE,
+        w  = LANDLOCK_ACCESS_FS_WRITE_FILE  |
+             LANDLOCK_ACCESS_FS_TRUNCATE,
+        c  = LANDLOCK_ACCESS_FS_MAKE_DIR    |
+             LANDLOCK_ACCESS_FS_MAKE_REG    |
+             LANDLOCK_ACCESS_FS_TRUNCATE    |
+             LANDLOCK_ACCESS_FS_MAKE_SYM    |
+             LANDLOCK_ACCESS_FS_REMOVE_DIR  |
+             LANDLOCK_ACCESS_FS_REMOVE_FILE |
+             LANDLOCK_ACCESS_FS_REFER,
+        s  = LANDLOCK_ACCESS_FS_MAKE_SOCK,
+        x  = LANDLOCK_ACCESS_FS_EXECUTE;
 
-    LL_PATH(basedir,                r|w|c);
-    LL_PATH("/tmp",                 r|w|c);
+    LL_PATH(basedir,                rf|rd|w|c);
+    LL_PATH("/tmp",                 rf|rd|w|c);
 #ifndef WITHOUT_SHM
-    LL_PATH("/dev/shm",             r|w|c);
+    LL_PATH("/dev/shm",             rf|w|c   );
 #endif
-    LL_PATH("/etc/resolv.conf",     r    );
-    LL_PATH("/etc/hosts",           r    );
-    LL_PATH("/etc/ssl/openssl.cnf", r    );
-    LL_PATH("/etc/ssl/cert.pem",    r    );
-    LL_PATH("/usr/share/zoneinfo",  r    );
+    LL_PATH("/etc/resolv.conf",     rf       );
+    LL_PATH("/etc/hosts",           rf       );
+    LL_PATH("/etc/ssl/openssl.cnf", rf       );
+    LL_PATH("/etc/ssl/cert.pem",    rf       );
+    LL_PATH("/usr/share/zoneinfo",  rf       );
 
     if (*address == '/')
         LL_PATH(address, s);
