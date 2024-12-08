@@ -9,42 +9,48 @@
 #define LL_PRINTERR(fmt, ...) srv_debug(0, xs_fmt(fmt, __VA_ARGS__))
 #include "landloc.h"
 
-#define LL_R LANDLOCK_ACCESS_FS_READ_FILE
-#define LL_X LANDLOCK_ACCESS_FS_EXECUTE
-#define LL_RWCF (LL_R | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_MAKE_REG | LANDLOCK_ACCESS_FS_TRUNCATE | LANDLOCK_ACCESS_FS_REMOVE_FILE | LANDLOCK_ACCESS_FS_REFER)
-#define LL_RWCD (LL_RWCF | LANDLOCK_ACCESS_FS_MAKE_DIR | LANDLOCK_ACCESS_FS_REMOVE_DIR)
-#define LL_UNIX (LL_R | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_MAKE_SOCK)
-#define LL_CONN LANDLOCK_ACCESS_NET_CONNECT_TCP
-#define LL_BIND LANDLOCK_ACCESS_NET_BIND_TCP
-
 static
 LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail) {
 
-    LL_PATH(basedir,                LL_RWCD);
-    LL_PATH("/tmp",                 LL_RWCD);
+    const unsigned long long
+        r = LANDLOCK_ACCESS_FS_READ_DIR    |
+            LANDLOCK_ACCESS_FS_READ_FILE,
+        w = LANDLOCK_ACCESS_FS_WRITE_FILE  |
+            LANDLOCK_ACCESS_FS_TRUNCATE,
+        c = LANDLOCK_ACCESS_FS_MAKE_DIR    |
+            LANDLOCK_ACCESS_FS_MAKE_REG    |
+            LANDLOCK_ACCESS_FS_TRUNCATE    |
+            LANDLOCK_ACCESS_FS_MAKE_SYM    |
+            LANDLOCK_ACCESS_FS_REMOVE_DIR  |
+            LANDLOCK_ACCESS_FS_REMOVE_FILE |
+            LANDLOCK_ACCESS_FS_REFER,
+        s = LANDLOCK_ACCESS_FS_MAKE_SOCK,
+        x = LANDLOCK_ACCESS_FS_EXECUTE;
+
+    LL_PATH(basedir,                r|w|c);
+    LL_PATH("/tmp",                 r|w|c);
 #ifndef WITHOUT_SHM
-    LL_PATH("/dev/shm",             LL_RWCF);
+    LL_PATH("/dev/shm",             r|w|c);
 #endif
-    LL_PATH("/etc/resolv.conf",     LL_R  );
-    LL_PATH("/etc/hosts",           LL_R  );
-    LL_PATH("/etc/ssl/openssl.cnf", LL_R  );
-    LL_PATH("/etc/ssl/cert.pem",    LL_R  );
-    LL_PATH("/usr/share/zoneinfo",  LL_R  );
+    LL_PATH("/etc/resolv.conf",     r    );
+    LL_PATH("/etc/hosts",           r    );
+    LL_PATH("/etc/ssl/openssl.cnf", r    );
+    LL_PATH("/etc/ssl/cert.pem",    r    );
+    LL_PATH("/usr/share/zoneinfo",  r    );
 
     if (*address == '/')
-        LL_PATH(address, LL_UNIX);
+        LL_PATH(address, s);
 
     if (smail)
-        LL_PATH("/usr/sbin/sendmail", LL_X);
-
+        LL_PATH("/usr/sbin/sendmail", x);
 
     if (*address != '/') {
-        LL_PORT(
-            (unsigned short)xs_number_get(xs_dict_get(srv_config, "port")), LL_BIND);
+        unsigned short listen_port = xs_number_get(xs_dict_get(srv_config, "port"));
+        LL_PORT(listen_port, LANDLOCK_ACCESS_NET_BIND_TCP);
     }
 
-    LL_PORT(80,  LL_CONN);
-    LL_PORT(443, LL_CONN);
+    LL_PORT(80,  LANDLOCK_ACCESS_NET_CONNECT_TCP);
+    LL_PORT(443, LANDLOCK_ACCESS_NET_CONNECT_TCP);
 
 } LL_END
 
