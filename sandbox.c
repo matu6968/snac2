@@ -104,9 +104,10 @@ void sbox_enter(const char *basedir)
     xs_free(p);
 #elif defined (__linux__)
     
-    sbox_enter_linux_(basedir, address, smail);
-
-    srv_log(xs_dup("landlocked"));
+    if (sbox_enter_linux_(basedir, address, smail) == 0)
+        srv_log(xs_dup("landlocked"));
+    else
+        srv_log(xs_dup("landlocking failed"));
 
 #endif
 }
