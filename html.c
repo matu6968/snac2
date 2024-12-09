@@ -2576,15 +2576,6 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                         html_button("limit", L("Limit"),
                                 L("Block announces (boosts) from this user")));
             }
-            else
-            if (pending_check(snac, actor_id)) {
-                xs_html_add(form,
-                    html_button("approve", L("Approve"),
-                                L("Approve this follow request")));
-
-                xs_html_add(form,
-                    html_button("discard", L("Discard"), L("Discard this follow request")));
-            }
             else {
                 xs_html_add(form,
                     html_button("follow", L("Follow"),
@@ -2593,6 +2584,15 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                 if (follower_check(snac, actor_id))
                     xs_html_add(form,
                         html_button("delete", L("Delete"), L("Delete this user")));
+            }
+
+            if (pending_check(snac, actor_id)) {
+                xs_html_add(form,
+                    html_button("approve", L("Approve"),
+                                L("Approve this follow request")));
+
+                xs_html_add(form,
+                    html_button("discard", L("Discard"), L("Discard this follow request")));
             }
 
             if (is_muted(snac, actor_id))
