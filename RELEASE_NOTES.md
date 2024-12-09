@@ -6,6 +6,8 @@ As many users have asked for it, there is now an option to make the number of fo
 
 Some fixes to blocked instances code (posts from them were sometimes shown).
 
+Fixed non-appearing buttons `Approve` and `Discard` if the account requesting a follow were being followed.
+
 ## 2.65
 
 Added a new user option to disable automatic follow confirmations (follow requests must be manually approved from the people page).
