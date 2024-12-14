@@ -2802,17 +2802,37 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
                 if (*fn != '\0') {
                     char *ext = strrchr(fn, '.');
-                    xs *hash  = xs_md5_hex(fn, strlen(fn));
+
+                    if(!ext)
+                        ext = "";
+
+                    xs *rnd   = random_str();
+                    xs *hash  = xs_md5_hex(rnd, strlen(rnd));
                     xs *id    = xs_fmt("%s%s", hash, ext);
-                    xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
                     int fo    = xs_number_get(xs_list_get(file, 1));
                     int fs    = xs_number_get(xs_list_get(file, 2));
+                    const char *mime = xs_list_get(file, 3);
+
+                    if (mime && !strcmp(mime, "application/octet-stream"))
+                        mime = NULL;
 
                     /* store */
                     static_put(&snac, id, payload + fo, fs);
+
+                    /* detect extension, if missing */
+                    if (!ext[0]) {
+                        xs_str *new_id = static_fix_extension(&snac, id, mime);
+
+                        if (new_id) {
+                            xs_free(id);
+                            id = new_id;
+                        }
+                    }
+
                     static_put_meta(&snac, id, desc);
 
                     /* prepare a response */
+                    xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
                     xs *rsp = xs_dict_new();
 
                     rsp = xs_dict_append(rsp, "id",          id);
