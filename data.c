@@ -9,6 +9,7 @@
 #include "xs_glob.h"
 #include "xs_set.h"
 #include "xs_time.h"
+#include "xs_mime.h"
 #include "xs_regex.h"
 #include "xs_match.h"
 #include "xs_unicode.h"
@@ -2371,6 +2372,57 @@ void static_put(snac *snac, const char *id, const char *data, int size)
         fwrite(data, size, 1, f);
         fclose(f);
     }
+}
+
+xs_str *static_fix_extension(snac *snac, const char *id, const char *mime)
+/* detects uploaded file extension by content and mime type,
+   renames file and returns new id */
+{
+    char buffer[8] = "";
+    xs *fn = _static_fn(snac, id);
+    xs *command = xs_fmt("file -b --extension \"%s\"", fn);
+    FILE *fp = popen(command, "r");
+    fgets(buffer, 7, fp);
+    pclose(fp);
+
+    char *e = strchr(buffer, '\n');
+    if(e)*e = 0;
+
+    e = strchr(buffer, '/');
+    if(e)*e = 0;
+
+    if (buffer[0] == '?' || !buffer[0]) {
+        const char *ext = xs_ext_by_mime(mime);
+
+        if (!ext) {
+            char mime_buffer[32] = "";
+            xs *command2 = xs_fmt("file -b --mime-type \"%s\"", fn);
+
+            fp = popen(command2, "r");
+            fgets(mime_buffer, 31, fp);
+            pclose(fp);
+
+            e = strchr(mime_buffer, '\n');
+            if(e)*e = 0;
+
+            ext = xs_ext_by_mime(mime_buffer);
+        }
+
+        if (ext)
+            strncpy(buffer,ext,7);
+
+        else return NULL;
+    }
+
+    xs_str *new_id = xs_fmt("%s.%s", id, buffer);
+    xs *new_fn = _static_fn(snac, new_id);
+
+    if (rename(fn, new_fn)) {
+        xs_free(new_id);
+        return NULL;
+    }
+
+    return new_id;
 }
 
 

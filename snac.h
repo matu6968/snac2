@@ -215,6 +215,7 @@ int actor_get_refresh(snac *user, const char *actor, xs_dict **data);
 
 int static_get(snac *snac, const char *id, xs_val **data, int *size, const char *inm, xs_str **etag);
 void static_put(snac *snac, const char *id, const char *data, int size);
+xs_str *static_fix_extension(snac *snac, const char *id, const char *mime);
 void static_put_meta(snac *snac, const char *id, const char *str);
 xs_str *static_get_meta(snac *snac, const char *id);
 
