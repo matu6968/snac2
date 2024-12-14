@@ -912,9 +912,17 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
             const char *o_href = xs_dict_get(v, "href");
             const char *name = xs_dict_get(v, "name");
 
-            if (xs_match(type, "image/*|video/*|audio/*|Image|Video")) { /* */
+            if (xs_match(type, "image/*|video/*|audio/*|Image|Video|Audio")) { /* */
                 xs *matteid = xs_fmt("%s_%d", id, xs_list_len(matt));
                 xs *href = make_url(o_href, proxy, 1);
+                const char *mastotype = "video";
+                if(*type == 'i' || *type == 'I')
+                    mastotype = "image";
+                if(*type == 'a' || *type == 'A')
+                    mastotype = "audio";
+                /* todo: gifv??? */
+                /* todo: better handle unknown types
+                /* todo: add document links to content? */
 
                 xs *d = xs_dict_new();
 
@@ -924,8 +932,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
                 d = xs_dict_append(d, "remote_url",  href);
                 d = xs_dict_append(d, "description", name);
 
-                d = xs_dict_append(d, "type", (*type == 'v' || *type == 'V') ? "video" :
-                                              (*type == 'a' || *type == 'A') ? "audio" : "image");
+                d = xs_dict_append(d, "type",        mastotype);
 
                 matt = xs_list_append(matt, d);
             }
