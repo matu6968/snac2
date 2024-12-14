@@ -209,6 +209,7 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
             l1 = xs_list_append(l1, fn);
             l1 = xs_list_append(l1, vpo);
             l1 = xs_list_append(l1, vps);
+            l1 = xs_list_append(l1, ct);
 
             p_vars = xs_dict_append(p_vars, vn, l1);
         }
