@@ -1,5 +1,11 @@
 # Release Notes
 
+## UNRELEASED
+
+Mastodon API: fixed a crash, fixed an incorrect value for the `bot` field, added a `Link` header to improve timeline pagination in some clients.
+
+Added documentation and some tweaks to enable static compilation with musl (contributed by Shamar).
+
 ## 2.66
 
 As many users have asked for it, there is now an option to make the number of followed and following accounts public (still disabled by default). These are only the numbers; the lists themselves are never published.
