@@ -990,7 +990,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
                     const char *o_url = xs_dict_get(icon, "url");
 
                     if (!xs_is_null(o_url)) {
-                        xs *url = make_url(o_url, snac->actor, 1);
+                        xs *url = make_url(o_url, snac ? snac->actor : NULL, 1);
                         xs *nm = xs_strip_chars_i(xs_dup(name), ":");
 
                         d1 = xs_dict_append(d1, "shortcode", nm);
@@ -1322,7 +1322,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
 
     const char *max_id   = xs_dict_get(args, "max_id");
     const char *since_id = xs_dict_get(args, "since_id");
-//    const char *min_id   = xs_dict_get(args, "min_id"); /* unsupported old-to-new navigation */
+    const char *min_id   = xs_dict_get(args, "min_id"); /* unsupported old-to-new navigation */
     const char *limit_s  = xs_dict_get(args, "limit");
     int limit = 0;
     int cnt   = 0;
@@ -1333,7 +1333,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
     if (limit == 0)
         limit = 20;
 
-    if (index_desc_first(f, md5, 0)) {
+    if (min_id == NULL && index_desc_first(f, md5, 0)) {
         do {
             xs *msg = NULL;
 
