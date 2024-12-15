@@ -1722,7 +1722,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             xs *ifn = user_index_fn(&snac1, "private");
             xs *out = mastoapi_timeline(&snac1, args, ifn);
 
-            *link = timeline_link_header(cmd, out);
+            *link = timeline_link_header("/api/v1/timelines/home", out);
 
             *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
