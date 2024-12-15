@@ -1193,9 +1193,12 @@ int process_auth_token(snac *snac, const xs_dict *req)
     return logged_in;
 }
 
+
 void credentials_get(char **body, char **ctype, int *status, snac snac)
 {
     xs *acct = xs_dict_new();
+
+    const xs_val *bot = xs_dict_get(snac.config, "bot");
 
     acct = xs_dict_append(acct, "id", snac.md5);
     acct = xs_dict_append(acct, "username", xs_dict_get(snac.config, "uid"));
@@ -1206,7 +1209,7 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     acct = xs_dict_append(acct, "note", xs_dict_get(snac.config, "bio"));
     acct = xs_dict_append(acct, "url", snac.actor);
     acct = xs_dict_append(acct, "locked", xs_stock(XSTYPE_FALSE));
-    acct = xs_dict_append(acct, "bot", xs_dict_get(snac.config, "bot"));
+    acct = xs_dict_append(acct, "bot", xs_stock(xs_is_true(bot) ? XSTYPE_TRUE : XSTYPE_FALSE));
     acct = xs_dict_append(acct, "emojis", xs_stock(XSTYPE_LIST));
 
     xs *src = xs_json_loads("{\"privacy\":\"public\", \"language\":\"en\","
@@ -1220,7 +1223,7 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     src = xs_dict_set(src, "sensitive",
         strcmp(cw, "open") == 0 ? xs_stock(XSTYPE_TRUE) : xs_stock(XSTYPE_FALSE));
 
-    src = xs_dict_set(src, "bot", xs_dict_get(snac.config, "bot"));
+    src = xs_dict_set(src, "bot", xs_stock(xs_is_true(bot) ? XSTYPE_TRUE : XSTYPE_FALSE));
 
     xs *avatar = NULL;
     const char *av = xs_dict_get(snac.config, "avatar");
