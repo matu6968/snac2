@@ -1322,7 +1322,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
 
     const char *max_id   = xs_dict_get(args, "max_id");
     const char *since_id = xs_dict_get(args, "since_id");
-    const char *min_id   = xs_dict_get(args, "min_id");
+//    const char *min_id   = xs_dict_get(args, "min_id"); /* unsupported old-to-new navigation */
     const char *limit_s  = xs_dict_get(args, "limit");
     int limit = 0;
     int cnt   = 0;
@@ -1348,13 +1348,6 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
             /* only returns entries newer than since_id */
             if (since_id) {
                 if (strcmp(md5, MID_TO_MD5(since_id)) == 0)
-                    break;
-            }
-
-            /* only returns entries newer than min_id */
-            /* what does really "Return results immediately newer than ID" mean? */
-            if (min_id) {
-                if (strcmp(md5, MID_TO_MD5(min_id)) == 0)
                     break;
             }
 
