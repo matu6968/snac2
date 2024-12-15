@@ -384,7 +384,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
                        const char *payload, int p_size,
                        char **body, int *b_size, char **ctype);
 int mastoapi_get_handler(const xs_dict *req, const char *q_path,
-                         char **body, int *b_size, char **ctype);
+                         char **body, int *b_size, char **ctype, xs_str **link);
 int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                           const char *payload, int p_size,
                           char **body, int *b_size, char **ctype);

@@ -1434,8 +1434,35 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
 }
 
 
+xs_str *timeline_link_header(const char *endpoint, xs_list *timeline)
+/* returns a Link header with paging information */
+{
+    xs_str *s = NULL;
+
+    if (xs_list_len(timeline) == 0)
+        return NULL;
+
+    const xs_dict *first_st = xs_list_get(timeline, 0);
+    const xs_dict *last_st  = xs_list_get(timeline, -1);
+    const char *first_id    = xs_dict_get(first_st, "id");
+    const char *last_id     = xs_dict_get(last_st, "id");
+    const char *host        = xs_dict_get(srv_config, "host");
+    const char *protocol    = xs_dict_get_def(srv_config, "protocol", "https");
+
+    s = xs_fmt(
+        "<%s:/" "/%s%s?max_id=%s>; rel=\"next\", "
+        "<%s:/" "/%s%s?since_id=%s>; rel=\"prev\"",
+        protocol, host, endpoint, last_id,
+        protocol, host, endpoint, first_id);
+
+    srv_debug(1, xs_fmt("timeline_link_header %s", s));
+
+    return s;
+}
+
+
 int mastoapi_get_handler(const xs_dict *req, const char *q_path,
-                         char **body, int *b_size, char **ctype)
+                         char **body, int *b_size, char **ctype, xs_str **link)
 {
     (void)b_size;
 
@@ -1694,6 +1721,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         if (logged_in) {
             xs *ifn = user_index_fn(&snac1, "private");
             xs *out = mastoapi_timeline(&snac1, args, ifn);
+
+            *link = timeline_link_header(cmd, out);
 
             *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
