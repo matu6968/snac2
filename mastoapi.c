@@ -911,31 +911,28 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
             const char *type = xs_dict_get(v, "type");
             const char *o_href = xs_dict_get(v, "href");
             const char *name = xs_dict_get(v, "name");
+            xs *matteid = xs_fmt("%s_%d", id, xs_list_len(matt));
+            xs *href = make_url(o_href, proxy, 1);
+            const char *mastotype = "unknown";
 
-            if (xs_match(type, "image/*|video/*|audio/*|Image|Video|Audio")) { /* */
-                xs *matteid = xs_fmt("%s_%d", id, xs_list_len(matt));
-                xs *href = make_url(o_href, proxy, 1);
-                const char *mastotype = "video";
-                if(*type == 'i' || *type == 'I')
-                    mastotype = "image";
-                if(*type == 'a' || *type == 'A')
-                    mastotype = "audio";
-                /* todo: gifv??? */
-                /* todo: better handle unknown types
-                /* todo: add document links to content? */
+            if(*type == 'i' || *type == 'I')
+                mastotype = "image";
+            if(*type == 'a' || *type == 'A')
+                mastotype = "audio";
+            if(*type == 'v' || *type == 'V')
+                mastotype = "video";
+            /* todo: gifv??? */
 
-                xs *d = xs_dict_new();
+            xs *d = xs_dict_new();
 
-                d = xs_dict_append(d, "id",          matteid);
-                d = xs_dict_append(d, "url",         href);
-                d = xs_dict_append(d, "preview_url", href);
-                d = xs_dict_append(d, "remote_url",  href);
-                d = xs_dict_append(d, "description", name);
+            d = xs_dict_append(d, "id",          matteid);
+            d = xs_dict_append(d, "url",         href);
+            d = xs_dict_append(d, "preview_url", href);
+            d = xs_dict_append(d, "remote_url",  href);
+            d = xs_dict_append(d, "description", name);
+            d = xs_dict_append(d, "type",        mastotype);
 
-                d = xs_dict_append(d, "type",        mastotype);
-
-                matt = xs_list_append(matt, d);
-            }
+            matt = xs_list_append(matt, d);
         }
 
         st = xs_dict_append(st, "media_attachments", matt);
