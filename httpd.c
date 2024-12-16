@@ -778,6 +778,26 @@ void httpd(void)
     xs *shm_name = NULL;
     sem_t anon_job_sem;
     xs *pidfile = xs_fmt("%s/server.pid", srv_basedir);
+    int pidfd;
+
+    {
+        /* do some pidfile locking acrobatics */
+        if ((pidfd = open(pidfile, O_RDWR | O_CREAT, 0660)) == -1) {
+            srv_log(xs_fmt("Cannot create pidfile %s -- cannot continue", pidfile));
+            return;
+        }
+
+        if (lockf(pidfd, F_TLOCK, 1) == -1) {
+            srv_log(xs_fmt("Cannot lock pidfile %s -- server already running?", pidfile));
+            close(pidfd);
+            return;
+        }
+
+        ftruncate(pidfd, 0);
+
+        xs *s = xs_fmt("%d\n", (int)getpid());
+        write(pidfd, s, strlen(s));
+    }
 
     address = xs_dict_get(srv_config, "address");
 
@@ -812,17 +832,6 @@ void httpd(void)
 
     srv_log(xs_fmt("httpd%s start %s %s", p_state->use_fcgi ? " (FastCGI)" : "",
                     full_address, USER_AGENT));
-
-    {
-        FILE *f;
-
-        if ((f = fopen(pidfile, "w")) != NULL) {
-            fprintf(f, "%d\n", getpid());
-            fclose(f);
-        }
-        else
-            srv_log(xs_fmt("Cannot create %s: %s", pidfile, strerror(errno)));
-    }
 
     /* show the number of usable file descriptors */
     struct rlimit r;
