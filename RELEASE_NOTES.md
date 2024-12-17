@@ -4,6 +4,8 @@
 
 Mastodon API: Improved timeline pagination in some clients (details: a `Link` header has been added), fixed an incorrect value for the `bot` field in newly created accounts, fixed a crash.
 
+When running in server mode, the pidfile is locked to avoid concurrent running of the same server instance.
+
 Added documentation and some tweaks to enable static compilation with musl (contributed by Shamar).
 
 ## 2.66
