@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-Mastodon API: fixed a crash, fixed an incorrect value for the `bot` field, added a `Link` header to improve timeline pagination in some clients.
+Mastodon API: Improved timeline pagination in some clients (details: a `Link` header has been added), fixed an incorrect value for the `bot` field in newly created accounts, fixed a crash.
 
 Added documentation and some tweaks to enable static compilation with musl (contributed by Shamar).
 
