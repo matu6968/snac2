@@ -3821,3 +3821,108 @@ xs_str *make_url(const char *href, const char *proxy, int by_token)
 
     return url;
 }
+
+
+/** bad login throttle **/
+
+xs_str *_badlogin_fn(const char *addr)
+{
+    xs *md5 = xs_md5_hex(addr, strlen(addr));
+    xs *dir = xs_fmt("%s/badlogin", srv_basedir);
+
+    mkdirx(dir);
+
+    return xs_fmt("%s/%s", dir, md5);
+}
+
+
+int _badlogin_read(const char *fn, int *failures)
+/* reads a badlogin file */
+{
+    int ok = 0;
+    FILE *f;
+
+    pthread_mutex_lock(&data_mutex);
+
+    if ((f = fopen(fn, "r")) != NULL) {
+        xs *l = xs_readline(f);
+        fclose(f);
+
+        if (sscanf(l, "%d", failures) == 1)
+            ok = 1;
+    }
+
+    pthread_mutex_unlock(&data_mutex);
+
+    return ok;
+}
+
+
+int badlogin_check(const char *user, const char *addr)
+/* checks if this address is authorized to try a login */
+{
+    int valid = 1;
+
+    if (xs_type(addr) == XSTYPE_STRING) {
+        xs *fn = _badlogin_fn(addr);
+        double mt = mtime(fn);
+
+        if (mt > 0) {
+            int badlogin_expire = xs_number_get(xs_dict_get_def(srv_config,
+                                        "badlogin_expire", "300"));
+
+            mt += badlogin_expire;
+
+            /* if file is expired, delete and give pass */
+            if (mt < time(NULL)) {
+                srv_debug(1, xs_fmt("Login from %s for %s allowed again", addr, user));
+                unlink(fn);
+            }
+            else {
+                int failures;
+
+                if (_badlogin_read(fn, &failures)) {
+                    int badlogin_max = xs_number_get(xs_dict_get_def(srv_config,
+                                            "badlogin_retries", "5"));
+
+                    if (failures >= badlogin_max) {
+                        valid = 0;
+
+                        xs *d = xs_str_iso_date((time_t) mt);
+
+                        srv_debug(1,
+                            xs_fmt("Login from %s for %s forbidden until %s", addr, user, d));
+                    }
+                }
+            }
+        }
+    }
+
+    return valid;
+}
+
+
+void badlogin_inc(const char *user, const char *addr)
+/* increments a bad login from this address */
+{
+    if (xs_type(addr) == XSTYPE_STRING) {
+        int failures = 0;
+        xs *fn = _badlogin_fn(addr);
+        FILE *f;
+
+        _badlogin_read(fn, &failures);
+
+        pthread_mutex_lock(&data_mutex);
+
+        if ((f = fopen(fn, "w")) != NULL) {
+            failures++;
+
+            fprintf(f, "%d %s %s\n", failures, addr, user);
+            fclose(f);
+
+            srv_log(xs_fmt("Registered %d login failure(s) from %s for %s", failures, addr, user));
+        }
+
+        pthread_mutex_unlock(&data_mutex);
+    }
+}
