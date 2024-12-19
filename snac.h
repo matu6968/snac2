@@ -236,6 +236,9 @@ int notify_new_num(snac *snac);
 xs_list *notify_list(snac *snac, int skip, int show);
 void notify_clear(snac *snac);
 
+xs_dict *markers_get(snac *snac, const xs_list *markers);
+xs_dict *markers_set(snac *snac, const char *home_marker, const char *notify_marker);
+
 void inbox_add(const char *inbox);
 void inbox_add_by_actor(const xs_dict *actor);
 xs_list *inbox_list(void);
