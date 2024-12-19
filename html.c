@@ -2996,6 +2996,51 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
         else {
             const char *q = xs_dict_get(q_vars, "q");
+            xs *url_acct = NULL;
+
+            /* searching for an URL? */
+            if (q && xs_match(q, "https://*|http://*")) {
+                /* may by an actor; try a webfinger */
+                xs *actor_obj = NULL;
+
+                if (valid_status(webfinger_request(q, &actor_obj, &url_acct))) {
+                    /* it's an actor; do the dirty trick of changing q to the account name */
+                    q = url_acct;
+                }
+                else {
+                    /* if it's not already here, try to bring it to the user's timeline */
+                    xs *md5 = xs_md5_hex(q, strlen(q));
+
+                    if (!timeline_here(&snac, md5)) {
+                        xs *object = NULL;
+                        int status;
+
+                        status = activitypub_request(&snac, q, &object);
+                        snac_debug(&snac, 1, xs_fmt("Request searched URL %s %d", q, status));
+
+                        if (valid_status(status)) {
+                            /* got it; also request the actor */
+                            const char *attr_to = get_atto(object);
+
+                            if (!xs_is_null(attr_to)) {
+                                status = actor_request(&snac, attr_to, &actor_obj);
+
+                                snac_debug(&snac, 1, xs_fmt("Request author %s of %s %d", attr_to, q, status));
+
+                                if (valid_status(status)) {
+                                    /* add the actor */
+                                    actor_add(attr_to, actor_obj);
+
+                                    /* add the post to the timeline */
+                                    timeline_add(&snac, q, object);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                /* fall through */
+            }
 
             if (q && *q) {
                 if (xs_regex_match(q, "^@?[a-zA-Z0-9_]+@[a-zA-Z0-9-]+\\.")) {
