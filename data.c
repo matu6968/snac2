@@ -2750,6 +2750,15 @@ xs_list *content_search(snac *user, const char *regex,
             continue;
         }
 
+        /* test for the alternate post id */
+        const char *url = xs_dict_get(post, "url");
+        if (!xs_is_null(url) && strcmp(url, regex) == 0) {
+            if (xs_set_add(&seen, md5) == 1)
+                show--;
+
+            continue;
+        }
+
         xs *c = xs_str_new(NULL);
         const char *content = xs_dict_get(post, "content");
         const char *name    = xs_dict_get(post, "name");
