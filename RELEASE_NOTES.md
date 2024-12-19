@@ -4,6 +4,8 @@
 
 The search box also accepts post URLs; the post is requested and, if it's found, can be interacted with (liked, boosted, replied to, etc.).
 
+Fixed a bug regarding repeated attachments when editing a post.
+
 Mastodon API: Improved timeline pagination in some clients (details: a `Link` header has been added), fixed an incorrect value for the `bot` field in newly created accounts, fixed a crash.
 
 When running in server mode, the pidfile is locked to avoid concurrent running of the same server instance.
