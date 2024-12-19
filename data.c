@@ -2752,7 +2752,7 @@ xs_list *content_search(snac *user, const char *regex,
 
         /* test for the alternate post id */
         const char *url = xs_dict_get(post, "url");
-        if (!xs_is_null(url) && strcmp(url, regex) == 0) {
+        if (xs_type(url) == XSTYPE_STRING && strcmp(url, regex) == 0) {
             if (xs_set_add(&seen, md5) == 1)
                 show--;
 
