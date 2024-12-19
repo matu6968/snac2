@@ -163,14 +163,26 @@ static xs_str *format_line(const char *line, xs_list **attach)
                     const char *mime     = xs_mime_by_ext(img_url);
 
                     if (attach != NULL && xs_startswith(mime, "image/")) {
-                        xs *d = xs_dict_new();
+                        const xs_dict *ad;
+                        int add = 1;
 
-                        d = xs_dict_append(d, "mediaType", mime);
-                        d = xs_dict_append(d, "url",       img_url);
-                        d = xs_dict_append(d, "name",      alt_text);
-                        d = xs_dict_append(d, "type",      "Image");
+                        xs_list_foreach(*attach, ad) {
+                            if (strcmp(xs_dict_get_def(ad, "url", ""), img_url) == 0) {
+                                add = 0;
+                                break;
+                            }
+                        }
 
-                        *attach = xs_list_append(*attach, d);
+                        if (add) {
+                            xs *d = xs_dict_new();
+
+                            d = xs_dict_append(d, "mediaType", mime);
+                            d = xs_dict_append(d, "url",       img_url);
+                            d = xs_dict_append(d, "name",      alt_text);
+                            d = xs_dict_append(d, "type",      "Image");
+
+                            *attach = xs_list_append(*attach, d);
+                        }
                     }
                     else {
                         xs *link = xs_fmt("<a href=\"%s\">%s</a>", img_url, alt_text);
@@ -191,14 +203,26 @@ static xs_str *format_line(const char *line, xs_list **attach)
 
                 if (attach != NULL && xs_startswith(mime, "image/")) {
                     /* if it's a link to an image, insert it as an attachment */
-                    xs *d = xs_dict_new();
+                    const xs_dict *ad;
+                    int add = 1;
 
-                    d = xs_dict_append(d, "mediaType", mime);
-                    d = xs_dict_append(d, "url",       v2);
-                    d = xs_dict_append(d, "name",      "");
-                    d = xs_dict_append(d, "type",      "Image");
+                    xs_list_foreach(*attach, ad) {
+                        if (strcmp(xs_dict_get_def(ad, "url", ""), v2) == 0) {
+                            add = 0;
+                            break;
+                        }
+                    }
 
-                    *attach = xs_list_append(*attach, d);
+                    if (add) {
+                        xs *d = xs_dict_new();
+
+                        d = xs_dict_append(d, "mediaType", mime);
+                        d = xs_dict_append(d, "url",       v2);
+                        d = xs_dict_append(d, "name",      "");
+                        d = xs_dict_append(d, "type",      "Image");
+
+                        *attach = xs_list_append(*attach, d);
+                    }
                 }
                 else {
                     xs *s1 = xs_fmt("<a href=\"%s\" target=\"_blank\">%s</a>", v2, u);
