@@ -2742,6 +2742,14 @@ xs_list *content_search(snac *user, const char *regex,
         if (id == NULL || is_hidden(user, id))
             continue;
 
+        /* test for the post URL */
+        if (strcmp(id, regex) == 0) {
+            if (xs_set_add(&seen, md5) == 1)
+                show--;
+
+            continue;
+        }
+
         xs *c = xs_str_new(NULL);
         const char *content = xs_dict_get(post, "content");
         const char *name    = xs_dict_get(post, "name");
