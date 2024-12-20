@@ -2840,6 +2840,72 @@ xs_str *notify_check_time(snac *snac, int reset)
     return t;
 }
 
+xs_dict *markers_get(snac *snac, const xs_list *markers)
+{
+    xs_dict *data = NULL;
+    xs_dict *returns = xs_dict_new();
+    xs *fn = xs_fmt("%s/markers.json", snac->basedir);
+    const xs_str *v = NULL;
+    FILE *f;
+
+    if ((f = fopen(fn, "r")) != NULL) {
+        data = xs_json_load(f);
+        fclose(f);
+    }
+
+    if (xs_is_null(data))
+        data = xs_dict_new();
+
+    xs_list_foreach(markers, v) {
+        const xs_dict *mark = xs_dict_get(data, v);
+        if (!xs_is_null(mark)) {
+            returns = xs_dict_append(returns, v, mark);
+        }
+    }
+    return returns;
+}
+
+xs_dict *markers_set(snac *snac, const char *home_marker, const char *notify_marker)
+/* gets or sets notification marker */
+{
+    xs_dict *data = NULL;
+    xs_dict *written = xs_dict_new();
+    xs *fn = xs_fmt("%s/markers.json", snac->basedir);
+    FILE *f;
+
+    if ((f = fopen(fn, "r")) != NULL) {
+        data = xs_json_load(f);
+        fclose(f);
+    }
+
+    if (xs_is_null(data))
+        data = xs_dict_new();
+
+    if (!xs_is_null(home_marker)) {
+        xs_dict *home = xs_dict_new();
+        home = xs_dict_append(home, "last_read_id", home_marker);
+        home = xs_dict_append(home, "version", xs_stock(0));
+        home = xs_dict_append(home, "updated_at", tid(0));
+        data = xs_dict_set(data, "home", home);
+        written = xs_dict_append(written, "home", home);
+    }
+
+    if (!xs_is_null(notify_marker)) {
+        xs_dict *notify = xs_dict_new();
+        notify = xs_dict_append(notify, "last_read_id", notify_marker);
+        notify = xs_dict_append(notify, "version", xs_stock(0));
+        notify = xs_dict_append(notify, "updated_at", tid(0));
+        data = xs_dict_set(data, "notifications", notify);
+        written = xs_dict_append(written, "notifications", notify);
+    }
+
+    if ((f = fopen(fn, "w")) != NULL) {
+        xs_json_dump(data, 4, f);
+        fclose(f);
+    }
+
+    return written;
+}
 
 void notify_add(snac *snac, const char *type, const char *utype,
                 const char *actor, const char *objid, const xs_dict *msg)

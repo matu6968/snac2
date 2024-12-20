@@ -1802,6 +1802,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             xs *out    = xs_list_new();
             const xs_dict *v;
             const xs_list *excl = xs_dict_get(args, "exclude_types[]");
+            const char *min_id = xs_dict_get(args, "min_id");
             const char *max_id = xs_dict_get(args, "max_id");
 
             xs_list_foreach(l, v) {
@@ -1828,10 +1829,14 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     continue;
 
                 if (max_id) {
-                    if (strcmp(fid, max_id) == 0)
-                        max_id = NULL;
+                    if (strcmp(fid, max_id) > 0)
+                        continue;
+                }
 
-                    continue;
+                if (min_id) {
+                    if (strcmp(fid, min_id) <= 0) {
+                        continue;
+                    }
                 }
 
                 /* convert the type */
@@ -2312,9 +2317,22 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/markers") == 0) { /** **/
-        *body  = xs_dup("{}");
-        *ctype = "application/json";
-        status = HTTP_STATUS_OK;
+        if (logged_in) {
+            const xs_list *timeline = xs_dict_get(args, "timeline[]");
+            xs_str *json = NULL;
+            if (!xs_is_null(timeline)) 
+                json = xs_json_dumps(markers_get(&snac1, timeline), 4);
+
+            if (!xs_is_null(json))
+                *body = json;
+            else
+                *body = xs_dup("{}");
+
+            *ctype = "application/json";
+            status = HTTP_STATUS_OK;
+        }
+        else
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (strcmp(cmd, "/v1/followed_tags") == 0) { /** **/
@@ -3011,9 +3029,35 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 }
             }
         }
-        else
-            status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
     }
+    else if (strcmp(cmd, "/v1/markers") == 0) { /** **/
+        xs_str *json = NULL;
+        if (logged_in) {
+            const xs_str *home_marker = xs_dict_get(args, "home[last_read_id]");
+            if (xs_is_null(home_marker)) {
+                const xs_dict *home = xs_dict_get(args, "home");
+                if (!xs_is_null(home))
+                    home_marker = xs_dict_get(home, "last_read_id");
+            }
+            
+            const xs_str *notify_marker = xs_dict_get(args, "notifications[last_read_id]");
+            if (xs_is_null(notify_marker)) {
+                const xs_dict *notify = xs_dict_get(args, "notifications");
+                if (!xs_is_null(notify))
+                    notify_marker = xs_dict_get(notify, "last_read_id");
+            }
+            json = xs_json_dumps(markers_set(&snac, home_marker, notify_marker), 4);
+        }
+        if (!xs_is_null(json))
+            *body = json;
+        else
+            *body = xs_dup("{}");
+
+        *ctype = "application/json";
+        status = HTTP_STATUS_OK;
+    }
+    else
+        status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
 
     /* user cleanup */
     if (logged_in)
