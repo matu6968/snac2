@@ -642,6 +642,17 @@ xs_html *html_user_head(snac *user, const char *desc, const char *url)
     else
         s_desc = xs_dup(desc);
 
+    /* show metrics in og:description? */
+    if (xs_is_true(xs_dict_get(user->config, "show_contact_metrics"))) {
+        xs *fwers = follower_list(user);
+        xs *fwing = following_list(user);
+
+        xs *s1 = xs_fmt(L("%d following, %d followers · "),
+            xs_list_len(fwing), xs_list_len(fwers));
+
+        s_desc = xs_str_prepend_i(s_desc, s1);
+    }
+
     /* shorten desc to a reasonable size */
     for (n = 0; s_desc[n]; n++) {
         if (n > 512 && (s_desc[n] == ' ' || s_desc[n] == '\n'))
