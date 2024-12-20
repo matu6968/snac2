@@ -293,47 +293,54 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
             snac snac;
 
             if (user_open(&snac, login)) {
-                /* check the login + password */
-                if (check_password(login, passwd, xs_dict_get(snac.config, "passwd"))) {
-                    /* success! redirect to the desired uri */
-                    xs *code = random_str();
+                const char *addr = xs_or(xs_dict_get(req, "remote-addr"),
+                                         xs_dict_get(req, "x-forwarded-for"));
 
-                    xs_free(*body);
+                if (badlogin_check(login, addr)) {
+                    /* check the login + password */
+                    if (check_password(login, passwd, xs_dict_get(snac.config, "passwd"))) {
+                        /* success! redirect to the desired uri */
+                        xs *code = random_str();
 
-                    if (strcmp(redir, "urn:ietf:wg:oauth:2.0:oob") == 0) {
-                        *body = xs_dup(code);
-                    }
-                    else {
-                        if (xs_str_in(redir, "?") != -1)
-                            *body = xs_fmt("%s&code=%s", redir, code);
-                        else
-                            *body = xs_fmt("%s?code=%s", redir, code);
+                        xs_free(*body);
 
-                        status = HTTP_STATUS_SEE_OTHER;
-                    }
+                        if (strcmp(redir, "urn:ietf:wg:oauth:2.0:oob") == 0) {
+                            *body = xs_dup(code);
+                        }
+                        else {
+                            if (xs_str_in(redir, "?") != -1)
+                                *body = xs_fmt("%s&code=%s", redir, code);
+                            else
+                                *body = xs_fmt("%s?code=%s", redir, code);
 
-                    /* if there is a state, add it */
-                    if (!xs_is_null(state) && *state) {
-                        *body = xs_str_cat(*body, "&state=");
-                        *body = xs_str_cat(*body, state);
-                    }
+                            status = HTTP_STATUS_SEE_OTHER;
+                        }
 
-                    srv_log(xs_fmt("oauth x-snac-login: '%s' success, redirect to %s",
+                        /* if there is a state, add it */
+                        if (!xs_is_null(state) && *state) {
+                            *body = xs_str_cat(*body, "&state=");
+                            *body = xs_str_cat(*body, state);
+                        }
+
+                        srv_log(xs_fmt("oauth x-snac-login: '%s' success, redirect to %s",
                                    login, *body));
 
-                    /* assign the login to the app */
-                    xs *app = app_get(cid);
+                        /* assign the login to the app */
+                        xs *app = app_get(cid);
 
-                    if (app != NULL) {
-                        app = xs_dict_set(app, "uid",  login);
-                        app = xs_dict_set(app, "code", code);
-                        app_add(cid, app);
+                        if (app != NULL) {
+                            app = xs_dict_set(app, "uid",  login);
+                            app = xs_dict_set(app, "code", code);
+                            app_add(cid, app);
+                        }
+                        else
+                            srv_log(xs_fmt("oauth x-snac-login: error getting app %s", cid));
                     }
-                    else
-                        srv_log(xs_fmt("oauth x-snac-login: error getting app %s", cid));
+                    else {
+                        srv_debug(1, xs_fmt("oauth x-snac-login: login '%s' incorrect", login));
+                        badlogin_inc(login, addr);
+                    }
                 }
-                else
-                    srv_debug(1, xs_fmt("oauth x-snac-login: login '%s' incorrect", login));
 
                 user_free(&snac);
             }
@@ -474,29 +481,36 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
             snac user;
 
             if (user_open(&user, login)) {
-                /* check the login + password */
-                if (check_password(login, passwd, xs_dict_get(user.config, "passwd"))) {
-                    /* success! create a new token */
-                    xs *tokid = random_str();
+                const char *addr = xs_or(xs_dict_get(req, "remote-addr"),
+                                         xs_dict_get(req, "x-forwarded-for"));
 
-                    srv_debug(1, xs_fmt("x-snac-new-token: "
+                if (badlogin_check(login, addr)) {
+                    /* check the login + password */
+                    if (check_password(login, passwd, xs_dict_get(user.config, "passwd"))) {
+                        /* success! create a new token */
+                        xs *tokid = random_str();
+
+                        srv_debug(1, xs_fmt("x-snac-new-token: "
                                     "successful login for %s, new token %s", login, tokid));
 
-                    xs *token = xs_dict_new();
-                    token = xs_dict_append(token, "token",         tokid);
-                    token = xs_dict_append(token, "client_id",     "snac-client");
-                    token = xs_dict_append(token, "client_secret", "");
-                    token = xs_dict_append(token, "uid",           login);
-                    token = xs_dict_append(token, "code",          "");
+                        xs *token = xs_dict_new();
+                        token = xs_dict_append(token, "token",         tokid);
+                        token = xs_dict_append(token, "client_id",     "snac-client");
+                        token = xs_dict_append(token, "client_secret", "");
+                        token = xs_dict_append(token, "uid",           login);
+                        token = xs_dict_append(token, "code",          "");
 
-                    token_add(tokid, token);
+                        token_add(tokid, token);
 
-                    *ctype = "text/plain";
-                    xs_free(*body);
-                    *body = xs_dup(tokid);
+                        *ctype = "text/plain";
+                        xs_free(*body);
+                        *body = xs_dup(tokid);
+                    }
+                    else
+                        badlogin_inc(login, addr);
+
+                    user_free(&user);
                 }
-
-                user_free(&user);
             }
         }
     }
