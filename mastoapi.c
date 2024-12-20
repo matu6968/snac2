@@ -1805,6 +1805,11 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             const char *min_id = xs_dict_get(args, "min_id");
             const char *max_id = xs_dict_get(args, "max_id");
 
+            if (dbglevel) {
+                xs *js = xs_json_dumps(args, 0);
+                srv_debug(1, xs_fmt("mastoapi_notifications args %s", js));
+            }
+
             xs_list_foreach(l, v) {
                 xs *noti = notify_get(&snac1, v);
 
@@ -1829,8 +1834,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     continue;
 
                 if (max_id) {
-                    if (strcmp(fid, max_id) > 0)
-                        continue;
+                    if (strcmp(fid, max_id) == 0)
+                        max_id = NULL;
+
+                    continue;
                 }
 
                 if (min_id) {
@@ -1885,6 +1892,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                 out = xs_list_append(out, mn);
             }
+
+            srv_debug(1, xs_fmt("mastoapi_notifications count %d", xs_list_len(out)));
 
             *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
@@ -3002,6 +3011,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
         }
     }
+    else
     if (xs_startswith(cmd, "/v1/lists/")) { /** list maintenance **/
         if (logged_in) {
             xs *l = xs_split(cmd, "/");
