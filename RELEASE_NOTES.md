@@ -8,7 +8,7 @@ IP addresses for failed logins are tracked and throttled to mitigate brute force
 
 Fixed a bug regarding repeated attachments when editing a post.
 
-Mastodon API: Improved timeline pagination in some clients (details: an HTTP `Link` header has been added), fixed an incorrect value for the `bot` field in newly created accounts, fixed a crash.
+Mastodon API: Improved timeline pagination in some clients (details: an HTTP `Link` header has been added), fixed an incorrect value for the `bot` field in newly created accounts, fixed a crash, implemented markers (contributed by nowster).
 
 When running in server mode, the pidfile is locked to avoid concurrent running of the same server instance.
 
