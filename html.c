@@ -3080,7 +3080,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             }
 
             if (q && *q) {
-                if (xs_regex_match(q, "^@?[a-zA-Z0-9_]+@[a-zA-Z0-9-]+\\.")) {
+                if (xs_regex_match(q, "^@?[a-zA-Z0-9._]+@[a-zA-Z0-9-]+\\.")) {
                     /** search account **/
                     xs *actor = NULL;
                     xs *acct = NULL;
