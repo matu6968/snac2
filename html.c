@@ -2061,6 +2061,23 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             if (content && xs_str_in(content, o_href) != -1)
                 continue;
 
+            /* do this attachment include an icon? */
+            const xs_dict *icon = xs_dict_get(a, "icon");
+            if (xs_type(icon) == XSTYPE_DICT) {
+                const char *icon_mtype = xs_dict_get(icon, "mediaType");
+                const char *icon_url   = xs_dict_get(icon, "url");
+
+                if (icon_mtype && icon_url && xs_startswith(icon_mtype, "image/")) {
+                    xs_html_add(content_attachments,
+                        xs_html_tag("a",
+                            xs_html_attr("href", icon_url),
+                            xs_html_attr("target", "_blank"),
+                            xs_html_sctag("img",
+                                xs_html_attr("loading", "lazy"),
+                                xs_html_attr("src", icon_url))));
+                }
+            }
+
             xs *href = make_url(o_href, proxy, 0);
 
             if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0) {

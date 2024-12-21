@@ -258,6 +258,10 @@ xs_list *get_attachments(const xs_dict *msg)
             d = xs_dict_append(d, "href", href);
             d = xs_dict_append(d, "name", name);
 
+            const xs_dict *icon = xs_dict_get(v, "icon");
+            if (xs_type(icon) == XSTYPE_DICT)
+                d = xs_dict_append(d, "icon", icon);
+
             l = xs_list_append(l, d);
         }
     }
