@@ -2377,6 +2377,37 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             if (xs_is_null(offset) || strcmp(offset, "0") == 0) {
                 /* reply something only for offset 0; otherwise,
                    apps like Tusky keep asking again and again */
+                if (xs_startswith(q, "https://")) {
+                    xs *md5 = xs_md5_hex(q, strlen(q));
+
+                    if (!timeline_here(&snac1, md5)) {
+                        xs *object = NULL;
+                        int status;
+
+                        status = activitypub_request(&snac1, q, &object);
+                        snac_debug(&snac1, 1, xs_fmt("Request searched URL %s %d", q, status));
+
+                        if (valid_status(status)) {
+                            /* got it; also request the actor */
+                            const char *attr_to = get_atto(object);
+                            xs *actor_obj = NULL;
+
+                            if (!xs_is_null(attr_to)) {
+                                status = actor_request(&snac1, attr_to, &actor_obj);
+
+                                snac_debug(&snac1, 1, xs_fmt("Request author %s of %s %d", attr_to, q, status));
+
+                                if (valid_status(status)) {
+                                    /* add the actor */
+                                    actor_add(attr_to, actor_obj);
+
+                                    /* add the post to the timeline */
+                                    timeline_add(&snac1, q, object);
+                                }
+                            }
+                        }
+                    }
+                }
 
                 if (!xs_is_null(q)) {
                     if (xs_is_null(type) || strcmp(type, "accounts") == 0) {
