@@ -178,6 +178,11 @@ const char *get_atto(const xs_dict *msg)
             }
         }
     }
+    else
+    if (xs_type(actor) == XSTYPE_DICT) {
+        /* bandwagon.fm returns this */
+        actor = xs_dict_get(actor, "id");
+    }
 
     return actor;
 }
