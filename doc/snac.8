@@ -242,6 +242,12 @@ posts will not be direct ones, but proxied by
 This way, remote media servers will not see the user's IP, but the server one,
 improving privacy. Please take note that this will increase the server's incoming
 and outgoing traffic.
+.It Ic badlogin_retries
+If incorrect logins from a given IP address reach this count, subsequent attempts
+from it are rejected until the lock expires (default: 5 retries).
+.It Ic badlogin_expire
+The number of seconds a blocked IP address is ignored in login attempts
+(default: 300 seconds).
 .El
 .Pp
 You must restart the server to make effective these changes.
@@ -546,6 +552,22 @@ heavily on how all the servers involved behave. Just cross your fingers and hope
 Full instances can be blocked. This operation must be done from
 the command-line tool. See
 .Xr snac 1 .
+.Pp
+.Ss Bad login throttling
+Since version 2.67, a simple logic to avoid brute force attacks against user passwords
+has been implemented: if, from a given IP address, the number of failed logins reaches
+a given threshold, further tries from that IP address are never successful until a timer
+expires. The maximum number of retries can be configured in the 
+.Pa server.json
+file by setting the
+.Ic badlogin_retries
+variable, and the number of seconds the IP address unlock timer expires, in
+.Ic badlogin_expire .
+Please take note that, for this system to work, you must setup your web server proxy
+to pass the remote connection address in the
+.Ic X-Forwarded-For
+HTTP header (unless you use the FastCGI interface; if that's the case, you don't have
+to do anything).
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev DEBUG
@@ -603,35 +625,42 @@ example.com server section:
 location /fedi {
     proxy_pass http://localhost:8001;
     proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
 }
 # webfinger
 location /.well-known/webfinger {
     proxy_pass http://localhost:8001;
     proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
 }
 # Mastodon API (entry points)
 location /api/v1/ {
     proxy_pass http://localhost:8001;
     proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
 }
 location /api/v2/ {
     proxy_pass http://localhost:8001;
     proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
 }
 # Mastodon API (OAuth support)
 location /oauth {
     proxy_pass http://localhost:8001;
     proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
 }
 # optional
 location /.well-known/nodeinfo {
     proxy_pass http://localhost:8001;
     proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
 }
 # optional (needed by some Mastodon API clients)
 location /.well-known/host-meta {
     proxy_pass http://localhost:8001;
     proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
 }
 .Ed
 .Pp

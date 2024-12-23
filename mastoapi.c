@@ -293,47 +293,54 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
             snac snac;
 
             if (user_open(&snac, login)) {
-                /* check the login + password */
-                if (check_password(login, passwd, xs_dict_get(snac.config, "passwd"))) {
-                    /* success! redirect to the desired uri */
-                    xs *code = random_str();
+                const char *addr = xs_or(xs_dict_get(req, "remote-addr"),
+                                         xs_dict_get(req, "x-forwarded-for"));
 
-                    xs_free(*body);
+                if (badlogin_check(login, addr)) {
+                    /* check the login + password */
+                    if (check_password(login, passwd, xs_dict_get(snac.config, "passwd"))) {
+                        /* success! redirect to the desired uri */
+                        xs *code = random_str();
 
-                    if (strcmp(redir, "urn:ietf:wg:oauth:2.0:oob") == 0) {
-                        *body = xs_dup(code);
-                    }
-                    else {
-                        if (xs_str_in(redir, "?") != -1)
-                            *body = xs_fmt("%s&code=%s", redir, code);
-                        else
-                            *body = xs_fmt("%s?code=%s", redir, code);
+                        xs_free(*body);
 
-                        status = HTTP_STATUS_SEE_OTHER;
-                    }
+                        if (strcmp(redir, "urn:ietf:wg:oauth:2.0:oob") == 0) {
+                            *body = xs_dup(code);
+                        }
+                        else {
+                            if (xs_str_in(redir, "?") != -1)
+                                *body = xs_fmt("%s&code=%s", redir, code);
+                            else
+                                *body = xs_fmt("%s?code=%s", redir, code);
 
-                    /* if there is a state, add it */
-                    if (!xs_is_null(state) && *state) {
-                        *body = xs_str_cat(*body, "&state=");
-                        *body = xs_str_cat(*body, state);
-                    }
+                            status = HTTP_STATUS_SEE_OTHER;
+                        }
 
-                    srv_log(xs_fmt("oauth x-snac-login: '%s' success, redirect to %s",
+                        /* if there is a state, add it */
+                        if (!xs_is_null(state) && *state) {
+                            *body = xs_str_cat(*body, "&state=");
+                            *body = xs_str_cat(*body, state);
+                        }
+
+                        srv_log(xs_fmt("oauth x-snac-login: '%s' success, redirect to %s",
                                    login, *body));
 
-                    /* assign the login to the app */
-                    xs *app = app_get(cid);
+                        /* assign the login to the app */
+                        xs *app = app_get(cid);
 
-                    if (app != NULL) {
-                        app = xs_dict_set(app, "uid",  login);
-                        app = xs_dict_set(app, "code", code);
-                        app_add(cid, app);
+                        if (app != NULL) {
+                            app = xs_dict_set(app, "uid",  login);
+                            app = xs_dict_set(app, "code", code);
+                            app_add(cid, app);
+                        }
+                        else
+                            srv_log(xs_fmt("oauth x-snac-login: error getting app %s", cid));
                     }
-                    else
-                        srv_log(xs_fmt("oauth x-snac-login: error getting app %s", cid));
+                    else {
+                        srv_debug(1, xs_fmt("oauth x-snac-login: login '%s' incorrect", login));
+                        badlogin_inc(login, addr);
+                    }
                 }
-                else
-                    srv_debug(1, xs_fmt("oauth x-snac-login: login '%s' incorrect", login));
 
                 user_free(&snac);
             }
@@ -474,29 +481,36 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
             snac user;
 
             if (user_open(&user, login)) {
-                /* check the login + password */
-                if (check_password(login, passwd, xs_dict_get(user.config, "passwd"))) {
-                    /* success! create a new token */
-                    xs *tokid = random_str();
+                const char *addr = xs_or(xs_dict_get(req, "remote-addr"),
+                                         xs_dict_get(req, "x-forwarded-for"));
 
-                    srv_debug(1, xs_fmt("x-snac-new-token: "
+                if (badlogin_check(login, addr)) {
+                    /* check the login + password */
+                    if (check_password(login, passwd, xs_dict_get(user.config, "passwd"))) {
+                        /* success! create a new token */
+                        xs *tokid = random_str();
+
+                        srv_debug(1, xs_fmt("x-snac-new-token: "
                                     "successful login for %s, new token %s", login, tokid));
 
-                    xs *token = xs_dict_new();
-                    token = xs_dict_append(token, "token",         tokid);
-                    token = xs_dict_append(token, "client_id",     "snac-client");
-                    token = xs_dict_append(token, "client_secret", "");
-                    token = xs_dict_append(token, "uid",           login);
-                    token = xs_dict_append(token, "code",          "");
+                        xs *token = xs_dict_new();
+                        token = xs_dict_append(token, "token",         tokid);
+                        token = xs_dict_append(token, "client_id",     "snac-client");
+                        token = xs_dict_append(token, "client_secret", "");
+                        token = xs_dict_append(token, "uid",           login);
+                        token = xs_dict_append(token, "code",          "");
 
-                    token_add(tokid, token);
+                        token_add(tokid, token);
 
-                    *ctype = "text/plain";
-                    xs_free(*body);
-                    *body = xs_dup(tokid);
+                        *ctype = "text/plain";
+                        xs_free(*body);
+                        *body = xs_dup(tokid);
+                    }
+                    else
+                        badlogin_inc(login, addr);
+
+                    user_free(&user);
                 }
-
-                user_free(&user);
             }
         }
     }
@@ -898,7 +912,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
             const char *o_href = xs_dict_get(v, "href");
             const char *name = xs_dict_get(v, "name");
 
-            if (xs_match(type, "image/*|video/*|Image|Video")) { /* */
+            if (xs_match(type, "image/*|video/*|audio/*|Image|Video")) { /* */
                 xs *matteid = xs_fmt("%s_%d", id, xs_list_len(matt));
                 xs *href = make_url(o_href, proxy, 1);
 
@@ -910,7 +924,8 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
                 d = xs_dict_append(d, "remote_url",  href);
                 d = xs_dict_append(d, "description", name);
 
-                d = xs_dict_append(d, "type", (*type == 'v' || *type == 'V') ? "video" : "image");
+                d = xs_dict_append(d, "type", (*type == 'v' || *type == 'V') ? "video" :
+                                              (*type == 'a' || *type == 'A') ? "audio" : "image");
 
                 matt = xs_list_append(matt, d);
             }
@@ -990,7 +1005,7 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
                     const char *o_url = xs_dict_get(icon, "url");
 
                     if (!xs_is_null(o_url)) {
-                        xs *url = make_url(o_url, snac->actor, 1);
+                        xs *url = make_url(o_url, snac ? snac->actor : NULL, 1);
                         xs *nm = xs_strip_chars_i(xs_dup(name), ":");
 
                         d1 = xs_dict_append(d1, "shortcode", nm);
@@ -1193,9 +1208,12 @@ int process_auth_token(snac *snac, const xs_dict *req)
     return logged_in;
 }
 
+
 void credentials_get(char **body, char **ctype, int *status, snac snac)
 {
     xs *acct = xs_dict_new();
+
+    const xs_val *bot = xs_dict_get(snac.config, "bot");
 
     acct = xs_dict_append(acct, "id", snac.md5);
     acct = xs_dict_append(acct, "username", xs_dict_get(snac.config, "uid"));
@@ -1206,7 +1224,7 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     acct = xs_dict_append(acct, "note", xs_dict_get(snac.config, "bio"));
     acct = xs_dict_append(acct, "url", snac.actor);
     acct = xs_dict_append(acct, "locked", xs_stock(XSTYPE_FALSE));
-    acct = xs_dict_append(acct, "bot", xs_dict_get(snac.config, "bot"));
+    acct = xs_dict_append(acct, "bot", xs_stock(xs_is_true(bot) ? XSTYPE_TRUE : XSTYPE_FALSE));
     acct = xs_dict_append(acct, "emojis", xs_stock(XSTYPE_LIST));
 
     xs *src = xs_json_loads("{\"privacy\":\"public\", \"language\":\"en\","
@@ -1220,7 +1238,7 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     src = xs_dict_set(src, "sensitive",
         strcmp(cw, "open") == 0 ? xs_stock(XSTYPE_TRUE) : xs_stock(XSTYPE_FALSE));
 
-    src = xs_dict_set(src, "bot", xs_dict_get(snac.config, "bot"));
+    src = xs_dict_set(src, "bot", xs_stock(xs_is_true(bot) ? XSTYPE_TRUE : XSTYPE_FALSE));
 
     xs *avatar = NULL;
     const char *av = xs_dict_get(snac.config, "avatar");
@@ -1319,7 +1337,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
 
     const char *max_id   = xs_dict_get(args, "max_id");
     const char *since_id = xs_dict_get(args, "since_id");
-    const char *min_id   = xs_dict_get(args, "min_id");
+    const char *min_id   = xs_dict_get(args, "min_id"); /* unsupported old-to-new navigation */
     const char *limit_s  = xs_dict_get(args, "limit");
     int limit = 0;
     int cnt   = 0;
@@ -1330,7 +1348,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
     if (limit == 0)
         limit = 20;
 
-    if (index_desc_first(f, md5, 0)) {
+    if (min_id == NULL && index_desc_first(f, md5, 0)) {
         do {
             xs *msg = NULL;
 
@@ -1345,13 +1363,6 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
             /* only returns entries newer than since_id */
             if (since_id) {
                 if (strcmp(md5, MID_TO_MD5(since_id)) == 0)
-                    break;
-            }
-
-            /* only returns entries newer than min_id */
-            /* what does really "Return results immediately newer than ID" mean? */
-            if (min_id) {
-                if (strcmp(md5, MID_TO_MD5(min_id)) == 0)
                     break;
             }
 
@@ -1438,8 +1449,35 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
 }
 
 
+xs_str *timeline_link_header(const char *endpoint, xs_list *timeline)
+/* returns a Link header with paging information */
+{
+    xs_str *s = NULL;
+
+    if (xs_list_len(timeline) == 0)
+        return NULL;
+
+    const xs_dict *first_st = xs_list_get(timeline, 0);
+    const xs_dict *last_st  = xs_list_get(timeline, -1);
+    const char *first_id    = xs_dict_get(first_st, "id");
+    const char *last_id     = xs_dict_get(last_st, "id");
+    const char *host        = xs_dict_get(srv_config, "host");
+    const char *protocol    = xs_dict_get_def(srv_config, "protocol", "https");
+
+    s = xs_fmt(
+        "<%s:/" "/%s%s?max_id=%s>; rel=\"next\", "
+        "<%s:/" "/%s%s?since_id=%s>; rel=\"prev\"",
+        protocol, host, endpoint, last_id,
+        protocol, host, endpoint, first_id);
+
+    srv_debug(1, xs_fmt("timeline_link_header %s", s));
+
+    return s;
+}
+
+
 int mastoapi_get_handler(const xs_dict *req, const char *q_path,
-                         char **body, int *b_size, char **ctype)
+                         char **body, int *b_size, char **ctype, xs_str **link)
 {
     (void)b_size;
 
@@ -1699,6 +1737,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             xs *ifn = user_index_fn(&snac1, "private");
             xs *out = mastoapi_timeline(&snac1, args, ifn);
 
+            *link = timeline_link_header("/api/v1/timelines/home", out);
+
             *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
             status = HTTP_STATUS_OK;
@@ -1763,7 +1803,13 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             xs *out    = xs_list_new();
             const xs_dict *v;
             const xs_list *excl = xs_dict_get(args, "exclude_types[]");
+            const char *min_id = xs_dict_get(args, "min_id");
             const char *max_id = xs_dict_get(args, "max_id");
+
+            if (dbglevel) {
+                xs *js = xs_json_dumps(args, 0);
+                srv_debug(1, xs_fmt("mastoapi_notifications args %s", js));
+            }
 
             xs_list_foreach(l, v) {
                 xs *noti = notify_get(&snac1, v);
@@ -1793,6 +1839,12 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         max_id = NULL;
 
                     continue;
+                }
+
+                if (min_id) {
+                    if (strcmp(fid, min_id) <= 0) {
+                        continue;
+                    }
                 }
 
                 /* convert the type */
@@ -1841,6 +1893,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
                 out = xs_list_append(out, mn);
             }
+
+            srv_debug(1, xs_fmt("mastoapi_notifications count %d", xs_list_len(out)));
 
             *body  = xs_json_dumps(out, 4);
             *ctype = "application/json";
@@ -2273,9 +2327,22 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/markers") == 0) { /** **/
-        *body  = xs_dup("{}");
-        *ctype = "application/json";
-        status = HTTP_STATUS_OK;
+        if (logged_in) {
+            const xs_list *timeline = xs_dict_get(args, "timeline[]");
+            xs_str *json = NULL;
+            if (!xs_is_null(timeline)) 
+                json = xs_json_dumps(markers_get(&snac1, timeline), 4);
+
+            if (!xs_is_null(json))
+                *body = json;
+            else
+                *body = xs_dup("{}");
+
+            *ctype = "application/json";
+            status = HTTP_STATUS_OK;
+        }
+        else
+            status = HTTP_STATUS_UNAUTHORIZED;
     }
     else
     if (strcmp(cmd, "/v1/followed_tags") == 0) { /** **/
@@ -2310,6 +2377,37 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             if (xs_is_null(offset) || strcmp(offset, "0") == 0) {
                 /* reply something only for offset 0; otherwise,
                    apps like Tusky keep asking again and again */
+                if (xs_startswith(q, "https://")) {
+                    xs *md5 = xs_md5_hex(q, strlen(q));
+
+                    if (!timeline_here(&snac1, md5)) {
+                        xs *object = NULL;
+                        int status;
+
+                        status = activitypub_request(&snac1, q, &object);
+                        snac_debug(&snac1, 1, xs_fmt("Request searched URL %s %d", q, status));
+
+                        if (valid_status(status)) {
+                            /* got it; also request the actor */
+                            const char *attr_to = get_atto(object);
+                            xs *actor_obj = NULL;
+
+                            if (!xs_is_null(attr_to)) {
+                                status = actor_request(&snac1, attr_to, &actor_obj);
+
+                                snac_debug(&snac1, 1, xs_fmt("Request author %s of %s %d", attr_to, q, status));
+
+                                if (valid_status(status)) {
+                                    /* add the actor */
+                                    actor_add(attr_to, actor_obj);
+
+                                    /* add the post to the timeline */
+                                    timeline_add(&snac1, q, object);
+                                }
+                            }
+                        }
+                    }
+                }
 
                 if (!xs_is_null(q)) {
                     if (xs_is_null(type) || strcmp(type, "accounts") == 0) {
@@ -2945,6 +3043,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
         }
     }
+    else
     if (xs_startswith(cmd, "/v1/lists/")) { /** list maintenance **/
         if (logged_in) {
             xs *l = xs_split(cmd, "/");
@@ -2972,9 +3071,35 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 }
             }
         }
-        else
-            status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
     }
+    else if (strcmp(cmd, "/v1/markers") == 0) { /** **/
+        xs_str *json = NULL;
+        if (logged_in) {
+            const xs_str *home_marker = xs_dict_get(args, "home[last_read_id]");
+            if (xs_is_null(home_marker)) {
+                const xs_dict *home = xs_dict_get(args, "home");
+                if (!xs_is_null(home))
+                    home_marker = xs_dict_get(home, "last_read_id");
+            }
+            
+            const xs_str *notify_marker = xs_dict_get(args, "notifications[last_read_id]");
+            if (xs_is_null(notify_marker)) {
+                const xs_dict *notify = xs_dict_get(args, "notifications");
+                if (!xs_is_null(notify))
+                    notify_marker = xs_dict_get(notify, "last_read_id");
+            }
+            json = xs_json_dumps(markers_set(&snac, home_marker, notify_marker), 4);
+        }
+        if (!xs_is_null(json))
+            *body = json;
+        else
+            *body = xs_dup("{}");
+
+        *ctype = "application/json";
+        status = HTTP_STATUS_OK;
+    }
+    else
+        status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
 
     /* user cleanup */
     if (logged_in)

@@ -190,7 +190,7 @@ xs_dict *xs_fcgi_request(FILE *f, xs_str **payload, int *p_size, int *fcgi_id)
                         q_vars = xs_url_vars(xs_list_get(pnv, 1));
                     }
                     else
-                    if (xs_match(k, "CONTENT_TYPE|CONTENT_LENGTH|HTTP_*")) {
+                    if (xs_match(k, "CONTENT_TYPE|CONTENT_LENGTH|REMOTE_ADDR|HTTP_*")) {
                         if (xs_startswith(k, "HTTP_"))
                             k = xs_crop_i(k, 5, 0);
 

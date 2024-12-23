@@ -258,6 +258,10 @@ xs_list *get_attachments(const xs_dict *msg)
             d = xs_dict_append(d, "href", href);
             d = xs_dict_append(d, "name", name);
 
+            const xs_dict *icon = xs_dict_get(v, "icon");
+            if (xs_type(icon) == XSTYPE_DICT)
+                d = xs_dict_append(d, "icon", icon);
+
             l = xs_list_append(l, d);
         }
     }
@@ -1476,20 +1480,31 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
 
     /* create the attachment list, if there are any */
     if (!xs_is_null(attach)) {
-        int c = 0;
-        while (xs_list_next(attach, &v, &c)) {
-            xs *d            = xs_dict_new();
+        xs_list_foreach(attach, v) {
             const char *url  = xs_list_get(v, 0);
             const char *alt  = xs_list_get(v, 1);
             const char *mime = xs_mime_by_ext(url);
+            int add = 1;
 
-            d = xs_dict_append(d, "mediaType", mime);
-            d = xs_dict_append(d, "url",       url);
-            d = xs_dict_append(d, "name",      alt);
-            d = xs_dict_append(d, "type",
-                xs_startswith(mime, "image/") ? "Image" : "Document");
+            /* check if it's already here */
+            const xs_dict *ad;
+            xs_list_foreach(atls, ad) {
+                if (strcmp(xs_dict_get_def(ad, "url", ""), url) == 0) {
+                    add = 0;
+                    break;
+                }
+            }
 
-            atls = xs_list_append(atls, d);
+            if (add) {
+                xs *d = xs_dict_new();
+                d = xs_dict_append(d, "mediaType", mime);
+                d = xs_dict_append(d, "url",       url);
+                d = xs_dict_append(d, "name",      alt);
+                d = xs_dict_append(d, "type",
+                    xs_startswith(mime, "image/") ? "Image" : "Document");
+
+                atls = xs_list_append(atls, d);
+            }
         }
     }
 

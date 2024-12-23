@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
 
-#define VERSION "2.66"
+#define VERSION "2.67"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -238,6 +238,9 @@ int notify_new_num(snac *snac);
 xs_list *notify_list(snac *snac, int skip, int show);
 void notify_clear(snac *snac);
 
+xs_dict *markers_get(snac *snac, const xs_list *markers);
+xs_dict *markers_set(snac *snac, const char *home_marker, const char *notify_marker);
+
 void inbox_add(const char *inbox);
 void inbox_add_by_actor(const xs_dict *actor);
 xs_list *inbox_list(void);
@@ -386,7 +389,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
                        const char *payload, int p_size,
                        char **body, int *b_size, char **ctype);
 int mastoapi_get_handler(const xs_dict *req, const char *q_path,
-                         char **body, int *b_size, char **ctype);
+                         char **body, int *b_size, char **ctype, xs_str **link);
 int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                           const char *payload, int p_size,
                           char **body, int *b_size, char **ctype);
@@ -427,3 +430,6 @@ typedef struct {
 t_announcement *announcement(double after);
 
 xs_str *make_url(const char *href, const char *proxy, int by_token);
+
+int badlogin_check(const char *user, const char *addr);
+void badlogin_inc(const char *user, const char *addr);

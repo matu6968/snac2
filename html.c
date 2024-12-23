@@ -29,9 +29,18 @@ int login(snac *snac, const xs_dict *headers)
         xs *l1 = xs_split_n(s2, ":", 1);
 
         if (xs_list_len(l1) == 2) {
-            logged_in = check_password(
-                xs_list_get(l1, 0), xs_list_get(l1, 1),
-                xs_dict_get(snac->config, "passwd"));
+            const char *user = xs_list_get(l1, 0);
+            const char *pwd  = xs_list_get(l1, 1);
+            const char *addr = xs_or(xs_dict_get(headers, "remote-addr"),
+                                     xs_dict_get(headers, "x-forwarded-for"));
+
+            if (badlogin_check(user, addr)) {
+                logged_in = check_password(user, pwd,
+                    xs_dict_get(snac->config, "passwd"));
+
+                if (!logged_in)
+                    badlogin_inc(user, addr);
+            }
         }
     }
 
@@ -632,6 +641,17 @@ xs_html *html_user_head(snac *user, const char *desc, const char *url)
         s_desc = xs_dup(xs_dict_get(user->config, "bio"));
     else
         s_desc = xs_dup(desc);
+
+    /* show metrics in og:description? */
+    if (xs_is_true(xs_dict_get(user->config, "show_contact_metrics"))) {
+        xs *fwers = follower_list(user);
+        xs *fwing = following_list(user);
+
+        xs *s1 = xs_fmt(L("%d following, %d followers · "),
+            xs_list_len(fwing), xs_list_len(fwers));
+
+        s_desc = xs_str_prepend_i(s_desc, s1);
+    }
 
     /* shorten desc to a reasonable size */
     for (n = 0; s_desc[n]; n++) {
@@ -2041,6 +2061,23 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             if (content && xs_str_in(content, o_href) != -1)
                 continue;
 
+            /* do this attachment include an icon? */
+            const xs_dict *icon = xs_dict_get(a, "icon");
+            if (xs_type(icon) == XSTYPE_DICT) {
+                const char *icon_mtype = xs_dict_get(icon, "mediaType");
+                const char *icon_url   = xs_dict_get(icon, "url");
+
+                if (icon_mtype && icon_url && xs_startswith(icon_mtype, "image/")) {
+                    xs_html_add(content_attachments,
+                        xs_html_tag("a",
+                            xs_html_attr("href", icon_url),
+                            xs_html_attr("target", "_blank"),
+                            xs_html_sctag("img",
+                                xs_html_attr("loading", "lazy"),
+                                xs_html_attr("src", icon_url))));
+                }
+            }
+
             xs *href = make_url(o_href, proxy, 0);
 
             if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0) {
@@ -2996,9 +3033,54 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
         else {
             const char *q = xs_dict_get(q_vars, "q");
+            xs *url_acct = NULL;
+
+            /* searching for an URL? */
+            if (q && xs_match(q, "https://*|http://*")) {
+                /* may by an actor; try a webfinger */
+                xs *actor_obj = NULL;
+
+                if (valid_status(webfinger_request(q, &actor_obj, &url_acct))) {
+                    /* it's an actor; do the dirty trick of changing q to the account name */
+                    q = url_acct;
+                }
+                else {
+                    /* if it's not already here, try to bring it to the user's timeline */
+                    xs *md5 = xs_md5_hex(q, strlen(q));
+
+                    if (!timeline_here(&snac, md5)) {
+                        xs *object = NULL;
+                        int status;
+
+                        status = activitypub_request(&snac, q, &object);
+                        snac_debug(&snac, 1, xs_fmt("Request searched URL %s %d", q, status));
+
+                        if (valid_status(status)) {
+                            /* got it; also request the actor */
+                            const char *attr_to = get_atto(object);
+
+                            if (!xs_is_null(attr_to)) {
+                                status = actor_request(&snac, attr_to, &actor_obj);
+
+                                snac_debug(&snac, 1, xs_fmt("Request author %s of %s %d", attr_to, q, status));
+
+                                if (valid_status(status)) {
+                                    /* add the actor */
+                                    actor_add(attr_to, actor_obj);
+
+                                    /* add the post to the timeline */
+                                    timeline_add(&snac, q, object);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                /* fall through */
+            }
 
             if (q && *q) {
-                if (xs_regex_match(q, "^@?[a-zA-Z0-9_]+@[a-zA-Z0-9-]+\\.")) {
+                if (xs_regex_match(q, "^@?[a-zA-Z0-9._]+@[a-zA-Z0-9-]+\\.")) {
                     /** search account **/
                     xs *actor = NULL;
                     xs *acct = NULL;

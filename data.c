@@ -2705,6 +2705,23 @@ xs_list *content_search(snac *user, const char *regex,
         if (id == NULL || is_hidden(user, id))
             continue;
 
+        /* test for the post URL */
+        if (strcmp(id, regex) == 0) {
+            if (xs_set_add(&seen, md5) == 1)
+                show--;
+
+            continue;
+        }
+
+        /* test for the alternate post id */
+        const char *url = xs_dict_get(post, "url");
+        if (xs_type(url) == XSTYPE_STRING && strcmp(url, regex) == 0) {
+            if (xs_set_add(&seen, md5) == 1)
+                show--;
+
+            continue;
+        }
+
         xs *c = xs_str_new(NULL);
         const char *content = xs_dict_get(post, "content");
         const char *name    = xs_dict_get(post, "name");
@@ -2786,6 +2803,74 @@ xs_str *notify_check_time(snac *snac, int reset)
     return t;
 }
 
+xs_dict *markers_get(snac *snac, const xs_list *markers)
+{
+    xs *data = NULL;
+    xs_dict *returns = xs_dict_new();
+    xs *fn = xs_fmt("%s/markers.json", snac->basedir);
+    const xs_str *v = NULL;
+    FILE *f;
+
+    if ((f = fopen(fn, "r")) != NULL) {
+        data = xs_json_load(f);
+        fclose(f);
+    }
+
+    if (xs_is_null(data))
+        data = xs_dict_new();
+
+    xs_list_foreach(markers, v) {
+        const xs_dict *mark = xs_dict_get(data, v);
+        if (!xs_is_null(mark)) {
+            returns = xs_dict_append(returns, v, mark);
+        }
+    }
+    return returns;
+}
+
+xs_dict *markers_set(snac *snac, const char *home_marker, const char *notify_marker)
+/* gets or sets notification marker */
+{
+    xs *data = NULL;
+    xs_dict *written = xs_dict_new();
+    xs *fn = xs_fmt("%s/markers.json", snac->basedir);
+    FILE *f;
+
+    if ((f = fopen(fn, "r")) != NULL) {
+        data = xs_json_load(f);
+        fclose(f);
+    }
+
+    if (xs_is_null(data))
+        data = xs_dict_new();
+
+    if (!xs_is_null(home_marker)) {
+        xs *home = xs_dict_new();
+        xs *s_tid = tid(0);
+        home = xs_dict_append(home, "last_read_id", home_marker);
+        home = xs_dict_append(home, "version", xs_stock(0));
+        home = xs_dict_append(home, "updated_at", s_tid);
+        data = xs_dict_set(data, "home", home);
+        written = xs_dict_append(written, "home", home);
+    }
+
+    if (!xs_is_null(notify_marker)) {
+        xs *notify = xs_dict_new();
+        xs *s_tid = tid(0);
+        notify = xs_dict_append(notify, "last_read_id", notify_marker);
+        notify = xs_dict_append(notify, "version", xs_stock(0));
+        notify = xs_dict_append(notify, "updated_at", s_tid);
+        data = xs_dict_set(data, "notifications", notify);
+        written = xs_dict_append(written, "notifications", notify);
+    }
+
+    if ((f = fopen(fn, "w")) != NULL) {
+        xs_json_dump(data, 4, f);
+        fclose(f);
+    }
+
+    return written;
+}
 
 void notify_add(snac *snac, const char *type, const char *utype,
                 const char *actor, const char *objid, const xs_dict *msg)
@@ -3766,4 +3851,109 @@ xs_str *make_url(const char *href, const char *proxy, int by_token)
         url = xs_dup(href);
 
     return url;
+}
+
+
+/** bad login throttle **/
+
+xs_str *_badlogin_fn(const char *addr)
+{
+    xs *md5 = xs_md5_hex(addr, strlen(addr));
+    xs *dir = xs_fmt("%s/badlogin", srv_basedir);
+
+    mkdirx(dir);
+
+    return xs_fmt("%s/%s", dir, md5);
+}
+
+
+int _badlogin_read(const char *fn, int *failures)
+/* reads a badlogin file */
+{
+    int ok = 0;
+    FILE *f;
+
+    pthread_mutex_lock(&data_mutex);
+
+    if ((f = fopen(fn, "r")) != NULL) {
+        xs *l = xs_readline(f);
+        fclose(f);
+
+        if (sscanf(l, "%d", failures) == 1)
+            ok = 1;
+    }
+
+    pthread_mutex_unlock(&data_mutex);
+
+    return ok;
+}
+
+
+int badlogin_check(const char *user, const char *addr)
+/* checks if this address is authorized to try a login */
+{
+    int valid = 1;
+
+    if (xs_type(addr) == XSTYPE_STRING) {
+        xs *fn = _badlogin_fn(addr);
+        double mt = mtime(fn);
+
+        if (mt > 0) {
+            int badlogin_expire = xs_number_get(xs_dict_get_def(srv_config,
+                                        "badlogin_expire", "300"));
+
+            mt += badlogin_expire;
+
+            /* if file is expired, delete and give pass */
+            if (mt < time(NULL)) {
+                srv_debug(1, xs_fmt("Login from %s for %s allowed again", addr, user));
+                unlink(fn);
+            }
+            else {
+                int failures;
+
+                if (_badlogin_read(fn, &failures)) {
+                    int badlogin_max = xs_number_get(xs_dict_get_def(srv_config,
+                                            "badlogin_retries", "5"));
+
+                    if (failures >= badlogin_max) {
+                        valid = 0;
+
+                        xs *d = xs_str_iso_date((time_t) mt);
+
+                        srv_debug(1,
+                            xs_fmt("Login from %s for %s forbidden until %s", addr, user, d));
+                    }
+                }
+            }
+        }
+    }
+
+    return valid;
+}
+
+
+void badlogin_inc(const char *user, const char *addr)
+/* increments a bad login from this address */
+{
+    if (xs_type(addr) == XSTYPE_STRING) {
+        int failures = 0;
+        xs *fn = _badlogin_fn(addr);
+        FILE *f;
+
+        _badlogin_read(fn, &failures);
+
+        pthread_mutex_lock(&data_mutex);
+
+        if ((f = fopen(fn, "w")) != NULL) {
+            failures++;
+
+            fprintf(f, "%d %s %s\n", failures, addr, user);
+            fclose(f);
+
+            srv_log(xs_fmt("Registered %d login failure(s) from %s for %s", failures, addr, user));
+        }
+
+        pthread_mutex_unlock(&data_mutex);
+    }
 }

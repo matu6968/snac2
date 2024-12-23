@@ -1,5 +1,19 @@
 # Release Notes
 
+## 2.67
+
+The search box also accepts post URLs; the post is requested and, if it's found, can be interacted with (liked, boosted, replied to, etc.).
+
+IP addresses for failed logins are tracked and throttled to mitigate brute force attacks (see `snac(8)` for more information).
+
+Fixed a bug regarding repeated attachments when editing a post.
+
+Mastodon API: Improved timeline pagination in some clients (details: an HTTP `Link` header has been added), fixed missing audio attachments, fixed an incorrect value for the `bot` field in newly created accounts, fixed a crash, implemented markers (contributed by nowster).
+
+When running in server mode, the pidfile is locked to avoid concurrent running of the same server instance.
+
+Added documentation and some tweaks to enable static compilation with musl (contributed by Shamar).
+
 ## 2.66
 
 As many users have asked for it, there is now an option to make the number of followed and following accounts public (still disabled by default). These are only the numbers; the lists themselves are never published.

@@ -82,7 +82,11 @@ int webfinger_request_signed(snac *snac, const char *qs, xs_str **actor, xs_str 
 
     if (obj == NULL && valid_status(status) && payload) {
         obj = xs_json_loads(payload);
-        object_add(cached_qs, obj);
+
+        if (obj)
+            object_add(cached_qs, obj);
+        else
+            status = HTTP_STATUS_BAD_REQUEST;
     }
 
     if (obj) {
