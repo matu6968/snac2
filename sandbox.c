@@ -46,11 +46,11 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail)
 
     if (*address != '/') {
         unsigned short listen_port = xs_number_get(xs_dict_get(srv_config, "port"));
-        LL_PORT(listen_port, LANDLOCK_ACCESS_NET_BIND_TCP);
+        LL_PORT(listen_port, LANDLOCK_ACCESS_NET_BIND_TCP_COMPAT);
     }
 
-    LL_PORT(80,  LANDLOCK_ACCESS_NET_CONNECT_TCP);
-    LL_PORT(443, LANDLOCK_ACCESS_NET_CONNECT_TCP);
+    LL_PORT(80,  LANDLOCK_ACCESS_NET_CONNECT_TCP_COMPAT);
+    LL_PORT(443, LANDLOCK_ACCESS_NET_CONNECT_TCP_COMPAT);
 
 } LL_END
 

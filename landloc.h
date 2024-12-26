@@ -90,57 +90,63 @@ int main(void) {
 #endif
 
 #ifdef LANDLOCK_ACCESS_FS_REFER
-#   define __LL_FS_REFER_COMPAT LANDLOCK_ACCESS_FS_REFER
-#   define __LL_SWITCH_FS_REFER __rattr.handled_access_fs &= ~__LL_FS_REFER_COMPAT
+#   define LANDLOCK_ACCESS_FS_REFER_COMPAT LANDLOCK_ACCESS_FS_REFER
+#   define __LL_SWITCH_FS_REFER __rattr.handled_access_fs &= ~LANDLOCK_ACCESS_FS_REFER_COMPAT
 #else
-#   define __LL_FS_REFER_COMPAT 0
+#   define LANDLOCK_ACCESS_FS_REFER_COMPAT 0
 #   define __LL_SWITCH_FS_REFER (void)0
 #endif
 
 #ifdef LANDLOCK_ACCESS_FS_TRUNCATE
-#   define __LL_FS_TRUNCATE_COMPAT LANDLOCK_ACCESS_FS_TRUNCATE
-#   define __LL_SWITCH_FS_TRUNCATE __rattr.handled_access_fs  &= ~__LL_FS_TRUNCATE_COMPAT
+#   define LANDLOCK_ACCESS_FS_TRUNCATE_COMPAT LANDLOCK_ACCESS_FS_TRUNCATE
+#   define __LL_SWITCH_FS_TRUNCATE __rattr.handled_access_fs  &= ~LANDLOCK_ACCESS_FS_TRUNCATE_COMPAT
 #else
-#   define __LL_FS_TRUNCATE_COMPAT 0
+#   define LANDLOCK_ACCESS_FS_TRUNCATE_COMPAT 0
 #   define __LL_SWITCH_FS_TRUNCATE (void)0
 #endif
 
 #ifdef LANDLOCK_ACCESS_FS_IOCTL_DEV
-#   define __LL_FS_IOCTL_DEV_COMPAT LANDLOCK_ACCESS_FS_IOCTL_DEV
-#   define __LL_SWITCH_FS_IOCTL_DEV __rattr.handled_access_fs &= ~__LL_FS_IOCTL_DEV_COMPAT
+#   define LANDLOCK_ACCESS_FS_IOCTL_DEV_COMPAT LANDLOCK_ACCESS_FS_IOCTL_DEV
+#   define __LL_SWITCH_FS_IOCTL_DEV __rattr.handled_access_fs &= ~LANDLOCK_ACCESS_FS_IOCTL_DEV_COMPAT
 #else
-#   define __LL_FS_IOCTL_DEV_COMPAT 0
+#   define LANDLOCK_ACCESS_FS_IOCTL_DEV_COMPAT 0
 #   define __LL_SWITCH_FS_IOCTL_DEV (void)0
 #endif
 
-#define LL_FS_ALL                       (\
-    LANDLOCK_ACCESS_FS_EXECUTE          |\
-    LANDLOCK_ACCESS_FS_WRITE_FILE       |\
-    LANDLOCK_ACCESS_FS_READ_FILE        |\
-    LANDLOCK_ACCESS_FS_READ_DIR         |\
-    LANDLOCK_ACCESS_FS_REMOVE_DIR       |\
-    LANDLOCK_ACCESS_FS_REMOVE_FILE      |\
-    LANDLOCK_ACCESS_FS_MAKE_CHAR        |\
-    LANDLOCK_ACCESS_FS_MAKE_DIR         |\
-    LANDLOCK_ACCESS_FS_MAKE_REG         |\
-    LANDLOCK_ACCESS_FS_MAKE_SOCK        |\
-    LANDLOCK_ACCESS_FS_MAKE_FIFO        |\
-    LANDLOCK_ACCESS_FS_MAKE_BLOCK       |\
-    LANDLOCK_ACCESS_FS_MAKE_SYM         |\
-    __LL_FS_REFER_COMPAT                |\
-    __LL_FS_TRUNCATE_COMPAT             |\
-    __LL_FS_IOCTL_DEV_COMPAT            )
+#define LL_FS_ALL                           (\
+    LANDLOCK_ACCESS_FS_EXECUTE              |\
+    LANDLOCK_ACCESS_FS_WRITE_FILE           |\
+    LANDLOCK_ACCESS_FS_READ_FILE            |\
+    LANDLOCK_ACCESS_FS_READ_DIR             |\
+    LANDLOCK_ACCESS_FS_REMOVE_DIR           |\
+    LANDLOCK_ACCESS_FS_REMOVE_FILE          |\
+    LANDLOCK_ACCESS_FS_MAKE_CHAR            |\
+    LANDLOCK_ACCESS_FS_MAKE_DIR             |\
+    LANDLOCK_ACCESS_FS_MAKE_REG             |\
+    LANDLOCK_ACCESS_FS_MAKE_SOCK            |\
+    LANDLOCK_ACCESS_FS_MAKE_FIFO            |\
+    LANDLOCK_ACCESS_FS_MAKE_BLOCK           |\
+    LANDLOCK_ACCESS_FS_MAKE_SYM             |\
+    LANDLOCK_ACCESS_FS_REFER_COMPAT         |\
+    LANDLOCK_ACCESS_FS_TRUNCATE_COMPAT      |\
+    LANDLOCK_ACCESS_FS_IOCTL_DEV_COMPAT     )
 
 #if defined(LANDLOCK_ACCESS_NET_BIND_TCP) && defined(LANDLOCK_ACCESS_NET_CONNECT_TCP)
-#   define __LL_HAVE_NET
-#endif
+#   define LL_HAVE_NET 1
 
-#ifdef __LL_HAVE_NET
-#   define LL_NET_ALL (LANDLOCK_ACCESS_NET_BIND_TCP | LANDLOCK_ACCESS_NET_CONNECT_TCP)
+#   define LANDLOCK_ACCESS_NET_BIND_TCP_COMPAT LANDLOCK_ACCESS_NET_BIND_TCP
+#   define LANDLOCK_ACCESS_NET_CONNECT_TCP_COMPAT LANDLOCK_ACCESS_NET_CONNECT_TCP
+
+#   define LL_NET_ALL (LANDLOCK_ACCESS_NET_BIND_TCP_COMPAT | LANDLOCK_ACCESS_NET_CONNECT_TCP_COMPAT)
 #   define __LL_DECLARE_NET struct landlock_net_port_attr __nattr = {0}
 #   define __LL_INIT_NET __rattr.handled_access_net = LL_NET_ALL
 #   define __LL_SWITCH_NET do { __rattr.handled_access_net &= ~(LANDLOCK_ACCESS_NET_BIND_TCP | LANDLOCK_ACCESS_NET_CONNECT_TCP); } while (0)
 #else
+#   define LL_HAVE_NET 0
+
+#   define LANDLOCK_ACCESS_NET_BIND_TCP_COMPAT 0
+#   define LANDLOCK_ACCESS_NET_CONNECT_TCP_COMPAT 0
+
 #   define LL_NET_ALL 0
 #   define __LL_DECLARE_NET (void)0
 #   define __LL_INIT_NET (void)0
@@ -185,26 +191,28 @@ int main(void) {
 #define LL_PATH(p, rules) do {\
     const char *__path = (p);\
     __pattr.allowed_access = (rules) & __rattr.handled_access_fs;\
-    __pattr.parent_fd = open(__path, O_PATH | O_CLOEXEC);\
-    if (-1 == __pattr.parent_fd) {\
-        LL_PRINTERR("open(%s): %s", __path, strerror(errno));\
-        __err = -1;\
-        goto __close;\
+    if (__pattr.allowed_access != 0) {\
+        __pattr.parent_fd = open(__path, O_PATH | O_CLOEXEC);\
+        if (-1 == __pattr.parent_fd) {\
+            LL_PRINTERR("open(%s): %s", __path, strerror(errno));\
+            __err = -1;\
+            goto __close;\
+        }\
+        __err = (int)syscall(SYS_landlock_add_rule, ll_rule_fd, LANDLOCK_RULE_PATH_BENEATH, &__pattr, 0);\
+        if (__err) {\
+            LL_PRINTERR("landlock_add_rule(%s): %s", __path, strerror(errno));\
+            goto __close;\
+        }\
+        close(__pattr.parent_fd);\
     }\
-    __err = (int)syscall(SYS_landlock_add_rule, ll_rule_fd, LANDLOCK_RULE_PATH_BENEATH, &__pattr, 0);\
-    if (__err) {\
-        LL_PRINTERR("landlock_add_rule(%s): %s", __path, strerror(errno));\
-        goto __close;\
-    }\
-    close(__pattr.parent_fd);\
 } while (0)
 
-#ifdef __LL_HAVE_NET
+#if LL_HAVE_NET
 
 #define LL_PORT(p, rules) do {\
     unsigned short __port = (p);\
     __nattr.allowed_access = (rules);\
-    if (ll_abi > 3) {\
+    if (ll_abi > 3 && __nattr.allowed_access != 0) {\
         __nattr.port = __port;\
         __err = (int)syscall(SYS_landlock_add_rule, ll_rule_fd, LANDLOCK_RULE_NET_PORT, &__nattr, 0);\
         if (__err) {\
@@ -218,7 +226,7 @@ int main(void) {
 
 #define LL_PORT(p, rules) do { (void)p; (void)rules; } while (0)
 
-#endif /* __LL_HAVE_NET */
+#endif /* LL_HAVE_NET */
 
 #endif /* KERNEL_VERSION(5, 13, 0) */
 
