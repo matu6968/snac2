@@ -7,6 +7,7 @@
 #include "xs_html.h"
 #include "xs_json.h"
 #include "xs_time.h"
+#include "xs_match.h"
 
 #include "snac.h"
 
@@ -93,7 +94,8 @@ static xs_str *format_line(const char *line, xs_list **attach)
             "\\*\\*?\\*?[^\\*]+\\*?\\*?\\*"     "|"
             "!\\[[^]]+\\]\\([^\\)]+\\)"         "|"
             "\\[[^]]+\\]\\([^\\)]+\\)"          "|"
-            "[a-z]+:/" "/[^[:space:]]+"
+            "[a-z]+:/" "/[^[:space:]]+"         "|"
+            "(mailto|xmpp):[^@[:space:]]+@[^[:space:]]+"
         ")");
     int n = 0;
 
@@ -228,6 +230,15 @@ static xs_str *format_line(const char *line, xs_list **attach)
                     xs *s1 = xs_fmt("<a href=\"%s\" target=\"_blank\">%s</a>", v2, u);
                     s = xs_str_cat(s, s1);
                 }
+            }
+            else
+            if (xs_match(v, "mailto*|xmpp*")) {
+                xs *u  = xs_replace_i(xs_replace(v, "#", "&#35;"), "@", "&#64;");
+
+                xs *v2 = xs_strip_chars_i(xs_dup(u), ".,)");
+
+                xs *s1 = xs_fmt("<a href=\"%s\" target=\"_blank\">%s</a>", v2, u);
+                s = xs_str_cat(s, s1);
             }
             else
                 s = xs_str_cat(s, v);

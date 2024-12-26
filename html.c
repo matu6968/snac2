@@ -934,7 +934,7 @@ static xs_html *html_user_body(snac *user, int read_only)
                     }
                 }
                 else
-                if (xs_startswith(v, "gemini:/")) {
+                if (xs_startswith(v, "gemini:/") || xs_startswith(v, "xmpp:")) {
                     value = xs_html_tag("a",
                         xs_html_attr("rel", "me"),
                         xs_html_attr("href", v),
