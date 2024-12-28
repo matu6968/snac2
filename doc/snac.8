@@ -480,6 +480,15 @@ Also, please take note that the
 account you migrated from is not disabled nor changed in any way, so can still
 use it as it no migration was done. This behaviour may or may not match what other
 ActivityPub implementations do.
+.Pp
+NOTE: If you run
+.Nm
+on OpenBSD, please take note that the pledge()/unveil() security system disallows
+opening or creating files in the current directory; to do this operation, please
+temporarily set the disable_openbsd_security option to true in the
+.Pa server.json
+file and restart before migrating. You can restore the option back to the default false
+value afterwards.
 .Ss Migrating from Mastodon to snac
 Since version 2.61, you can migrate accounts on other ActivityPub instances to your
 .Nm
@@ -548,6 +557,14 @@ account from all accounts that followed the Mastodon one. According to the great
 I linked above, this process may or may not start immediately, and its success may depend
 heavily on how all the servers involved behave. Just cross your fingers and hope for the best.
 .Pp
+NOTE: If you run
+.Nm
+on OpenBSD, please take note that the pledge()/unveil() security system disallows
+opening or creating files in the current directory; to do this operation, please
+temporarily set the disable_openbsd_security option to true in the
+.Pa server.json
+file and restart before migrating. You can restore the option back to the default false
+value afterwards.
 .Ss Instance blocking
 Full instances can be blocked. This operation must be done from
 the command-line tool. See
