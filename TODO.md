@@ -2,13 +2,13 @@
 
 ## Open
 
+CSV import/export does not work with OpenBSD security on; document it or fix it.
+
 Investigate the problem with boosts inside the same instance (see https://codeberg.org/grunfink/snac2/issues/214).
 
 Editing / Updating a post does not index newly added hashtags.
 
 Wrong level of message visibility when using the Mastodon API: https://codeberg.org/grunfink/snac2/issues/200#issuecomment-2351042
-
-Unfollowing lemmy groups gets rejected with an http status of 400.
 
 Unfollowing guppe groups seems to work (http status of 200), but messages continue to arrive as if it didn't.
 
@@ -363,3 +363,5 @@ Add a pidfile (2.64, 2024-11-17T10:21:29+0100).
 Implement Proxying for Media Links to Enhance User Privacy (see https://codeberg.org/grunfink/snac2/issues/219 for more information) (2024-11-18T20:36:39+0100).
 
 Consider showing only posts by the account owner (not full trees) (see https://codeberg.org/grunfink/snac2/issues/217 for more information) (2024-11-18T20:36:39+0100).
+
+Unfollowing lemmy groups gets rejected with an http status of 400 (it seems to work now; 2024-12-28T16:50:16+0100).
