@@ -54,7 +54,39 @@ int xs_socket_server(const char *addr, const char *serv)
 /* opens a server socket by service name (or port as string) */
 {
     int rs = -1;
-    struct sockaddr_in host;
+#ifndef WITHOUT_GETADDRINFO
+    struct addrinfo *res;
+    struct addrinfo hints;
+    int status;
+
+    memset(&hints, '\0', sizeof(hints));
+
+    hints.ai_family     = AF_UNSPEC;
+    hints.ai_socktype   = SOCK_STREAM;
+
+    if (getaddrinfo(addr, serv, &hints, &res) != 0) {
+        goto end;
+    }
+
+    rs = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+    /* reuse addr */
+    int i = 1;
+    setsockopt(rs, SOL_SOCKET, SO_REUSEADDR, (char *)&i, sizeof(i));
+
+    status = bind(rs, res->ai_addr, res->ai_addrlen);
+    if (status == -1) {
+        fprintf(stderr, "Error binding with status %d\n", status);
+        close(rs);
+        rs = -1;
+    }
+    else {
+
+      listen(rs, SOMAXCONN);
+    }
+
+#else /* WITHOUT_GETADDRINFO */
+   struct sockaddr_in host;
 
     memset(&host, '\0', sizeof(host));
 
@@ -89,6 +121,7 @@ int xs_socket_server(const char *addr, const char *serv)
             listen(rs, SOMAXCONN);
     }
 
+#endif  /* WITHOUT_GETADDRINFO */
 end:
     return rs;
 }
