@@ -1,5 +1,9 @@
 # Release Notes
 
+## UNRELEASED
+
+Added ipv6 support for the https frontend connection (contributed by hb9hnt).
+
 ## 2.67
 
 The search box also accepts post URLs; the post is requested and, if it's found, can be interacted with (liked, boosted, replied to, etc.).
