@@ -706,6 +706,28 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         }
     }
 
+    /* is this a tag we're following? */
+    const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
+    if (xs_type(tags_in_msg) == XSTYPE_LIST) {
+        const xs_list *fw_tags = xs_dict_get(snac->config, "followed_hashtags");
+        if (xs_type(fw_tags) == XSTYPE_LIST) {
+            const xs_dict *te;
+
+            /* iterate the tags in the message */
+            xs_list_foreach(tags_in_msg, te) {
+                if (xs_type(te) == XSTYPE_DICT) {
+                    const char *type = xs_dict_get(te, "type");
+                    const char *name = xs_dict_get(te, "name");
+
+                    if (xs_type(type) == XSTYPE_STRING && xs_type(name) == XSTYPE_STRING) {
+                        if (strcmp(type, "Hashtag") == 0 && xs_list_in(fw_tags, name) != -1)
+                            return 7;
+                    }
+                }
+            }
+        }
+    }
+
     return 0;
 }
 
