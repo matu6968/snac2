@@ -706,11 +706,11 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         }
     }
 
-    /* is this a tag we're following? */
-    const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
-    if (xs_type(tags_in_msg) == XSTYPE_LIST) {
-        const xs_list *fw_tags = xs_dict_get(snac->config, "followed_hashtags");
-        if (xs_type(fw_tags) == XSTYPE_LIST) {
+    /* does this message contain a tag we are following? */
+    const xs_list *fw_tags = xs_dict_get(snac->config, "followed_hashtags");
+    if (xs_type(fw_tags) == XSTYPE_LIST) {
+        const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
+        if (xs_type(tags_in_msg) == XSTYPE_LIST) {
             const xs_dict *te;
 
             /* iterate the tags in the message */
@@ -2413,13 +2413,16 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         xs *rcpts = recipient_list(snac, msg, 1);
         xs_set inboxes;
         const xs_str *actor;
-        int c;
 
         xs_set_init(&inboxes);
 
+        /* add this shared inbox first */
+        xs *this_shared_inbox = xs_fmt("%s/shared-inbox", srv_baseurl);
+        xs_set_add(&inboxes, this_shared_inbox);
+        enqueue_output(snac, msg, this_shared_inbox, 0, 0);
+
         /* iterate the recipients */
-        c = 0;
-        while (xs_list_next(rcpts, &actor, &c)) {
+        xs_list_foreach(rcpts, actor) {
             xs *inbox = get_actor_inbox(actor, 1);
 
             if (inbox != NULL) {
@@ -2437,8 +2440,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
                 xs *shibx = inbox_list();
                 const xs_str *inbox;
 
-                c = 0;
-                while (xs_list_next(shibx, &inbox, &c)) {
+                xs_list_foreach(shibx, inbox) {
                     if (xs_set_add(&inboxes, inbox) == 1)
                         enqueue_output(snac, msg, inbox, 0, 0);
                 }
