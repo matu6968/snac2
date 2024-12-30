@@ -708,7 +708,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 
     /* does this message contain a tag we are following? */
     const xs_list *fw_tags = xs_dict_get(snac->config, "followed_hashtags");
-    if (xs_type(fw_tags) == XSTYPE_LIST) {
+    if (pub_msg && xs_type(fw_tags) == XSTYPE_LIST) {
         const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
         if (xs_type(tags_in_msg) == XSTYPE_LIST) {
             const xs_dict *te;
