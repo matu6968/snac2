@@ -15,15 +15,15 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail)
     const unsigned long long
         rd = LANDLOCK_ACCESS_FS_READ_DIR,
         rf = LANDLOCK_ACCESS_FS_READ_FILE,
-        w  = LANDLOCK_ACCESS_FS_WRITE_FILE  |
-             LANDLOCK_ACCESS_FS_TRUNCATE,
-        c  = LANDLOCK_ACCESS_FS_MAKE_DIR    |
-             LANDLOCK_ACCESS_FS_MAKE_REG    |
-             LANDLOCK_ACCESS_FS_TRUNCATE    |
-             LANDLOCK_ACCESS_FS_MAKE_SYM    |
-             LANDLOCK_ACCESS_FS_REMOVE_DIR  |
-             LANDLOCK_ACCESS_FS_REMOVE_FILE |
-             LANDLOCK_ACCESS_FS_REFER,
+        w  = LANDLOCK_ACCESS_FS_WRITE_FILE      |
+             LANDLOCK_ACCESS_FS_TRUNCATE_COMPAT,
+        c  = LANDLOCK_ACCESS_FS_MAKE_DIR        |
+             LANDLOCK_ACCESS_FS_MAKE_REG        |
+             LANDLOCK_ACCESS_FS_TRUNCATE_COMPAT |
+             LANDLOCK_ACCESS_FS_MAKE_SYM        |
+             LANDLOCK_ACCESS_FS_REMOVE_DIR      |
+             LANDLOCK_ACCESS_FS_REMOVE_FILE     |
+             LANDLOCK_ACCESS_FS_REFER_COMPAT,
         s  = LANDLOCK_ACCESS_FS_MAKE_SOCK,
         x  = LANDLOCK_ACCESS_FS_EXECUTE;
 
