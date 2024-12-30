@@ -70,7 +70,9 @@ int main(void) {
 
 #include <linux/version.h>
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 13, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 13, 0)
+#   error "no landlock on kernels older than 5.13.0"
+#endif
 
 #include <unistd.h>
 #include <linux/landlock.h>
@@ -224,10 +226,13 @@ int main(void) {
 
 #else
 
-#define LL_PORT(p, rules) do { (void)p; (void)rules; } while (0)
+#define LL_PORT(p, rules) do {\
+    unsigned short __port = (p);\
+    __u64 __rules = (rules);\
+    (void)__port;\
+    (void)__rules;\
+} while (0)
 
 #endif /* LL_HAVE_NET */
-
-#endif /* KERNEL_VERSION(5, 13, 0) */
 
 #endif /* __LANDLOC_H__ */
