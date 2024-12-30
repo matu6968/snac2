@@ -10,6 +10,7 @@
 #include "xs_time.h"
 #include "xs_set.h"
 #include "xs_match.h"
+#include "xs_unicode.h"
 
 #include "snac.h"
 
@@ -720,8 +721,12 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
                     const char *name = xs_dict_get(te, "name");
 
                     if (xs_type(type) == XSTYPE_STRING && xs_type(name) == XSTYPE_STRING) {
-                        if (strcmp(type, "Hashtag") == 0 && xs_list_in(fw_tags, name) != -1)
-                            return 7;
+                        if (strcmp(type, "Hashtag") == 0) {
+                            xs *lc_name = xs_utf8_to_lower(name);
+
+                            if (xs_list_in(fw_tags, lc_name) != -1)
+                                return 7;
+                        }
                     }
                 }
             }
