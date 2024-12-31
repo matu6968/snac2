@@ -446,7 +446,8 @@ int deluser(snac *user)
 void verify_links(snac *user)
 /* verifies a user's links */
 {
-    const xs_dict *p = xs_dict_get(user->config, "metadata");
+    xs *metadata = NULL;
+    const xs_dict *md = xs_dict_get(user->config, "metadata");
     const char *k, *v;
     int changed = 0;
 
@@ -454,8 +455,30 @@ void verify_links(snac *user)
     headers = xs_dict_append(headers, "accept", "text/html");
     headers = xs_dict_append(headers, "user-agent", USER_AGENT " (link verify)");
 
+    if (xs_type(md) == XSTYPE_DICT)
+        metadata = xs_dup(md);
+    else
+    if (xs_type(md) == XSTYPE_STRING) {
+        /* convert to dict for easier iteration */
+        metadata = xs_dict_new();
+        xs *l = xs_split(md, "\n");
+        const char *ll;
+
+        xs_list_foreach(l, ll) {
+            xs *kv = xs_split_n(ll, "=", 1);
+            const char *k = xs_list_get(kv, 0);
+            const char *v = xs_list_get(kv, 1);
+
+            if (k && v) {
+                xs *kk = xs_strip_i(xs_dup(k));
+                xs *vv = xs_strip_i(xs_dup(v));
+                metadata = xs_dict_set(metadata, kk, vv);
+            }
+        }
+    }
+
     int c = 0;
-    while (p && xs_dict_next(p, &k, &v, &c)) {
+    while (metadata && xs_dict_next(metadata, &k, &v, &c)) {
         /* not an https link? skip */
         if (!xs_startswith(v, "https:/" "/"))
             continue;
