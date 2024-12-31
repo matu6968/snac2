@@ -3516,7 +3516,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         else {
             const char *content = xs_dict_get(q_vars, "content");
 
-//            srv_log(xs_fmt("---> SHARE %s", content));
+            srv_log(xs_fmt("shared post %s", content));
             *body   = xs_fmt("%s/admin", snac.actor);
             *b_size = strlen(*body);
             status  = HTTP_STATUS_SEE_OTHER;
