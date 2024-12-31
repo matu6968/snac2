@@ -2428,15 +2428,18 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
 
         /* iterate the recipients */
         xs_list_foreach(rcpts, actor) {
-            xs *inbox = get_actor_inbox(actor, 1);
+            /* local users were served by this_shared_inbox */
+            if (!xs_startswith(actor, srv_baseurl)) {
+                xs *inbox = get_actor_inbox(actor, 1);
 
-            if (inbox != NULL) {
-                /* add to the set and, if it's not there, send message */
-                if (xs_set_add(&inboxes, inbox) == 1)
-                    enqueue_output(snac, msg, inbox, 0, 0);
+                if (inbox != NULL) {
+                    /* add to the set and, if it's not there, send message */
+                    if (xs_set_add(&inboxes, inbox) == 1)
+                        enqueue_output(snac, msg, inbox, 0, 0);
+                }
+                else
+                    snac_log(snac, xs_fmt("cannot find inbox for %s", actor));
             }
-            else
-                snac_log(snac, xs_fmt("cannot find inbox for %s", actor));
         }
 
         /* if it's a public note or question, send to the collected inboxes */
