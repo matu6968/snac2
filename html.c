@@ -1034,6 +1034,23 @@ xs_html *html_top_controls(snac *snac)
                     xs_html_attr("value",   L("Boost"))),
                 xs_html_text(" "),
                 xs_html_text(L("(by URL)"))),
+            xs_html_tag("p", NULL),
+            xs_html_tag("form",
+                xs_html_attr("autocomplete", "off"),
+                xs_html_attr("method",       "post"),
+                xs_html_attr("action",       ops_action),
+                xs_html_sctag("input",
+                    xs_html_attr("type",     "text"),
+                    xs_html_attr("name",     "id"),
+                    xs_html_attr("required", "required"),
+                    xs_html_attr("placeholder", "https:/" "/fedi.example.com/bob/...")),
+                xs_html_text(" "),
+                xs_html_sctag("input",
+                    xs_html_attr("type",    "submit"),
+                    xs_html_attr("name",    "action"),
+                    xs_html_attr("value",   L("Like"))),
+                xs_html_text(" "),
+                xs_html_text(L("(by URL)"))),
             xs_html_tag("p", NULL)));
 
     /** user settings **/
