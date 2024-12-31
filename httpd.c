@@ -164,6 +164,23 @@ static xs_str *greeting_html(void)
 }
 
 
+const char *share_page = ""
+"<!DOCTYPE html>\n"
+"<html>\n"
+"<head>\n"
+"<title>%s - snac</title>\n"
+"<meta content=\"width=device-width, initial-scale=1, minimum-scale=1, user-scalable=no\" name=\"viewport\">"
+"<style>:root {color-scheme: light dark}</style>\n"
+"</head>\n"
+"<body><h1>%s link share</h1>\n"
+"<form method=\"get\" action=\"%s/share-bridge\">\n"
+"<textarea name=\"content\" rows=\"6\" wrap=\"virtual\" required=\"required\" style=\"width: 50em\">%s</textarea>\n"
+"<p>Login: <input type=\"text\" name=\"login\" autocapitalize=\"off\" required=\"required\"></p>\n"
+"<input type=\"submit\" value=\"OK\">\n"
+"</form><p>%s</p></body></html>\n"
+"";
+
+
 int server_get_handler(xs_dict *req, const char *q_path,
                        char **body, int *b_size, char **ctype)
 /* basic server services */
@@ -256,6 +273,28 @@ int server_get_handler(xs_dict *req, const char *q_path,
         *ctype = "text/plain";
         *body  = xs_str_new("User-agent: *\n"
                             "Disallow: /\n");
+    }
+    else
+    if (strcmp(q_path, "/share") == 0) {
+        const xs_dict *q_vars = xs_dict_get(req, "q_vars");
+        const char *url  = xs_dict_get(q_vars, "url");
+        const char *text = xs_dict_get(q_vars, "text");
+        xs *s = NULL;
+
+        if (xs_type(text) == XSTYPE_STRING)
+            s = xs_fmt("%s\n\n%s\n", text, url);
+        else
+            s = xs_fmt("%s\n", url);
+
+        status = HTTP_STATUS_OK;
+        *ctype = "text/html";
+        *body  = xs_fmt(share_page,
+            xs_dict_get(srv_config, "host"),
+            xs_dict_get(srv_config, "host"),
+            srv_baseurl,
+            s,
+            USER_AGENT
+        );
     }
 
     if (status != 0)

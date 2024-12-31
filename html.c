@@ -2934,12 +2934,31 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     int proxy = 0;
     const char *v;
 
+    const xs_dict *q_vars = xs_dict_get(req, "q_vars");
+
     xs *l = xs_split_n(q_path, "/", 2);
     v = xs_list_get(l, 1);
 
     if (xs_is_null(v)) {
         srv_log(xs_fmt("html_get_handler bad query '%s'", q_path));
         return HTTP_STATUS_NOT_FOUND;
+    }
+
+    if (strcmp(v, "share-bridge") == 0) {
+        /* temporary redirect for a post */
+        const char *login = xs_dict_get(q_vars, "login");
+        const char *content = xs_dict_get(q_vars, "content");
+
+        if (xs_type(login) == XSTYPE_STRING && xs_type(content) == XSTYPE_STRING) {
+            xs *b64 = xs_base64_enc(content, strlen(content));
+
+            srv_log(xs_fmt("share-bridge for user '%s'", login));
+
+            *body = xs_fmt("%s/%s/share?content=%s", srv_baseurl, login, b64);
+            return HTTP_STATUS_SEE_OTHER;
+        }
+        else
+            return HTTP_STATUS_NOT_FOUND;
     }
 
     uid = xs_dup(v);
@@ -2976,7 +2995,6 @@ int html_get_handler(const xs_dict *req, const char *q_path,
     int def_show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
     int show = def_show;
 
-    const xs_dict *q_vars = xs_dict_get(req, "q_vars");
     if ((v = xs_dict_get(q_vars, "skip")) != NULL)
         skip = atoi(v), cache = 0, save = 0;
     if ((v = xs_dict_get(q_vars, "show")) != NULL)
@@ -3487,6 +3505,21 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             }
 
             snac_debug(&snac, 1, xs_fmt("Proxy for %s %d", url, status));
+        }
+    }
+    else
+    if (strcmp(p_path, "share") == 0) { /** direct post **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = HTTP_STATUS_UNAUTHORIZED;
+        }
+        else {
+            const char *content = xs_dict_get(q_vars, "content");
+
+//            srv_log(xs_fmt("---> SHARE %s", content));
+            *body   = xs_fmt("%s/admin", snac.actor);
+            *b_size = strlen(*body);
+            status  = HTTP_STATUS_SEE_OTHER;
         }
     }
     else
