@@ -2,7 +2,15 @@
 
 ## UNRELEASED
 
+Fixed regression in link verification code (contributed by nowster).
+
 Added ipv6 support for the https frontend connection (contributed by hb9hnt).
+
+New "Like by URL" operation (contributed by dheadshot).
+
+Fixed support for `Audio` objects.
+
+Made xmpp and mailto URLs clickable.
 
 ## 2.67
 
