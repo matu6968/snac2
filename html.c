@@ -3100,6 +3100,10 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                                 snac_debug(&snac, 1, xs_fmt("Request author %s of %s %d", attr_to, q, status));
 
                                 if (valid_status(status)) {
+                                    /* reset the query string to be the real id */
+                                    url_acct = xs_dup(xs_dict_get(object, "id"));
+                                    q = url_acct;
+
                                     /* add the actor */
                                     actor_add(attr_to, actor_obj);
 
