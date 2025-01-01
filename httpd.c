@@ -282,7 +282,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
         xs *s = NULL;
 
         if (xs_type(text) == XSTYPE_STRING)
-            s = xs_fmt("%s\n\n%s\n", text, url);
+            s = xs_fmt("%s:\n\n%s\n", text, url);
         else
             s = xs_fmt("%s\n", url);
 

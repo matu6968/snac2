@@ -3514,9 +3514,18 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             status = HTTP_STATUS_UNAUTHORIZED;
         }
         else {
-            const char *content = xs_dict_get(q_vars, "content");
+            const char *b64 = xs_dict_get(q_vars, "content");
+            int sz;
+            xs *content = xs_base64_dec(b64, &sz);
+            xs *msg = msg_note(&snac, content, NULL, NULL, NULL, 0);
+            xs *c_msg = msg_create(&snac, msg);
 
-            srv_log(xs_fmt("shared post %s", content));
+            timeline_add(&snac, xs_dict_get(msg, "id"), msg);
+
+            enqueue_message(&snac, c_msg);
+
+            snac_debug(&snac, 1, xs_fmt("web action 'share' received"));
+
             *body   = xs_fmt("%s/admin", snac.actor);
             *b_size = strlen(*body);
             status  = HTTP_STATUS_SEE_OTHER;
