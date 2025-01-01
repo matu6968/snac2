@@ -2742,6 +2742,11 @@ xs_list *content_search(snac *user, const char *regex,
         if (id == NULL || is_hidden(user, id))
             continue;
 
+        /* recalculate the md5 id to be sure it's not repeated
+           (it may have been searched by the "url" field instead of "id") */
+        xs *new_md5 = xs_md5_hex(id, strlen(id));
+        md5 = new_md5;
+
         /* test for the post URL */
         if (strcmp(id, regex) == 0) {
             if (xs_set_add(&seen, md5) == 1)
