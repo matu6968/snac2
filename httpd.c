@@ -281,8 +281,12 @@ int server_get_handler(xs_dict *req, const char *q_path,
         const char *text = xs_dict_get(q_vars, "text");
         xs *s = NULL;
 
-        if (xs_type(text) == XSTYPE_STRING)
-            s = xs_fmt("%s:\n\n%s\n", text, url);
+        if (xs_type(text) == XSTYPE_STRING) {
+            if (xs_type(url) == XSTYPE_STRING)
+                s = xs_fmt("%s:\n\n%s\n", text, url);
+            else
+                s = xs_fmt("%s\n", text);
+        }
         else
             s = xs_fmt("%s\n", url);
 
