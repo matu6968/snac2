@@ -275,6 +275,19 @@ int server_get_handler(xs_dict *req, const char *q_path,
                             "Disallow: /\n");
     }
     else
+    if (strcmp(q_path, "/style.css") == 0) {
+        FILE *f;
+        xs *css_fn = xs_fmt("%s/style.css", srv_basedir);
+
+        if ((f = fopen(css_fn, "r")) != NULL) {
+            *body = xs_readall(f);
+            fclose(f);
+
+            status = HTTP_STATUS_OK;
+            *ctype = "text/css";
+        }
+    }
+    else
     if (strcmp(q_path, "/share") == 0) {
         const xs_dict *q_vars = xs_dict_get(req, "q_vars");
         const char *url  = xs_dict_get(q_vars, "url");
