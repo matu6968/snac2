@@ -594,9 +594,9 @@ void export_csv(snac *user)
 /* exports user data to current directory in a way that pleases Mastodon */
 {
     FILE *f;
-    const char *fn;
+    xs *fn = NULL;
 
-    fn = "bookmarks.csv";
+    fn = xs_fmt("%s/export/bookmarks.csv", user->basedir);
     if ((f = fopen(fn, "w")) != NULL) {
         snac_log(user, xs_fmt("Creating %s...", fn));
 
@@ -619,7 +619,8 @@ void export_csv(snac *user)
     else
         snac_log(user, xs_fmt("Cannot create file %s", fn));
 
-    fn = "blocked_accounts.csv";
+    xs_free(fn);
+    fn = xs_fmt("%s/export/blocked_accounts.csv", user->basedir);
     if ((f = fopen(fn, "w")) != NULL) {
         snac_log(user, xs_fmt("Creating %s...", fn));
 
@@ -638,7 +639,8 @@ void export_csv(snac *user)
     else
         snac_log(user, xs_fmt("Cannot create file %s", fn));
 
-    fn = "lists.csv";
+    xs_free(fn);
+    fn = xs_fmt("%s/export/lists.csv", user->basedir);
     if ((f = fopen(fn, "w")) != NULL) {
         snac_log(user, xs_fmt("Creating %s...", fn));
 
@@ -670,7 +672,8 @@ void export_csv(snac *user)
     else
         snac_log(user, xs_fmt("Cannot create file %s", fn));
 
-    fn = "following_accounts.csv";
+    xs_free(fn);
+    fn = xs_fmt("%s/export/following_accounts.csv", user->basedir);
     if ((f = fopen(fn, "w")) != NULL) {
         snac_log(user, xs_fmt("Creating %s...", fn));
 
