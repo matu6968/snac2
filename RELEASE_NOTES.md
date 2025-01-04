@@ -8,6 +8,10 @@ Added ipv6 support for the https frontend connection (contributed by hb9hnt).
 
 New "Like by URL" operation (contributed by dheadshot).
 
+Some search fixes regarding repeated matches.
+
+Mastodon API: more timeline paging tunings (contributed by nowster).
+
 Fixed support for `Audio` objects.
 
 Made xmpp and mailto URLs clickable.
