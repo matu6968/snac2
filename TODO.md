@@ -2,8 +2,6 @@
 
 ## Open
 
-CSV import/export does not work with OpenBSD security on; document it or fix it.
-
 Investigate the problem with boosts inside the same instance (see https://codeberg.org/grunfink/snac2/issues/214).
 
 Editing / Updating a post does not index newly added hashtags.
@@ -365,3 +363,5 @@ Implement Proxying for Media Links to Enhance User Privacy (see https://codeberg
 Consider showing only posts by the account owner (not full trees) (see https://codeberg.org/grunfink/snac2/issues/217 for more information) (2024-11-18T20:36:39+0100).
 
 Unfollowing lemmy groups gets rejected with an http status of 400 (it seems to work now; 2024-12-28T16:50:16+0100).
+
+CSV import/export does not work with OpenBSD security on; document it or fix it (2025-01-04T19:35:09+0100).
