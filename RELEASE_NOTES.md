@@ -10,7 +10,9 @@ New "Like by URL" operation (contributed by dheadshot).
 
 Some search fixes regarding repeated matches.
 
-The `export_csv` cmdline operation now exports the CSV files inside each user's `export/` subdirectory instead of the current directory.
+The `export_csv` cmdline operation now exports the CSV files inside a user's `export/` subdirectory instead of the current directory.
+
+All CSV files to be imported must now be stored inside a user's `import/` subdirectory instead of the current directory.
 
 Mastodon API: more timeline paging tunings (contributed by nowster).
 
