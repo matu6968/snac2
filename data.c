@@ -173,6 +173,18 @@ int srv_open(const char *basedir, int auto_upgrade)
         srv_proxy_token_seed = xs_hex_enc(rnd, sizeof(rnd));
     }
 
+    /* ensure user directories include important subdirectories */
+    xs *users = user_list();
+    const char *uid;
+
+    xs_list_foreach(users, uid) {
+        xs *impdir = xs_fmt("%s/user/%s/import", srv_basedir, uid);
+        xs *expdir = xs_fmt("%s/user/%s/export", srv_basedir, uid);
+
+        mkdirx(impdir);
+        mkdirx(expdir);
+    }
+
     return ret;
 }
 
