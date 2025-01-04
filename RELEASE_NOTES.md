@@ -10,6 +10,8 @@ New "Like by URL" operation (contributed by dheadshot).
 
 Some search fixes regarding repeated matches.
 
+The `export_csv` cmdline operation now exports the CSV files inside each user's `export/` subdirectory instead of the current directory.
+
 Mastodon API: more timeline paging tunings (contributed by nowster).
 
 Fixed support for `Audio` objects.
