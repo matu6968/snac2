@@ -696,10 +696,12 @@ void export_csv(snac *user)
 }
 
 
-void import_blocked_accounts_csv(snac *user, const char *fn)
+void import_blocked_accounts_csv(snac *user, const char *ifn)
 /* imports a Mastodon CSV file of blocked accounts */
 {
     FILE *f;
+    xs *l = xs_split(ifn, "/");
+    xs *fn = xs_fmt("%s/import/%s", user->basedir, xs_list_get(l, -1));
 
     if ((f = fopen(fn, "r")) != NULL) {
         snac_log(user, xs_fmt("Importing from %s...", fn));
@@ -731,10 +733,12 @@ void import_blocked_accounts_csv(snac *user, const char *fn)
 }
 
 
-void import_following_accounts_csv(snac *user, const char *fn)
+void import_following_accounts_csv(snac *user, const char *ifn)
 /* imports a Mastodon CSV file of accounts to follow */
 {
     FILE *f;
+    xs *l = xs_split(ifn, "/");
+    xs *fn = xs_fmt("%s/import/%s", user->basedir, xs_list_get(l, -1));
 
     if ((f = fopen(fn, "r")) != NULL) {
         snac_log(user, xs_fmt("Importing from %s...", fn));
@@ -790,10 +794,12 @@ void import_following_accounts_csv(snac *user, const char *fn)
 }
 
 
-void import_list_csv(snac *user, const char *fn)
+void import_list_csv(snac *user, const char *ifn)
 /* imports a Mastodon CSV file list */
 {
     FILE *f;
+    xs *l = xs_split(ifn, "/");
+    xs *fn = xs_fmt("%s/import/%s", user->basedir, xs_list_get(l, -1));
 
     if ((f = fopen(fn, "r")) != NULL) {
         snac_log(user, xs_fmt("Importing from %s...", fn));
@@ -851,7 +857,6 @@ void import_csv(snac *user)
 /* import CSV files from Mastodon */
 {
     FILE *f;
-    const char *fn;
 
     import_blocked_accounts_csv(user, "blocked_accounts.csv");
 
@@ -859,7 +864,7 @@ void import_csv(snac *user)
 
     import_list_csv(user, "lists.csv");
 
-    fn = "bookmarks.csv";
+    xs *fn = xs_fmt("%s/import/bookmarks.csv", user->basedir);
     if ((f = fopen(fn, "r")) != NULL) {
         snac_log(user, xs_fmt("Importing from %s...", fn));
 
