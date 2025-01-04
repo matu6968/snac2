@@ -511,7 +511,9 @@ directory:
 .Pa lists.csv , and
 .Pa following_accounts.csv .
 .Pp
-2. From the directory where those files are stored, run
+2. Copy all those files to the
+.Pa import/
+subdirectory of the user's directory inside the server base directory, and run
 .Bd -literal -offset indent
 snac import_csv $SNAC_BASEDIR destination
 .Ed
@@ -521,7 +523,9 @@ of all the ActivityPub servers involved (webfinger, accounts, posts, etc.). Some
 may be transient and retried later. Also, if
 .Nm
 complains that it can't find any of these files, please check that they are really
-stored in the current directory and that their names match exactly. Some of them may be
+stored in the
+.Pa import/
+subdirectory and that their names match exactly. Some of them may be
 empty (for example, if you didn't create any list) and that's fine.
 .Pp
 3. Again on your
@@ -551,14 +555,6 @@ account from all accounts that followed the Mastodon one. According to the great
 I linked above, this process may or may not start immediately, and its success may depend
 heavily on how all the servers involved behave. Just cross your fingers and hope for the best.
 .Pp
-NOTE: If you run
-.Nm
-on OpenBSD, please take note that the pledge()/unveil() security system disallows
-opening or creating files in the current directory; to do this operation, please
-temporarily set the disable_openbsd_security option to true in the
-.Pa server.json
-file and restart before migrating. You can restore the option back to the default false
-value afterwards.
 .Ss Instance blocking
 Full instances can be blocked. This operation must be done from
 the command-line tool. See

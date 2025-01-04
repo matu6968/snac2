@@ -288,7 +288,9 @@ Starts a migration from this account to the one set as an alias (see
 section 'Migrating from snac to Mastodon').
 .It Cm import_csv Ar basedir Ar uid
 Imports CSV data files from a Mastodon export. This command expects the
-following files to be in the current directory:
+following files to be inside the
+.Pa import/
+subdirectory of a user's directory inside the server base directory:
 .Pa bookmarks.csv ,
 .Pa blocked_accounts.csv ,
 .Pa lists.csv , and
@@ -316,10 +318,15 @@ for a job to be assigned), input or output (processing I/O packets)
 or stopped (not running, only to be seen while starting or stopping
 the server).
 .It Cm import_list Ar basedir Ar uid Ar file
-Imports a Mastodon list in CSV format. This option can be used to
-import "Mastodon Follow Packs".
+Imports a Mastodon list in CSV format. The file must be stored inside the
+.Pa import/
+subdirectory of a user's directory inside the server base directory.
+This option can be used to import "Mastodon Follow Packs".
 .It Cm import_block_list Ar basedir Ar uid Ar file
-Imports a Mastodon list of accounts to be blocked in CSV format.
+Imports a Mastodon list of accounts to be blocked in CSV format. The
+file must be stored inside the
+.Pa import/
+subdirectory of a user's directory inside the server base directory.
 .El
 .Ss Migrating an account to/from Mastodon
 See 
