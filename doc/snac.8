@@ -421,7 +421,9 @@ server, first export your data to CSV by running:
 snac export_csv $SNAC_BASEDIR origin
 .Ed
 .Pp
-You'll find the following CSV files in the current directory:
+You'll find the following CSV files in the
+.Pa export/
+subdirectory inside the user directory:
 .Pa bookmarks.csv ,
 .Pa blocked_accounts.csv ,
 .Pa lists.csv , and
@@ -481,14 +483,6 @@ account you migrated from is not disabled nor changed in any way, so can still
 use it as it no migration was done. This behaviour may or may not match what other
 ActivityPub implementations do.
 .Pp
-NOTE: If you run
-.Nm
-on OpenBSD, please take note that the pledge()/unveil() security system disallows
-opening or creating files in the current directory; to do this operation, please
-temporarily set the disable_openbsd_security option to true in the
-.Pa server.json
-file and restart before migrating. You can restore the option back to the default false
-value afterwards.
 .Ss Migrating from Mastodon to snac
 Since version 2.61, you can migrate accounts on other ActivityPub instances to your
 .Nm

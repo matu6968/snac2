@@ -270,7 +270,9 @@ user url that also contains a rel="me" attribute. These links are specially
 marked as verified in the user's public timeline and also via the Mastodon API.
 .It Cm export_csv Ar basedir Ar uid
 Exports some account data as Mastodon-compatible CSV files. After executing
-this command, the following files will be written to the current directory:
+this command, the following files will be written to the
+.Pa export/
+subdirectory inside the user directory:
 .Pa bookmarks.csv ,
 .Pa blocked_accounts.csv ,
 .Pa lists.csv , and
