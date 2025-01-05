@@ -8,6 +8,8 @@ Added ipv6 support for the https frontend connection (contributed by hb9hnt).
 
 New "Like by URL" operation (contributed by dheadshot).
 
+New linux landlock (sandboxing) support for enhanced security (contributed by shtrophic).
+
 Some search fixes regarding repeated matches.
 
 The `export_csv` cmdline operation now exports the CSV files inside a user's `export/` subdirectory instead of the current directory.
