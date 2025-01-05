@@ -169,7 +169,8 @@ const char *share_page = ""
 "<html>\n"
 "<head>\n"
 "<title>%s - snac</title>\n"
-"<meta content=\"width=device-width, initial-scale=1, minimum-scale=1, user-scalable=no\" name=\"viewport\">"
+"<meta content=\"width=device-width, initial-scale=1, minimum-scale=1, user-scalable=no\" name=\"viewport\">\n"
+"<link rel=\"stylesheet\" type=\"text/css\" href=\"%s/style.css\"/>\n"
 "<style>:root {color-scheme: light dark}</style>\n"
 "</head>\n"
 "<body><h1>%s link share</h1>\n"
@@ -310,6 +311,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
         *ctype = "text/html";
         *body  = xs_fmt(share_page,
             xs_dict_get(srv_config, "host"),
+            srv_baseurl,
             xs_dict_get(srv_config, "host"),
             srv_baseurl,
             s,
