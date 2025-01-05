@@ -1,16 +1,27 @@
+#include "xs.h"
+
+#include "snac.h"
+
+#ifdef __linux__
+#include <linux/version.h>
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 13, 0)
+#define WITHOUT_SANDBOX
+#endif
+#endif /* __linux__ */
+
+
 #ifdef WITHOUT_SANDBOX
 
 void sbox_enter(const char *basedir)
 {
     /* nothing to do */
     (void)basedir;
+
+    srv_debug(0, xs_fmt("Linux sandboxing disabled or unsupported"));
 }
 
 #else /* WITHOUT_SANDBOX */
-
-#include "xs.h"
-
-#include "snac.h"
 
 #include <unistd.h>
 
