@@ -669,6 +669,21 @@ int main(int argc, char *argv[])
 
         msg = msg_note(&snac, content, NULL, NULL, attl, 0);
 
+        /* set a post language according the LANG environment variable */
+        const char *lang_env = getenv("LANG");
+        if (xs_type(lang_env) == XSTYPE_STRING) {
+            /* split at the first _ */
+            xs *l0 = xs_split(lang_env, "_");
+            const char *lang = xs_list_get(l0, 0);
+
+            if (xs_type(lang) == XSTYPE_STRING && strlen(lang) == 2) {
+                /* a valid ISO language id */
+                xs *cmap = xs_dict_new();
+                cmap = xs_dict_set(cmap, lang, xs_dict_get(msg, "content"));
+                msg = xs_dict_set(msg, "contentMap", cmap);
+            }
+        }
+
         c_msg = msg_create(&snac, msg);
 
         if (dbglevel) {
