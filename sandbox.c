@@ -3,10 +3,12 @@
 #include "snac.h"
 
 #ifdef __linux__
+#ifndef WITHOUT_SANDBOX
 #include <linux/version.h>
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 13, 0)
 #define WITHOUT_SANDBOX
+#endif
 #endif
 #endif /* __linux__ */
 
