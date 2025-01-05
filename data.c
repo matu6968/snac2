@@ -115,44 +115,7 @@ int srv_open(const char *basedir, int auto_upgrade)
 #define st_mtim st_mtimespec
 #endif
 
-#ifdef __OpenBSD__
-    if (xs_is_true(xs_dict_get(srv_config, "disable_openbsd_security"))) {
-        srv_debug(1, xs_dup("OpenBSD security disabled by admin"));
-    }
-    else {
-        int smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
-        const char *address = xs_dict_get(srv_config, "address");
-
-        srv_debug(1, xs_fmt("Calling unveil()"));
-        unveil(basedir,                "rwc");
-        unveil("/tmp",                 "rwc");
-        unveil("/etc/resolv.conf",     "r");
-        unveil("/etc/hosts",           "r");
-        unveil("/etc/ssl/openssl.cnf", "r");
-        unveil("/etc/ssl/cert.pem",    "r");
-        unveil("/usr/share/zoneinfo",  "r");
-
-        if (smail)
-            unveil("/usr/sbin/sendmail",   "x");
-
-        if (*address == '/')
-            unveil(address, "rwc");
-
-        unveil(NULL,                   NULL);
-
-        srv_debug(1, xs_fmt("Calling pledge()"));
-
-        xs *p = xs_str_new("stdio rpath wpath cpath flock inet proc dns fattr");
-
-        if (smail)
-            p = xs_str_cat(p, " exec");
-
-        if (*address == '/')
-            p = xs_str_cat(p, " unix");
-
-        pledge(p, NULL);
-    }
-#endif /* __OpenBSD__ */
+    sbox_enter(srv_basedir);
 
     /* read (and drop) emojis.json, possibly creating it */
     xs_free(emojis());

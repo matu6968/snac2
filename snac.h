@@ -75,6 +75,8 @@ void snac_log(snac *user, xs_str *str);
 int srv_open(const char *basedir, int auto_upgrade);
 void srv_free(void);
 
+void sbox_enter(const char *basedir);
+
 int user_open(snac *snac, const char *uid);
 void user_free(snac *snac);
 xs_list *user_list(void);

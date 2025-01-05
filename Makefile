@@ -4,7 +4,7 @@ CFLAGS?=-g -Wall -Wextra -pedantic
 
 all: snac
 
-snac: snac.o main.o data.o http.o httpd.o webfinger.o \
+snac: snac.o main.o sandbox.o data.o http.o httpd.o webfinger.o \
     activitypub.o html.o utils.o format.o upgrade.o mastoapi.o
 	$(CC) $(CFLAGS) -L$(PREFIX)/lib *.o -lcurl -lcrypto $(LDFLAGS) -pthread -o $@
 
@@ -36,6 +36,9 @@ uninstall:
 activitypub.o: activitypub.c xs.h xs_json.h xs_curl.h xs_mime.h \
  xs_openssl.h xs_regex.h xs_time.h xs_set.h xs_match.h snac.h \
  http_codes.h
+sandbox.o: sandbox.c xs.h xs_hex.h xs_io.h xs_json.h xs_openssl.h \
+ xs_glob.h xs_set.h xs_time.h xs_regex.h xs_match.h xs_unicode.h \
+ landloc.h snac.h
 data.o: data.c xs.h xs_hex.h xs_io.h xs_json.h xs_openssl.h xs_glob.h \
  xs_set.h xs_time.h xs_regex.h xs_match.h xs_unicode.h xs_random.h snac.h \
  http_codes.h
