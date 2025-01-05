@@ -8,7 +8,7 @@ Added ipv6 support for the https frontend connection (contributed by hb9hnt).
 
 New "Like by URL" operation (contributed by dheadshot).
 
-New linux landlock (sandboxing) support for enhanced security (contributed by shtrophic).
+New linux landlock (sandboxing) support for enhanced security (contributed by shtrophic). It's still a bit experimental, so you have to enable it explicitly by setting the `disable_sandbox` field to `false` in `server.json`.
 
 Some search fixes regarding repeated matches.
 
