@@ -16,6 +16,8 @@ All CSV files to be imported must now be stored inside a user's `import/` subdir
 
 Mastodon API: more timeline paging tunings (contributed by nowster).
 
+The command-line operation `note` new reads the `LANG` environment variable to set the post's language.
+
 Fixed support for `Audio` objects.
 
 Made xmpp and mailto URLs clickable.
