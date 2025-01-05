@@ -3423,7 +3423,9 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE)
             return HTTP_STATUS_FORBIDDEN;
 
-        xs *elems = timeline_simple_list(&snac, "public", 0, 20);
+        int cnt = xs_number_get(xs_dict_get_def(srv_config, "max_public_entries", "20"));
+
+        xs *elems = timeline_simple_list(&snac, "public", 0, cnt);
         xs *bio   = xs_dup(xs_dict_get(snac.config, "bio"));
 
         xs *rss_title = xs_fmt("%s (@%s@%s)",
