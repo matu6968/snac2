@@ -1,3 +1,13 @@
+#ifdef WITHOUT_SANDBOX
+
+void sbox_enter(const char *basedir)
+{
+    /* nothing to do */
+    (void)basedir;
+}
+
+#else /* WITHOUT_SANDBOX */
+
 #include "xs.h"
 
 #include "snac.h"
@@ -113,3 +123,5 @@ void sbox_enter(const char *basedir)
 
 #endif
 }
+
+#endif /* WITHOUT_SANDBOX */
