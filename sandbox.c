@@ -126,7 +126,6 @@ void sbox_enter(const char *basedir)
 
     pledge(p, NULL);
 
-    xs_free(p);
 #elif defined (__linux__)
     
     if (sbox_enter_linux_(basedir, address, smail) == 0)
