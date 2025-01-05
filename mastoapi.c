@@ -2600,6 +2600,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             const char *visibility = xs_dict_get(args, "visibility");
             const char *summary    = xs_dict_get(args, "spoiler_text");
             const char *media_ids  = xs_dict_get(args, "media_ids");
+            const char *language   = xs_dict_get(args, "language");
 
             if (xs_is_null(media_ids))
                 media_ids = xs_dict_get(args, "media_ids[]");
@@ -2650,7 +2651,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
             /* prepare the message */
             xs *msg = msg_note(&snac, content, NULL, irt, attach_list,
-                        strcmp(visibility, "public") == 0 ? 0 : 1);
+                        strcmp(visibility, "public") == 0 ? 0 : 1, language);
 
             if (!xs_is_null(summary) && *summary) {
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));
@@ -3000,7 +3001,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                                 if (o) {
                                     const char *name = xs_dict_get(o, "name");
 
-                                    xs *msg = msg_note(&snac, "", atto, (char *)id, NULL, 1);
+                                    xs *msg = msg_note(&snac, "", atto, (char *)id, NULL, 1, NULL);
                                     msg = xs_dict_append(msg, "name", name);
 
                                     xs *c_msg = msg_create(&snac, msg);

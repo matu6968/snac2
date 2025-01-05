@@ -3515,7 +3515,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             const char *b64 = xs_dict_get(q_vars, "content");
             int sz;
             xs *content = xs_base64_dec(b64, &sz);
-            xs *msg = msg_note(&snac, content, NULL, NULL, NULL, 0);
+            xs *msg = msg_note(&snac, content, NULL, NULL, NULL, 0, NULL);
             xs *c_msg = msg_create(&snac, msg);
 
             timeline_add(&snac, xs_dict_get(msg, "id"), msg);
@@ -3661,7 +3661,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 enqueue_close_question(&snac, xs_dict_get(msg, "id"), end_secs);
             }
             else
-                msg = msg_note(&snac, content_2, to, in_reply_to, attach_list, priv);
+                msg = msg_note(&snac, content_2, to, in_reply_to, attach_list, priv, NULL);
 
             if (sensitive != NULL) {
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));
@@ -4095,7 +4095,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         int c = 0;
 
         while (xs_list_next(ls, &v, &c)) {
-            xs *msg = msg_note(&snac, "", actor, irt, NULL, 1);
+            xs *msg = msg_note(&snac, "", actor, irt, NULL, 1, NULL);
 
             /* set the option */
             msg = xs_dict_append(msg, "name", v);

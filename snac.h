@@ -314,7 +314,8 @@ xs_dict *msg_create(snac *snac, const xs_dict *object);
 xs_dict *msg_follow(snac *snac, const char *actor);
 
 xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
-                  const xs_str *in_reply_to, const xs_list *attach, int priv);
+                  const xs_str *in_reply_to, const xs_list *attach,
+                  int priv, const char *lang);
 
 xs_dict *msg_undo(snac *snac, const xs_val *object);
 xs_dict *msg_delete(snac *snac, const char *id);

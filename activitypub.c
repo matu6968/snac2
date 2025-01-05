@@ -1422,7 +1422,8 @@ xs_dict *msg_follow(snac *snac, const char *q)
 
 
 xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
-                  const xs_str *in_reply_to, const xs_list *attach, int priv)
+                  const xs_str *in_reply_to, const xs_list *attach,
+                  int priv, const char *lang_str)
 /* creates a 'Note' message */
 {
     xs *ntid = tid(0);
@@ -1584,6 +1585,20 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     if (xs_list_len(atls))
         msg = xs_dict_append(msg, "attachment", atls);
 
+    /* set language content map */
+    if (xs_type(lang_str) == XSTYPE_STRING) {
+        /* split at the first _ */
+        xs *l0 = xs_split(lang_str, "_");
+        const char *lang = xs_list_get(l0, 0);
+
+        if (xs_type(lang) == XSTYPE_STRING && strlen(lang) == 2) {
+            /* a valid ISO language id */
+            xs *cmap = xs_dict_new();
+            cmap = xs_dict_set(cmap, lang, xs_dict_get(msg, "content"));
+            msg = xs_dict_set(msg, "contentMap", cmap);
+        }
+    }
+
     return msg;
 }
 
@@ -1625,7 +1640,7 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
                       const xs_list *opts, int multiple, int end_secs)
 /* creates a Question message */
 {
-    xs_dict *msg = msg_note(user, content, NULL, NULL, attach, 0);
+    xs_dict *msg = msg_note(user, content, NULL, NULL, attach, 0, NULL);
     int max      = 8;
     xs_set seen;
 
