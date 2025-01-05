@@ -76,6 +76,12 @@ If it still gives compilation errors (because your system does not implement the
 make CFLAGS=-DWITHOUT_SHM
 ```
 
+If compilation fails on Linux with the message `no landlock on kernels older than...` or complaining about not finding the `linux/landlock.h` header, then your system lacks support for Linux Landlock sandboxing (new in snac v2.68); to disable it, run
+
+```sh
+make CFLAGS=-DWITHOUT_SANDBOX
+```
+
 See the administrator manual on how to proceed from here.
 
 ## Testing via Docker
