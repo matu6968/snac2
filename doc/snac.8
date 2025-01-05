@@ -248,6 +248,10 @@ from it are rejected until the lock expires (default: 5 retries).
 .It Ic badlogin_expire
 The number of seconds a blocked IP address is ignored in login attempts
 (default: 300 seconds).
+.It Ic disable_sandbox
+This boolean toggle allows disabling sandboxing (for Linux or OpenBSD). Sandboxing limits
+what directories a program can use, so it's recommended for security. Disable it only
+if you are experimenting errors while stablishing connections or DNS resolving.
 .El
 .Pp
 You must restart the server to make effective these changes.
