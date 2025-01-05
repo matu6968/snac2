@@ -83,6 +83,11 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail)
 
 void sbox_enter(const char *basedir)
 {
+    const char *address = xs_dict_get(srv_config, "address");
+
+    int smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
+
+#if defined (__OpenBSD__)
     if (xs_is_true(xs_dict_get(srv_config, "disable_openbsd_security"))) {
         srv_log(xs_dup("disable_openbsd_security is deprecated. Use disable_sandbox instead."));
         return;
@@ -92,11 +97,6 @@ void sbox_enter(const char *basedir)
         return;
     }
 
-    const char *address = xs_dict_get(srv_config, "address");
-
-    int smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
-
-#if defined (__OpenBSD__)
     srv_debug(1, xs_fmt("Calling unveil()"));
     unveil(basedir,                "rwc");
     unveil("/tmp",                 "rwc");
@@ -128,6 +128,11 @@ void sbox_enter(const char *basedir)
 
 #elif defined (__linux__)
     
+    if (xs_is_true(xs_dict_get_def(srv_config, "disable_sandbox", xs_stock(XSTYPE_TRUE)))) {
+        srv_debug(0, xs_dup("Sandbox disabled by admin"));
+        return;
+    }
+
     if (sbox_enter_linux_(basedir, address, smail) == 0)
         srv_log(xs_dup("landlocked"));
     else
