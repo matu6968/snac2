@@ -14,7 +14,7 @@ The `export_csv` cmdline operation now exports the CSV files inside a user's `ex
 
 All CSV files to be imported must now be stored inside a user's `import/` subdirectory instead of the current directory.
 
-Mastodon API: more timeline paging tunings (contributed by nowster).
+Mastodon API: more timeline paging tunings (contributed by nowster), post language selected in apps is properly set.
 
 The command-line operation `note` new reads the `LANG` environment variable to set the post's language.
 
