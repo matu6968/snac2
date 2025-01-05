@@ -790,7 +790,7 @@ static xs_html *html_user_body(snac *user, int read_only)
                     xs_html_sctag("input",
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "q"),
-                        xs_html_attr("title", L("Search posts by content (regular expression), @user@host accounts, or #tag")),
+                        xs_html_attr("title", L("Search posts by URL or content (regular expression), @user@host accounts, or #tag")),
                         xs_html_attr("placeholder", L("Content search")))));
     }
 
