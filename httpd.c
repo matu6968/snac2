@@ -301,7 +301,10 @@ int server_get_handler(xs_dict *req, const char *q_path,
                 s = xs_fmt("%s\n", text);
         }
         else
+        if (xs_type(url) == XSTYPE_STRING)
             s = xs_fmt("%s\n", url);
+        else
+            s = xs_str_new(NULL);
 
         status = HTTP_STATUS_OK;
         *ctype = "text/html";
