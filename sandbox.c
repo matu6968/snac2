@@ -34,9 +34,11 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail)
 #endif
     LL_PATH("/etc/resolv.conf",     rf       );
     LL_PATH("/etc/hosts",           rf       );
-    LL_PATH("/etc/ssl/openssl.cnf", rf       );
-    LL_PATH("/etc/ssl/cert.pem",    rf       );
+    LL_PATH("/etc/ssl",             rf       );
     LL_PATH("/usr/share/zoneinfo",  rf       );
+
+    if (mtime("/etc/pki") > 0)
+        LL_PATH("/etc/pki",         rf       );
 
     if (*address == '/')
         LL_PATH(address, s);
