@@ -676,6 +676,12 @@ location /.well-known/host-meta {
     proxy_set_header Host $http_host;
     proxy_set_header X-Forwarded-For $remote_addr;
 }
+# optional (Mastodon-like link share entrypoint)
+location /share {
+    proxy_pass http://localhost:8001;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+}
 .Ed
 .Pp
 Restart the nginx daemon and connect to
@@ -723,6 +729,11 @@ ProxyPreserveHost On
 # host-meta (optional, needed for some Mastodon API clients)
 <Location /.well-known/host-meta>
     ProxyPass http://127.0.0.1:8001/.well-known/host-meta
+</Location>
+
+# optional (Mastodon-like link share entrypoint)
+<Location /share>
+    ProxyPass http://127.0.0.1:8001/share
 </Location>
 .Ed
 .Pp
@@ -777,6 +788,10 @@ location "/.well-known/nodeinfo" {
 }
 
 location "/.well-known/host-meta" {
+    fastcgi socket tcp "127.0.0.1" 8001
+}
+
+location "/share" {
     fastcgi socket tcp "127.0.0.1" 8001
 }
 .Ed
