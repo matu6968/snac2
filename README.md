@@ -76,10 +76,10 @@ If it still gives compilation errors (because your system does not implement the
 make CFLAGS=-DWITHOUT_SHM
 ```
 
-If compilation fails on Linux with the message `no landlock on kernels older than...` or complaining about not being able to compile `sandbox.c`, then your system lacks support for Linux Landlock sandboxing (new in snac v2.68); to disable it, run
+From version 2.68, Linux Landlock sandboxing is included (not supported on Linux kernels older than 5.13.0). It's still a bit experimental, so you must compile it in explicitly with
 
 ```sh
-make CFLAGS=-DWITHOUT_SANDBOX
+make CFLAGS=-DWITH_LINUX_SANDBOX
 ```
 
 See the administrator manual on how to proceed from here.
