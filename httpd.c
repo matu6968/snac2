@@ -308,7 +308,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
             s = xs_str_new(NULL);
 
         status = HTTP_STATUS_OK;
-        *ctype = "text/html";
+        *ctype = "text/html; charset=utf-8";
         *body  = xs_fmt(share_page,
             xs_dict_get(srv_config, "host"),
             srv_baseurl,
