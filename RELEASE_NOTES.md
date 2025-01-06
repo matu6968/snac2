@@ -10,7 +10,7 @@ New "Like by URL" operation (contributed by dheadshot).
 
 Added support for a Mastodon-like `/share` link sharing URL, like the one provided by sites like https://mastodonshare.com/ and such. To be able to use it, you must reconfigure your https proxy to redirect `/share` to snac (see `snac(8)`).
 
-New linux landlock (sandboxing) support for enhanced security (contributed by shtrophic). It's still a bit experimental, so you have to enable it explicitly by setting the `disable_sandbox` field to `false` in `server.json`.
+New linux landlock (sandboxing) support for enhanced security (contributed by shtrophic). It's still a bit experimental, so you have to enable it explicitly by recompiling with the WITH_LINUX_SANDBOX directive (e.g. `make CFLAGS=-DWITH_LINUX_SANDBOX`).
 
 Some search fixes regarding repeated matches.
 
