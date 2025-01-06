@@ -22,6 +22,8 @@ Mastodon API: more timeline paging tunings (contributed by nowster), post langua
 
 The command-line operation `note` new reads the `LANG` environment variable to set the post's language.
 
+A new command-line operation, `note_unlisted`, allows posting "unlisted" or "quiet public" posts.
+
 The maximum number of entries in users' RSS feeds and in outboxes can now be set via the `max_public_entries` variable in the `server.json` file.
 
 Fixed broken support for `Audio` objects.
