@@ -537,10 +537,11 @@ xs_html *html_instance_head(void)
 
 static xs_html *html_instance_body(void)
 {
-    const char *host  = xs_dict_get(srv_config, "host");
-    const char *sdesc = xs_dict_get(srv_config, "short_description");
-    const char *email = xs_dict_get(srv_config, "admin_email");
-    const char *acct  = xs_dict_get(srv_config, "admin_account");
+    const char *host     = xs_dict_get(srv_config, "host");
+    const char *sdesc    = xs_dict_get(srv_config, "short_description");
+    const char *sdescraw = xs_dict_get(srv_config, "short_description_raw");
+    const char *email    = xs_dict_get(srv_config, "admin_email");
+    const char *acct     = xs_dict_get(srv_config, "admin_account");
 
     xs *blurb = xs_replace(snac_blurb, "%host%", host);
 
@@ -553,12 +554,21 @@ static xs_html *html_instance_body(void)
             dl = xs_html_tag("dl", NULL)));
 
     if (sdesc && *sdesc) {
-        xs_html_add(dl,
-            xs_html_tag("di",
-                xs_html_tag("dt",
-                    xs_html_text(L("Site description"))),
-                xs_html_tag("dd",
-                    xs_html_text(sdesc))));
+        if (!xs_is_null(sdescraw) && xs_type(sdescraw) == XSTYPE_TRUE) {
+            xs_html_add(dl,
+                xs_html_tag("di",
+                    xs_html_tag("dt",
+                        xs_html_text(L("Site description"))),
+                    xs_html_tag("dd",
+                        xs_html_raw(sdesc))));
+        } else {
+            xs_html_add(dl,
+                xs_html_tag("di",
+                    xs_html_tag("dt",
+                        xs_html_text(L("Site description"))),
+                    xs_html_tag("dd",
+                        xs_html_text(sdesc))));
+        }
     }
     if (email && *email) {
         xs *mailto = xs_fmt("mailto:%s", email);
