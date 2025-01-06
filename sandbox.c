@@ -94,7 +94,7 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail)
         LL_PATH(sdir, s);
     }
 
-    if (smail)
+    if (smail && mtime("/usr/sbin/sendmail") > 0)
         LL_PATH("/usr/sbin/sendmail", x);
 
     if (*address != '/') {
