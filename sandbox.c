@@ -2,32 +2,54 @@
 
 #include "snac.h"
 
-#ifdef __linux__
-#ifndef WITHOUT_SANDBOX
-#include <linux/version.h>
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 13, 0)
-#define WITHOUT_SANDBOX
-#endif
-#endif
-#endif /* __linux__ */
-
-
-#ifdef WITHOUT_SANDBOX
+#if defined(__OpenBSD__)
 
 void sbox_enter(const char *basedir)
 {
-    /* nothing to do */
-    (void)basedir;
+    const char *address = xs_dict_get(srv_config, "address");
 
-    srv_debug(0, xs_fmt("Linux sandboxing disabled or unsupported"));
+    int smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
+
+    if (xs_is_true(xs_dict_get(srv_config, "disable_openbsd_security"))) {
+        srv_log(xs_dup("OpenBSD security disabled by admin"));
+        return;
+    }
+
+    srv_debug(1, xs_fmt("Calling unveil()"));
+    unveil(basedir,                "rwc");
+    unveil("/tmp",                 "rwc");
+    unveil("/etc/resolv.conf",     "r");
+    unveil("/etc/hosts",           "r");
+    unveil("/etc/ssl/openssl.cnf", "r");
+    unveil("/etc/ssl/cert.pem",    "r");
+    unveil("/usr/share/zoneinfo",  "r");
+
+    if (smail)
+        unveil("/usr/sbin/sendmail",   "x");
+
+    if (*address == '/')
+        unveil(address, "rwc");
+
+    unveil(NULL,                   NULL);
+
+    srv_debug(1, xs_fmt("Calling pledge()"));
+
+    xs *p = xs_str_new("stdio rpath wpath cpath flock inet proc dns fattr");
+
+    if (smail)
+        p = xs_str_cat(p, " exec");
+
+    if (*address == '/')
+        p = xs_str_cat(p, " unix");
+
+    pledge(p, NULL);
 }
 
-#else /* WITHOUT_SANDBOX */
+#elif defined(__linux__)
+
+#if defined(WITH_LINUX_SANDBOX)
 
 #include <unistd.h>
-
-#if defined (__linux__)
 
 #define LL_PRINTERR(fmt, ...) srv_debug(0, xs_fmt(fmt, __VA_ARGS__))
 #include "landloc.h"
@@ -85,66 +107,42 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail)
 
 } LL_END
 
-#endif
-
 void sbox_enter(const char *basedir)
 {
     const char *address = xs_dict_get(srv_config, "address");
 
     int smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
 
-#if defined (__OpenBSD__)
-    if (xs_is_true(xs_dict_get(srv_config, "disable_openbsd_security"))) {
-        srv_log(xs_dup("disable_openbsd_security is deprecated. Use disable_sandbox instead."));
-        return;
-    }
     if (xs_is_true(xs_dict_get(srv_config, "disable_sandbox"))) {
-        srv_debug(0, xs_dup("Sandbox disabled by admin"));
-        return;
-    }
-
-    srv_debug(1, xs_fmt("Calling unveil()"));
-    unveil(basedir,                "rwc");
-    unveil("/tmp",                 "rwc");
-    unveil("/etc/resolv.conf",     "r");
-    unveil("/etc/hosts",           "r");
-    unveil("/etc/ssl/openssl.cnf", "r");
-    unveil("/etc/ssl/cert.pem",    "r");
-    unveil("/usr/share/zoneinfo",  "r");
-
-    if (smail)
-        unveil("/usr/sbin/sendmail",   "x");
-
-    if (*address == '/')
-        unveil(address, "rwc");
-
-    unveil(NULL,                   NULL);
-
-    srv_debug(1, xs_fmt("Calling pledge()"));
-
-    xs *p = xs_str_new("stdio rpath wpath cpath flock inet proc dns fattr");
-
-    if (smail)
-        p = xs_str_cat(p, " exec");
-
-    if (*address == '/')
-        p = xs_str_cat(p, " unix");
-
-    pledge(p, NULL);
-
-#elif defined (__linux__)
-    
-    if (xs_is_true(xs_dict_get_def(srv_config, "disable_sandbox", xs_stock(XSTYPE_TRUE)))) {
-        srv_debug(0, xs_dup("Sandbox disabled by admin"));
+        srv_debug(1, xs_dup("Linux sandbox disabled by admin"));
         return;
     }
 
     if (sbox_enter_linux_(basedir, address, smail) == 0)
-        srv_log(xs_dup("landlocked"));
+        srv_debug(1, xs_dup("Linux sandbox enabled"));
     else
-        srv_log(xs_dup("landlocking failed"));
-
-#endif
+        srv_debug(1, xs_dup("Linux sandbox failed"));
 }
 
-#endif /* WITHOUT_SANDBOX */
+#else /* defined(WITH_LINUX_SANDBOX) */
+
+void sbox_enter(const char *basedir)
+{
+    (void)basedir;
+
+    srv_debug(1, xs_fmt("Linux sandbox not compiled in"));
+}
+
+#endif
+
+#else
+
+/* other OSs: dummy sbox_enter() */
+
+void sbox_enter(const char *basedir)
+{
+    (void)basedir;
+}
+
+
+#endif /* __OpenBSD__ */
