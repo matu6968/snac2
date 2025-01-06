@@ -33,6 +33,7 @@ int usage(void)
     printf("insert {basedir} {uid} {url}         Requests an object and inserts it into the timeline\n");
     printf("actor {basedir} [{uid}] {url}        Requests an actor\n");
     printf("note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n");
+    printf("note_unlisted {basedir} {uid} {text} [files...] Sends an unlisted note with optional attachments\n");
     printf("boost|announce {basedir} {uid} {url} Boosts (announces) a post\n");
     printf("unboost {basedir} {uid} {url}        Unboosts a post\n");
     printf("resetpwd {basedir} {uid}             Resets the password of a user\n");
@@ -603,7 +604,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (strcmp(cmd, "note") == 0) { /** **/
+    if (strcmp(cmd, "note") == 0 || strcmp(cmd, "note_unlisted") == 0) { /** **/
         xs *content = NULL;
         xs *msg = NULL;
         xs *c_msg = NULL;
@@ -668,6 +669,14 @@ int main(int argc, char *argv[])
             content = xs_dup(url);
 
         msg = msg_note(&snac, content, NULL, NULL, attl, 0, getenv("LANG"));
+
+        if (strcmp(cmd, "note_unlisted") == 0) {
+            /* according to Mastodon, "unlisted" posts (now called "quiet public")
+               has the public address as a cc instead of to, so toggle it */
+            xs *to = xs_dup(xs_dict_get(msg, "to"));
+            msg = xs_dict_set(msg, "cc", to);
+            msg = xs_dict_set(msg, "to", xs_stock(XSTYPE_LIST));
+        }
 
         c_msg = msg_create(&snac, msg);
 
