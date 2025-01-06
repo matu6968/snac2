@@ -63,8 +63,14 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail)
     if (mtime("/etc/pki") > 0)
         LL_PATH("/etc/pki",         rf       );
 
-    if (*address == '/')
-        LL_PATH(address, s);
+    if (*address == '/') {
+        /* the directory holding the socket must be allowed */
+        xs *l = xs_split(address, "/");
+        l = xs_list_del(l, -1);
+        xs *sdir = xs_join(l, "/");
+
+        LL_PATH(sdir, s);
+    }
 
     if (smail)
         LL_PATH("/usr/sbin/sendmail", x);
