@@ -1423,8 +1423,9 @@ xs_dict *msg_follow(snac *snac, const char *q)
 
 xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
                   const xs_str *in_reply_to, const xs_list *attach,
-                  int priv, const char *lang_str)
+                  int scope, const char *lang_str)
 /* creates a 'Note' message */
+/* scope: 0, public; 1, private (mentioned only); 2, "quiet public"; 3, followers only */
 {
     xs *ntid = tid(0);
     xs *id   = xs_fmt("%s/p/%s", snac->actor, ntid);
@@ -1439,6 +1440,9 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     xs_dict *msg = msg_base(snac, "Note", id, NULL, "@now", NULL);
     xs_list *p;
     const xs_val *v;
+
+    /* FIXME: implement scopes 2 and 3 */
+    int priv = scope == 1;
 
     if (rcpts == NULL)
         to = xs_list_new();
