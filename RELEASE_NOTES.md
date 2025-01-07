@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.68
 
 Fixed regression in link verification code (contributed by nowster).
 
