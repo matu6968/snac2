@@ -675,7 +675,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 
         if (pub_msg) {
             /* a public message for someone we follow? (probably cc'ed) accept */
-            if (following_check(snac, v))
+            if (strcmp(v, public_address) != 0 && following_check(snac, v))
                 return 5;
         }
         else
@@ -1241,6 +1241,10 @@ xs_dict *msg_actor(snac *snac)
     /* if the "bot" config field is set to true, change type to "Service" */
     if (xs_type(xs_dict_get(snac->config, "bot")) == XSTYPE_TRUE)
         msg = xs_dict_set(msg, "type", "Service");
+
+    /* if it's named "relay", then identify as an "Application" */
+    if (strcmp(snac->uid, "relay") == 0)
+        msg = xs_dict_set(msg, "type", "Application");
 
     /* add the header image, if there is one defined */
     const char *header = xs_dict_get(snac->config, "header");
@@ -2773,11 +2777,12 @@ void process_queue_item(xs_dict *q_item)
                 snac user;
 
                 if (user_open(&user, v)) {
-                    if (is_msg_for_me(&user, msg)) {
+                    int rsn = is_msg_for_me(&user, msg);
+                    if (rsn) {
                         xs *fn = xs_fmt("%s/queue/%s.json", user.basedir, ntid);
 
                         snac_debug(&user, 1,
-                            xs_fmt("enqueue_input (from shared inbox) %s", xs_dict_get(msg, "id")));
+                            xs_fmt("enqueue_input (from shared inbox) %s [%d]", xs_dict_get(msg, "id"), rsn));
 
                         if (link(tmpfn, fn) < 0)
                             srv_log(xs_fmt("link(%s, %s) error", tmpfn, fn));
