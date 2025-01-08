@@ -2209,7 +2209,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 if (xs_type(o_href) == XSTYPE_STRING) {
                     xs *href = xs_utf8_to_lower(o_href);
 
-                    if (xs_type(href) == XSTYPE_STRING && xs_str_in(content, href) == -1) {
+                    if (xs_str_in(content, href) == -1) {
                         /* not in the content: add here */
                         const char *name = xs_dict_get(tag, "name");
 
