@@ -2189,6 +2189,39 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             au_tag);
     }
 
+    /* show all hashtags that has not been shown previously in the content */
+    const xs_list *tags = xs_dict_get(msg, "tag");
+    if (xs_type(tags) == XSTYPE_LIST && xs_list_len(tags)) {
+        const char *content = xs_dict_get(msg, "content");
+        const xs_dict *tag;
+
+        xs_html *add_hashtags = xs_html_tag("ul",
+            xs_html_attr("class", "snac-more-hashtags"));
+
+        xs_list_foreach(tags, tag) {
+            const char *type = xs_dict_get(tag, "type");
+
+            if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Hashtag") == 0) {
+                const char *href = xs_dict_get(tag, "href");
+
+                if (xs_type(href) == XSTYPE_STRING && xs_str_in(content, href) == -1) {
+                    /* not in the content: add here */
+                    const char *name = xs_dict_get(tag, "name");
+
+                    xs_html_add(add_hashtags,
+                        xs_html_tag("li",
+                            xs_html_tag("a",
+                                xs_html_attr("href", href),
+                                xs_html_text(name),
+                                xs_html_text(" "))));
+                }
+            }
+        }
+
+        xs_html_add(snac_content_wrap,
+            add_hashtags);
+    }
+
     /** controls **/
 
     if (!read_only && user) {
