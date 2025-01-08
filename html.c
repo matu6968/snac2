@@ -2205,18 +2205,21 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
             if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Hashtag") == 0) {
                 const char *o_href = xs_dict_get(tag, "href");
-                xs *href = xs_utf8_to_lower(o_href);
 
-                if (xs_type(href) == XSTYPE_STRING && xs_str_in(content, href) == -1) {
-                    /* not in the content: add here */
-                    const char *name = xs_dict_get(tag, "name");
+                if (xs_type(o_href) == XSTYPE_STRING) {
+                    xs *href = xs_utf8_to_lower(o_href);
 
-                    xs_html_add(add_hashtags,
-                        xs_html_tag("li",
-                            xs_html_tag("a",
-                                xs_html_attr("href", href),
-                                xs_html_text(name),
-                                xs_html_text(" "))));
+                    if (xs_type(href) == XSTYPE_STRING && xs_str_in(content, href) == -1) {
+                        /* not in the content: add here */
+                        const char *name = xs_dict_get(tag, "name");
+
+                        xs_html_add(add_hashtags,
+                            xs_html_tag("li",
+                                xs_html_tag("a",
+                                    xs_html_attr("href", href),
+                                    xs_html_text(name),
+                                    xs_html_text(" "))));
+                    }
                 }
             }
         }
