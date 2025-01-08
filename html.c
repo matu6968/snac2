@@ -12,6 +12,7 @@
 #include "xs_match.h"
 #include "xs_html.h"
 #include "xs_curl.h"
+#include "xs_unicode.h"
 
 #include "snac.h"
 
@@ -2203,8 +2204,11 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
             if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Hashtag") == 0) {
                 const char *href = xs_dict_get(tag, "href");
+                xs *lc_href = xs_utf8_to_lower(href);
 
-                if (xs_type(href) == XSTYPE_STRING && xs_str_in(content, href) == -1) {
+                if (xs_type(href) == XSTYPE_STRING &&
+                    xs_str_in(content, href) == -1 &&
+                    xs_str_in(content, lc_href) == -1) {
                     /* not in the content: add here */
                     const char *name = xs_dict_get(tag, "name");
 
