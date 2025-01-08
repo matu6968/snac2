@@ -1,10 +1,11 @@
-/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
 #ifndef _XS_URL_H
 
 #define _XS_URL_H
 
 xs_str *xs_url_dec(const char *str);
+xs_str *xs_url_enc(const char *str);
 xs_dict *xs_url_vars(const char *str);
 xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *header);
 
@@ -31,6 +32,28 @@ xs_str *xs_url_dec(const char *str)
             s = xs_append_m(s, " ", 1);
         else
             s = xs_append_m(s, str, 1);
+
+        str++;
+    }
+
+    return s;
+}
+
+
+xs_str *xs_url_enc(const char *str)
+/* URL-encodes a string (RFC 3986) */
+{
+    xs_str *s = xs_str_new(NULL);
+
+    while (*str) {
+        if (isalnum(*str) || strchr("-._~", *str)) {
+            s = xs_append_m(s, str, 1);
+        }
+        else {
+            char tmp[8];
+            snprintf(tmp, sizeof(tmp), "%%%02X", (unsigned char)*str);
+            s = xs_append_m(s, tmp, 3);
+        }
 
         str++;
     }
