@@ -1853,6 +1853,17 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     /* reject uninteresting messages right now */
     if (xs_match(type, "Add|View|Reject|Read|Remove")) {
         srv_debug(0, xs_fmt("Ignored message of type '%s'", type));
+
+        /* archive the ignored activity */
+        xs *ntid = tid(0);
+        xs *fn = xs_fmt("%s/ignored/%s.json", srv_basedir, ntid);
+        FILE *f;
+
+        if ((f = fopen(fn, "w")) != NULL) {
+            xs_json_dump(msg, 4, f);
+            fclose(f);
+        }
+
         return -1;
     }
 
