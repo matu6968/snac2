@@ -1201,7 +1201,7 @@ xs_dict *msg_actor(snac *snac)
     /* everybody loves some caching */
     if (time(NULL) - object_mtime(snac->actor) < 6 * 3600 &&
         valid_status(object_get(snac->actor, &msg))) {
-        snac_debug(snac, 1, xs_fmt("Returning cached actor %s", snac->actor));
+        snac_debug(snac, 2, xs_fmt("Returning cached actor %s", snac->actor));
 
         return msg;
     }
