@@ -2137,14 +2137,14 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                 snac_log(snac, xs_fmt("new 'Question' %s %s", actor, id));
         }
         else
-        if (strcmp(utype, "Video") == 0) { /** **/
+        if (xs_match(utype, "Audio|Video|Event")) { /** **/
             const char *id = xs_dict_get(object, "id");
 
             if (xs_is_null(id))
                 snac_log(snac, xs_fmt("malformed message: no 'id' field"));
             else
             if (timeline_add(snac, id, object))
-                snac_log(snac, xs_fmt("new 'Video' %s %s", actor, id));
+                snac_log(snac, xs_fmt("new '%s' %s %s", utype, actor, id));
         }
         else
             snac_debug(snac, 1, xs_fmt("ignored 'Create' for object type '%s'", utype));
@@ -2252,7 +2252,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             snac_log(snac, xs_fmt("updated actor %s", actor));
         }
         else
-        if (xs_match(utype, "Note|Page|Article|Video")) { /** **/
+        if (xs_match(utype, "Note|Page|Article|Video|Audio|Event")) { /** **/
             const char *id = xs_dict_get(object, "id");
 
             if (xs_is_null(id))
