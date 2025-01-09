@@ -1194,9 +1194,19 @@ xs_dict *msg_actor(snac *snac)
     xs *avtr     = NULL;
     xs *kid      = NULL;
     xs *f_bio    = NULL;
-    xs_dict *msg = msg_base(snac, "Person", snac->actor, NULL, NULL, NULL);
+    xs_dict *msg = NULL;
     const char *p;
     int n;
+
+    /* everybody loves some caching */
+    if (time(NULL) - object_mtime(snac->actor) < 6 * 3600 &&
+        valid_status(object_get(snac->actor, &msg))) {
+        snac_debug(snac, 1, xs_fmt("Returning cached actor %s", snac->actor));
+
+        return msg;
+    }
+
+    msg = msg_base(snac, "Person", snac->actor, NULL, NULL, NULL);
 
     /* change the @context (is this really necessary?) */
     ctxt = xs_list_append(ctxt, "https:/" "/www.w3.org/ns/activitystreams");
@@ -1329,6 +1339,10 @@ xs_dict *msg_actor(snac *snac)
     const xs_val *manually = xs_dict_get(snac->config, "approve_followers");
     msg = xs_dict_set(msg, "manuallyApprovesFollowers",
         xs_stock(xs_is_true(manually) ? XSTYPE_TRUE : XSTYPE_FALSE));
+
+    /* cache it */
+    snac_debug(snac, 1, xs_fmt("Caching actor %s", snac->actor));
+    object_add_ow(snac->actor, msg);
 
     return msg;
 }

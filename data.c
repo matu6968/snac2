@@ -336,6 +336,10 @@ int user_persist(snac *snac, int publish)
 
                 if (!nw)
                     publish = 0;
+                else {
+                    /* uncache the actor object */
+                    object_del(snac->actor);
+                }
             }
         }
     }
