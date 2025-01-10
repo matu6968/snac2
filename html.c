@@ -1311,7 +1311,7 @@ xs_html *html_top_controls(snac *snac)
                         xs_html_attr("for", "show_contact_metrics"),
                         xs_html_text(L("Publish follower and following metrics")))),
                 xs_html_tag("p",
-                    xs_html_text(L("Home location:")),
+                    xs_html_text(L("Current location:")),
                     xs_html_sctag("br", NULL),
                     xs_html_sctag("input",
                         xs_html_attr("type", "text"),

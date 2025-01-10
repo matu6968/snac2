@@ -1184,6 +1184,28 @@ xs_dict *msg_repulsion(snac *user, const char *id, const char *type)
 }
 
 
+xs_dict *msg_place(snac *user, const char *label)
+/* creates a Place object, if the user has a location defined */
+{
+    xs *place = NULL;
+    const char *latitude = xs_dict_get_def(user->config, "latitude", "");
+    const char *longitude = xs_dict_get_def(user->config, "longitude", "");
+
+    if (*latitude && *longitude) {
+        xs *d_la = xs_number_new(atof(latitude));
+        xs *d_lo = xs_number_new(atof(longitude));
+
+        place = msg_base(user, "Place", NULL, user->actor, NULL, NULL);
+
+        place = xs_dict_set(place, "name", label);
+        place = xs_dict_set(place, "latitude", d_la);
+        place = xs_dict_set(place, "longitude", d_lo);
+    }
+
+    return place;
+}
+
+
 xs_dict *msg_actor(snac *snac)
 /* create a Person message for this actor */
 {
@@ -1339,6 +1361,11 @@ xs_dict *msg_actor(snac *snac)
     const xs_val *manually = xs_dict_get(snac->config, "approve_followers");
     msg = xs_dict_set(msg, "manuallyApprovesFollowers",
         xs_stock(xs_is_true(manually) ? XSTYPE_TRUE : XSTYPE_FALSE));
+
+    /* if there are location coords, create a Place object */
+    xs *location = msg_place(snac, "Home");
+    if (xs_type(location) == XSTYPE_DICT)
+        msg = xs_dict_set(msg, "location", location);
 
     /* cache it */
     snac_debug(snac, 1, xs_fmt("Caching actor %s", snac->actor));
