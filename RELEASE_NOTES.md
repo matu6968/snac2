@@ -1,5 +1,13 @@
 # Release Notes
 
+## UNRELEASED
+
+Some fixes to accept `Event` objects properly (like those coming from implementations like https://gancio.org/).
+
+Added some caching for local `Actor` objects.
+
+Hashtags that are not explicitly linked in a post's content are shown below.
+
 ## 2.68
 
 Fixed regression in link verification code (contributed by nowster).
