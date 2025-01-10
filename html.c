@@ -924,6 +924,7 @@ static xs_html *html_user_body(snac *user, int read_only)
                             xs_html_raw("&#10004; "),
                             xs_html_tag("a",
                                 xs_html_attr("rel", "me"),
+                                xs_html_attr("target", "_blank"),
                                 xs_html_attr("href", v),
                                 xs_html_text(v)));
                     }
@@ -958,6 +959,23 @@ static xs_html *html_user_body(snac *user, int read_only)
 
             xs_html_add(top_user,
                 snac_metadata);
+        }
+
+        const char *latitude = xs_dict_get_def(user->config, "latitude", "");
+        const char *longitude = xs_dict_get_def(user->config, "longitude", "");
+
+        if (*latitude && *longitude) {
+            xs *label = xs_fmt(L("%s,%s"), latitude, longitude);
+            xs *url   = xs_fmt(L("https://openstreetmap.org/search?query=%s,%s"),
+                        latitude, longitude);
+
+            xs_html_add(top_user,
+                xs_html_tag("p",
+                    xs_html_text(L("Location: ")),
+                    xs_html_tag("a",
+                        xs_html_attr("href", url),
+                        xs_html_attr("target", "_blank"),
+                        xs_html_text(label))));
         }
 
         if (xs_is_true(xs_dict_get(user->config, "show_contact_metrics"))) {
