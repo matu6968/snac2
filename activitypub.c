@@ -1321,7 +1321,7 @@ xs_dict *msg_actor(snac *snac)
     }
 
     /* use shared inboxes? */
-    if (xs_type(xs_dict_get(srv_config, "shared_inboxes")) == XSTYPE_TRUE) {
+    if (xs_is_true(xs_dict_get(srv_config, "shared_inboxes")) || strcmp(snac->uid, "relay") == 0) {
         xs *d = xs_dict_new();
         xs *si = xs_fmt("%s/shared-inbox", srv_baseurl);
         d = xs_dict_append(d, "sharedInbox", si);
