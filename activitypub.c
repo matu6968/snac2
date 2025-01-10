@@ -1187,7 +1187,7 @@ xs_dict *msg_repulsion(snac *user, const char *id, const char *type)
 xs_dict *msg_place(snac *user, const char *label)
 /* creates a Place object, if the user has a location defined */
 {
-    xs *place = NULL;
+    xs_dict *place = NULL;
     const char *latitude = xs_dict_get_def(user->config, "latitude", "");
     const char *longitude = xs_dict_get_def(user->config, "longitude", "");
 
