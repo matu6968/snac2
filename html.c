@@ -2227,7 +2227,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     /* show all hashtags that has not been shown previously in the content */
     const xs_list *tags = xs_dict_get(msg, "tag");
     if (xs_type(tags) == XSTYPE_LIST && xs_list_len(tags)) {
-        const char *o_content = xs_dict_get(msg, "content");
+        const char *o_content = xs_dict_get_def(msg, "content", "");
         xs *content = xs_utf8_to_lower(o_content);
         const xs_dict *tag;
 
