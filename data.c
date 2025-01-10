@@ -319,7 +319,8 @@ int user_persist(snac *snac, int publish)
 
             if (old != NULL) {
                 int nw = 0;
-                const char *fields[] = { "header", "avatar", "name", "bio", "metadata", NULL };
+                const char *fields[] = { "header", "avatar", "name", "bio",
+                                         "metadata", "latitude", "longitude", NULL };
 
                 for (int n = 0; fields[n]; n++) {
                     const char *of = xs_dict_get(old, fields[n]);

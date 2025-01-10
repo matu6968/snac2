@@ -1101,6 +1101,8 @@ xs_html *html_top_controls(snac *snac)
     const xs_val *coll_thrds = xs_dict_get(snac->config, "collapse_threads");
     const xs_val *pending    = xs_dict_get(snac->config, "approve_followers");
     const xs_val *show_foll  = xs_dict_get(snac->config, "show_contact_metrics");
+    const char *latitude     = xs_dict_get_def(snac->config, "latitude", "");
+    const char *longitude    = xs_dict_get_def(snac->config, "longitude", "");
 
     xs *metadata = NULL;
     const xs_dict *md = xs_dict_get(snac->config, "metadata");
@@ -1290,6 +1292,20 @@ xs_html *html_top_controls(snac *snac)
                     xs_html_tag("label",
                         xs_html_attr("for", "show_contact_metrics"),
                         xs_html_text(L("Publish follower and following metrics")))),
+                xs_html_tag("p",
+                    xs_html_text(L("Home location:")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "text"),
+                        xs_html_attr("name", "latitude"),
+                        xs_html_attr("value", latitude),
+                        xs_html_attr("placeholder", "latitude")),
+                    xs_html_text(" "),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "text"),
+                        xs_html_attr("name", "longitude"),
+                        xs_html_attr("value", longitude),
+                        xs_html_attr("placeholder", "longitude"))),
                 xs_html_tag("p",
                     xs_html_text(L("Profile metadata (key=value pairs in each line):")),
                     xs_html_sctag("br", NULL),
@@ -4052,6 +4068,9 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_TRUE));
         else
             snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_FALSE));
+
+        snac.config = xs_dict_set(snac.config, "latitude", xs_dict_get_def(p_vars, "latitude", ""));
+        snac.config = xs_dict_set(snac.config, "longitude", xs_dict_get_def(p_vars, "longitude", ""));
 
         if ((v = xs_dict_get(p_vars, "metadata")) != NULL)
             snac.config = xs_dict_set(snac.config, "metadata", v);
