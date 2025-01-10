@@ -2224,6 +2224,43 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             au_tag);
     }
 
+    /* does it have a location? */
+    const xs_dict *location = xs_dict_get(msg, "location");
+    if (xs_type(location) == XSTYPE_DICT) {
+        const xs_number *latitude = xs_dict_get(location, "latitude");
+        const xs_number *longitude = xs_dict_get(location, "longitude");
+        const char *name = xs_dict_get(location, "name");
+        const char *address = xs_dict_get(location, "address");
+        xs *label_list = xs_list_new();
+
+        if (xs_type(name) == XSTYPE_STRING)
+            label_list = xs_list_append(label_list, name);
+        if (xs_type(address) == XSTYPE_STRING)
+            label_list = xs_list_append(label_list, address);
+
+        if (xs_list_len(label_list)) {
+            xs *label = xs_join(label_list, ", ");
+
+            if (!xs_is_null(latitude) && !xs_is_null(longitude)) {
+                xs *url = xs_fmt("https://openstreetmap.org/search/?query=%s,%s",
+                    xs_number_str(latitude), xs_number_str(longitude));
+
+                xs_html_add(snac_content_wrap,
+                    xs_html_tag("p",
+                        xs_html_text(L("Location: ")),
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_attr("target", "_blank"),
+                            xs_html_text(label))));
+            }
+            else
+                xs_html_add(snac_content_wrap,
+                    xs_html_tag("p",
+                        xs_html_text(L("Location: ")),
+                        xs_html_text(label)));
+        }
+    }
+
     /* show all hashtags that has not been shown previously in the content */
     const xs_list *tags = xs_dict_get(msg, "tag");
     if (xs_type(tags) == XSTYPE_LIST && xs_list_len(tags)) {
