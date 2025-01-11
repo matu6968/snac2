@@ -2650,8 +2650,14 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             }
 
             /* prepare the message */
-            xs *msg = msg_note(&snac, content, NULL, irt, attach_list,
-                        strcmp(visibility, "public") == 0 ? 0 : 1, language);
+            int scope = 1;
+            if (strcmp(visibility, "unlisted") == 0)
+                scope = 2;
+            else
+            if (strcmp(visibility, "public") == 0)
+                scope = 0;
+
+            xs *msg = msg_note(&snac, content, NULL, irt, attach_list, scope, language);
 
             if (!xs_is_null(summary) && *summary) {
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));
