@@ -1486,7 +1486,7 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     xs_list *p;
     const xs_val *v;
 
-    /* FIXME: implement scopes 2 and 3 */
+    /* FIXME: implement scope 3 */
     int priv = scope == 1;
 
     if (rcpts == NULL)
@@ -1606,6 +1606,12 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
         }
     }
 
+    if (scope == 2) {
+        /* Mastodon's "quiet public": add public address to cc */
+        if (xs_list_in(cc, public_address) == -1)
+            cc = xs_list_append(cc, public_address);
+    }
+    else
     /* no recipients? must be for everybody */
     if (!priv && xs_list_len(to) == 0)
         to = xs_list_append(to, public_address);

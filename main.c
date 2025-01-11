@@ -668,15 +668,8 @@ int main(int argc, char *argv[])
         else
             content = xs_dup(url);
 
-        msg = msg_note(&snac, content, NULL, NULL, attl, 0, getenv("LANG"));
-
-        if (strcmp(cmd, "note_unlisted") == 0) {
-            /* according to Mastodon, "unlisted" posts (now called "quiet public")
-               has the public address as a cc instead of to, so toggle it */
-            xs *to = xs_dup(xs_dict_get(msg, "to"));
-            msg = xs_dict_set(msg, "cc", to);
-            msg = xs_dict_set(msg, "to", xs_stock(XSTYPE_LIST));
-        }
+        msg = msg_note(&snac, content, NULL, NULL, attl,
+            strcmp(cmd, "note_unlisted") == 0 ? 2 : 0, getenv("LANG"));
 
         c_msg = msg_create(&snac, msg);
 
