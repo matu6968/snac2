@@ -8,6 +8,8 @@ Added some caching for local `Actor` objects.
 
 Hashtags that are not explicitly linked in a post's content are shown below.
 
+Fixed broken NetBSD build (missing dependency in Makefile.NetBSD).
+
 ## 2.68
 
 Fixed regression in link verification code (contributed by nowster).
