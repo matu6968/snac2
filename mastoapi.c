@@ -1428,9 +1428,9 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
                     continue;
             }
 
-            /* if it has a name and it's not a Page or a Video,
+            /* if it has a name and it's not an object that may have one,
                it's a poll vote, so discard it */
-            if (!xs_is_null(xs_dict_get(msg, "name")) && !xs_match(type, "Page|Video"))
+            if (!xs_is_null(xs_dict_get(msg, "name")) && !xs_match(type, "Page|Video|Audio|Event"))
                 continue;
 
             /* convert the Note into a Mastodon status */

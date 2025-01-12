@@ -351,6 +351,22 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+
+    if (strcmp(cmd, "assist") == 0) { /** **/
+        /* undocumented: experimental (do not use) */
+        xs *msg = msg_admiration(&snac, url, "Accept");
+
+        if (msg != NULL) {
+            enqueue_message(&snac, msg);
+
+            if (dbglevel) {
+                xs_json_dump(msg, 4, stdout);
+            }
+        }
+
+        return 0;
+    }
+
     if (strcmp(cmd, "unboost") == 0) { /** **/
         xs *msg = msg_repulsion(&snac, url, "Announce");
 
