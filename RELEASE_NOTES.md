@@ -10,6 +10,8 @@ Hashtags that are not explicitly linked in a post's content are shown below.
 
 Fixed broken NetBSD build (missing dependency in Makefile.NetBSD).
 
+The user profile can now include longitude and latitude data for your current location.
+
 ## 2.68
 
 Fixed regression in link verification code (contributed by nowster).
