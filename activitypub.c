@@ -1184,7 +1184,7 @@ xs_dict *msg_repulsion(snac *user, const char *id, const char *type)
 }
 
 
-xs_dict *msg_place(snac *user, const char *label)
+xs_dict *msg_actor_place(snac *user, const char *label)
 /* creates a Place object, if the user has a location defined */
 {
     xs_dict *place = NULL;
@@ -1363,7 +1363,7 @@ xs_dict *msg_actor(snac *snac)
         xs_stock(xs_is_true(manually) ? XSTYPE_TRUE : XSTYPE_FALSE));
 
     /* if there are location coords, create a Place object */
-    xs *location = msg_place(snac, "Home");
+    xs *location = msg_actor_place(snac, "Home");
     if (xs_type(location) == XSTYPE_DICT)
         msg = xs_dict_set(msg, "location", location);
 
