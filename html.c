@@ -2272,6 +2272,49 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         }
     }
 
+    if (strcmp(type, "Event") == 0) { /** Event start and end times **/
+        const char *s_time = xs_dict_get(msg, "startTime");
+
+        if (xs_type(s_time) == XSTYPE_STRING) {
+            const char *e_time = xs_dict_get(msg, "endTime");
+            const char *tz     = xs_dict_get(msg, "timezone");
+
+            xs *s = xs_replace_i(xs_dup(s_time), "T", " ");
+            xs *e = NULL;
+
+            if (xs_type(e_time) == XSTYPE_STRING)
+                e = xs_replace_i(xs_dup(e_time), "T", " ");
+
+            /* if the event has a timezone, crop the offsets */
+            if (xs_type(tz) == XSTYPE_STRING) {
+                s = xs_crop_i(s, 0, 19);
+
+                if (e)
+                    e = xs_crop_i(e, 0, 19);
+            }
+            else
+                tz = "";
+
+            /* if start and end share the same day, crop it from the end */
+            if (e && memcmp(s, e, 11) == 0)
+                e = xs_crop_i(e, 11, strlen(e));
+
+            if (e)
+                s = xs_str_cat(s, " / ", e);
+
+            if (*tz)
+                s = xs_str_cat(s, " (", tz, ")");
+
+            /* replace ugly decimals */
+            s = xs_replace_i(s, ".000", "");
+
+            xs_html_add(snac_content_wrap,
+                xs_html_tag("p",
+                    xs_html_text(L("Time: ")),
+                    xs_html_text(s)));
+        }
+    }
+
     /* show all hashtags that has not been shown previously in the content */
     const xs_list *tags = xs_dict_get(msg, "tag");
     if (xs_type(tags) == XSTYPE_LIST && xs_list_len(tags)) {
