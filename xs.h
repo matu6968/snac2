@@ -157,6 +157,9 @@ unsigned int xs_hash_func(const char *data, int size);
 #define xs_is_true(v) (xs_type((v)) == XSTYPE_TRUE)
 #define xs_is_false(v) (xs_type((v)) == XSTYPE_FALSE)
 #define xs_not(v) xs_stock(xs_is_true((v)) ? XSTYPE_FALSE : XSTYPE_TRUE)
+#define xs_is_string(v) (xs_type((v)) == XSTYPE_STRING)
+#define xs_is_list(v) (xs_type((v)) == XSTYPE_LIST)
+#define xs_is_dict(v) (xs_type((v)) == XSTYPE_DICT)
 
 #define xs_list_foreach(l, v) for (int ct_##__LINE__ = 0; xs_list_next(l, &v, &ct_##__LINE__); )
 #define xs_dict_foreach(l, k, v) for (int ct_##__LINE__ = 0; xs_dict_next(l, &k, &v, &ct_##__LINE__); )

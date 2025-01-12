@@ -2317,8 +2317,9 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
     /* show all hashtags that has not been shown previously in the content */
     const xs_list *tags = xs_dict_get(msg, "tag");
-    if (xs_type(tags) == XSTYPE_LIST && xs_list_len(tags)) {
-        const char *o_content = xs_dict_get_def(msg, "content", "");
+    const char *o_content = xs_dict_get_def(msg, "content", "");
+
+    if (xs_is_string(o_content) && xs_is_list(tags) && xs_list_len(tags)) {
         xs *content = xs_utf8_to_lower(o_content);
         const xs_dict *tag;
 
@@ -2328,16 +2329,15 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         xs_list_foreach(tags, tag) {
             const char *type = xs_dict_get(tag, "type");
 
-            if (xs_type(type) == XSTYPE_STRING && strcmp(type, "Hashtag") == 0) {
+            if (xs_is_string(type) && strcmp(type, "Hashtag") == 0) {
                 const char *o_href = xs_dict_get(tag, "href");
+                const char *name   = xs_dict_get(tag, "name");
 
-                if (xs_type(o_href) == XSTYPE_STRING) {
+                if (xs_is_string(o_href) && xs_is_string(name)) {
                     xs *href = xs_utf8_to_lower(o_href);
 
-                    if (xs_str_in(content, href) == -1) {
+                    if (xs_str_in(content, href) == -1 && xs_str_in(content, name) == -1) {
                         /* not in the content: add here */
-                        const char *name = xs_dict_get(tag, "name");
-
                         xs_html_add(add_hashtags,
                             xs_html_tag("li",
                                 xs_html_tag("a",
