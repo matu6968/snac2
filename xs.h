@@ -1061,14 +1061,15 @@ xs_keyval *xs_keyval_make(xs_keyval *keyval, const xs_str *key, const xs_val *va
 
 typedef struct {
     int value_offset;   /* offset to value (from dict start) */
-    int next;           /* next node in sequential search */
+    int next;           /* next node in sequential scanning */
     int child[4];       /* child nodes in hashed search */
     char key[];         /* C string key */
 } ditem_hdr;
 
 typedef struct {
     int size;           /* size of full dict (_XS_TYPE_SIZE) */
-    int first;          /* first node for sequential search */
+    int first;          /* first node for sequential scanning */
+    int last;           /* last node for sequential scanning */
     int root;           /* root node for hashed search */
     /* a bunch of ditem_hdr and value follows */
 } dict_hdr;
@@ -1153,8 +1154,15 @@ xs_dict *xs_dict_set(xs_dict *dict, const xs_str *key, const xs_val *value)
             memcpy(dict + di->value_offset, value, vsz);
 
             /* chain to the sequential list */
-            di->next = dh->first;
-            dh->first = end;
+            if (dh->first == 0)
+                dh->first = end;
+            else {
+                /* chain this new element to the last one */
+                ditem_hdr *dil = (ditem_hdr *)(dict + dh->last);
+                dil->next = end;
+            }
+
+            dh->last = end;
         }
         else {
             /* ditem already exists */
