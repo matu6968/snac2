@@ -2239,8 +2239,19 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             label_list = xs_list_append(label_list, address);
 
         if (xs_list_len(label_list)) {
+            const char *url = xs_dict_get(location, "url");
             xs *label = xs_join(label_list, ", ");
 
+            if (xs_type(url) == XSTYPE_STRING) {
+                xs_html_add(snac_content_wrap,
+                    xs_html_tag("p",
+                        xs_html_text(L("Location: ")),
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_attr("target", "_blank"),
+                            xs_html_text(label))));
+            }
+            else
             if (!xs_is_null(latitude) && !xs_is_null(longitude)) {
                 xs *url = xs_fmt("https://openstreetmap.org/search/?query=%s,%s",
                     xs_number_str(latitude), xs_number_str(longitude));
