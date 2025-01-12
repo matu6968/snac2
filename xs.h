@@ -626,15 +626,14 @@ int xs_between(const char *prefix, const char *str, const char *suffix)
 xs_str *xs_crop_i(xs_str *str, int start, int end)
 /* crops the string to be only from start to end */
 {
-    XS_ASSERT_TYPE(str, XSTYPE_STRING);
-
     int sz = strlen(str);
 
     if (end <= 0)
         end = sz + end;
 
     /* crop from the top */
-    str[end] = '\0';
+    if (end > 0 && end < sz)
+        str[end] = '\0';
 
     /* crop from the bottom */
     str = xs_collapse(str, 0, start);

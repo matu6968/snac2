@@ -2275,18 +2275,18 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     if (strcmp(type, "Event") == 0) { /** Event start and end times **/
         const char *s_time = xs_dict_get(msg, "startTime");
 
-        if (xs_type(s_time) == XSTYPE_STRING) {
+        if (xs_is_string(s_time) && strlen(s_time) > 20) {
             const char *e_time = xs_dict_get(msg, "endTime");
             const char *tz     = xs_dict_get(msg, "timezone");
 
             xs *s = xs_replace_i(xs_dup(s_time), "T", " ");
             xs *e = NULL;
 
-            if (xs_type(e_time) == XSTYPE_STRING)
+            if (xs_is_string(e_time) && strlen(e_time) > 20)
                 e = xs_replace_i(xs_dup(e_time), "T", " ");
 
             /* if the event has a timezone, crop the offsets */
-            if (xs_type(tz) == XSTYPE_STRING) {
+            if (xs_is_string(tz)) {
                 s = xs_crop_i(s, 0, 19);
 
                 if (e)
@@ -2297,7 +2297,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
             /* if start and end share the same day, crop it from the end */
             if (e && memcmp(s, e, 11) == 0)
-                e = xs_crop_i(e, 11, strlen(e));
+                e = xs_crop_i(e, 11, 0);
 
             if (e)
                 s = xs_str_cat(s, " / ", e);
