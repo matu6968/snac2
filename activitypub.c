@@ -2706,7 +2706,7 @@ void process_queue_item(xs_dict *q_item)
                 || status == HTTP_STATUS_UNPROCESSABLE_CONTENT
                 || status < 0)
                 /* explicit error: discard */
-                srv_log(xs_fmt("output message: fatal error %s %d", inbox, status));
+                srv_log(xs_fmt("output message: error %s %d", inbox, status));
             else
             if (retries > queue_retry_max)
                 srv_log(xs_fmt("output message: giving up %s %d", inbox, status));
