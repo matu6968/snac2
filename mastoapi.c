@@ -1816,6 +1816,11 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             const xs_list *excl = xs_dict_get(args, "exclude_types[]");
             const char *min_id = xs_dict_get(args, "min_id");
             const char *max_id = xs_dict_get(args, "max_id");
+            const char *limit = xs_dict_get(args, "limit");
+            int limit_count = 0;
+            if (!xs_is_null(limit)) {
+                limit_count = atoi(limit);
+            }
 
             if (dbglevel) {
                 xs *js = xs_json_dumps(args, 0);
@@ -1903,6 +1908,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 }
 
                 out = xs_list_append(out, mn);
+                if (!xs_is_null(limit)) {
+                    if (--limit_count <= 0)
+                        break;
+                }
             }
 
             srv_debug(1, xs_fmt("mastoapi_notifications count %d", xs_list_len(out)));
