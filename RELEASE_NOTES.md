@@ -12,6 +12,8 @@ Fixed broken NetBSD build (missing dependency in Makefile.NetBSD).
 
 The user profile can now include longitude and latitude data for your current location.
 
+Reduced RSA key size for new users from 4096 to 2048. This will be friendlier to smaller machines, and everybody else out there is using 2048.
+
 ## 2.68
 
 Fixed regression in link verification code (contributed by nowster).
