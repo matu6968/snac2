@@ -108,6 +108,8 @@ int index_len(const char *fn);
 xs_list *index_list(const char *fn, int max);
 int index_desc_next(FILE *f, char md5[MD5_HEX_SIZE]);
 int index_desc_first(FILE *f, char md5[MD5_HEX_SIZE], int skip);
+int index_asc_next(FILE *f, char md5[MD5_HEX_SIZE]);
+int index_asc_first(FILE *f, char md5[MD5_HEX_SIZE], const char *seek_md5);
 xs_list *index_list_desc(const char *fn, int skip, int show);
 
 int object_add(const char *id, const xs_dict *obj);

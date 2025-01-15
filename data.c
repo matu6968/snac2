@@ -679,6 +679,37 @@ int index_desc_first(FILE *f, char md5[MD5_HEX_SIZE], int skip)
     return 1;
 }
 
+int index_asc_first(FILE *f,char md5[MD5_HEX_SIZE], const char *seek_md5)
+/* reads the first entry of an ascending index, starting from a given md5 */
+{
+    fseek(f, SEEK_SET, 0);
+    while (fread(md5, MD5_HEX_SIZE, 1, f)) {
+        md5[MD5_HEX_SIZE - 1] = '\0';
+        if (strcmp(md5,seek_md5) == 0) {
+            return index_asc_next(f, md5);
+        }
+    }
+    return 0;
+}
+
+int index_asc_next(FILE *f, char md5[MD5_HEX_SIZE])
+/* reads the next entry of an ascending index */
+{
+    for (;;) {
+        /* read an md5 */
+        if (!fread(md5, MD5_HEX_SIZE, 1, f))
+            return 0;
+
+        /* deleted, skip */
+        if (md5[0] != '-')
+            break;
+    }
+
+    md5[MD5_HEX_SIZE - 1] = '\0';
+
+    return 1;
+}
+
 
 xs_list *index_list_desc(const char *fn, int skip, int show)
 /* returns an index as a list, in reverse order */

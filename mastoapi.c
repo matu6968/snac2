@@ -1339,6 +1339,9 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
     const char *since_id = xs_dict_get(args, "since_id");
     const char *min_id   = xs_dict_get(args, "min_id"); /* unsupported old-to-new navigation */
     const char *limit_s  = xs_dict_get(args, "limit");
+    int (*iterator)(FILE *, char *);
+    int initial_status = 0;
+    int ascending = 0;
     int limit = 0;
     int cnt   = 0;
 
@@ -1348,27 +1351,40 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
     if (limit == 0)
         limit = 20;
 
-    if (index_desc_first(f, md5, 0)) {
+    if (min_id) {
+        iterator = &index_asc_next;
+        initial_status = index_asc_first(f, md5, MID_TO_MD5(min_id));
+        ascending = 1;
+    }
+    else {
+        iterator = &index_desc_next;
+        initial_status = index_desc_first(f, md5, 0);
+    }
+
+    if (initial_status) {
         do {
             xs *msg = NULL;
 
             /* only return entries older that max_id */
             if (max_id) {
-                if (strcmp(md5, MID_TO_MD5(max_id)) == 0)
+                if (strcmp(md5, MID_TO_MD5(max_id)) == 0) {
                     max_id = NULL;
-
-                continue;
+                    if (ascending)
+                        break;
+                }
+                if (!ascending)
+                    continue;
             }
 
             /* only returns entries newer than since_id */
             if (since_id) {
-                if (strcmp(md5, MID_TO_MD5(since_id)) == 0)
-                    break;
-            }
-
-            if (min_id) {
-                if (strcmp(md5, MID_TO_MD5(min_id)) == 0)
-                    break;
+                if (strcmp(md5, MID_TO_MD5(since_id)) == 0) {
+                    if (!ascending)
+                        break;
+                    since_id = NULL;
+                }
+                if (ascending)
+                    continue;
             }
 
             /* get the entry */
@@ -1440,14 +1456,8 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
                 out = xs_list_append(out, st);
                 cnt++;
             }
-            if (min_id) {
-                while (cnt > limit) {
-                    out = xs_list_del(out, 0);
-                    cnt--;
-                }
-            }
 
-        } while ((min_id || (cnt < limit)) && index_desc_next(f, md5));
+        } while ((cnt < limit) && (*iterator)(f, md5));
     }
 
     int more = index_desc_next(f, md5);
