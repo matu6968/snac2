@@ -683,6 +683,12 @@ location /share {
     proxy_set_header Host $http_host;
     proxy_set_header X-Forwarded-For $remote_addr;
 }
+# optional (Mastodon-like "authorize interaction" entrypoint)
+location /authorize_interaction {
+    proxy_pass http://localhost:8001;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+}
 .Ed
 .Pp
 Restart the nginx daemon and connect to
@@ -734,6 +740,11 @@ ProxyPreserveHost On
 
 # optional (Mastodon-like link share entrypoint)
 <Location /share>
+    ProxyPass http://127.0.0.1:8001/share
+</Location>
+
+# optional (Mastodon-like "authorize interaction" entrypoint)
+<Location /authorize_interaction>
     ProxyPass http://127.0.0.1:8001/share
 </Location>
 .Ed
@@ -793,6 +804,10 @@ location "/.well-known/host-meta" {
 }
 
 location "/share" {
+    fastcgi socket tcp "127.0.0.1" 8001
+}
+
+location "/authorize_interaction" {
     fastcgi socket tcp "127.0.0.1" 8001
 }
 .Ed
