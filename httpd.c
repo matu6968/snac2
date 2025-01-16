@@ -182,6 +182,29 @@ const char *share_page = ""
 "";
 
 
+const char *authorize_interaction_page = ""
+"<!DOCTYPE html>\n"
+"<html>\n"
+"<head>\n"
+"<title>%s - snac</title>\n"
+"<meta content=\"width=device-width, initial-scale=1, minimum-scale=1, user-scalable=no\" name=\"viewport\">\n"
+"<link rel=\"stylesheet\" type=\"text/css\" href=\"%s/style.css\"/>\n"
+"<style>:root {color-scheme: light dark}</style>\n"
+"</head>\n"
+"<body><h1>%s authorize interaction</h1>\n"
+"<form method=\"get\" action=\"%s/auth-int-bridge\">\n"
+"<select name=\"action\">\n"
+"<option value=\"Follow\">Follow</option>\n"
+"<option value=\"Like\">Like</option>\n"
+"<option value=\"Boost\">Boost</option>\n"
+"</select> %s\n"
+"<input type=\"hidden\" name=\"id\" value=\"%s\">\n"
+"<p>Login: <input type=\"text\" name=\"login\" autocapitalize=\"off\" required=\"required\"></p>\n"
+"<input type=\"submit\" value=\"OK\">\n"
+"</form><p>%s</p></body></html>\n"
+"";
+
+
 int server_get_handler(xs_dict *req, const char *q_path,
                        char **body, int *b_size, char **ctype)
 /* basic server services */
@@ -317,6 +340,25 @@ int server_get_handler(xs_dict *req, const char *q_path,
             s,
             USER_AGENT
         );
+    }
+    else
+    if (strcmp(q_path, "/authorize_interaction") == 0) {
+        const xs_dict *q_vars = xs_dict_get(req, "q_vars");
+        const char *uri  = xs_dict_get(q_vars, "uri");
+
+        if (xs_is_string(uri)) {
+            status = HTTP_STATUS_OK;
+            *ctype = "text/html; charset=utf-8";
+            *body  = xs_fmt(authorize_interaction_page,
+                xs_dict_get(srv_config, "host"),
+                srv_baseurl,
+                xs_dict_get(srv_config, "host"),
+                srv_baseurl,
+                uri,
+                uri,
+                USER_AGENT
+            );
+        }
     }
 
     if (status != 0)

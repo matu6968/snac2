@@ -3124,6 +3124,21 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         else
             return HTTP_STATUS_NOT_FOUND;
     }
+    else
+    if (strcmp(v, "auth-int-bridge") == 0) {
+        const char *login  = xs_dict_get(q_vars, "login");
+        const char *id     = xs_dict_get(q_vars, "id");
+        const char *action = xs_dict_get(q_vars, "action");
+
+        if (xs_is_string(login) && xs_is_string(id) && xs_is_string(action)) {
+            *body = xs_fmt("%s/%s/authorize_interaction?action=%s&id=%s",
+                srv_baseurl, login, action, id);
+
+            return HTTP_STATUS_SEE_OTHER;
+        }
+        else
+            return HTTP_STATUS_NOT_FOUND;
+    }
 
     uid = xs_dup(v);
 
@@ -3693,6 +3708,52 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             *body   = xs_fmt("%s/admin", snac.actor);
             *b_size = strlen(*body);
             status  = HTTP_STATUS_SEE_OTHER;
+        }
+    }
+    else
+    if (strcmp(p_path, "authorize_interaction") == 0) { /** follow, like or boost from Mastodon **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = HTTP_STATUS_UNAUTHORIZED;
+        }
+        else {
+            status = HTTP_STATUS_NOT_FOUND;
+
+            const char *id     = xs_dict_get(q_vars, "id");
+            const char *action = xs_dict_get(q_vars, "action");
+
+            if (xs_is_string(id) && xs_is_string(action)) {
+                if (strcmp(action, "Follow") == 0) {
+                    xs *msg = msg_follow(&snac, id);
+
+                    if (msg != NULL) {
+                        const char *actor = xs_dict_get(msg, "object");
+
+                        following_add(&snac, actor, msg);
+
+                        enqueue_output_by_actor(&snac, msg, actor, 0);
+
+                        status = HTTP_STATUS_SEE_OTHER;
+                    }
+                }
+                else
+                if (xs_match(action, "Like|Boost|Announce")) {
+                    /* bring the post */
+                    xs *msg = msg_admiration(&snac, id, *action == 'L' ? "Like" : "Announce");
+
+                    if (msg != NULL) {
+                        enqueue_message(&snac, msg);
+                        timeline_admire(&snac, xs_dict_get(msg, "object"), snac.actor, *action == 'L' ? 1 : 0);
+
+                        status = HTTP_STATUS_SEE_OTHER;
+                    }
+                }
+            }
+
+            if (status == HTTP_STATUS_SEE_OTHER) {
+                *body   = xs_fmt("%s/admin", snac.actor);
+                *b_size = strlen(*body);
+            }
         }
     }
     else
