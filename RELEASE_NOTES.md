@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+Added support for a Mastodon-like `/authorize_interaction` webpoint entry, that allows following, liking and boosting from another account's Mastodon public web interface. To be able to use it, you must reconfigure your https proxy to redirect `/authorize_interaction` to snac (see `snac(8)`).
+
 Some fixes to accept `Event` objects properly (like those coming from implementations like https://gancio.org/ or https://mobilizon.fr).
 
 Added some caching for local `Actor` objects.
