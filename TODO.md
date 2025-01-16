@@ -32,8 +32,6 @@ Integrate "Added handling for International Domain Names" PR https://codeberg.or
 
 Do something about Akkoma and Misskey's quoted replies (they use the `quoteUrl` field instead of `inReplyTo`).
 
-Add support for /authorize_interaction (whatever it is).
-
 Add a list of hashtags to drop.
 
 Take a look at crashes in the brittle Mastodon official app (crashes when hitting the reply button, crashes or 'ownVotes is null' errors when trying to show polls).
@@ -365,3 +363,5 @@ Unfollowing lemmy groups gets rejected with an http status of 400 (it seems to w
 CSV import/export does not work with OpenBSD security on; document it or fix it (2025-01-04T19:35:09+0100).
 
 Add support for /share?text=tt&website=url (whatever it is, see https://mastodonshare.com/ for details) (2025-01-06T18:43:52+0100).
+
+Add support for /authorize_interaction (whatever it is) (2025-01-16T14:45:28+0100).
