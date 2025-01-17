@@ -97,7 +97,7 @@ static const char *greeting_html =
     "<html><head>\n"
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n"
     "<link rel=\"icon\" type=\"image/x-icon\" href=\"https://%host%/favicon.ico\"/>\n"
-    "<title>Welcome to %host%</title>\n"
+    "<title>Welcome to %host%</title>\n</head>\n"
     "<body style=\"margin: auto; max-width: 50em\">\n"
     "%blurb%"
     "<p>The following users are part of this community:</p>\n"
