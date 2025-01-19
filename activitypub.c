@@ -889,6 +889,11 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
         /* if it's not an admiration about something by us, done */
         if (xs_is_null(objid) || !xs_startswith(objid, snac->actor))
             return;
+
+        /* if it's an announce by our own relay, done */
+        xs *relay_id = xs_fmt("%s/relay", srv_baseurl);
+        if (xs_startswith(id, relay_id))
+            return;
     }
 
     /* updated poll? */
