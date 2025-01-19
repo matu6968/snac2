@@ -2539,7 +2539,7 @@ void process_user_queue_item(snac *user, xs_dict *q_item)
         xs_set_free(&inboxes);
 
         /* relay this note */
-        if (strcmp(user->uid, "relay") != 0) { /* avoid loops */
+        if (is_msg_public(msg) && strcmp(user->uid, "relay") != 0) { /* avoid loops */
             snac relay;
             if (user_open(&relay, "relay")) {
                 /* a 'relay' user exists */
