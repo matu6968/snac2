@@ -1355,6 +1355,38 @@ xs_html *html_top_controls(snac *snac)
                     xs_html_attr("class", "button"),
                     xs_html_attr("value", L("Update user info")))))));
 
+    xs *followed_hashtags_action = xs_fmt("%s/admin/followed-hashtags", snac->actor);
+    xs *followed_hashtags = xs_join(xs_dict_get_def(snac->config,
+                        "followed_hashtags", xs_stock(XSTYPE_LIST)), "\n");
+
+    xs_html_add(top_controls,
+        xs_html_tag("details",
+        xs_html_tag("summary",
+            xs_html_text(L("Followed hashtags..."))),
+        xs_html_tag("p",
+            xs_html_text(L("One hashtag per line"))),
+        xs_html_tag("div",
+            xs_html_attr("class", "snac-followed-hashtags"),
+            xs_html_tag("form",
+                xs_html_attr("autocomplete", "off"),
+                xs_html_attr("method", "post"),
+                xs_html_attr("action", followed_hashtags_action),
+                xs_html_attr("enctype", "multipart/form-data"),
+
+                xs_html_tag("textarea",
+                    xs_html_attr("name", "hashtags"),
+                    xs_html_attr("cols", "40"),
+                    xs_html_attr("rows", "4"),
+                    xs_html_attr("placeholder", "#cats\n#windowfriday\n#classicalmusic"),
+                    xs_html_text(followed_hashtags)),
+
+                xs_html_tag("br", NULL),
+
+                xs_html_sctag("input",
+                    xs_html_attr("type", "submit"),
+                    xs_html_attr("class", "button"),
+                    xs_html_attr("value", L("Update hashtags")))))));
+
     return top_controls;
 }
 
