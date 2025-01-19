@@ -2485,7 +2485,7 @@ int send_email(const char *msg)
 }
 
 
-void process_user_queue_item(snac *snac, xs_dict *q_item)
+void process_user_queue_item(snac *user, xs_dict *q_item)
 /* processes an item from the user queue */
 {
     const char *type;
@@ -2496,7 +2496,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
 
     if (strcmp(type, "message") == 0) {
         const xs_dict *msg = xs_dict_get(q_item, "message");
-        xs *rcpts = recipient_list(snac, msg, 1);
+        xs *rcpts = recipient_list(user, msg, 1);
         xs_set inboxes;
         const xs_str *actor;
 
@@ -2505,7 +2505,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         /* add this shared inbox first */
         xs *this_shared_inbox = xs_fmt("%s/shared-inbox", srv_baseurl);
         xs_set_add(&inboxes, this_shared_inbox);
-        enqueue_output(snac, msg, this_shared_inbox, 0, 0);
+        enqueue_output(user, msg, this_shared_inbox, 0, 0);
 
         /* iterate the recipients */
         xs_list_foreach(rcpts, actor) {
@@ -2516,10 +2516,10 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
                 if (inbox != NULL) {
                     /* add to the set and, if it's not there, send message */
                     if (xs_set_add(&inboxes, inbox) == 1)
-                        enqueue_output(snac, msg, inbox, 0, 0);
+                        enqueue_output(user, msg, inbox, 0, 0);
                 }
                 else
-                    snac_log(snac, xs_fmt("cannot find inbox for %s", actor));
+                    snac_log(user, xs_fmt("cannot find inbox for %s", actor));
             }
         }
 
@@ -2531,12 +2531,36 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
 
                 xs_list_foreach(shibx, inbox) {
                     if (xs_set_add(&inboxes, inbox) == 1)
-                        enqueue_output(snac, msg, inbox, 0, 0);
+                        enqueue_output(user, msg, inbox, 0, 0);
                 }
             }
         }
 
         xs_set_free(&inboxes);
+
+        /* relay this note */
+        if (strcmp(user->uid, "relay") != 0) { /* avoid loops */
+            snac relay;
+            if (user_open(&relay, "relay")) {
+                /* a 'relay' user exists */
+                const char *type = xs_dict_get(msg, "type");
+
+                if (xs_is_string(type) && strcmp(type, "Create") == 0) {
+                    const xs_val *object = xs_dict_get(msg, "object");
+
+                    if (xs_is_dict(object)) {
+                        object = xs_dict_get(object, "id");
+
+                        snac_debug(&relay, 1, xs_fmt("relaying message %s", object));
+
+                        xs *boost = msg_admiration(&relay, object, "Announce");
+                        enqueue_message(&relay, boost);
+                    }
+                }
+
+                user_free(&relay);
+            }
+        }
     }
     else
     if (strcmp(type, "input") == 0) {
@@ -2548,13 +2572,13 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         if (xs_is_null(msg))
             return;
 
-        if (!process_input_message(snac, msg, req)) {
+        if (!process_input_message(user, msg, req)) {
             if (retries > queue_retry_max)
-                snac_log(snac, xs_fmt("input giving up"));
+                snac_log(user, xs_fmt("input giving up"));
             else {
                 /* reenqueue */
-                enqueue_input(snac, msg, req, retries + 1);
-                snac_log(snac, xs_fmt("input requeue #%d", retries + 1));
+                enqueue_input(user, msg, req, retries + 1);
+                snac_log(user, xs_fmt("input requeue #%d", retries + 1));
             }
         }
     }
@@ -2564,7 +2588,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         const char *id = xs_dict_get(q_item, "message");
 
         if (!xs_is_null(id))
-            update_question(snac, id);
+            update_question(user, id);
     }
     else
     if (strcmp(type, "object_request") == 0) {
@@ -2574,17 +2598,17 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
             int status;
             xs *data = NULL;
 
-            status = activitypub_request(snac, id, &data);
+            status = activitypub_request(user, id, &data);
 
             if (valid_status(status))
                 object_add_ow(id, data);
 
-            snac_debug(snac, 1, xs_fmt("object_request %s %d", id, status));
+            snac_debug(user, 1, xs_fmt("object_request %s %d", id, status));
         }
     }
     else
     if (strcmp(type, "verify_links") == 0) {
-        verify_links(snac);
+        verify_links(user);
     }
     else
     if (strcmp(type, "actor_refresh") == 0) {
@@ -2596,16 +2620,16 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
             xs *actor_o = NULL;
             int status;
 
-            if (valid_status((status = activitypub_request(snac, actor, &actor_o))))
+            if (valid_status((status = activitypub_request(user, actor, &actor_o))))
                 actor_add(actor, actor_o);
             else
                 object_touch(actor);
 
-            snac_log(snac, xs_fmt("actor_refresh %s %d", actor, status));
+            snac_log(user, xs_fmt("actor_refresh %s %d", actor, status));
         }
     }
     else
-        snac_log(snac, xs_fmt("unexpected user q_item type '%s'", type));
+        snac_log(user, xs_fmt("unexpected user q_item type '%s'", type));
 }
 
 
