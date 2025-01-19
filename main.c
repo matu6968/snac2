@@ -6,6 +6,7 @@
 #include "xs_json.h"
 #include "xs_time.h"
 #include "xs_openssl.h"
+#include "xs_match.h"
 
 #include "snac.h"
 
@@ -34,6 +35,7 @@ int usage(void)
     printf("actor {basedir} [{uid}] {url}        Requests an actor\n");
     printf("note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n");
     printf("note_unlisted {basedir} {uid} {text} [files...] Sends an unlisted note with optional attachments\n");
+    printf("note_mention {basedir} {uid} {text} [files...] Sends a note only to mentioned accounts\n");
     printf("boost|announce {basedir} {uid} {url} Boosts (announces) a post\n");
     printf("unboost {basedir} {uid} {url}        Unboosts a post\n");
     printf("resetpwd {basedir} {uid}             Resets the password of a user\n");
@@ -620,7 +622,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (strcmp(cmd, "note") == 0 || strcmp(cmd, "note_unlisted") == 0) { /** **/
+    if (xs_match(cmd, "note|note_unlisted|note_mention")) { /** **/
         xs *content = NULL;
         xs *msg = NULL;
         xs *c_msg = NULL;
@@ -684,8 +686,14 @@ int main(int argc, char *argv[])
         else
             content = xs_dup(url);
 
-        msg = msg_note(&snac, content, NULL, NULL, attl,
-            strcmp(cmd, "note_unlisted") == 0 ? 2 : 0, getenv("LANG"));
+        int scope = 0;
+        if (strcmp(cmd, "note_mention") == 0)
+            scope = 1;
+        else
+        if (strcmp(cmd, "note_unlisted") == 0)
+            scope = 2;
+
+        msg = msg_note(&snac, content, NULL, NULL, attl, scope, getenv("LANG"));
 
         c_msg = msg_create(&snac, msg);
 
