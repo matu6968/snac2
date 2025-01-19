@@ -1374,7 +1374,7 @@ xs_html *html_top_controls(snac *snac)
                 xs_html_attr("enctype", "multipart/form-data"),
 
                 xs_html_tag("textarea",
-                    xs_html_attr("name", "hashtags"),
+                    xs_html_attr("name", "followed_hashtags"),
                     xs_html_attr("cols", "40"),
                     xs_html_attr("rows", "4"),
                     xs_html_attr("placeholder", "#cats\n#windowfriday\n#classicalmusic"),
@@ -4386,6 +4386,35 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                     enqueue_object_request(&snac, irt, t + 2);
                 }
             }
+        }
+
+        status = HTTP_STATUS_SEE_OTHER;
+    }
+    else
+    if (p_path && strcmp(p_path, "admin/followed-hashtags") == 0) { /** **/
+        const char *followed_hashtags = xs_dict_get(p_vars, "followed_hashtags");
+
+        if (xs_is_string(followed_hashtags)) {
+            xs *new_hashtags = xs_list_new();
+            xs *l = xs_split(followed_hashtags, "\n");
+            const char *v;
+
+            xs_list_foreach(l, v) {
+                xs *s1 = xs_strip_i(xs_dup(v));
+                s1 = xs_replace_i(s1, " ", "");
+
+                if (*s1 == '\0')
+                    continue;
+
+                xs *s2 = xs_utf8_to_lower(s1);
+                if (*s2 != '#')
+                    s2 = xs_str_prepend_i(s2, "#");
+
+                new_hashtags = xs_list_append(new_hashtags, s2);
+            }
+
+            snac.config = xs_dict_set(snac.config, "followed_hashtags", new_hashtags);
+            user_persist(&snac, 0);
         }
 
         status = HTTP_STATUS_SEE_OTHER;
