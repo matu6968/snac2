@@ -2,6 +2,10 @@
 
 ## UNRELEASED
 
+Added support for subscribing to LitePub (Pleroma-style) Fediverse Relays like e.g. https://fedi-relay.gyptazy.com to improve federation. See `snac(8)` (the Administrator Manual) for more information on how to use this feature.
+
+Added support for following hashtags. This is only useful if your instance is subscribed to relays (see above).
+
 Added support for a Mastodon-like `/authorize_interaction` webpoint entry, that allows following, liking and boosting from another account's Mastodon public web interface. To be able to use it, you must reconfigure your https proxy to redirect `/authorize_interaction` to snac (see `snac(8)`).
 
 Some fixes to accept `Event` objects properly (like those coming from implementations like https://gancio.org/ or https://mobilizon.fr).
