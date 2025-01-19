@@ -622,7 +622,9 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (xs_match(cmd, "note|note_unlisted|note_mention")) { /** **/
+    if (strcmp(cmd, "note") == 0 ||             /** **/
+        strcmp(cmd, "note_unlisted") == 0 ||    /** **/
+        strcmp(cmd, "note_mention") == 0) {     /** **/
         xs *content = NULL;
         xs *msg = NULL;
         xs *c_msg = NULL;
