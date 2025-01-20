@@ -602,8 +602,9 @@ snac adduser $SNAC_BASEDIR relay # only needed once
 snac follow $SNAC_BASEDIR relay https://fedi-relay.gyptazy.com/actor
 .Ed
 .Pp
-Lowering the data retention time for this special user is recommended, as the amount of
-received posts can be big.
+Please take note that subscribing to relays can increase the traffic towards your instance
+significantly. In any case, lowering the "Maximum days to keep posts" value for the relay
+special user is recommended (e.g. setting to just 1 day).
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev DEBUG
