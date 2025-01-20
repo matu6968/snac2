@@ -114,7 +114,8 @@ xs_str *actor_name(xs_dict *actor, const char *proxy)
 
 
 xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
-                        const char *udate, const char *url, int priv, int in_people, const char *proxy)
+                        const char *udate, const char *url, int priv,
+                        int in_people, const char *proxy, const char *lang)
 {
     xs_html *actor_icon = xs_html_tag("p", NULL);
 
@@ -220,6 +221,9 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             date_title = xs_str_cat(date_title, " / ", udate);
         }
 
+        if (xs_is_string(lang))
+            date_title = xs_str_cat(date_title, " (", lang, ")");
+
         xs_html_add(actor_icon,
             xs_html_text(" "),
             xs_html_tag("time",
@@ -266,6 +270,7 @@ xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, con
         const char *date  = NULL;
         const char *udate = NULL;
         const char *url   = NULL;
+        const char *lang  = NULL;
         int priv    = 0;
         const char *type = xs_dict_get(msg, "type");
 
@@ -277,7 +282,17 @@ xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, con
         date  = xs_dict_get(msg, "published");
         udate = xs_dict_get(msg, "updated");
 
-        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0, proxy);
+        lang = xs_dict_get(msg, "contentMap");
+        if (xs_is_dict(lang)) {
+            const char *v;
+            int c = 0;
+
+            xs_dict_next(lang, &lang, &v, &c);
+        }
+        else
+            lang = NULL;
+
+        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0, proxy, lang);
     }
 
     return actor_icon;
@@ -2769,7 +2784,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post-header"),
                     html_actor_icon(snac, actor, xs_dict_get(actor, "published"),
-                                    NULL, NULL, 0, 1, proxy)));
+                                    NULL, NULL, 0, 1, proxy, NULL)));
 
             /* content (user bio) */
             const char *c = xs_dict_get(actor, "summary");
@@ -3022,7 +3037,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
             xs_html_add(entry,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post"),
-                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy)));
+                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy, NULL)));
         }
         else
         if (strcmp(type, "Move") == 0) {
@@ -3036,7 +3051,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_add(entry,
                         xs_html_tag("div",
                             xs_html_attr("class", "snac-post"),
-                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0, proxy)));
+                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0, proxy, NULL)));
                 }
             }
         }
