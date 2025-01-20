@@ -96,19 +96,6 @@ int main(int argc, char *argv[])
         return snac_init(basedir);
     }
 
-    if (strcmp(cmd, "upgrade") == 0) { /** **/
-        int ret;
-
-        /* upgrade */
-        if ((basedir = GET_ARGV()) == NULL)
-            return usage();
-
-        if ((ret = srv_open(basedir, 1)) == 1)
-            srv_log(xs_dup("OK"));
-
-        return ret;
-    }
-
     if (strcmp(cmd, "markdown") == 0) { /** **/
         /* undocumented, for testing only */
         xs *c = xs_readall(stdin);
@@ -118,8 +105,20 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if ((basedir = GET_ARGV()) == NULL)
-        return usage();
+    if ((basedir = getenv("SNAC_BASEDIR")) == NULL) {
+        if ((basedir = GET_ARGV()) == NULL)
+            return usage();
+    }
+
+    if (strcmp(cmd, "upgrade") == 0) { /** **/
+        int ret;
+
+        /* upgrade */
+        if ((ret = srv_open(basedir, 1)) == 1)
+            srv_log(xs_dup("OK"));
+
+        return ret;
+    }
 
     if (!srv_open(basedir, 0)) {
         srv_log(xs_fmt("error opening data storage at %s", basedir));
