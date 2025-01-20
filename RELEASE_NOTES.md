@@ -22,6 +22,8 @@ Mastodon API: implemented limit= on notification fetches (contributed by nowster
 
 Reduced RSA key size for new users from 4096 to 2048. This will be friendlier to smaller machines, and everybody else out there is using 2048.
 
+If the `SNAC_BASEDIR` environment variable is defined and set to the base directory of your installation, you don't have to include the base directory in the command line.
+
 ## 2.68
 
 Fixed regression in link verification code (contributed by nowster).
