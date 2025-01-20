@@ -24,6 +24,8 @@ Reduced RSA key size for new users from 4096 to 2048. This will be friendlier to
 
 If the `SNAC_BASEDIR` environment variable is defined and set to the base directory of your installation, you don't have to include the base directory in the command line.
 
+Fixed a bug in the generation of the top page (contributed by an-im-dugud).
+
 ## 2.68
 
 Fixed regression in link verification code (contributed by nowster).
