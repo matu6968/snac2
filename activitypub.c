@@ -2465,9 +2465,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 
 
 int send_email(const xs_dict *mailinfo)
-/* invoke sendmail with email headers and body in msg */
+/* invoke curl */
 {
-    const xs_dict *smtp_cfg = xs_dict_get(srv_config, "smtp");
+    const xs_dict *smtp_cfg = xs_dict_get(srv_config, "email_notifications");
     const char 
         *url  = xs_dict_get(smtp_cfg, "url"),
         *user = xs_dict_get(smtp_cfg, "username"),
