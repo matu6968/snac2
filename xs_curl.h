@@ -9,6 +9,9 @@ xs_dict *xs_http_request(const char *method, const char *url,
                         const xs_str *body, int b_size, int *status,
                         xs_str **payload, int *p_size, int timeout);
 
+int xs_smtp_request(const char *url, const char *user, const char *pass,
+                   const char *from, const char *to, const xs_str *body);
+
 #ifdef XS_IMPLEMENTATION
 
 #include <curl/curl.h>
@@ -192,6 +195,39 @@ xs_dict *xs_http_request(const char *method, const char *url,
         xs_free(ipd.data);
 
     return response;
+}
+
+int xs_smtp_request(const char *url, const char *user, const char *pass,
+                   const char *from, const char *to, const xs_str *body)
+{
+    CURL *curl;
+    CURLcode res = CURLE_OK;
+    struct curl_slist *rcpt = NULL;
+    struct _payload_data pd = {
+        .data = (char *)body,
+        .size = xs_size(body),
+        .offset = 0
+    };
+
+    curl = curl_easy_init();
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_USERNAME, user);
+    curl_easy_setopt(curl, CURLOPT_PASSWORD, pass);
+    
+    curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from);
+    curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, rcpt = curl_slist_append(rcpt, to));
+
+    curl_easy_setopt(curl, CURLOPT_READDATA, &pd);
+    curl_easy_setopt(curl, CURLOPT_READFUNCTION, _post_callback);
+    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+
+    res = curl_easy_perform(curl);
+    
+    curl_slist_free_all(rcpt);
+    curl_easy_cleanup(curl);
+
+    return (int)res;
 }
 
 #endif /* XS_IMPLEMENTATION */

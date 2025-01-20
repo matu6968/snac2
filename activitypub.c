@@ -962,17 +962,20 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
 
         xs *subject = xs_fmt("snac notify for @%s@%s",
                     xs_dict_get(snac->config, "uid"), xs_dict_get(srv_config, "host"));
-        xs *from    = xs_fmt("snac-daemon <snac-daemon@%s>", xs_dict_get(srv_config, "host"));
+        xs *from    = xs_fmt("<snac-daemon@%s>", xs_dict_get(srv_config, "host"));
         xs *header  = xs_fmt(
-                    "From: %s\n"
+                    "From: snac-daemon %s\n"
                     "To: %s\n"
                     "Subject: %s\n"
                     "\n",
                     from, email, subject);
 
-        xs *email_body = xs_fmt("%s%s", header, body);
+        xs_dict *mailinfo = xs_dict_new();
+        xs_dict_append(mailinfo, "from", from);
+        xs_dict_append(mailinfo, "to", email);
+        xs_dict_append(mailinfo, "body", xs_fmt("%s%s", header, body));
 
-        enqueue_email(email_body, 0);
+        enqueue_email(mailinfo, 0);
     }
 
     /* telegram */
@@ -2461,32 +2464,19 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 }
 
 
-int send_email(const char *msg)
+int send_email(const xs_dict *mailinfo)
 /* invoke sendmail with email headers and body in msg */
 {
-    FILE *f;
-    int status;
-    int fds[2];
-    pid_t pid;
-    if (pipe(fds) == -1) return -1;
-    pid = vfork();
-    if (pid == -1) return -1;
-    else if (pid == 0) {
-        dup2(fds[0], 0);
-        close(fds[0]);
-        close(fds[1]);
-        execl("/usr/sbin/sendmail", "sendmail", "-t", (char *) NULL);
-        _exit(1);
-    }
-    close(fds[0]);
-    if ((f = fdopen(fds[1], "w")) == NULL) {
-        close(fds[1]);
-        return -1;
-    }
-    fprintf(f, "%s\n", msg);
-    fclose(f);
-    if (waitpid(pid, &status, 0) == -1) return -1;
-    return status;
+    const xs_dict *smtp_cfg = xs_dict_get(srv_config, "smtp");
+    const char 
+        *url  = xs_dict_get(smtp_cfg, "url"),
+        *user = xs_dict_get(smtp_cfg, "username"),
+        *pass = xs_dict_get(smtp_cfg, "password"),
+        *from = xs_dict_get(mailinfo, "from"),
+        *to   = xs_dict_get(mailinfo, "to"),
+        *body = xs_dict_get(mailinfo, "body");
+
+    return xs_smtp_request(url, user, pass, from, to, body);
 }
 
 
@@ -2749,7 +2739,7 @@ void process_queue_item(xs_dict *q_item)
     else
     if (strcmp(type, "email") == 0) {
         /* send this email */
-        const xs_str *msg = xs_dict_get(q_item, "message");
+        const xs_dict *msg = xs_dict_get(q_item, "message");
         int retries = xs_number_get(xs_dict_get(q_item, "retries"));
 
         if (!send_email(msg))

@@ -3195,7 +3195,7 @@ void enqueue_output_by_actor(snac *snac, const xs_dict *msg,
 }
 
 
-void enqueue_email(const xs_str *msg, int retries)
+void enqueue_email(const xs_dict *msg, int retries)
 /* enqueues an email message to be sent */
 {
     xs *qmsg   = _new_qmsg("email", msg, retries);
