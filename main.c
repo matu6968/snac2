@@ -51,10 +51,10 @@ int usage(void)
     printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
     printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
     printf("search {basedir} {uid} {regex}       Searches posts by content\n");
-    printf("export_csv {basedir} {uid}           Exports data as CSV files into current directory\n");
+    printf("export_csv {basedir} {uid}           Exports data as CSV files\n");
     printf("alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n");
     printf("migrate {basedir} {uid}              Migrates to the account defined as the alias\n");
-    printf("import_csv {basedir} {uid}           Imports data from CSV files in the current directory\n");
+    printf("import_csv {basedir} {uid}           Imports data from CSV files\n");
     printf("import_list {basedir} {uid} {file}   Imports a Mastodon CSV list file\n");
     printf("import_block_list {basedir} {uid} {file} Imports a Mastodon CSV block list file\n");
 
