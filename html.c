@@ -1368,7 +1368,9 @@ xs_html *html_top_controls(snac *snac)
                 xs_html_sctag("input",
                     xs_html_attr("type", "submit"),
                     xs_html_attr("class", "button"),
-                    xs_html_attr("value", L("Update user info")))))));
+                    xs_html_attr("value", L("Update user info"))),
+
+                xs_html_tag("p", NULL)))));
 
     xs *followed_hashtags_action = xs_fmt("%s/admin/followed-hashtags", snac->actor);
     xs *followed_hashtags = xs_join(xs_dict_get_def(snac->config,
