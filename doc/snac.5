@@ -24,9 +24,11 @@ A special subset of Markdown is allowed, including:
 .It bold
 **text between two pairs of asterisks**
 .It italic
-*text between a pair of asterisks*
+*text between a pair of asterisks* or _between a pair of underscores_
 .It strikethrough text
 ~~text between a pair of tildes~~
+.It underlined text
+__text between two pairs of underscores__
 .It code
 Text `between backticks` is formatted as code.
 .Bd -literal
@@ -53,6 +55,9 @@ Horizonal rules can be inserted by typing three minus symbols
 alone in a line.
 .It quoted text
 Lines starting with >.
+.It headers
+One, two or three # at the beginning of a line plus a space plus
+some text are converted to HTML headers.
 .It user mentions
 Strings in the format @user@host are requested using the Webfinger
 protocol and converted to links and mentions if something reasonable
