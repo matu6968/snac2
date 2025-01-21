@@ -138,7 +138,7 @@ static xs_str *greeting_html(void)
             while (xs_list_iter(&p, &uid)) {
                 snac user;
 
-                if (user_open(&user, uid)) {
+                if (strcmp(uid, "relay") && user_open(&user, uid)) {
                     xs_html_add(ul,
                         xs_html_tag("li",
                             xs_html_tag("a",
