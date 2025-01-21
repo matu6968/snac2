@@ -26,6 +26,8 @@ If the `SNAC_BASEDIR` environment variable is defined and set to the base direct
 
 Fixed a bug in the generation of the top page (contributed by an-im-dugud).
 
+Added support for Markdown headers and underlining (contributed by an-im-dugud).
+
 ## 2.68
 
 Fixed regression in link verification code (contributed by nowster).
