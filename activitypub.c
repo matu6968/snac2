@@ -2274,11 +2274,16 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                     xs *who_o = NULL;
 
                     if (valid_status(actor_request(snac, who, &who_o))) {
-                        if (timeline_admire(snac, object, actor, 0) == HTTP_STATUS_CREATED)
-                            snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
-                        else
-                            snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",
-                                actor, object));
+                        /* don't account as such announces by our own relay */
+                        xs *this_relay = xs_fmt("%s/relay", srv_baseurl);
+
+                        if (strcmp(actor, this_relay) != 0) {
+                            if (timeline_admire(snac, object, actor, 0) == HTTP_STATUS_CREATED)
+                                snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
+                            else
+                                snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",
+                                    actor, object));
+                        }
 
                         /* distribute the post with the actor as 'proxy' */
                         list_distribute(snac, actor, a_msg);
