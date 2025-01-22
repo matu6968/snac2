@@ -636,19 +636,32 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     if (xs_match(type, "Like|Announce|EmojiReact")) {
         const char *object = xs_dict_get(c_msg, "object");
 
-        if (xs_type(object) == XSTYPE_DICT)
+        if (xs_is_dict(object))
             object = xs_dict_get(object, "id");
 
         /* bad object id? reject */
-        if (xs_type(object) != XSTYPE_STRING)
+        if (!xs_is_string(object))
             return 0;
 
         /* if it's about one of our posts, accept it */
         if (xs_startswith(object, snac->actor))
             return 2;
 
-        /* if it's by someone we don't follow, reject */
-        return following_check(snac, actor);
+        /* if it's by someone we follow, accept it */
+        if (following_check(snac, actor))
+            return 1;
+
+        /* do we follow any hashtag? */
+        if (xs_is_list(xs_dict_get(snac->config, "followed_hashtags"))) {
+            xs *obj = NULL;
+
+            /* if the admired object contains any followed hashtag, accept it */
+            if (valid_status(object_get(object, &obj)) &&
+                followed_hashtag_check(snac, obj))
+                return 7;
+        }
+
+        return 0;
     }
 
     /* if it's an Undo, it must be from someone related to us */
