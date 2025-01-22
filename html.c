@@ -1855,22 +1855,20 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             }
         }
     }
-    else
-    if (strcmp(type, "Note") == 0) {
-        if (level == 0) {
-            /* is the parent not here? */
-            const char *parent = get_in_reply_to(msg);
 
-            if (user && !xs_is_null(parent) && *parent && !timeline_here(user, parent)) {
-                xs_html_add(post_header,
-                    xs_html_tag("div",
-                        xs_html_attr("class", "snac-origin"),
-                        xs_html_text(L("in reply to")),
-                        xs_html_text(" "),
-                        xs_html_tag("a",
-                            xs_html_attr("href", parent),
-                            xs_html_text("»"))));
-            }
+    if (strcmp(type, "Note") == 0) {
+        /* is the parent not here? */
+        const char *parent = get_in_reply_to(msg);
+
+        if (user && !xs_is_null(parent) && *parent && !timeline_here(user, parent)) {
+            xs_html_add(post_header,
+                xs_html_tag("div",
+                    xs_html_attr("class", "snac-origin"),
+                    xs_html_text(L("in reply to")),
+                    xs_html_text(" "),
+                    xs_html_tag("a",
+                        xs_html_attr("href", parent),
+                        xs_html_text("»"))));
         }
     }
 
