@@ -2302,7 +2302,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     }
     else
     if (strcmp(type, "Update") == 0) { /** **/
-        if (xs_match(utype, "Person|Service")) { /** **/
+        if (xs_match(utype, "Person|Service|Application")) { /** **/
             actor_add(actor, xs_dict_get(msg, "object"));
             timeline_touch(snac);
 
