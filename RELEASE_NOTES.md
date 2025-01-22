@@ -18,7 +18,7 @@ Fixed broken NetBSD build (missing dependency in Makefile.NetBSD).
 
 The user profile can now include longitude and latitude data for your current location.
 
-Mastodon API: implemented limit= on notification fetches (contributed by nowster), implemented faster min_id handling (contributed by nowster), obey the quiet public visibility set for posts.
+Mastodon API: implemented limit= on notification fetches (contributed by nowster), implemented faster min_id handling (contributed by nowster), obey the quiet public visibility set for posts, other timeline improvements (contributed by nowster).
 
 Reduced RSA key size for new users from 4096 to 2048. This will be friendlier to smaller machines, and everybody else out there is using 2048.
 
