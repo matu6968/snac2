@@ -1453,7 +1453,10 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
             xs *st = mastoapi_status(user, msg);
 
             if (st != NULL) {
-                out = xs_list_append(out, st);
+                if (ascending)
+                    out = xs_list_insert(out, 0, st);
+                else
+                    out = xs_list_append(out, st);
                 cnt++;
             }
 
