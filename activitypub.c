@@ -621,6 +621,36 @@ int followed_hashtag_check(snac *user, const xs_dict *msg)
 }
 
 
+void followed_hashtag_distribute(const xs_dict *msg)
+/* distribute this post to all users following the included hashtags */
+{
+    const char *id = xs_dict_get(msg, "id");
+    const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
+
+    if (!xs_is_string(id) || !xs_is_list(tags_in_msg) || xs_list_len(tags_in_msg) == 0)
+        return;
+
+    srv_debug(1, xs_fmt("followed_hashtag_distribute check for %s", id));
+
+    xs *users = user_list();
+    const char *uid;
+
+    xs_list_foreach(users, uid) {
+        snac user;
+
+        if (user_open(&user, uid)) {
+            if (followed_hashtag_check(&user, msg)) {
+                timeline_add(&user, id, msg);
+
+                snac_log(&user, xs_fmt("followed hashtag in %s", id));
+            }
+
+            user_free(&user);
+        }
+    }
+}
+
+
 int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 /* checks if this message is for me */
 {
@@ -2312,6 +2342,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 
                         /* distribute the post with the actor as 'proxy' */
                         list_distribute(snac, actor, a_msg);
+
+                        /* distribute the post to users following these hashtags */
+                        followed_hashtag_distribute(a_msg);
 
                         do_notify = 1;
                     }
