@@ -71,15 +71,22 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail)
              LANDLOCK_ACCESS_FS_REFER_COMPAT,
         s  = LANDLOCK_ACCESS_FS_MAKE_SOCK,
         x  = LANDLOCK_ACCESS_FS_EXECUTE;
+    char *resolved_path = NULL;
 
     LL_PATH(basedir,                rf|rd|w|c);
     LL_PATH("/tmp",                 rf|rd|w|c);
 #ifndef WITHOUT_SHM
     LL_PATH("/dev/shm",             rf|w|c   );
 #endif
+    LL_PATH("/dev/urandom",         rf       );
     LL_PATH("/etc/resolv.conf",     rf       );
     LL_PATH("/etc/hosts",           rf       );
-    LL_PATH("/etc/ssl",             rf       );
+    LL_PATH("/etc/ssl",             rf|rd    );
+    if ((resolved_path = realpath("/etc/ssl/cert.pem", NULL))) {
+        /* some distros like cert.pem to be a symlink */
+        LL_PATH(resolved_path,      rf       );
+        free(resolved_path);
+    }
     LL_PATH("/usr/share/zoneinfo",  rf       );
 
     if (mtime("/etc/pki") > 0)
