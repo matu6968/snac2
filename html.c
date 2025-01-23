@@ -2967,9 +2967,12 @@ xs_str *html_notifications(snac *user, int skip, int show)
         xs_html_attr("class", "snac-posts"));
     xs_html_add(body, posts);
 
-    xs_list *p = n_list;
+    xs_set rep;
+    xs_set_init(&rep);
+
     const xs_str *v;
-    while (xs_list_iter(&p, &v)) {
+
+    xs_list_foreach(n_list, v) {
         xs *noti = notify_get(user, v);
 
         if (noti == NULL)
@@ -2989,6 +2992,9 @@ xs_str *html_notifications(snac *user, int skip, int show)
             continue;
 
         object_get(id, &obj);
+
+        if (xs_set_add(&rep, xs_dict_get(obj, "id")) != 1)
+            continue;
 
         const char *actor_id = xs_dict_get(noti, "actor");
         xs *actor = NULL;
@@ -3102,6 +3108,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
                 entry);
         }
     }
+
+    xs_set_free(&rep);
 
     if (noti_new == NULL && noti_seen == NULL)
         xs_html_add(body,
