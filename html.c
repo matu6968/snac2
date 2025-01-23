@@ -2993,7 +2993,9 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
         object_get(id, &obj);
 
-        if (xs_set_add(&rep, xs_dict_get(obj, "id")) != 1)
+        const char *msg_id = NULL;
+
+        if (xs_is_dict(obj) && (msg_id = xs_dict_get(obj, "id")) && xs_set_add(&rep, msg_id) != 1)
             continue;
 
         const char *actor_id = xs_dict_get(noti, "actor");
