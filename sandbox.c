@@ -81,7 +81,7 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail)
     LL_PATH("/dev/urandom",         rf       );
     LL_PATH("/etc/resolv.conf",     rf       );
     LL_PATH("/etc/hosts",           rf       );
-    LL_PATH("/etc/ssl",             rf|rd    );
+    LL_PATH("/etc/ssl/openssl.cnf", rf       );
     if ((resolved_path = realpath("/etc/ssl/cert.pem", NULL))) {
         /* some distros like cert.pem to be a symlink */
         LL_PATH(resolved_path,      rf       );
