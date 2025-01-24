@@ -1855,13 +1855,15 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             }
         }
     }
-    else
-    if (strcmp(type, "Note") == 0) {
-        if (level == 0) {
-            /* is the parent not here? */
-            const char *parent = get_in_reply_to(msg);
 
-            if (user && !xs_is_null(parent) && *parent && !timeline_here(user, parent)) {
+    if (user && strcmp(type, "Note") == 0) {
+        /* is the parent not here? */
+        const char *parent = get_in_reply_to(msg);
+
+        if (!xs_is_null(parent) && *parent) {
+            xs *md5 = xs_md5_hex(parent, strlen(parent));
+
+            if (!timeline_here(user, md5)) {
                 xs_html_add(post_header,
                     xs_html_tag("div",
                         xs_html_attr("class", "snac-origin"),
@@ -2965,9 +2967,12 @@ xs_str *html_notifications(snac *user, int skip, int show)
         xs_html_attr("class", "snac-posts"));
     xs_html_add(body, posts);
 
-    xs_list *p = n_list;
+    xs_set rep;
+    xs_set_init(&rep);
+
     const xs_str *v;
-    while (xs_list_iter(&p, &v)) {
+
+    xs_list_foreach(n_list, v) {
         xs *noti = notify_get(user, v);
 
         if (noti == NULL)
@@ -2987,6 +2992,11 @@ xs_str *html_notifications(snac *user, int skip, int show)
             continue;
 
         object_get(id, &obj);
+
+        const char *msg_id = NULL;
+
+        if (xs_is_dict(obj) && (msg_id = xs_dict_get(obj, "id")) && xs_set_add(&rep, msg_id) != 1)
+            continue;
 
         const char *actor_id = xs_dict_get(noti, "actor");
         xs *actor = NULL;
@@ -3100,6 +3110,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
                 entry);
         }
     }
+
+    xs_set_free(&rep);
 
     if (noti_new == NULL && noti_seen == NULL)
         xs_html_add(body,

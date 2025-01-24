@@ -587,6 +587,70 @@ int is_msg_from_private_user(const xs_dict *msg)
 }
 
 
+int followed_hashtag_check(snac *user, const xs_dict *msg)
+/* returns true if this message contains a hashtag followed by me */
+{
+    const xs_list *fw_tags = xs_dict_get(user->config, "followed_hashtags");
+
+    if (xs_is_list(fw_tags)) {
+        const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
+
+        if (xs_is_list(tags_in_msg)) {
+            const xs_dict *te;
+
+            /* iterate the tags in the message */
+            xs_list_foreach(tags_in_msg, te) {
+                if (xs_is_dict(te)) {
+                    const char *type = xs_dict_get(te, "type");
+                    const char *name = xs_dict_get(te, "name");
+
+                    if (xs_is_string(type) && xs_is_string(name)) {
+                        if (strcmp(type, "Hashtag") == 0) {
+                            xs *lc_name = xs_utf8_to_lower(name);
+
+                            if (xs_list_in(fw_tags, lc_name) != -1)
+                                return 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+void followed_hashtag_distribute(const xs_dict *msg)
+/* distribute this post to all users following the included hashtags */
+{
+    const char *id = xs_dict_get(msg, "id");
+    const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
+
+    if (!xs_is_string(id) || !xs_is_list(tags_in_msg) || xs_list_len(tags_in_msg) == 0)
+        return;
+
+    srv_debug(1, xs_fmt("followed_hashtag_distribute check for %s", id));
+
+    xs *users = user_list();
+    const char *uid;
+
+    xs_list_foreach(users, uid) {
+        snac user;
+
+        if (user_open(&user, uid)) {
+            if (followed_hashtag_check(&user, msg)) {
+                timeline_add(&user, id, msg);
+
+                snac_log(&user, xs_fmt("followed hashtag in %s", id));
+            }
+
+            user_free(&user);
+        }
+    }
+}
+
+
 int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 /* checks if this message is for me */
 {
@@ -602,19 +666,32 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     if (xs_match(type, "Like|Announce|EmojiReact")) {
         const char *object = xs_dict_get(c_msg, "object");
 
-        if (xs_type(object) == XSTYPE_DICT)
+        if (xs_is_dict(object))
             object = xs_dict_get(object, "id");
 
         /* bad object id? reject */
-        if (xs_type(object) != XSTYPE_STRING)
+        if (!xs_is_string(object))
             return 0;
 
         /* if it's about one of our posts, accept it */
         if (xs_startswith(object, snac->actor))
             return 2;
 
-        /* if it's by someone we don't follow, reject */
-        return following_check(snac, actor);
+        /* if it's by someone we follow, accept it */
+        if (following_check(snac, actor))
+            return 1;
+
+        /* do we follow any hashtag? */
+        if (xs_is_list(xs_dict_get(snac->config, "followed_hashtags"))) {
+            xs *obj = NULL;
+
+            /* if the admired object contains any followed hashtag, accept it */
+            if (valid_status(object_get(object, &obj)) &&
+                followed_hashtag_check(snac, obj))
+                return 7;
+        }
+
+        return 0;
     }
 
     /* if it's an Undo, it must be from someone related to us */
@@ -708,30 +785,8 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     }
 
     /* does this message contain a tag we are following? */
-    const xs_list *fw_tags = xs_dict_get(snac->config, "followed_hashtags");
-    if (pub_msg && xs_type(fw_tags) == XSTYPE_LIST) {
-        const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
-        if (xs_type(tags_in_msg) == XSTYPE_LIST) {
-            const xs_dict *te;
-
-            /* iterate the tags in the message */
-            xs_list_foreach(tags_in_msg, te) {
-                if (xs_type(te) == XSTYPE_DICT) {
-                    const char *type = xs_dict_get(te, "type");
-                    const char *name = xs_dict_get(te, "name");
-
-                    if (xs_type(type) == XSTYPE_STRING && xs_type(name) == XSTYPE_STRING) {
-                        if (strcmp(type, "Hashtag") == 0) {
-                            xs *lc_name = xs_utf8_to_lower(name);
-
-                            if (xs_list_in(fw_tags, lc_name) != -1)
-                                return 7;
-                        }
-                    }
-                }
-            }
-        }
-    }
+    if (pub_msg && followed_hashtag_check(snac, msg))
+        return 7;
 
     return 0;
 }
@@ -2277,14 +2332,22 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                     xs *who_o = NULL;
 
                     if (valid_status(actor_request(snac, who, &who_o))) {
-                        if (timeline_admire(snac, object, actor, 0) == HTTP_STATUS_CREATED)
-                            snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
-                        else
-                            snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",
-                                actor, object));
+                        /* don't account as such announces by our own relay */
+                        xs *this_relay = xs_fmt("%s/relay", srv_baseurl);
+
+                        if (strcmp(actor, this_relay) != 0) {
+                            if (timeline_admire(snac, object, actor, 0) == HTTP_STATUS_CREATED)
+                                snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
+                            else
+                                snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",
+                                    actor, object));
+                        }
 
                         /* distribute the post with the actor as 'proxy' */
                         list_distribute(snac, actor, a_msg);
+
+                        /* distribute the post to users following these hashtags */
+                        followed_hashtag_distribute(a_msg);
 
                         do_notify = 1;
                     }
@@ -2300,7 +2363,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     }
     else
     if (strcmp(type, "Update") == 0) { /** **/
-        if (xs_match(utype, "Person|Service")) { /** **/
+        if (xs_match(utype, "Person|Service|Application")) { /** **/
             actor_add(actor, xs_dict_get(msg, "object"));
             timeline_touch(snac);
 
