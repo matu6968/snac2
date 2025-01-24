@@ -591,16 +591,19 @@ instance can subscribe to LitePub (Pleroma-style) Fediverse Relays. Doing this i
 visibility and allows following hashtags. To do this, you must create a special user named
 relay and, from it, follow the relay actor(s) like you do with regular actor URLs. This
 special user will start receiving boosts from the relay server of posts from other instances
-also following it. It any other user of the same
+also following it. If any other user of the same
 .Nm
 instance follows any of the hashtags included in these boosted posts coming from the relay,
-they will received as if they were for them.
+they will be received as if they were for them.
 .Pp
 Example:
 .Bd -literal -offset indent
 snac adduser $SNAC_BASEDIR relay # only needed once
 snac follow $SNAC_BASEDIR relay https://relay.example.com/actor
 .Ed
+.Pp
+Users on your instance do NOT need to follow the local relay user to benefit from following
+hashtags.
 .Pp
 Please take note that subscribing to relays can increase the traffic towards your instance
 significantly. In any case, lowering the "Maximum days to keep posts" value for the relay
