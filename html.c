@@ -2967,8 +2967,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
         xs_html_attr("class", "snac-posts"));
     xs_html_add(body, posts);
 
-    xs_set rep;
-    xs_set_init(&rep);
+    /* dict to store previous notification labels */
+    xs *admiration_labels = xs_dict_new();
 
     const xs_str *v;
 
@@ -2995,8 +2995,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
         const char *msg_id = NULL;
 
-        if (xs_is_dict(obj) && (msg_id = xs_dict_get(obj, "id")) && xs_set_add(&rep, msg_id) != 1)
-            continue;
+        if (xs_is_dict(obj))
+            msg_id = xs_dict_get(obj, "id");
 
         const char *actor_id = xs_dict_get(noti, "actor");
         xs *actor = NULL;
@@ -3030,9 +3030,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
         xs *s_date = xs_crop_i(xs_dup(date), 0, 10);
 
-        xs_html *entry = xs_html_tag("div",
-            xs_html_attr("class", "snac-post-with-desc"),
-            xs_html_tag("p",
+        xs_html *this_html_label = xs_html_container(
                 xs_html_tag("b",
                     xs_html_text(label),
                     xs_html_text(" by "),
@@ -3043,7 +3041,37 @@ xs_str *html_notifications(snac *user, int skip, int show)
                 xs_html_tag("time",
                     xs_html_attr("class", "dt-published snac-pubdate"),
                     xs_html_attr("title", date),
-                    xs_html_text(s_date))));
+                    xs_html_text(s_date)));
+
+        xs_html *html_label = NULL;
+
+        if (xs_is_string(msg_id)) {
+            const xs_val *prev_label = xs_dict_get(admiration_labels, msg_id);
+
+            if (xs_type(prev_label) == XSTYPE_DATA) {
+                /* there is a previous list of admiration labels! */
+                xs_data_get(&html_label, prev_label);
+
+                xs_html_add(html_label,
+                    xs_html_sctag("br", NULL),
+                    this_html_label);
+
+                continue;
+            }
+        }
+
+        xs_html *entry = NULL;
+
+        html_label = xs_html_tag("p",
+            this_html_label);
+
+        /* store in the admiration labels dict */
+        xs *pl = xs_data_new(&html_label, sizeof(html_label));
+        admiration_labels = xs_dict_set(admiration_labels, msg_id, pl);
+
+        entry = xs_html_tag("div",
+            xs_html_attr("class", "snac-post-with-desc"),
+            html_label);
 
         if (strcmp(type, "Follow") == 0 || strcmp(utype, "Follow") == 0 || strcmp(type, "Block") == 0) {
             xs_html_add(entry,
@@ -3110,8 +3138,6 @@ xs_str *html_notifications(snac *user, int skip, int show)
                 entry);
         }
     }
-
-    xs_set_free(&rep);
 
     if (noti_new == NULL && noti_seen == NULL)
         xs_html_add(body,
