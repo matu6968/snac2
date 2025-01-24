@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.69 "Yin/Yang of Love"
 
 Added support for subscribing to LitePub (Pleroma-style) Fediverse Relays like e.g. https://fedi-relay.gyptazy.com to improve federation. See `snac(8)` (the Administrator Manual) for more information on how to use this feature.
 
