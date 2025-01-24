@@ -318,6 +318,10 @@ int adduser(const char *uid)
         mkdirx(d);
     }
 
+    /* add a specially short data retention time for the relay */
+    if (strcmp(uid, "relay") == 0)
+        config = xs_dict_set(config, "purge_days", xs_stock(1));
+
     xs *cfn = xs_fmt("%s/user.json", basedir);
 
     if ((f = fopen(cfn, "w")) == NULL) {
