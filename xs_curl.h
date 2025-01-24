@@ -10,7 +10,8 @@ xs_dict *xs_http_request(const char *method, const char *url,
                         xs_str **payload, int *p_size, int timeout);
 
 int xs_smtp_request(const char *url, const char *user, const char *pass,
-                   const char *from, const char *to, const xs_str *body);
+                   const char *from, const char *to, const xs_str *body,
+                   int use_ssl);
 
 #ifdef XS_IMPLEMENTATION
 
@@ -198,7 +199,8 @@ xs_dict *xs_http_request(const char *method, const char *url,
 }
 
 int xs_smtp_request(const char *url, const char *user, const char *pass,
-                   const char *from, const char *to, const xs_str *body)
+                   const char *from, const char *to, const xs_str *body,
+                   int use_ssl)
 {
     CURL *curl;
     CURLcode res = CURLE_OK;
@@ -212,11 +214,19 @@ int xs_smtp_request(const char *url, const char *user, const char *pass,
     curl = curl_easy_init();
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_USERNAME, user);
-    curl_easy_setopt(curl, CURLOPT_PASSWORD, pass);
+    if (user && pass) {
+        /* allow authless connections, to, e.g. localhost */
+        curl_easy_setopt(curl, CURLOPT_USERNAME, user);
+        curl_easy_setopt(curl, CURLOPT_PASSWORD, pass);
+    }
+
+    if (use_ssl)
+        curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
     
     curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from);
-    curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, rcpt = curl_slist_append(rcpt, to));
+
+    rcpt = curl_slist_append(rcpt, to);
+    curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, rcpt);
 
     curl_easy_setopt(curl, CURLOPT_READDATA, &pd);
     curl_easy_setopt(curl, CURLOPT_READFUNCTION, _post_callback);
@@ -224,8 +234,8 @@ int xs_smtp_request(const char *url, const char *user, const char *pass,
 
     res = curl_easy_perform(curl);
     
-    curl_slist_free_all(rcpt);
     curl_easy_cleanup(curl);
+    curl_slist_free_all(rcpt);
 
     return (int)res;
 }

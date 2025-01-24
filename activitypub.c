@@ -2538,8 +2538,9 @@ int send_email(const xs_dict *mailinfo)
         *from = xs_dict_get(mailinfo, "from"),
         *to   = xs_dict_get(mailinfo, "to"),
         *body = xs_dict_get(mailinfo, "body");
+    int smtp_port = parse_port(url, NULL);
 
-    return xs_smtp_request(url, user, pass, from, to, body);
+    return xs_smtp_request(url, user, pass, from, to, body, smtp_port == 465 || smtp_port == 587);
 }
 
 

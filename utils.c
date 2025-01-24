@@ -931,6 +931,7 @@ int parse_port(const char *url, const char **errstr)
 	if (!(col = strchr(url, ':'))) {
         if (errstr)
 		    *errstr = "bad url";
+
 		return -1;
 	}
 	
@@ -950,13 +951,17 @@ int parse_port(const char *url, const char **errstr)
             if (ret != -1) 
                 return ret;
             
-            *errstr = strerror(errno);
+            if (errstr)
+                *errstr = strerror(errno);
+
             return -1;
         }
 		
 		return tmp;
 	}
 
-	*errstr = "unknown protocol";
+    if (errstr)
+	    *errstr = "unknown protocol";
+
 	return -1;
 }
