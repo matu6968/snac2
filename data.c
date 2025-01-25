@@ -1399,11 +1399,13 @@ void timeline_update_indexes(snac *snac, const char *id)
         if (valid_status(object_get(id, &msg))) {
             /* if its ours and is public, also store in public */
             if (is_msg_public(msg)) {
-                object_user_cache_add(snac, id, "public");
-
-                /* also add it to the instance public timeline */
-                xs *ipt = xs_fmt("%s/public.idx", srv_basedir);
-                index_add(ipt, id);
+                if (object_user_cache_add(snac, id, "public") >= 0) {
+                    /* also add it to the instance public timeline */
+                    xs *ipt = xs_fmt("%s/public.idx", srv_basedir);
+                    index_add(ipt, id);
+                }
+                else
+                    srv_debug(1, xs_fmt("Not added to public instance index %s", id));
             }
         }
     }
@@ -1524,8 +1526,17 @@ xs_list *timeline_instance_list(int skip, int show)
 /* returns the timeline for the full instance */
 {
     xs *idx = instance_index_fn();
+    xs *lst = index_list_desc(idx, skip, show);
 
-    return index_list_desc(idx, skip, show);
+    /* make the list unique */
+    xs_set rep;
+    xs_set_init(&rep);
+    const char *md5;
+
+    xs_list_foreach(lst, md5)
+        xs_set_add(&rep, md5);
+
+    return xs_set_result(&rep);
 }
 
 
