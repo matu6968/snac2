@@ -2967,6 +2967,9 @@ xs_str *html_notifications(snac *user, int skip, int show)
         xs_html_attr("class", "snac-posts"));
     xs_html_add(body, posts);
 
+    xs_set rep;
+    xs_set_init(&rep);
+
     /* dict to store previous notification labels */
     xs *admiration_labels = xs_dict_new();
 
@@ -2983,12 +2986,16 @@ xs_str *html_notifications(snac *user, int skip, int show)
         const char *utype = xs_dict_get(noti, "utype");
         const char *id    = xs_dict_get(noti, "objid");
         const char *date  = xs_dict_get(noti, "date");
+        const char *id2   = xs_dict_get_path(noti, "msg.id");
         xs *wrk = NULL;
 
         if (xs_is_null(id))
             continue;
 
         if (is_hidden(user, id))
+            continue;
+
+        if (xs_is_string(id2) && xs_set_add(&rep, id2) != 1)
             continue;
 
         object_get(id, &obj);
@@ -3157,6 +3164,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_attr("href", url),
                     xs_html_text(L("More...")))));
     }
+
+    xs_set_free(&rep);
 
     xs_html_add(body,
         html_footer());
