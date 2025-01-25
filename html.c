@@ -3074,7 +3074,9 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
         /* store in the admiration labels dict */
         xs *pl = xs_data_new(&html_label, sizeof(html_label));
-        admiration_labels = xs_dict_set(admiration_labels, msg_id, pl);
+
+        if (xs_is_string(msg_id))
+            admiration_labels = xs_dict_set(admiration_labels, msg_id, pl);
 
         entry = xs_html_tag("div",
             xs_html_attr("class", "snac-post-with-desc"),
