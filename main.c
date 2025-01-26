@@ -49,6 +49,7 @@ int usage(void)
     printf("unblock {basedir} {instance_url}     Unblocks a full instance\n");
     printf("limit {basedir} {uid} {actor}        Limits an actor (drops their announces)\n");
     printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
+    printf("unmute {basedir} {uid} {actor}       Unmutes a previously muted actor\n");
     printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
     printf("search {basedir} {uid} {regex}       Searches posts by content\n");
     printf("export_csv {basedir} {uid}           Exports data as CSV files\n");
@@ -442,6 +443,18 @@ int main(int argc, char *argv[])
             snac_log(&snac, xs_fmt("actor %s is no longer limited", url));
         else
             snac_log(&snac, xs_fmt("error unlimiting actor %s (%d)", url, ret));
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "unmute") == 0) { /** **/
+        if (is_muted(&snac, url)) {
+            unmute(&snac, url);
+
+            printf("%s unmuted\n", url);
+        }
+        else
+            printf("%s actor is not muted\n", url);
 
         return 0;
     }
