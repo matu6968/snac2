@@ -1489,16 +1489,28 @@ xs_str *user_index_fn(snac *user, const char *idx_name)
 }
 
 
-xs_list *timeline_simple_list(snac *user, const char *idx_name, int skip, int show)
+xs_list *timeline_simple_list(snac *user, const char *idx_name, int skip, int show, int *more)
 /* returns a timeline (with all entries) */
 {
     xs *idx = user_index_fn(user, idx_name);
 
-    return index_list_desc(idx, skip, show);
+    /* if a more flag is sent, request one more */
+    xs_list *lst = index_list_desc(idx, skip, show + (more != NULL ? 1 : 0));
+
+    if (more != NULL) {
+        if (xs_list_len(lst) > show) {
+            *more = 1;
+            lst = xs_list_del(lst, -1);
+        }
+        else
+            *more = 0;
+    }
+
+    return lst;
 }
 
 
-xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show)
+xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show, int *more)
 /* returns a timeline (only top level entries) */
 {
     int c_max;
@@ -1510,7 +1522,7 @@ xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show)
     if (show > c_max)
         show = c_max;
 
-    xs *list = timeline_simple_list(snac, idx_name, skip, show);
+    xs *list = timeline_simple_list(snac, idx_name, skip, show, more);
 
     return timeline_top_level(snac, list);
 }
@@ -2709,9 +2721,9 @@ xs_list *content_search(snac *user, const char *regex,
     const char *md5s[3] = {0};
     int c[3] = {0};
 
-    tls[0] = timeline_simple_list(user, "public", 0, XS_ALL);   /* public */
+    tls[0] = timeline_simple_list(user, "public", 0, XS_ALL, NULL);   /* public */
     tls[1] = timeline_instance_list(0, XS_ALL); /* instance */
-    tls[2] = priv ? timeline_simple_list(user, "private", 0, XS_ALL) : xs_list_new(); /* private or none */
+    tls[2] = priv ? timeline_simple_list(user, "private", 0, XS_ALL, NULL) : xs_list_new(); /* private or none */
 
     /* first positioning */
     for (int n = 0; n < 3; n++)

@@ -1676,7 +1676,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 else
                 if (strcmp(opt, "statuses") == 0) { /** **/
                     /* the public list of posts of a user */
-                    xs *timeline = timeline_simple_list(&snac2, "public", 0, 256);
+                    xs *timeline = timeline_simple_list(&snac2, "public", 0, 256, NULL);
                     xs_list *p   = timeline;
                     const xs_str *v;
 

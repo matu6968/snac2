@@ -3081,7 +3081,7 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         int cnt = xs_number_get(xs_dict_get_def(srv_config, "max_public_entries", "20"));
 
         /* get the public outbox or the pinned list */
-        xs *elems = *p_path == 'o' ? timeline_simple_list(&snac, "public", 0, cnt) : pinned_list(&snac);
+        xs *elems = *p_path == 'o' ? timeline_simple_list(&snac, "public", 0, cnt, NULL) : pinned_list(&snac);
 
         xs_list_foreach(elems, v) {
             xs *i = NULL;

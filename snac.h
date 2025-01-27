@@ -157,8 +157,8 @@ int timeline_here(snac *snac, const char *md5);
 int timeline_get_by_md5(snac *snac, const char *md5, xs_dict **msg);
 int timeline_del(snac *snac, const char *id);
 xs_str *user_index_fn(snac *user, const char *idx_name);
-xs_list *timeline_simple_list(snac *user, const char *idx_name, int skip, int show);
-xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show);
+xs_list *timeline_simple_list(snac *user, const char *idx_name, int skip, int show, int *more);
+xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show, int *more);
 int timeline_add(snac *snac, const char *id, const xs_dict *o_msg);
 int timeline_admire(snac *snac, const char *id, const char *admirer, int like);
 
