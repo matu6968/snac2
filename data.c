@@ -1528,6 +1528,14 @@ xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show, int
 }
 
 
+void timeline_add_mark(snac *user)
+/* adds an "already seen" mark to the private timeline */
+{
+    xs *fn = xs_fmt("%s/private.idx", user->basedir);
+    index_add_md5(fn, MD5_ALREADY_SEEN_MARK);
+}
+
+
 xs_str *instance_index_fn(void)
 {
     return xs_fmt("%s/public.idx", srv_basedir);

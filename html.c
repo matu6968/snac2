@@ -2648,9 +2648,30 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     xs_html_add(body,
         posts);
 
+    int mark_shown = 0;
+
     while (xs_list_iter(&p, &v)) {
         xs *msg = NULL;
         int status;
+
+        /* "already seen" mark? */
+        if (strcmp(v, MD5_ALREADY_SEEN_MARK) == 0) {
+            if (skip == 0 && !mark_shown) {
+                xs *s = xs_fmt("%s/admin#top", user->actor);
+
+                xs_html_add(posts,
+                    xs_html_text(L("No more unseen posts")),
+                    xs_html_text(" - "),
+                    xs_html_tag("a",
+                        xs_html_attr("href",  s),
+                        xs_html_text(L("Back to top"))),
+                    xs_html_sctag("hr", NULL));
+            }
+
+            mark_shown = 1;
+
+            continue;
+        }
 
         if (utl && user && !is_pinned_by_md5(user, v))
             status = timeline_get_by_md5(user, v, &msg);
@@ -3473,6 +3494,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 }
             }
             else {
+                /** the private timeline **/
                 double t = history_mtime(&snac, "timeline.html_");
 
                 /* if enabled by admin, return a cached page if its timestamp is:
@@ -3491,6 +3513,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                     snac_debug(&snac, 1, xs_fmt("building timeline"));
 
                     xs *list = timeline_list(&snac, "private", skip, show, &more);
+
+                    timeline_add_mark(&snac);
 
                     *body = html_timeline(&snac, list, 0, skip, show,
                             more, NULL, "/admin", 1, error);

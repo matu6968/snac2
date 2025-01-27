@@ -22,6 +22,8 @@
 
 #define MD5_HEX_SIZE 33
 
+#define MD5_ALREADY_SEEN_MARK "00000000000000000000000000000000"
+
 extern double disk_layout;
 extern xs_str *srv_basedir;
 extern xs_dict *srv_config;
@@ -163,6 +165,8 @@ int timeline_add(snac *snac, const char *id, const xs_dict *o_msg);
 int timeline_admire(snac *snac, const char *id, const char *admirer, int like);
 
 xs_list *timeline_top_level(snac *snac, const xs_list *list);
+void timeline_add_mark(snac *user);
+
 xs_list *local_list(snac *snac, int max);
 xs_str *instance_index_fn(void);
 xs_list *timeline_instance_list(int skip, int show);
