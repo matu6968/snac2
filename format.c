@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_regex.h"
@@ -92,6 +92,8 @@ static xs_str *format_line(const char *line, xs_list **attach)
             "`[^`]+`"                           "|"
             "~~[^~]+~~"                         "|"
             "\\*\\*?\\*?[^\\*]+\\*?\\*?\\*"     "|"
+            "_[^_]+_"                           "|" //anzu
+            "__[^_]+__"                         "|" //anzu
             "!\\[[^]]+\\]\\([^\\)]+\\)"         "|"
             "\\[[^]]+\\]\\([^\\)]+\\)"          "|"
             "[a-z]+:/" "/[^[:space:]]+"         "|"
@@ -127,6 +129,20 @@ static xs_str *format_line(const char *line, xs_list **attach)
                 xs *s2 = xs_fmt("<i>%s</i>", s1);
                 s = xs_str_cat(s, s2);
             }
+            //anzu - begin
+            else
+            if (xs_startswith(v, "__")) {
+                xs *s1 = xs_strip_chars_i(xs_dup(v), "_");
+                xs *s2 = xs_fmt("<u>%s</u>", s1);
+                s = xs_str_cat(s, s2);
+            }
+            else
+            if (xs_startswith(v, "_")) {
+                xs *s1 = xs_strip_chars_i(xs_dup(v), "_");
+                xs *s2 = xs_fmt("<i>%s</i>", s1);
+                s = xs_str_cat(s, s2);
+            }
+            //anzu - end
             else
             if (xs_startswith(v, "~~")) {
                 xs *s1 = xs_strip_chars_i(xs_dup(v), "~");
@@ -303,6 +319,31 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
             continue;
         }
 
+        //anzu - begin
+        // h1 reserved for snac?
+        if (xs_startswith(ss, "# ")) {
+            ss = xs_strip_i(xs_crop_i(ss, 2, 0));
+            s = xs_str_cat(s, "<h2>");
+            s = xs_str_cat(s, ss);
+            s = xs_str_cat(s, "</h2>");
+            continue;
+        }
+        if (xs_startswith(ss, "## ")) {
+            ss = xs_strip_i(xs_crop_i(ss, 3, 0));
+            s = xs_str_cat(s, "<h2>");
+            s = xs_str_cat(s, ss);
+            s = xs_str_cat(s, "</h2>");
+            continue;
+        }
+        if (xs_startswith(ss, "### ")) {
+            ss = xs_strip_i(xs_crop_i(ss, 4, 0));
+            s = xs_str_cat(s, "<h3>");
+            s = xs_str_cat(s, ss);
+            s = xs_str_cat(s, "</h3>");
+            continue;
+        }
+        //anzu - end
+
         if (xs_startswith(ss, ">")) {
             /* delete the > and subsequent spaces */
             ss = xs_strip_i(xs_crop_i(ss, 1, 0));
@@ -336,6 +377,8 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
     s = xs_replace_i(s, "<br><br><blockquote>", "<br><blockquote>");
     s = xs_replace_i(s, "</blockquote><br>", "</blockquote>");
     s = xs_replace_i(s, "</pre><br>", "</pre>");
+    s = xs_replace_i(s, "</h2><br>", "</h2>"); //anzu ???
+    s = xs_replace_i(s, "</h3><br>", "</h3>"); //anzu ???
 
     {
         /* traditional emoticons */
@@ -378,7 +421,9 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
 
 const char *valid_tags[] = {
     "a", "p", "br", "br/", "blockquote", "ul", "ol", "li", "cite", "small",
-    "span", "i", "b", "u", "s", "pre", "code", "em", "strong", "hr", "img", "del", "bdi", NULL
+    "span", "i", "b", "u", "s", "pre", "code", "em", "strong", "hr", "img", "del", "bdi",
+    "h2","h3", //anzu
+    NULL
 };
 
 xs_str *sanitize(const char *content)

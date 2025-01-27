@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
 #ifndef NO_MASTODON_API
 
@@ -1339,6 +1339,9 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
     const char *since_id = xs_dict_get(args, "since_id");
     const char *min_id   = xs_dict_get(args, "min_id"); /* unsupported old-to-new navigation */
     const char *limit_s  = xs_dict_get(args, "limit");
+    int (*iterator)(FILE *, char *);
+    int initial_status = 0;
+    int ascending = 0;
     int limit = 0;
     int cnt   = 0;
 
@@ -1348,27 +1351,40 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
     if (limit == 0)
         limit = 20;
 
-    if (index_desc_first(f, md5, 0)) {
+    if (min_id) {
+        iterator = &index_asc_next;
+        initial_status = index_asc_first(f, md5, MID_TO_MD5(min_id));
+        ascending = 1;
+    }
+    else {
+        iterator = &index_desc_next;
+        initial_status = index_desc_first(f, md5, 0);
+    }
+
+    if (initial_status) {
         do {
             xs *msg = NULL;
 
             /* only return entries older that max_id */
             if (max_id) {
-                if (strcmp(md5, MID_TO_MD5(max_id)) == 0)
+                if (strcmp(md5, MID_TO_MD5(max_id)) == 0) {
                     max_id = NULL;
-
-                continue;
+                    if (ascending)
+                        break;
+                }
+                if (!ascending)
+                    continue;
             }
 
             /* only returns entries newer than since_id */
             if (since_id) {
-                if (strcmp(md5, MID_TO_MD5(since_id)) == 0)
-                    break;
-            }
-
-            if (min_id) {
-                if (strcmp(md5, MID_TO_MD5(min_id)) == 0)
-                    break;
+                if (strcmp(md5, MID_TO_MD5(since_id)) == 0) {
+                    if (!ascending)
+                        break;
+                    since_id = NULL;
+                }
+                if (ascending)
+                    continue;
             }
 
             /* get the entry */
@@ -1428,26 +1444,23 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
                     continue;
             }
 
-            /* if it has a name and it's not a Page or a Video,
+            /* if it has a name and it's not an object that may have one,
                it's a poll vote, so discard it */
-            if (!xs_is_null(xs_dict_get(msg, "name")) && !xs_match(type, "Page|Video"))
+            if (!xs_is_null(xs_dict_get(msg, "name")) && !xs_match(type, "Page|Video|Audio|Event"))
                 continue;
 
             /* convert the Note into a Mastodon status */
             xs *st = mastoapi_status(user, msg);
 
             if (st != NULL) {
-                out = xs_list_append(out, st);
+                if (ascending)
+                    out = xs_list_insert(out, 0, st);
+                else
+                    out = xs_list_append(out, st);
                 cnt++;
             }
-            if (min_id) {
-                while (cnt > limit) {
-                    out = xs_list_del(out, 0);
-                    cnt--;
-                }
-            }
 
-        } while ((min_id || (cnt < limit)) && index_desc_next(f, md5));
+        } while ((cnt < limit) && (*iterator)(f, md5));
     }
 
     int more = index_desc_next(f, md5);
@@ -1816,6 +1829,11 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             const xs_list *excl = xs_dict_get(args, "exclude_types[]");
             const char *min_id = xs_dict_get(args, "min_id");
             const char *max_id = xs_dict_get(args, "max_id");
+            const char *limit = xs_dict_get(args, "limit");
+            int limit_count = 0;
+            if (!xs_is_null(limit)) {
+                limit_count = atoi(limit);
+            }
 
             if (dbglevel) {
                 xs *js = xs_json_dumps(args, 0);
@@ -1903,6 +1921,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 }
 
                 out = xs_list_append(out, mn);
+                if (!xs_is_null(limit)) {
+                    if (--limit_count <= 0)
+                        break;
+                }
             }
 
             srv_debug(1, xs_fmt("mastoapi_notifications count %d", xs_list_len(out)));
@@ -2650,8 +2672,14 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             }
 
             /* prepare the message */
-            xs *msg = msg_note(&snac, content, NULL, irt, attach_list,
-                        strcmp(visibility, "public") == 0 ? 0 : 1, language);
+            int scope = 1;
+            if (strcmp(visibility, "unlisted") == 0)
+                scope = 2;
+            else
+            if (strcmp(visibility, "public") == 0)
+                scope = 0;
+
+            xs *msg = msg_note(&snac, content, NULL, irt, attach_list, scope, language);
 
             if (!xs_is_null(summary) && *summary) {
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));

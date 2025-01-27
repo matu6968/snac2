@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_io.h"
@@ -98,7 +98,7 @@ static const char *greeting_html =
     "<html><head>\n"
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n"
     "<link rel=\"icon\" type=\"image/x-icon\" href=\"https://%host%/favicon.ico\"/>\n"
-    "<title>Welcome to %host%</title>\n"
+    "<title>Welcome to %host%</title>\n</head>\n"
     "<body style=\"margin: auto; max-width: 50em\">\n"
     "%blurb%"
     "<p>The following users are part of this community:</p>\n"
@@ -319,6 +319,10 @@ int adduser(const char *uid)
         mkdirx(d);
     }
 
+    /* add a specially short data retention time for the relay */
+    if (strcmp(uid, "relay") == 0)
+        config = xs_dict_set(config, "purge_days", xs_stock(1));
+
     xs *cfn = xs_fmt("%s/user.json", basedir);
 
     if ((f = fopen(cfn, "w")) == NULL) {
@@ -331,7 +335,7 @@ int adduser(const char *uid)
     }
 
     printf("\nCreating RSA key...\n");
-    key = xs_evp_genkey(4096);
+    key = xs_evp_genkey(2048);
     printf("Done.\n");
 
     xs *kfn = xs_fmt("%s/key.json", basedir);

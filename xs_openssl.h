@@ -1,4 +1,4 @@
-/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
 #ifndef _XS_OPENSSL_H
 

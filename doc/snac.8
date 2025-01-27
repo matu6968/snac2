@@ -585,6 +585,31 @@ to pass the remote connection address in the
 .Ic X-Forwarded-For
 HTTP header (unless you use the FastCGI interface; if that's the case, you don't have
 to do anything).
+.Pp
+.Ss Subscribing to Fediverse Relays
+Since version 2.69, a
+.Nm
+instance can subscribe to LitePub (Pleroma-style) Fediverse Relays. Doing this improves
+visibility and allows following hashtags. To do this, you must create a special user named
+relay and, from it, follow the relay actor(s) like you do with regular actor URLs. This
+special user will start receiving boosts from the relay server of posts from other instances
+also following it. If any other user of the same
+.Nm
+instance follows any of the hashtags included in these boosted posts coming from the relay,
+they will be received as if they were for them.
+.Pp
+Example:
+.Bd -literal -offset indent
+snac adduser $SNAC_BASEDIR relay # only needed once
+snac follow $SNAC_BASEDIR relay https://relay.example.com/actor
+.Ed
+.Pp
+Users on your instance do NOT need to follow the local relay user to benefit from following
+hashtags.
+.Pp
+Please take note that subscribing to relays can increase the traffic towards your instance
+significantly. In any case, lowering the "Maximum days to keep posts" value for the relay
+special user is recommended (e.g. setting to just 1 day).
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev DEBUG
@@ -685,6 +710,12 @@ location /share {
     proxy_set_header Host $http_host;
     proxy_set_header X-Forwarded-For $remote_addr;
 }
+# optional (Mastodon-like "authorize interaction" entrypoint)
+location /authorize_interaction {
+    proxy_pass http://localhost:8001;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+}
 .Ed
 .Pp
 Restart the nginx daemon and connect to
@@ -736,6 +767,11 @@ ProxyPreserveHost On
 
 # optional (Mastodon-like link share entrypoint)
 <Location /share>
+    ProxyPass http://127.0.0.1:8001/share
+</Location>
+
+# optional (Mastodon-like "authorize interaction" entrypoint)
+<Location /authorize_interaction>
     ProxyPass http://127.0.0.1:8001/share
 </Location>
 .Ed
@@ -795,6 +831,10 @@ location "/.well-known/host-meta" {
 }
 
 location "/share" {
+    fastcgi socket tcp "127.0.0.1" 8001
+}
+
+location "/authorize_interaction" {
     fastcgi socket tcp "127.0.0.1" 8001
 }
 .Ed

@@ -1,4 +1,4 @@
-/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
 #ifndef _XS_H
 
@@ -157,6 +157,9 @@ unsigned int xs_hash_func(const char *data, int size);
 #define xs_is_true(v) (xs_type((v)) == XSTYPE_TRUE)
 #define xs_is_false(v) (xs_type((v)) == XSTYPE_FALSE)
 #define xs_not(v) xs_stock(xs_is_true((v)) ? XSTYPE_FALSE : XSTYPE_TRUE)
+#define xs_is_string(v) (xs_type((v)) == XSTYPE_STRING)
+#define xs_is_list(v) (xs_type((v)) == XSTYPE_LIST)
+#define xs_is_dict(v) (xs_type((v)) == XSTYPE_DICT)
 
 #define xs_list_foreach(l, v) for (int ct_##__LINE__ = 0; xs_list_next(l, &v, &ct_##__LINE__); )
 #define xs_dict_foreach(l, k, v) for (int ct_##__LINE__ = 0; xs_dict_next(l, &k, &v, &ct_##__LINE__); )
@@ -623,15 +626,14 @@ int xs_between(const char *prefix, const char *str, const char *suffix)
 xs_str *xs_crop_i(xs_str *str, int start, int end)
 /* crops the string to be only from start to end */
 {
-    XS_ASSERT_TYPE(str, XSTYPE_STRING);
-
     int sz = strlen(str);
 
     if (end <= 0)
         end = sz + end;
 
     /* crop from the top */
-    str[end] = '\0';
+    if (end > 0 && end < sz)
+        str[end] = '\0';
 
     /* crop from the bottom */
     str = xs_collapse(str, 0, start);
@@ -1061,14 +1063,15 @@ xs_keyval *xs_keyval_make(xs_keyval *keyval, const xs_str *key, const xs_val *va
 
 typedef struct {
     int value_offset;   /* offset to value (from dict start) */
-    int next;           /* next node in sequential search */
+    int next;           /* next node in sequential scanning */
     int child[4];       /* child nodes in hashed search */
     char key[];         /* C string key */
 } ditem_hdr;
 
 typedef struct {
     int size;           /* size of full dict (_XS_TYPE_SIZE) */
-    int first;          /* first node for sequential search */
+    int first;          /* first node for sequential scanning */
+    int last;           /* last node for sequential scanning */
     int root;           /* root node for hashed search */
     /* a bunch of ditem_hdr and value follows */
 } dict_hdr;
@@ -1153,8 +1156,15 @@ xs_dict *xs_dict_set(xs_dict *dict, const xs_str *key, const xs_val *value)
             memcpy(dict + di->value_offset, value, vsz);
 
             /* chain to the sequential list */
-            di->next = dh->first;
-            dh->first = end;
+            if (dh->first == 0)
+                dh->first = end;
+            else {
+                /* chain this new element to the last one */
+                ditem_hdr *dil = (ditem_hdr *)(dict + dh->last);
+                dil->next = end;
+            }
+
+            dh->last = end;
         }
         else {
             /* ditem already exists */

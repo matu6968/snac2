@@ -1,11 +1,12 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_io.h"
 #include "xs_json.h"
 #include "xs_time.h"
 #include "xs_openssl.h"
+#include "xs_match.h"
 
 #include "snac.h"
 
@@ -14,7 +15,7 @@
 int usage(void)
 {
     printf("snac " VERSION " - A simple, minimalistic ActivityPub instance\n");
-    printf("Copyright (c) 2022 - 2024 grunfink et al. / MIT license\n");
+    printf("Copyright (c) 2022 - 2025 grunfink et al. / MIT license\n");
     printf("\n");
     printf("Commands:\n");
     printf("\n");
@@ -34,6 +35,7 @@ int usage(void)
     printf("actor {basedir} [{uid}] {url}        Requests an actor\n");
     printf("note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n");
     printf("note_unlisted {basedir} {uid} {text} [files...] Sends an unlisted note with optional attachments\n");
+    printf("note_mention {basedir} {uid} {text} [files...] Sends a note only to mentioned accounts\n");
     printf("boost|announce {basedir} {uid} {url} Boosts (announces) a post\n");
     printf("unboost {basedir} {uid} {url}        Unboosts a post\n");
     printf("resetpwd {basedir} {uid}             Resets the password of a user\n");
@@ -49,10 +51,10 @@ int usage(void)
     printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
     printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
     printf("search {basedir} {uid} {regex}       Searches posts by content\n");
-    printf("export_csv {basedir} {uid}           Exports data as CSV files into current directory\n");
+    printf("export_csv {basedir} {uid}           Exports data as CSV files\n");
     printf("alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n");
     printf("migrate {basedir} {uid}              Migrates to the account defined as the alias\n");
-    printf("import_csv {basedir} {uid}           Imports data from CSV files in the current directory\n");
+    printf("import_csv {basedir} {uid}           Imports data from CSV files\n");
     printf("import_list {basedir} {uid} {file}   Imports a Mastodon CSV list file\n");
     printf("import_block_list {basedir} {uid} {file} Imports a Mastodon CSV block list file\n");
 
@@ -94,19 +96,6 @@ int main(int argc, char *argv[])
         return snac_init(basedir);
     }
 
-    if (strcmp(cmd, "upgrade") == 0) { /** **/
-        int ret;
-
-        /* upgrade */
-        if ((basedir = GET_ARGV()) == NULL)
-            return usage();
-
-        if ((ret = srv_open(basedir, 1)) == 1)
-            srv_log(xs_dup("OK"));
-
-        return ret;
-    }
-
     if (strcmp(cmd, "markdown") == 0) { /** **/
         /* undocumented, for testing only */
         xs *c = xs_readall(stdin);
@@ -116,8 +105,20 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if ((basedir = GET_ARGV()) == NULL)
-        return usage();
+    if ((basedir = getenv("SNAC_BASEDIR")) == NULL) {
+        if ((basedir = GET_ARGV()) == NULL)
+            return usage();
+    }
+
+    if (strcmp(cmd, "upgrade") == 0) { /** **/
+        int ret;
+
+        /* upgrade */
+        if ((ret = srv_open(basedir, 1)) == 1)
+            srv_log(xs_dup("OK"));
+
+        return ret;
+    }
 
     if (!srv_open(basedir, 0)) {
         srv_log(xs_fmt("error opening data storage at %s", basedir));
@@ -339,6 +340,22 @@ int main(int argc, char *argv[])
 
     if (strcmp(cmd, "boost") == 0 || strcmp(cmd, "announce") == 0) { /** **/
         xs *msg = msg_admiration(&snac, url, "Announce");
+
+        if (msg != NULL) {
+            enqueue_message(&snac, msg);
+
+            if (dbglevel) {
+                xs_json_dump(msg, 4, stdout);
+            }
+        }
+
+        return 0;
+    }
+
+
+    if (strcmp(cmd, "assist") == 0) { /** **/
+        /* undocumented: experimental (do not use) */
+        xs *msg = msg_admiration(&snac, url, "Accept");
 
         if (msg != NULL) {
             enqueue_message(&snac, msg);
@@ -604,7 +621,9 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (strcmp(cmd, "note") == 0 || strcmp(cmd, "note_unlisted") == 0) { /** **/
+    if (strcmp(cmd, "note") == 0 ||             /** **/
+        strcmp(cmd, "note_unlisted") == 0 ||    /** **/
+        strcmp(cmd, "note_mention") == 0) {     /** **/
         xs *content = NULL;
         xs *msg = NULL;
         xs *c_msg = NULL;
@@ -668,15 +687,14 @@ int main(int argc, char *argv[])
         else
             content = xs_dup(url);
 
-        msg = msg_note(&snac, content, NULL, NULL, attl, 0, getenv("LANG"));
+        int scope = 0;
+        if (strcmp(cmd, "note_mention") == 0)
+            scope = 1;
+        else
+        if (strcmp(cmd, "note_unlisted") == 0)
+            scope = 2;
 
-        if (strcmp(cmd, "note_unlisted") == 0) {
-            /* according to Mastodon, "unlisted" posts (now called "quiet public")
-               has the public address as a cc instead of to, so toggle it */
-            xs *to = xs_dup(xs_dict_get(msg, "to"));
-            msg = xs_dict_set(msg, "cc", to);
-            msg = xs_dict_set(msg, "to", xs_stock(XSTYPE_LIST));
-        }
+        msg = msg_note(&snac, content, NULL, NULL, attl, scope, getenv("LANG"));
 
         c_msg = msg_create(&snac, msg);
 

@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_io.h"
@@ -12,6 +12,7 @@
 #include "xs_match.h"
 #include "xs_html.h"
 #include "xs_curl.h"
+#include "xs_unicode.h"
 
 #include "snac.h"
 
@@ -113,7 +114,8 @@ xs_str *actor_name(xs_dict *actor, const char *proxy)
 
 
 xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
-                        const char *udate, const char *url, int priv, int in_people, const char *proxy)
+                        const char *udate, const char *url, int priv,
+                        int in_people, const char *proxy, const char *lang)
 {
     xs_html *actor_icon = xs_html_tag("p", NULL);
 
@@ -219,6 +221,9 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             date_title = xs_str_cat(date_title, " / ", udate);
         }
 
+        if (xs_is_string(lang))
+            date_title = xs_str_cat(date_title, " (", lang, ")");
+
         xs_html_add(actor_icon,
             xs_html_text(" "),
             xs_html_tag("time",
@@ -265,6 +270,7 @@ xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, con
         const char *date  = NULL;
         const char *udate = NULL;
         const char *url   = NULL;
+        const char *lang  = NULL;
         int priv    = 0;
         const char *type = xs_dict_get(msg, "type");
 
@@ -276,7 +282,17 @@ xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, con
         date  = xs_dict_get(msg, "published");
         udate = xs_dict_get(msg, "updated");
 
-        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0, proxy);
+        lang = xs_dict_get(msg, "contentMap");
+        if (xs_is_dict(lang)) {
+            const char *v;
+            int c = 0;
+
+            xs_dict_next(lang, &lang, &v, &c);
+        }
+        else
+            lang = NULL;
+
+        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0, proxy, lang);
     }
 
     return actor_icon;
@@ -933,6 +949,7 @@ static xs_html *html_user_body(snac *user, int read_only)
                             xs_html_raw("&#10004; "),
                             xs_html_tag("a",
                                 xs_html_attr("rel", "me"),
+                                xs_html_attr("target", "_blank"),
                                 xs_html_attr("href", v),
                                 xs_html_text(v)));
                     }
@@ -967,6 +984,23 @@ static xs_html *html_user_body(snac *user, int read_only)
 
             xs_html_add(top_user,
                 snac_metadata);
+        }
+
+        const char *latitude = xs_dict_get_def(user->config, "latitude", "");
+        const char *longitude = xs_dict_get_def(user->config, "longitude", "");
+
+        if (*latitude && *longitude) {
+            xs *label = xs_fmt(L("%s,%s"), latitude, longitude);
+            xs *url   = xs_fmt(L("https://openstreetmap.org/search?query=%s,%s"),
+                        latitude, longitude);
+
+            xs_html_add(top_user,
+                xs_html_tag("p",
+                    xs_html_text(L("Location: ")),
+                    xs_html_tag("a",
+                        xs_html_attr("href", url),
+                        xs_html_attr("target", "_blank"),
+                        xs_html_text(label))));
         }
 
         if (xs_is_true(xs_dict_get(user->config, "show_contact_metrics"))) {
@@ -1110,6 +1144,8 @@ xs_html *html_top_controls(snac *snac)
     const xs_val *coll_thrds = xs_dict_get(snac->config, "collapse_threads");
     const xs_val *pending    = xs_dict_get(snac->config, "approve_followers");
     const xs_val *show_foll  = xs_dict_get(snac->config, "show_contact_metrics");
+    const char *latitude     = xs_dict_get_def(snac->config, "latitude", "");
+    const char *longitude    = xs_dict_get_def(snac->config, "longitude", "");
 
     xs *metadata = NULL;
     const xs_dict *md = xs_dict_get(snac->config, "metadata");
@@ -1300,6 +1336,20 @@ xs_html *html_top_controls(snac *snac)
                         xs_html_attr("for", "show_contact_metrics"),
                         xs_html_text(L("Publish follower and following metrics")))),
                 xs_html_tag("p",
+                    xs_html_text(L("Current location:")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "text"),
+                        xs_html_attr("name", "latitude"),
+                        xs_html_attr("value", latitude),
+                        xs_html_attr("placeholder", "latitude")),
+                    xs_html_text(" "),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "text"),
+                        xs_html_attr("name", "longitude"),
+                        xs_html_attr("value", longitude),
+                        xs_html_attr("placeholder", "longitude"))),
+                xs_html_tag("p",
                     xs_html_text(L("Profile metadata (key=value pairs in each line):")),
                     xs_html_sctag("br", NULL),
                     xs_html_tag("textarea",
@@ -1328,7 +1378,41 @@ xs_html *html_top_controls(snac *snac)
                 xs_html_sctag("input",
                     xs_html_attr("type", "submit"),
                     xs_html_attr("class", "button"),
-                    xs_html_attr("value", L("Update user info")))))));
+                    xs_html_attr("value", L("Update user info"))),
+
+                xs_html_tag("p", NULL)))));
+
+    xs *followed_hashtags_action = xs_fmt("%s/admin/followed-hashtags", snac->actor);
+    xs *followed_hashtags = xs_join(xs_dict_get_def(snac->config,
+                        "followed_hashtags", xs_stock(XSTYPE_LIST)), "\n");
+
+    xs_html_add(top_controls,
+        xs_html_tag("details",
+        xs_html_tag("summary",
+            xs_html_text(L("Followed hashtags..."))),
+        xs_html_tag("p",
+            xs_html_text(L("One hashtag per line"))),
+        xs_html_tag("div",
+            xs_html_attr("class", "snac-followed-hashtags"),
+            xs_html_tag("form",
+                xs_html_attr("autocomplete", "off"),
+                xs_html_attr("method", "post"),
+                xs_html_attr("action", followed_hashtags_action),
+                xs_html_attr("enctype", "multipart/form-data"),
+
+                xs_html_tag("textarea",
+                    xs_html_attr("name", "followed_hashtags"),
+                    xs_html_attr("cols", "40"),
+                    xs_html_attr("rows", "4"),
+                    xs_html_attr("placeholder", "#cats\n#windowfriday\n#classicalmusic"),
+                    xs_html_text(followed_hashtags)),
+
+                xs_html_tag("br", NULL),
+
+                xs_html_sctag("input",
+                    xs_html_attr("type", "submit"),
+                    xs_html_attr("class", "button"),
+                    xs_html_attr("value", L("Update hashtags")))))));
 
     return top_controls;
 }
@@ -1781,13 +1865,15 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             }
         }
     }
-    else
-    if (strcmp(type, "Note") == 0) {
-        if (level == 0) {
-            /* is the parent not here? */
-            const char *parent = get_in_reply_to(msg);
 
-            if (user && !xs_is_null(parent) && *parent && !timeline_here(user, parent)) {
+    if (user && strcmp(type, "Note") == 0) {
+        /* is the parent not here? */
+        const char *parent = get_in_reply_to(msg);
+
+        if (!xs_is_null(parent) && *parent) {
+            xs *md5 = xs_md5_hex(parent, strlen(parent));
+
+            if (!timeline_here(user, md5)) {
                 xs_html_add(post_header,
                     xs_html_tag("div",
                         xs_html_attr("class", "snac-origin"),
@@ -2199,6 +2285,135 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             au_tag);
     }
 
+    /* does it have a location? */
+    const xs_dict *location = xs_dict_get(msg, "location");
+    if (xs_type(location) == XSTYPE_DICT) {
+        const xs_number *latitude = xs_dict_get(location, "latitude");
+        const xs_number *longitude = xs_dict_get(location, "longitude");
+        const char *name = xs_dict_get(location, "name");
+        const char *address = xs_dict_get(location, "address");
+        xs *label_list = xs_list_new();
+
+        if (xs_type(name) == XSTYPE_STRING)
+            label_list = xs_list_append(label_list, name);
+        if (xs_type(address) == XSTYPE_STRING)
+            label_list = xs_list_append(label_list, address);
+
+        if (xs_list_len(label_list)) {
+            const char *url = xs_dict_get(location, "url");
+            xs *label = xs_join(label_list, ", ");
+
+            if (xs_type(url) == XSTYPE_STRING) {
+                xs_html_add(snac_content_wrap,
+                    xs_html_tag("p",
+                        xs_html_text(L("Location: ")),
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_attr("target", "_blank"),
+                            xs_html_text(label))));
+            }
+            else
+            if (!xs_is_null(latitude) && !xs_is_null(longitude)) {
+                xs *url = xs_fmt("https://openstreetmap.org/search/?query=%s,%s",
+                    xs_number_str(latitude), xs_number_str(longitude));
+
+                xs_html_add(snac_content_wrap,
+                    xs_html_tag("p",
+                        xs_html_text(L("Location: ")),
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_attr("target", "_blank"),
+                            xs_html_text(label))));
+            }
+            else
+                xs_html_add(snac_content_wrap,
+                    xs_html_tag("p",
+                        xs_html_text(L("Location: ")),
+                        xs_html_text(label)));
+        }
+    }
+
+    if (strcmp(type, "Event") == 0) { /** Event start and end times **/
+        const char *s_time = xs_dict_get(msg, "startTime");
+
+        if (xs_is_string(s_time) && strlen(s_time) > 20) {
+            const char *e_time = xs_dict_get(msg, "endTime");
+            const char *tz     = xs_dict_get(msg, "timezone");
+
+            xs *s = xs_replace_i(xs_dup(s_time), "T", " ");
+            xs *e = NULL;
+
+            if (xs_is_string(e_time) && strlen(e_time) > 20)
+                e = xs_replace_i(xs_dup(e_time), "T", " ");
+
+            /* if the event has a timezone, crop the offsets */
+            if (xs_is_string(tz)) {
+                s = xs_crop_i(s, 0, 19);
+
+                if (e)
+                    e = xs_crop_i(e, 0, 19);
+            }
+            else
+                tz = "";
+
+            /* if start and end share the same day, crop it from the end */
+            if (e && memcmp(s, e, 11) == 0)
+                e = xs_crop_i(e, 11, 0);
+
+            if (e)
+                s = xs_str_cat(s, " / ", e);
+
+            if (*tz)
+                s = xs_str_cat(s, " (", tz, ")");
+
+            /* replace ugly decimals */
+            s = xs_replace_i(s, ".000", "");
+
+            xs_html_add(snac_content_wrap,
+                xs_html_tag("p",
+                    xs_html_text(L("Time: ")),
+                    xs_html_text(s)));
+        }
+    }
+
+    /* show all hashtags that has not been shown previously in the content */
+    const xs_list *tags = xs_dict_get(msg, "tag");
+    const char *o_content = xs_dict_get_def(msg, "content", "");
+
+    if (xs_is_string(o_content) && xs_is_list(tags) && xs_list_len(tags)) {
+        xs *content = xs_utf8_to_lower(o_content);
+        const xs_dict *tag;
+
+        xs_html *add_hashtags = xs_html_tag("ul",
+            xs_html_attr("class", "snac-more-hashtags"));
+
+        xs_list_foreach(tags, tag) {
+            const char *type = xs_dict_get(tag, "type");
+
+            if (xs_is_string(type) && strcmp(type, "Hashtag") == 0) {
+                const char *o_href = xs_dict_get(tag, "href");
+                const char *name   = xs_dict_get(tag, "name");
+
+                if (xs_is_string(o_href) && xs_is_string(name)) {
+                    xs *href = xs_utf8_to_lower(o_href);
+
+                    if (xs_str_in(content, href) == -1 && xs_str_in(content, name) == -1) {
+                        /* not in the content: add here */
+                        xs_html_add(add_hashtags,
+                            xs_html_tag("li",
+                                xs_html_tag("a",
+                                    xs_html_attr("href", href),
+                                    xs_html_text(name),
+                                    xs_html_text(" "))));
+                    }
+                }
+            }
+        }
+
+        xs_html_add(snac_content_wrap,
+            add_hashtags);
+    }
+
     /** controls **/
 
     if (!read_only && user) {
@@ -2583,7 +2798,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post-header"),
                     html_actor_icon(snac, actor, xs_dict_get(actor, "published"),
-                                    NULL, NULL, 0, 1, proxy)));
+                                    NULL, NULL, 0, 1, proxy, NULL)));
 
             /* content (user bio) */
             const char *c = xs_dict_get(actor, "summary");
@@ -2762,9 +2977,15 @@ xs_str *html_notifications(snac *user, int skip, int show)
         xs_html_attr("class", "snac-posts"));
     xs_html_add(body, posts);
 
-    xs_list *p = n_list;
+    xs_set rep;
+    xs_set_init(&rep);
+
+    /* dict to store previous notification labels */
+    xs *admiration_labels = xs_dict_new();
+
     const xs_str *v;
-    while (xs_list_iter(&p, &v)) {
+
+    xs_list_foreach(n_list, v) {
         xs *noti = notify_get(user, v);
 
         if (noti == NULL)
@@ -2775,6 +2996,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
         const char *utype = xs_dict_get(noti, "utype");
         const char *id    = xs_dict_get(noti, "objid");
         const char *date  = xs_dict_get(noti, "date");
+        const char *id2   = xs_dict_get_path(noti, "msg.id");
         xs *wrk = NULL;
 
         if (xs_is_null(id))
@@ -2783,7 +3005,15 @@ xs_str *html_notifications(snac *user, int skip, int show)
         if (is_hidden(user, id))
             continue;
 
+        if (xs_is_string(id2) && xs_set_add(&rep, id2) != 1)
+            continue;
+
         object_get(id, &obj);
+
+        const char *msg_id = NULL;
+
+        if (xs_is_dict(obj))
+            msg_id = xs_dict_get(obj, "id");
 
         const char *actor_id = xs_dict_get(noti, "actor");
         xs *actor = NULL;
@@ -2817,9 +3047,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
         xs *s_date = xs_crop_i(xs_dup(date), 0, 10);
 
-        xs_html *entry = xs_html_tag("div",
-            xs_html_attr("class", "snac-post-with-desc"),
-            xs_html_tag("p",
+        xs_html *this_html_label = xs_html_container(
                 xs_html_tag("b",
                     xs_html_text(label),
                     xs_html_text(" by "),
@@ -2830,13 +3058,45 @@ xs_str *html_notifications(snac *user, int skip, int show)
                 xs_html_tag("time",
                     xs_html_attr("class", "dt-published snac-pubdate"),
                     xs_html_attr("title", date),
-                    xs_html_text(s_date))));
+                    xs_html_text(s_date)));
+
+        xs_html *html_label = NULL;
+
+        if (xs_is_string(msg_id)) {
+            const xs_val *prev_label = xs_dict_get(admiration_labels, msg_id);
+
+            if (xs_type(prev_label) == XSTYPE_DATA) {
+                /* there is a previous list of admiration labels! */
+                xs_data_get(&html_label, prev_label);
+
+                xs_html_add(html_label,
+                    xs_html_sctag("br", NULL),
+                    this_html_label);
+
+                continue;
+            }
+        }
+
+        xs_html *entry = NULL;
+
+        html_label = xs_html_tag("p",
+            this_html_label);
+
+        /* store in the admiration labels dict */
+        xs *pl = xs_data_new(&html_label, sizeof(html_label));
+
+        if (xs_is_string(msg_id))
+            admiration_labels = xs_dict_set(admiration_labels, msg_id, pl);
+
+        entry = xs_html_tag("div",
+            xs_html_attr("class", "snac-post-with-desc"),
+            html_label);
 
         if (strcmp(type, "Follow") == 0 || strcmp(utype, "Follow") == 0 || strcmp(type, "Block") == 0) {
             xs_html_add(entry,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post"),
-                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy)));
+                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy, NULL)));
         }
         else
         if (strcmp(type, "Move") == 0) {
@@ -2850,7 +3110,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_add(entry,
                         xs_html_tag("div",
                             xs_html_attr("class", "snac-post"),
-                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0, proxy)));
+                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0, proxy, NULL)));
                 }
             }
         }
@@ -2917,6 +3177,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_text(L("More...")))));
     }
 
+    xs_set_free(&rep);
+
     xs_html_add(body,
         html_footer());
 
@@ -2965,6 +3227,21 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             srv_log(xs_fmt("share-bridge for user '%s'", login));
 
             *body = xs_fmt("%s/%s/share?content=%s", srv_baseurl, login, b64);
+            return HTTP_STATUS_SEE_OTHER;
+        }
+        else
+            return HTTP_STATUS_NOT_FOUND;
+    }
+    else
+    if (strcmp(v, "auth-int-bridge") == 0) {
+        const char *login  = xs_dict_get(q_vars, "login");
+        const char *id     = xs_dict_get(q_vars, "id");
+        const char *action = xs_dict_get(q_vars, "action");
+
+        if (xs_is_string(login) && xs_is_string(id) && xs_is_string(action)) {
+            *body = xs_fmt("%s/%s/authorize_interaction?action=%s&id=%s",
+                srv_baseurl, login, action, id);
+
             return HTTP_STATUS_SEE_OTHER;
         }
         else
@@ -3542,6 +3819,52 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
     }
     else
+    if (strcmp(p_path, "authorize_interaction") == 0) { /** follow, like or boost from Mastodon **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = HTTP_STATUS_UNAUTHORIZED;
+        }
+        else {
+            status = HTTP_STATUS_NOT_FOUND;
+
+            const char *id     = xs_dict_get(q_vars, "id");
+            const char *action = xs_dict_get(q_vars, "action");
+
+            if (xs_is_string(id) && xs_is_string(action)) {
+                if (strcmp(action, "Follow") == 0) {
+                    xs *msg = msg_follow(&snac, id);
+
+                    if (msg != NULL) {
+                        const char *actor = xs_dict_get(msg, "object");
+
+                        following_add(&snac, actor, msg);
+
+                        enqueue_output_by_actor(&snac, msg, actor, 0);
+
+                        status = HTTP_STATUS_SEE_OTHER;
+                    }
+                }
+                else
+                if (xs_match(action, "Like|Boost|Announce")) {
+                    /* bring the post */
+                    xs *msg = msg_admiration(&snac, id, *action == 'L' ? "Like" : "Announce");
+
+                    if (msg != NULL) {
+                        enqueue_message(&snac, msg);
+                        timeline_admire(&snac, xs_dict_get(msg, "object"), snac.actor, *action == 'L' ? 1 : 0);
+
+                        status = HTTP_STATUS_SEE_OTHER;
+                    }
+                }
+            }
+
+            if (status == HTTP_STATUS_SEE_OTHER) {
+                *body   = xs_fmt("%s/admin", snac.actor);
+                *b_size = strlen(*body);
+            }
+        }
+    }
+    else
         status = HTTP_STATUS_NOT_FOUND;
 
     user_free(&snac);
@@ -4024,6 +4347,9 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         else
             snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_FALSE));
 
+        snac.config = xs_dict_set(snac.config, "latitude", xs_dict_get_def(p_vars, "latitude", ""));
+        snac.config = xs_dict_set(snac.config, "longitude", xs_dict_get_def(p_vars, "longitude", ""));
+
         if ((v = xs_dict_get(p_vars, "metadata")) != NULL)
             snac.config = xs_dict_set(snac.config, "metadata", v);
 
@@ -4136,6 +4462,35 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                     enqueue_object_request(&snac, irt, t + 2);
                 }
             }
+        }
+
+        status = HTTP_STATUS_SEE_OTHER;
+    }
+    else
+    if (p_path && strcmp(p_path, "admin/followed-hashtags") == 0) { /** **/
+        const char *followed_hashtags = xs_dict_get(p_vars, "followed_hashtags");
+
+        if (xs_is_string(followed_hashtags)) {
+            xs *new_hashtags = xs_list_new();
+            xs *l = xs_split(followed_hashtags, "\n");
+            const char *v;
+
+            xs_list_foreach(l, v) {
+                xs *s1 = xs_strip_i(xs_dup(v));
+                s1 = xs_replace_i(s1, " ", "");
+
+                if (*s1 == '\0')
+                    continue;
+
+                xs *s2 = xs_utf8_to_lower(s1);
+                if (*s2 != '#')
+                    s2 = xs_str_prepend_i(s2, "#");
+
+                new_hashtags = xs_list_append(new_hashtags, s2);
+            }
+
+            snac.config = xs_dict_set(snac.config, "followed_hashtags", new_hashtags);
+            user_persist(&snac, 0);
         }
 
         status = HTTP_STATUS_SEE_OTHER;

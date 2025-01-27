@@ -1,6 +1,34 @@
 # Release Notes
 
-## UNRELEASED
+## 2.69 "Yin/Yang of Love"
+
+Added support for subscribing to LitePub (Pleroma-style) Fediverse Relays like e.g. https://fedi-relay.gyptazy.com to improve federation. See `snac(8)` (the Administrator Manual) for more information on how to use this feature.
+
+Added support for following hashtags. This is only useful if your instance is subscribed to relays (see above).
+
+Added support for a Mastodon-like `/authorize_interaction` webpoint entry, that allows following, liking and boosting from another account's Mastodon public web interface. To be able to use it, you must reconfigure your https proxy to redirect `/authorize_interaction` to snac (see `snac(8)`).
+
+Some fixes to accept `Event` objects properly (like those coming from implementations like https://gancio.org/ or https://mobilizon.fr).
+
+Added some caching for local `Actor` objects.
+
+Hashtags that are not explicitly linked in a post's content are shown below it.
+
+Fixed broken NetBSD build (missing dependency in Makefile.NetBSD).
+
+The user profile can now include longitude and latitude data for your current location.
+
+Mastodon API: implemented limit= on notification fetches (contributed by nowster), implemented faster min_id handling (contributed by nowster), obey the quiet public visibility set for posts, other timeline improvements (contributed by nowster).
+
+Reduced RSA key size for new users from 4096 to 2048. This will be friendlier to smaller machines, and everybody else out there is using 2048.
+
+If the `SNAC_BASEDIR` environment variable is defined and set to the base directory of your installation, you don't have to include the base directory in the command line.
+
+Fixed a bug in the generation of the top page (contributed by an-im-dugud).
+
+Added support for Markdown headers and underlining (contributed by an-im-dugud).
+
+## 2.68
 
 Fixed regression in link verification code (contributed by nowster).
 

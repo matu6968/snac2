@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_io.h"
@@ -138,7 +138,7 @@ static xs_str *greeting_html(void)
             while (xs_list_iter(&p, &uid)) {
                 snac user;
 
-                if (user_open(&user, uid)) {
+                if (strcmp(uid, "relay") && user_open(&user, uid)) {
                     xs_html_add(ul,
                         xs_html_tag("li",
                             xs_html_tag("a",
@@ -182,6 +182,29 @@ const char *share_page = ""
 "";
 
 
+const char *authorize_interaction_page = ""
+"<!DOCTYPE html>\n"
+"<html>\n"
+"<head>\n"
+"<title>%s - snac</title>\n"
+"<meta content=\"width=device-width, initial-scale=1, minimum-scale=1, user-scalable=no\" name=\"viewport\">\n"
+"<link rel=\"stylesheet\" type=\"text/css\" href=\"%s/style.css\"/>\n"
+"<style>:root {color-scheme: light dark}</style>\n"
+"</head>\n"
+"<body><h1>%s authorize interaction</h1>\n"
+"<form method=\"get\" action=\"%s/auth-int-bridge\">\n"
+"<select name=\"action\">\n"
+"<option value=\"Follow\">Follow</option>\n"
+"<option value=\"Boost\">Boost</option>\n"
+"<option value=\"Like\">Like</option>\n"
+"</select> %s\n"
+"<input type=\"hidden\" name=\"id\" value=\"%s\">\n"
+"<p>Login: <input type=\"text\" name=\"login\" autocapitalize=\"off\" required=\"required\"></p>\n"
+"<input type=\"submit\" value=\"OK\">\n"
+"</form><p>%s</p></body></html>\n"
+"";
+
+
 int server_get_handler(xs_dict *req, const char *q_path,
                        char **body, int *b_size, char **ctype)
 /* basic server services */
@@ -189,7 +212,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
     int status = 0;
 
     /* is it the server root? */
-    if (*q_path == '\0') {
+    if (*q_path == '\0' || strcmp(q_path, "/") == 0) {
         const xs_dict *q_vars = xs_dict_get(req, "q_vars");
         const char *t = NULL;
 
@@ -317,6 +340,25 @@ int server_get_handler(xs_dict *req, const char *q_path,
             s,
             USER_AGENT
         );
+    }
+    else
+    if (strcmp(q_path, "/authorize_interaction") == 0) {
+        const xs_dict *q_vars = xs_dict_get(req, "q_vars");
+        const char *uri  = xs_dict_get(q_vars, "uri");
+
+        if (xs_is_string(uri)) {
+            status = HTTP_STATUS_OK;
+            *ctype = "text/html; charset=utf-8";
+            *body  = xs_fmt(authorize_interaction_page,
+                xs_dict_get(srv_config, "host"),
+                srv_baseurl,
+                xs_dict_get(srv_config, "host"),
+                srv_baseurl,
+                uri,
+                uri,
+                USER_AGENT
+            );
+        }
     }
 
     if (status != 0)
@@ -459,13 +501,13 @@ void httpd_connection(FILE *f)
     }
 
     if (status == HTTP_STATUS_FORBIDDEN)
-        body = xs_str_new("<h1>403 Forbidden</h1>");
+        body = xs_str_new("<h1>403 Forbidden (" USER_AGENT ")</h1>");
 
     if (status == HTTP_STATUS_NOT_FOUND)
-        body = xs_str_new("<h1>404 Not Found</h1>");
+        body = xs_str_new("<h1>404 Not Found (" USER_AGENT ")</h1>");
 
     if (status == HTTP_STATUS_BAD_REQUEST && body != NULL)
-        body = xs_str_new("<h1>400 Bad Request</h1>");
+        body = xs_str_new("<h1>400 Bad Request (" USER_AGENT ")</h1>");
 
     if (status == HTTP_STATUS_SEE_OTHER)
         headers = xs_dict_append(headers, "location", body);

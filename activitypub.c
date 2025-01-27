@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_json.h"
@@ -587,6 +587,70 @@ int is_msg_from_private_user(const xs_dict *msg)
 }
 
 
+int followed_hashtag_check(snac *user, const xs_dict *msg)
+/* returns true if this message contains a hashtag followed by me */
+{
+    const xs_list *fw_tags = xs_dict_get(user->config, "followed_hashtags");
+
+    if (xs_is_list(fw_tags)) {
+        const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
+
+        if (xs_is_list(tags_in_msg)) {
+            const xs_dict *te;
+
+            /* iterate the tags in the message */
+            xs_list_foreach(tags_in_msg, te) {
+                if (xs_is_dict(te)) {
+                    const char *type = xs_dict_get(te, "type");
+                    const char *name = xs_dict_get(te, "name");
+
+                    if (xs_is_string(type) && xs_is_string(name)) {
+                        if (strcmp(type, "Hashtag") == 0) {
+                            xs *lc_name = xs_utf8_to_lower(name);
+
+                            if (xs_list_in(fw_tags, lc_name) != -1)
+                                return 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+void followed_hashtag_distribute(const xs_dict *msg)
+/* distribute this post to all users following the included hashtags */
+{
+    const char *id = xs_dict_get(msg, "id");
+    const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
+
+    if (!xs_is_string(id) || !xs_is_list(tags_in_msg) || xs_list_len(tags_in_msg) == 0)
+        return;
+
+    srv_debug(1, xs_fmt("followed_hashtag_distribute check for %s", id));
+
+    xs *users = user_list();
+    const char *uid;
+
+    xs_list_foreach(users, uid) {
+        snac user;
+
+        if (user_open(&user, uid)) {
+            if (followed_hashtag_check(&user, msg)) {
+                timeline_add(&user, id, msg);
+
+                snac_log(&user, xs_fmt("followed hashtag in %s", id));
+            }
+
+            user_free(&user);
+        }
+    }
+}
+
+
 int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 /* checks if this message is for me */
 {
@@ -602,19 +666,32 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     if (xs_match(type, "Like|Announce|EmojiReact")) {
         const char *object = xs_dict_get(c_msg, "object");
 
-        if (xs_type(object) == XSTYPE_DICT)
+        if (xs_is_dict(object))
             object = xs_dict_get(object, "id");
 
         /* bad object id? reject */
-        if (xs_type(object) != XSTYPE_STRING)
+        if (!xs_is_string(object))
             return 0;
 
         /* if it's about one of our posts, accept it */
         if (xs_startswith(object, snac->actor))
             return 2;
 
-        /* if it's by someone we don't follow, reject */
-        return following_check(snac, actor);
+        /* if it's by someone we follow, accept it */
+        if (following_check(snac, actor))
+            return 1;
+
+        /* do we follow any hashtag? */
+        if (xs_is_list(xs_dict_get(snac->config, "followed_hashtags"))) {
+            xs *obj = NULL;
+
+            /* if the admired object contains any followed hashtag, accept it */
+            if (valid_status(object_get(object, &obj)) &&
+                followed_hashtag_check(snac, obj))
+                return 7;
+        }
+
+        return 0;
     }
 
     /* if it's an Undo, it must be from someone related to us */
@@ -675,7 +752,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 
         if (pub_msg) {
             /* a public message for someone we follow? (probably cc'ed) accept */
-            if (following_check(snac, v))
+            if (strcmp(v, public_address) != 0 && following_check(snac, v))
                 return 5;
         }
         else
@@ -708,30 +785,8 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
     }
 
     /* does this message contain a tag we are following? */
-    const xs_list *fw_tags = xs_dict_get(snac->config, "followed_hashtags");
-    if (pub_msg && xs_type(fw_tags) == XSTYPE_LIST) {
-        const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
-        if (xs_type(tags_in_msg) == XSTYPE_LIST) {
-            const xs_dict *te;
-
-            /* iterate the tags in the message */
-            xs_list_foreach(tags_in_msg, te) {
-                if (xs_type(te) == XSTYPE_DICT) {
-                    const char *type = xs_dict_get(te, "type");
-                    const char *name = xs_dict_get(te, "name");
-
-                    if (xs_type(type) == XSTYPE_STRING && xs_type(name) == XSTYPE_STRING) {
-                        if (strcmp(type, "Hashtag") == 0) {
-                            xs *lc_name = xs_utf8_to_lower(name);
-
-                            if (xs_list_in(fw_tags, lc_name) != -1)
-                                return 7;
-                        }
-                    }
-                }
-            }
-        }
-    }
+    if (pub_msg && followed_hashtag_check(snac, msg))
+        return 7;
 
     return 0;
 }
@@ -888,6 +943,11 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
     if (xs_match(type, "Like|Announce|EmojiReact")) {
         /* if it's not an admiration about something by us, done */
         if (xs_is_null(objid) || !xs_startswith(objid, snac->actor))
+            return;
+
+        /* if it's an announce by our own relay, done */
+        xs *relay_id = xs_fmt("%s/relay", srv_baseurl);
+        if (xs_startswith(id, relay_id))
             return;
     }
 
@@ -1184,6 +1244,28 @@ xs_dict *msg_repulsion(snac *user, const char *id, const char *type)
 }
 
 
+xs_dict *msg_actor_place(snac *user, const char *label)
+/* creates a Place object, if the user has a location defined */
+{
+    xs_dict *place = NULL;
+    const char *latitude = xs_dict_get_def(user->config, "latitude", "");
+    const char *longitude = xs_dict_get_def(user->config, "longitude", "");
+
+    if (*latitude && *longitude) {
+        xs *d_la = xs_number_new(atof(latitude));
+        xs *d_lo = xs_number_new(atof(longitude));
+
+        place = msg_base(user, "Place", NULL, user->actor, NULL, NULL);
+
+        place = xs_dict_set(place, "name", label);
+        place = xs_dict_set(place, "latitude", d_la);
+        place = xs_dict_set(place, "longitude", d_lo);
+    }
+
+    return place;
+}
+
+
 xs_dict *msg_actor(snac *snac)
 /* create a Person message for this actor */
 {
@@ -1194,9 +1276,19 @@ xs_dict *msg_actor(snac *snac)
     xs *avtr     = NULL;
     xs *kid      = NULL;
     xs *f_bio    = NULL;
-    xs_dict *msg = msg_base(snac, "Person", snac->actor, NULL, NULL, NULL);
+    xs_dict *msg = NULL;
     const char *p;
     int n;
+
+    /* everybody loves some caching */
+    if (time(NULL) - object_mtime(snac->actor) < 3 * 3600 &&
+        valid_status(object_get(snac->actor, &msg))) {
+        snac_debug(snac, 2, xs_fmt("Returning cached actor %s", snac->actor));
+
+        return msg;
+    }
+
+    msg = msg_base(snac, "Person", snac->actor, NULL, NULL, NULL);
 
     /* change the @context (is this really necessary?) */
     ctxt = xs_list_append(ctxt, "https:/" "/www.w3.org/ns/activitystreams");
@@ -1241,6 +1333,10 @@ xs_dict *msg_actor(snac *snac)
     /* if the "bot" config field is set to true, change type to "Service" */
     if (xs_type(xs_dict_get(snac->config, "bot")) == XSTYPE_TRUE)
         msg = xs_dict_set(msg, "type", "Service");
+
+    /* if it's named "relay", then identify as an "Application" */
+    if (strcmp(snac->uid, "relay") == 0)
+        msg = xs_dict_set(msg, "type", "Application");
 
     /* add the header image, if there is one defined */
     const char *header = xs_dict_get(snac->config, "header");
@@ -1307,7 +1403,7 @@ xs_dict *msg_actor(snac *snac)
     }
 
     /* use shared inboxes? */
-    if (xs_type(xs_dict_get(srv_config, "shared_inboxes")) == XSTYPE_TRUE) {
+    if (xs_is_true(xs_dict_get(srv_config, "shared_inboxes")) || strcmp(snac->uid, "relay") == 0) {
         xs *d = xs_dict_new();
         xs *si = xs_fmt("%s/shared-inbox", srv_baseurl);
         d = xs_dict_append(d, "sharedInbox", si);
@@ -1325,6 +1421,15 @@ xs_dict *msg_actor(snac *snac)
     const xs_val *manually = xs_dict_get(snac->config, "approve_followers");
     msg = xs_dict_set(msg, "manuallyApprovesFollowers",
         xs_stock(xs_is_true(manually) ? XSTYPE_TRUE : XSTYPE_FALSE));
+
+    /* if there are location coords, create a Place object */
+    xs *location = msg_actor_place(snac, "Home");
+    if (xs_type(location) == XSTYPE_DICT)
+        msg = xs_dict_set(msg, "location", location);
+
+    /* cache it */
+    snac_debug(snac, 1, xs_fmt("Caching actor %s", snac->actor));
+    object_add_ow(snac->actor, msg);
 
     return msg;
 }
@@ -1423,8 +1528,9 @@ xs_dict *msg_follow(snac *snac, const char *q)
 
 xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
                   const xs_str *in_reply_to, const xs_list *attach,
-                  int priv, const char *lang_str)
+                  int scope, const char *lang_str)
 /* creates a 'Note' message */
+/* scope: 0, public; 1, private (mentioned only); 2, "quiet public"; 3, followers only */
 {
     xs *ntid = tid(0);
     xs *id   = xs_fmt("%s/p/%s", snac->actor, ntid);
@@ -1439,6 +1545,9 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     xs_dict *msg = msg_base(snac, "Note", id, NULL, "@now", NULL);
     xs_list *p;
     const xs_val *v;
+
+    /* FIXME: implement scope 3 */
+    int priv = scope == 1;
 
     if (rcpts == NULL)
         to = xs_list_new();
@@ -1557,6 +1666,12 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
         }
     }
 
+    if (scope == 2) {
+        /* Mastodon's "quiet public": add public address to cc */
+        if (xs_list_in(cc, public_address) == -1)
+            cc = xs_list_append(cc, public_address);
+    }
+    else
     /* no recipients? must be for everybody */
     if (!priv && xs_list_len(to) == 0)
         to = xs_list_append(to, public_address);
@@ -1845,6 +1960,17 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     /* reject uninteresting messages right now */
     if (xs_match(type, "Add|View|Reject|Read|Remove")) {
         srv_debug(0, xs_fmt("Ignored message of type '%s'", type));
+
+        /* archive the ignored activity */
+        xs *ntid = tid(0);
+        xs *fn = xs_fmt("%s/ignored/%s.json", srv_basedir, ntid);
+        FILE *f;
+
+        if ((f = fopen(fn, "w")) != NULL) {
+            xs_json_dump(msg, 4, f);
+            fclose(f);
+        }
+
         return -1;
     }
 
@@ -2118,14 +2244,14 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                 snac_log(snac, xs_fmt("new 'Question' %s %s", actor, id));
         }
         else
-        if (strcmp(utype, "Video") == 0) { /** **/
+        if (xs_match(utype, "Audio|Video|Event")) { /** **/
             const char *id = xs_dict_get(object, "id");
 
             if (xs_is_null(id))
                 snac_log(snac, xs_fmt("malformed message: no 'id' field"));
             else
             if (timeline_add(snac, id, object))
-                snac_log(snac, xs_fmt("new 'Video' %s %s", actor, id));
+                snac_log(snac, xs_fmt("new '%s' %s %s", utype, actor, id));
         }
         else
             snac_debug(snac, 1, xs_fmt("ignored 'Create' for object type '%s'", utype));
@@ -2203,14 +2329,22 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                     xs *who_o = NULL;
 
                     if (valid_status(actor_request(snac, who, &who_o))) {
-                        if (timeline_admire(snac, object, actor, 0) == HTTP_STATUS_CREATED)
-                            snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
-                        else
-                            snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",
-                                actor, object));
+                        /* don't account as such announces by our own relay */
+                        xs *this_relay = xs_fmt("%s/relay", srv_baseurl);
+
+                        if (strcmp(actor, this_relay) != 0) {
+                            if (timeline_admire(snac, object, actor, 0) == HTTP_STATUS_CREATED)
+                                snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
+                            else
+                                snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",
+                                    actor, object));
+                        }
 
                         /* distribute the post with the actor as 'proxy' */
                         list_distribute(snac, actor, a_msg);
+
+                        /* distribute the post to users following these hashtags */
+                        followed_hashtag_distribute(a_msg);
 
                         do_notify = 1;
                     }
@@ -2226,14 +2360,14 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     }
     else
     if (strcmp(type, "Update") == 0) { /** **/
-        if (xs_match(utype, "Person|Service")) { /** **/
+        if (xs_match(utype, "Person|Service|Application")) { /** **/
             actor_add(actor, xs_dict_get(msg, "object"));
             timeline_touch(snac);
 
             snac_log(snac, xs_fmt("updated actor %s", actor));
         }
         else
-        if (xs_match(utype, "Note|Page|Article|Video")) { /** **/
+        if (xs_match(utype, "Note|Page|Article|Video|Audio|Event")) { /** **/
             const char *id = xs_dict_get(object, "id");
 
             if (xs_is_null(id))
@@ -2419,7 +2553,7 @@ int send_email(const char *msg)
 }
 
 
-void process_user_queue_item(snac *snac, xs_dict *q_item)
+void process_user_queue_item(snac *user, xs_dict *q_item)
 /* processes an item from the user queue */
 {
     const char *type;
@@ -2430,7 +2564,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
 
     if (strcmp(type, "message") == 0) {
         const xs_dict *msg = xs_dict_get(q_item, "message");
-        xs *rcpts = recipient_list(snac, msg, 1);
+        xs *rcpts = recipient_list(user, msg, 1);
         xs_set inboxes;
         const xs_str *actor;
 
@@ -2439,7 +2573,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         /* add this shared inbox first */
         xs *this_shared_inbox = xs_fmt("%s/shared-inbox", srv_baseurl);
         xs_set_add(&inboxes, this_shared_inbox);
-        enqueue_output(snac, msg, this_shared_inbox, 0, 0);
+        enqueue_output(user, msg, this_shared_inbox, 0, 0);
 
         /* iterate the recipients */
         xs_list_foreach(rcpts, actor) {
@@ -2450,10 +2584,10 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
                 if (inbox != NULL) {
                     /* add to the set and, if it's not there, send message */
                     if (xs_set_add(&inboxes, inbox) == 1)
-                        enqueue_output(snac, msg, inbox, 0, 0);
+                        enqueue_output(user, msg, inbox, 0, 0);
                 }
                 else
-                    snac_log(snac, xs_fmt("cannot find inbox for %s", actor));
+                    snac_log(user, xs_fmt("cannot find inbox for %s", actor));
             }
         }
 
@@ -2465,12 +2599,36 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
 
                 xs_list_foreach(shibx, inbox) {
                     if (xs_set_add(&inboxes, inbox) == 1)
-                        enqueue_output(snac, msg, inbox, 0, 0);
+                        enqueue_output(user, msg, inbox, 0, 0);
                 }
             }
         }
 
         xs_set_free(&inboxes);
+
+        /* relay this note */
+        if (is_msg_public(msg) && strcmp(user->uid, "relay") != 0) { /* avoid loops */
+            snac relay;
+            if (user_open(&relay, "relay")) {
+                /* a 'relay' user exists */
+                const char *type = xs_dict_get(msg, "type");
+
+                if (xs_is_string(type) && strcmp(type, "Create") == 0) {
+                    const xs_val *object = xs_dict_get(msg, "object");
+
+                    if (xs_is_dict(object)) {
+                        object = xs_dict_get(object, "id");
+
+                        snac_debug(&relay, 1, xs_fmt("relaying message %s", object));
+
+                        xs *boost = msg_admiration(&relay, object, "Announce");
+                        enqueue_message(&relay, boost);
+                    }
+                }
+
+                user_free(&relay);
+            }
+        }
     }
     else
     if (strcmp(type, "input") == 0) {
@@ -2482,13 +2640,13 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         if (xs_is_null(msg))
             return;
 
-        if (!process_input_message(snac, msg, req)) {
+        if (!process_input_message(user, msg, req)) {
             if (retries > queue_retry_max)
-                snac_log(snac, xs_fmt("input giving up"));
+                snac_log(user, xs_fmt("input giving up"));
             else {
                 /* reenqueue */
-                enqueue_input(snac, msg, req, retries + 1);
-                snac_log(snac, xs_fmt("input requeue #%d", retries + 1));
+                enqueue_input(user, msg, req, retries + 1);
+                snac_log(user, xs_fmt("input requeue #%d", retries + 1));
             }
         }
     }
@@ -2498,7 +2656,7 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
         const char *id = xs_dict_get(q_item, "message");
 
         if (!xs_is_null(id))
-            update_question(snac, id);
+            update_question(user, id);
     }
     else
     if (strcmp(type, "object_request") == 0) {
@@ -2508,17 +2666,17 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
             int status;
             xs *data = NULL;
 
-            status = activitypub_request(snac, id, &data);
+            status = activitypub_request(user, id, &data);
 
             if (valid_status(status))
                 object_add_ow(id, data);
 
-            snac_debug(snac, 1, xs_fmt("object_request %s %d", id, status));
+            snac_debug(user, 1, xs_fmt("object_request %s %d", id, status));
         }
     }
     else
     if (strcmp(type, "verify_links") == 0) {
-        verify_links(snac);
+        verify_links(user);
     }
     else
     if (strcmp(type, "actor_refresh") == 0) {
@@ -2530,16 +2688,16 @@ void process_user_queue_item(snac *snac, xs_dict *q_item)
             xs *actor_o = NULL;
             int status;
 
-            if (valid_status((status = activitypub_request(snac, actor, &actor_o))))
+            if (valid_status((status = activitypub_request(user, actor, &actor_o))))
                 actor_add(actor, actor_o);
             else
                 object_touch(actor);
 
-            snac_log(snac, xs_fmt("actor_refresh %s %d", actor, status));
+            snac_log(user, xs_fmt("actor_refresh %s %d", actor, status));
         }
     }
     else
-        snac_log(snac, xs_fmt("unexpected user q_item type '%s'", type));
+        snac_log(user, xs_fmt("unexpected user q_item type '%s'", type));
 }
 
 
@@ -2640,7 +2798,7 @@ void process_queue_item(xs_dict *q_item)
                 || status == HTTP_STATUS_UNPROCESSABLE_CONTENT
                 || status < 0)
                 /* explicit error: discard */
-                srv_log(xs_fmt("output message: fatal error %s %d", inbox, status));
+                srv_log(xs_fmt("output message: error %s %d", inbox, status));
             else
             if (retries > queue_retry_max)
                 srv_log(xs_fmt("output message: giving up %s %d", inbox, status));
@@ -2769,11 +2927,12 @@ void process_queue_item(xs_dict *q_item)
                 snac user;
 
                 if (user_open(&user, v)) {
-                    if (is_msg_for_me(&user, msg)) {
+                    int rsn = is_msg_for_me(&user, msg);
+                    if (rsn) {
                         xs *fn = xs_fmt("%s/queue/%s.json", user.basedir, ntid);
 
                         snac_debug(&user, 1,
-                            xs_fmt("enqueue_input (from shared inbox) %s", xs_dict_get(msg, "id")));
+                            xs_fmt("enqueue_input (from shared inbox) %s [%d]", xs_dict_get(msg, "id"), rsn));
 
                         if (link(tmpfn, fn) < 0)
                             srv_log(xs_fmt("link(%s, %s) error", tmpfn, fn));

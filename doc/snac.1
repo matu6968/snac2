@@ -256,7 +256,7 @@ it's - (a lonely hyphen), the post content will be read from stdin.
 The rest of command line arguments are treated as media files to be
 attached to the post.
 .It Cm note_unlisted Ar basedir Ar uid Ar text Op file file ...
-Like the previous one, but creates an "unlisted" (or "quiet public") one.
+Like the previous one, but creates an "unlisted" (or "quiet public") post.
 .It Cm block Ar basedir Ar instance_url
 Blocks a full instance, given its URL or domain name. All subsequent
 incoming activities with identifiers from that instance will be immediately
@@ -377,6 +377,13 @@ https://$SNAC_HOST/oauth/x-snac-get-token
 .Pp
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
+.It SNAC_BASEDIR
+This optional environment variable can be set to the base directory of
+your installation; if set, you don't have to add the base directory as an
+argument to command-line operations. This may prove useful if you only
+have one
+.Nm
+instance in you system (which is probably your case).
 .It Ev DEBUG
 Overrides the debugging level from the server 'dbglevel' configuration
 variable. Set it to an integer value. The higher, the deeper in meaningless

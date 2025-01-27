@@ -22,7 +22,7 @@ Mastoapi: implement /v1/conversations.
 
 Implement following of hashtags (this is not trivial).
 
-Track 'Event' data types standardization; how to add plan-to-attend and similar activities (more info: https://event-federation.eu/)
+Track 'Event' data types standardization; how to add plan-to-attend and similar activities (more info: https://event-federation.eu/). Friendica interacts with events via activities `Accept` (will go), `TentativeAccept` (will try to go) or `Reject` (cannot go) (`object` field as id, not object). `Undo` for any of these activities cancel (`object` as an object, not id).
 
 Implement "FEP-3b86: Activity Intents" https://codeberg.org/fediverse/fep/src/branch/main/fep/3b86/fep-3b86.md
 
@@ -31,8 +31,6 @@ Track "FEP-ef61: Portable Objects" https://codeberg.org/fediverse/fep/src/branch
 Integrate "Added handling for International Domain Names" PR https://codeberg.org/grunfink/snac2/pulls/104
 
 Do something about Akkoma and Misskey's quoted replies (they use the `quoteUrl` field instead of `inReplyTo`).
-
-Add support for /authorize_interaction (whatever it is).
 
 Add a list of hashtags to drop.
 
@@ -365,3 +363,5 @@ Unfollowing lemmy groups gets rejected with an http status of 400 (it seems to w
 CSV import/export does not work with OpenBSD security on; document it or fix it (2025-01-04T19:35:09+0100).
 
 Add support for /share?text=tt&website=url (whatever it is, see https://mastodonshare.com/ for details) (2025-01-06T18:43:52+0100).
+
+Add support for /authorize_interaction (whatever it is) (2025-01-16T14:45:28+0100).

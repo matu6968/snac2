@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2024 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
-#define VERSION "2.68-dev"
+#define VERSION "2.70-dev"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -108,6 +108,8 @@ int index_len(const char *fn);
 xs_list *index_list(const char *fn, int max);
 int index_desc_next(FILE *f, char md5[MD5_HEX_SIZE]);
 int index_desc_first(FILE *f, char md5[MD5_HEX_SIZE], int skip);
+int index_asc_next(FILE *f, char md5[MD5_HEX_SIZE]);
+int index_asc_first(FILE *f, char md5[MD5_HEX_SIZE], const char *seek_md5);
 xs_list *index_list_desc(const char *fn, int skip, int show);
 
 int object_add(const char *id, const xs_dict *obj);
@@ -317,7 +319,7 @@ xs_dict *msg_follow(snac *snac, const char *actor);
 
 xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
                   const xs_str *in_reply_to, const xs_list *attach,
-                  int priv, const char *lang);
+                  int scope, const char *lang);
 
 xs_dict *msg_undo(snac *snac, const xs_val *object);
 xs_dict *msg_delete(snac *snac, const char *id);
