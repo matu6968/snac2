@@ -2657,7 +2657,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
         /* "already seen" mark? */
         if (strcmp(v, MD5_ALREADY_SEEN_MARK) == 0) {
             if (skip == 0 && !mark_shown) {
-                xs *s = xs_fmt("%s/admin#top", user->actor);
+                xs *s = xs_fmt("%s/admin", user->actor);
 
                 xs_html_add(posts,
                     xs_html_tag("div",
@@ -2665,7 +2665,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_text(L("No more unseen posts")),
                         xs_html_text(" - "),
                         xs_html_tag("a",
-                            xs_html_attr("href",  s),
+                            xs_html_attr("href", s),
                             xs_html_text(L("Back to top")))));
             }
 

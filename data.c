@@ -1532,7 +1532,23 @@ void timeline_add_mark(snac *user)
 /* adds an "already seen" mark to the private timeline */
 {
     xs *fn = xs_fmt("%s/private.idx", user->basedir);
-    index_add_md5(fn, MD5_ALREADY_SEEN_MARK);
+    char last_entry[MD5_HEX_SIZE] = "";
+    FILE *f;
+
+    /* get the last entry in the index */
+    if ((f = fopen(fn, "r")) != NULL) {
+        index_desc_first(f, last_entry, 0);
+        fclose(f);
+    }
+
+    /* is the last entry *not* a mark? */
+    if (strcmp(last_entry, MD5_ALREADY_SEEN_MARK) != 0) {
+        /* add it */
+        index_add_md5(fn, MD5_ALREADY_SEEN_MARK);
+
+        /* mark as new */
+        timeline_touch(user);
+    }
 }
 
 
