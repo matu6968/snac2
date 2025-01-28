@@ -1545,9 +1545,6 @@ void timeline_add_mark(snac *user)
     if (strcmp(last_entry, MD5_ALREADY_SEEN_MARK) != 0) {
         /* add it */
         index_add_md5(fn, MD5_ALREADY_SEEN_MARK);
-
-        /* mark as new */
-        timeline_touch(user);
     }
 }
 
