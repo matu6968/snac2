@@ -2660,12 +2660,13 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                 xs *s = xs_fmt("%s/admin#top", user->actor);
 
                 xs_html_add(posts,
-                    xs_html_text(L("No more unseen posts")),
-                    xs_html_text(" - "),
-                    xs_html_tag("a",
-                        xs_html_attr("href",  s),
-                        xs_html_text(L("Back to top"))),
-                    xs_html_sctag("hr", NULL));
+                    xs_html_tag("div",
+                        xs_html_attr("class", "snac-no-more-unseen-posts"),
+                        xs_html_text(L("No more unseen posts")),
+                        xs_html_text(" - "),
+                        xs_html_tag("a",
+                            xs_html_attr("href",  s),
+                            xs_html_text(L("Back to top")))));
             }
 
             mark_shown = 1;
