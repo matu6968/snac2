@@ -72,7 +72,7 @@ static const char *default_css =
     ".snac-list-of-lists { padding-left: 0; }\n"
     ".snac-list-of-lists li { display: inline; border: 1px solid #a0a0a0; border-radius: 25px;\n"
     "  margin-right: 0.5em; padding-left: 0.5em; padding-right: 0.5em; }\n"
-    ".snac-no-more-unseen-posts { border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 0.5em 0; margin: 1em 0; }\n"
+    ".snac-no-more-unseen-posts { border-top: 1px solid #a0a0a0; border-bottom: 1px solid #a0a0a0; padding: 0.5em 0; margin: 1em 0; }\n"
     "@media (prefers-color-scheme: dark) { \n"
     "  body, input, textarea { background-color: #000; color: #fff; }\n"
     "  a { color: #7799dd }\n"
