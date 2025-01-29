@@ -3515,8 +3515,6 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
                     xs *list = timeline_list(&snac, "private", skip, show, &more);
 
-                    timeline_add_mark(&snac);
-
                     *body = html_timeline(&snac, list, 0, skip, show,
                             more, NULL, "/admin", 1, error);
 
@@ -3525,6 +3523,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
                     if (save)
                         history_add(&snac, "timeline.html_", *body, *b_size, etag);
+
+                    timeline_add_mark(&snac);
                 }
             }
         }
