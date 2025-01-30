@@ -6,7 +6,9 @@ Notifications are now shown in a more compact way (i.e. all reactions are shown 
 
 New command-line option `unmute` to, well, no-longer-mute an actor.
 
-The private timeline now includes a mark between new posts and "already seen" ones.
+The private timeline now includes an approximate mark between new posts and "already seen" ones.
+
+Fixed a spurious 404 error in the instance root URL for some configurations.
 
 ## 2.69 "Yin/Yang of Love"
 
