@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.70
 
 Notifications are now shown in a more compact way (i.e. all reactions are shown just above your post, instead of repeating the post *ad nauseam* for every reaction).
 
