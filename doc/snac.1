@@ -259,6 +259,9 @@ The rest of command line arguments are treated as media files to be
 attached to the post.
 .It Cm note_unlisted Ar basedir Ar uid Ar text Op file file ...
 Like the previous one, but creates an "unlisted" (or "quiet public") post.
+.It Cm note_mention Ar basedir Ar uid Ar text Op file file ...
+Like the previous one, but creates a post only for accounts mentioned
+in the post body.
 .It Cm block Ar basedir Ar instance_url
 Blocks a full instance, given its URL or domain name. All subsequent
 incoming activities with identifiers from that instance will be immediately
