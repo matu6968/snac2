@@ -991,16 +991,20 @@ xs_str *xs_join(const xs_list *list, const char *sep)
 xs_list *xs_split_n(const char *str, const char *sep, int times)
 /* splits a string into a list upto n times */
 {
+    xs_list *list = xs_list_new();
+
+    if (!xs_is_string(str) || !xs_is_string(sep))
+        return list;
+
     int sz = strlen(sep);
     char *ss;
-    xs_list *list;
-
-    list = xs_list_new();
 
     while (times > 0 && (ss = strstr(str, sep)) != NULL) {
         /* create a new string with this slice and add it to the list */
         xs *s = xs_str_new_sz(str, ss - str);
-        list = xs_list_append(list, s);
+
+        if (xs_is_string(s))
+            list = xs_list_append(list, s);
 
         /* skip past the separator */
         str = ss + sz;
@@ -1009,7 +1013,8 @@ xs_list *xs_split_n(const char *str, const char *sep, int times)
     }
 
     /* add the rest of the string */
-    list = xs_list_append(list, str);
+    if (xs_is_string(str))
+        list = xs_list_append(list, str);
 
     return list;
 }
