@@ -85,6 +85,8 @@ int xs_socket_server(const char *addr, const char *serv)
       listen(rs, SOMAXCONN);
     }
 
+    freeaddrinfo(res);
+
 #else /* WITHOUT_GETADDRINFO */
    struct sockaddr_in host;
 
