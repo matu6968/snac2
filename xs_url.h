@@ -17,6 +17,9 @@ xs_str *xs_url_dec(const char *str)
     xs_str *s = xs_str_new(NULL);
 
     while (*str) {
+        if (!xs_is_string(str))
+            break;
+
         if (*str == '%') {
             unsigned int i;
 
