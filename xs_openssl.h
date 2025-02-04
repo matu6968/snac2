@@ -83,7 +83,7 @@ xs_val *xs_base64_dec(const xs_str *data, int *size)
     s = xs_realloc(s, _xs_blk_size(*size + 1));
     s[*size] = '\0';
 
-    BIO_free_all(mem);
+    BIO_free_all(b64);
 
     return s;
 }

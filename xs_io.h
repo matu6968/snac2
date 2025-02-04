@@ -27,7 +27,8 @@ xs_str *xs_readline(FILE *f)
         while ((c = fgetc(f)) != EOF) {
             unsigned char rc = c;
 
-            s = xs_append_m(s, (char *)&rc, 1);
+            if (xs_is_string((char *)&rc))
+                s = xs_append_m(s, (char *)&rc, 1);
 
             if (c == '\n')
                 break;

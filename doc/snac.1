@@ -234,6 +234,8 @@ Purges old data from the timeline of all users.
 .It Cm adduser Ar basedir Op uid
 Adds a new user to the server. This is an interactive command;
 necessary information will be prompted for.
+.It Cm deluser Ar basedir Ar uid
+Deletes a user, unfollowing all accounts first.
 .It Cm resetpwd Ar basedir Ar uid
 Resets a user's password to a new, random one.
 .It Cm queue Ar basedir Ar uid
@@ -257,6 +259,9 @@ The rest of command line arguments are treated as media files to be
 attached to the post.
 .It Cm note_unlisted Ar basedir Ar uid Ar text Op file file ...
 Like the previous one, but creates an "unlisted" (or "quiet public") post.
+.It Cm note_mention Ar basedir Ar uid Ar text Op file file ...
+Like the previous one, but creates a post only for accounts mentioned
+in the post body.
 .It Cm block Ar basedir Ar instance_url
 Blocks a full instance, given its URL or domain name. All subsequent
 incoming activities with identifiers from that instance will be immediately

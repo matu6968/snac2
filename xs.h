@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <errno.h>
+#include <stdint.h>
 
 typedef enum {
     XSTYPE_STRING = 0x02,       /* C string (\0 delimited) (NOT STORED) */
@@ -142,6 +143,7 @@ void xs_data_get(void *data, const xs_data *value);
 void *xs_memmem(const char *haystack, int h_size, const char *needle, int n_size);
 
 unsigned int xs_hash_func(const char *data, int size);
+uint64_t xs_hash64_func(const char *data, int size);
 
 #ifdef XS_ASSERT
 #include <assert.h>
@@ -632,7 +634,7 @@ xs_str *xs_crop_i(xs_str *str, int start, int end)
         end = sz + end;
 
     /* crop from the top */
-    if (end > 0 && end < sz)
+    if (end >= 0 && end < sz)
         str[end] = '\0';
 
     /* crop from the bottom */
@@ -989,16 +991,20 @@ xs_str *xs_join(const xs_list *list, const char *sep)
 xs_list *xs_split_n(const char *str, const char *sep, int times)
 /* splits a string into a list upto n times */
 {
+    xs_list *list = xs_list_new();
+
+    if (!xs_is_string(str) || !xs_is_string(sep))
+        return list;
+
     int sz = strlen(sep);
     char *ss;
-    xs_list *list;
-
-    list = xs_list_new();
 
     while (times > 0 && (ss = strstr(str, sep)) != NULL) {
         /* create a new string with this slice and add it to the list */
         xs *s = xs_str_new_sz(str, ss - str);
-        list = xs_list_append(list, s);
+
+        if (xs_is_string(s))
+            list = xs_list_append(list, s);
 
         /* skip past the separator */
         str = ss + sz;
@@ -1007,7 +1013,8 @@ xs_list *xs_split_n(const char *str, const char *sep, int times)
     }
 
     /* add the rest of the string */
-    list = xs_list_append(list, str);
+    if (xs_is_string(str))
+        list = xs_list_append(list, str);
 
     return list;
 }
@@ -1487,14 +1494,27 @@ unsigned int xs_hash_func(const char *data, int size)
 /* a general purpose hashing function */
 {
     unsigned int hash = 0x666;
-    int n;
 
-    for (n = 0; n < size; n++) {
+    for (int n = 0; n < size; n++) {
         hash ^= (unsigned char)data[n];
         hash *= 111111111;
     }
 
     return hash ^ hash >> 16;
+}
+
+
+uint64_t xs_hash64_func(const char *data, int size)
+/* a general purpose hashing function (64 bit) */
+{
+    uint64_t hash = 0x100;
+
+    for (int n = 0; n < size; n++) {
+        hash ^= (unsigned char)data[n];
+        hash *= 1111111111111111111;
+    }
+
+    return hash;
 }
 
 

@@ -17,11 +17,17 @@ xs_str *xs_url_dec(const char *str)
     xs_str *s = xs_str_new(NULL);
 
     while (*str) {
+        if (!xs_is_string(str))
+            break;
+
         if (*str == '%') {
             unsigned int i;
 
             if (sscanf(str + 1, "%02x", &i) == 1) {
                 unsigned char uc = i;
+
+                if (!xs_is_string((char *)&uc))
+                    break;
 
                 s = xs_append_m(s, (char *)&uc, 1);
                 str += 2;
@@ -69,7 +75,7 @@ xs_dict *xs_url_vars(const char *str)
 
     vars = xs_dict_new();
 
-    if (str != NULL) {
+    if (xs_is_string(str)) {
         /* split by arguments */
         xs *args = xs_split(str, "&");
 

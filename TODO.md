@@ -14,13 +14,9 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
-Add support for subscribing and posting to relays (see https://codeberg.org/grunfink/snac2/issues/216 for more information).
-
 The instance timeline should also show boosts from users.
 
 Mastoapi: implement /v1/conversations.
-
-Implement following of hashtags (this is not trivial).
 
 Track 'Event' data types standardization; how to add plan-to-attend and similar activities (more info: https://event-federation.eu/). Friendica interacts with events via activities `Accept` (will go), `TentativeAccept` (will try to go) or `Reject` (cannot go) (`object` field as id, not object). `Undo` for any of these activities cancel (`object` as an object, not id).
 
@@ -365,3 +361,7 @@ CSV import/export does not work with OpenBSD security on; document it or fix it 
 Add support for /share?text=tt&website=url (whatever it is, see https://mastodonshare.com/ for details) (2025-01-06T18:43:52+0100).
 
 Add support for /authorize_interaction (whatever it is) (2025-01-16T14:45:28+0100).
+
+Implement following of hashtags (this is not trivial) (2025-01-30T16:12:16+0100).
+
+Add support for subscribing and posting to relays (see https://codeberg.org/grunfink/snac2/issues/216 for more information) (2025-01-30T16:12:34+0100).

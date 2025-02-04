@@ -1,5 +1,21 @@
 # Release Notes
 
+## 2.71
+
+Fixed memory leak (contributed by inz).
+
+Fixed crash.
+
+## 2.70
+
+Notifications are now shown in a more compact way (i.e. all reactions are shown just above your post, instead of repeating the post *ad nauseam* for every reaction).
+
+New command-line option `unmute` to, well, no-longer-mute an actor.
+
+The private timeline now includes an approximate mark between new posts and "already seen" ones.
+
+Fixed a spurious 404 error in the instance root URL for some configurations.
+
 ## 2.69 "Yin/Yang of Love"
 
 Added support for subscribing to LitePub (Pleroma-style) Fediverse Relays like e.g. https://fedi-relay.gyptazy.com to improve federation. See `snac(8)` (the Administrator Manual) for more information on how to use this feature.

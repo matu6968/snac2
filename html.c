@@ -2658,9 +2658,31 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     xs_html_add(body,
         posts);
 
+    int mark_shown = 0;
+
     while (xs_list_iter(&p, &v)) {
         xs *msg = NULL;
         int status;
+
+        /* "already seen" mark? */
+        if (strcmp(v, MD5_ALREADY_SEEN_MARK) == 0) {
+            if (skip == 0 && !mark_shown) {
+                xs *s = xs_fmt("%s/admin", user->actor);
+
+                xs_html_add(posts,
+                    xs_html_tag("div",
+                        xs_html_attr("class", "snac-no-more-unseen-posts"),
+                        xs_html_text(L("No more unseen posts")),
+                        xs_html_text(" - "),
+                        xs_html_tag("a",
+                            xs_html_attr("href", s),
+                            xs_html_text(L("Back to top")))));
+            }
+
+            mark_shown = 1;
+
+            continue;
+        }
 
         if (utl && user && !is_pinned_by_md5(user, v))
             status = timeline_get_by_md5(user, v, &msg);
@@ -3324,21 +3346,17 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
         else {
             xs *list = NULL;
-            xs *next = NULL;
+            int more = 0;
 
-            if (xs_is_true(xs_dict_get(srv_config, "strict_public_timelines"))) {
-                list = timeline_simple_list(&snac, "public", skip, show);
-                next = timeline_simple_list(&snac, "public", skip + show, 1);
-            }
-            else {
-                list = timeline_list(&snac, "public", skip, show);
-                next = timeline_list(&snac, "public", skip + show, 1);
-            }
+            if (xs_is_true(xs_dict_get(srv_config, "strict_public_timelines")))
+                list = timeline_simple_list(&snac, "public", skip, show, &more);
+            else 
+                list = timeline_list(&snac, "public", skip, show, &more);
 
             xs *pins = pinned_list(&snac);
             pins = xs_list_cat(pins, list);
 
-            *body = html_timeline(&snac, pins, 1, skip, show, xs_list_len(next), NULL, "", 1, error);
+            *body = html_timeline(&snac, pins, 1, skip, show, more, NULL, "", 1, error);
 
             *b_size = strlen(*body);
             status  = HTTP_STATUS_OK;
@@ -3487,6 +3505,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 }
             }
             else {
+                /** the private timeline **/
                 double t = history_mtime(&snac, "timeline.html_");
 
                 /* if enabled by admin, return a cached page if its timestamp is:
@@ -3500,19 +3519,22 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                                 xs_dict_get(req, "if-none-match"), etag);
                 }
                 else {
+                    int more = 0;
+
                     snac_debug(&snac, 1, xs_fmt("building timeline"));
 
-                    xs *list = timeline_list(&snac, "private", skip, show);
-                    xs *next = timeline_list(&snac, "private", skip + show, 1);
+                    xs *list = timeline_list(&snac, "private", skip, show, &more);
 
                     *body = html_timeline(&snac, list, 0, skip, show,
-                            xs_list_len(next), NULL, "/admin", 1, error);
+                            more, NULL, "/admin", 1, error);
 
                     *b_size = strlen(*body);
                     status  = HTTP_STATUS_OK;
 
                     if (save)
                         history_add(&snac, "timeline.html_", *body, *b_size, etag);
+
+                    timeline_add_mark(&snac);
                 }
             }
         }
@@ -3712,7 +3734,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
         int cnt = xs_number_get(xs_dict_get_def(srv_config, "max_public_entries", "20"));
 
-        xs *elems = timeline_simple_list(&snac, "public", 0, cnt);
+        xs *elems = timeline_simple_list(&snac, "public", 0, cnt, NULL);
         xs *bio   = xs_dup(xs_dict_get(snac.config, "bio"));
 
         xs *rss_title = xs_fmt("%s (@%s@%s)",
