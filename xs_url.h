@@ -69,7 +69,7 @@ xs_dict *xs_url_vars(const char *str)
 
     vars = xs_dict_new();
 
-    if (str != NULL) {
+    if (xs_is_string(str)) {
         /* split by arguments */
         xs *args = xs_split(str, "&");
 
