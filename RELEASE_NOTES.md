@@ -1,5 +1,9 @@
 # Release Notes
 
+## UNRELEASED
+
+Fixed more crashes (thank you very much to inz for helping me debugging this).
+
 ## 2.71
 
 Fixed memory leak (contributed by inz).
