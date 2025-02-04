@@ -1,5 +1,11 @@
 # Release Notes
 
+## UNRELEASED
+
+Fixed memory leak (contributed by inz).
+
+Fixed crash.
+
 ## 2.70
 
 Notifications are now shown in a more compact way (i.e. all reactions are shown just above your post, instead of repeating the post *ad nauseam* for every reaction).
