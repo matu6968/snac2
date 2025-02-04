@@ -23,6 +23,9 @@ xs_str *xs_url_dec(const char *str)
             if (sscanf(str + 1, "%02x", &i) == 1) {
                 unsigned char uc = i;
 
+                if (!xs_is_string((char *)&uc))
+                    break;
+
                 s = xs_append_m(s, (char *)&uc, 1);
                 str += 2;
             }
