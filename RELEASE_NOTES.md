@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.71
 
 Fixed memory leak (contributed by inz).
 
