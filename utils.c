@@ -36,6 +36,7 @@ static const char *default_srv_config = "{"
     "\"admin_account\":        \"\","
     "\"title\":                \"\","
     "\"short_description\":    \"\","
+    "\"short_description_raw\": false,"
     "\"protocol\":             \"https\","
     "\"fastcgi\":              false"
     "}";
