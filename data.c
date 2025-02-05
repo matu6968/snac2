@@ -2766,7 +2766,17 @@ xs_list *content_search(snac *user, const char *regex,
         for (int n = 0; n < 3; n++) {
             if (md5s[n] != NULL) {
                 xs *fn = _object_fn_by_md5(md5s[n], "content_search");
-                double mt = mtime(fn);
+                double mt;
+
+                while ((mt = mtime(fn)) == 0 && md5s[n] != NULL) {
+                    /* object is not here: move to the next one */
+                    if (xs_list_next(tls[n], &md5s[n], &c[n])) {
+                        xs_free(fn);
+                        fn = _object_fn_by_md5(md5s[n], "content_search_2");
+                    }
+                    else
+                        md5s[n] = NULL;
+                }
 
                 if (mt > mtime) {
                     newest = n;
