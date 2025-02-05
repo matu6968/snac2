@@ -280,6 +280,12 @@ static xs_val *_xs_json_load_lexer(FILE *f, js_type *t)
             else {
                 char cc = c;
                 v = xs_insert_m(v, offset, &cc, 1);
+
+                if (!xs_is_string(v)) {
+                    *t = JS_ERROR;
+                    break;
+                }
+
                 offset++;
             }
         }
