@@ -78,6 +78,8 @@ xs_dict *emojis(void)
     return d;
 }
 
+/* Non-whitespace without trailing comma, period or closing paren */
+#define NOSPACE "([^[:space:],.)]+|[,.)]+[^[:space:],.)])+"
 
 static xs_str *format_line(const char *line, xs_list **attach)
 /* formats a line */
@@ -96,8 +98,8 @@ static xs_str *format_line(const char *line, xs_list **attach)
             "__[^_]+__"                         "|" //anzu
             "!\\[[^]]+\\]\\([^\\)]+\\)"         "|"
             "\\[[^]]+\\]\\([^\\)]+\\)"          "|"
-            "[a-z]+:/" "/[^[:space:]]+"         "|"
-            "(mailto|xmpp):[^@[:space:]]+@[^[:space:]]+"
+            "[a-z]+:/" "/" NOSPACE              "|"
+            "(mailto|xmpp):[^@[:space:]]+@" NOSPACE
         ")");
     int n = 0;
 
