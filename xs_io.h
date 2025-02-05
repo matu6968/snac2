@@ -14,15 +14,13 @@ xs_val *xs_readall(FILE *f);
 xs_str *xs_readline(FILE *f)
 /* reads a line from a file */
 {
-    xs_str *s = NULL;
+    xs_str *s = xs_str_new(NULL);
 
     errno = 0;
 
     /* don't even try on eof */
     if (!feof(f)) {
         int c;
-
-        s = xs_str_new(NULL);
 
         while ((c = fgetc(f)) != EOF) {
             unsigned char rc = c;
