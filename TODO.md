@@ -14,6 +14,8 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
+Each notification should show a link to the full thread, to see it in context.
+
 The instance timeline should also show boosts from users.
 
 Mastoapi: implement /v1/conversations.
