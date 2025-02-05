@@ -3129,11 +3129,16 @@ xs_str *html_notifications(snac *user, int skip, int show)
         else
         if (obj != NULL) {
             xs *md5 = xs_md5_hex(id, strlen(id));
+            xs *ctxt = xs_fmt("%s/admin/p/%s#%s_entry", user->actor, md5, md5);
 
             xs_html *h = html_entry(user, obj, 0, 0, md5, 1);
 
             if (h != NULL) {
                 xs_html_add(entry,
+                    xs_html_tag("p",
+                        xs_html_tag("a",
+                            xs_html_attr("href", ctxt),
+                            xs_html_text(L("Context")))),
                     h);
             }
         }
@@ -3540,7 +3545,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             const char *md5 = xs_list_get(l, -1);
 
             if (md5 && *md5 && timeline_here(&snac, md5)) {
-                xs *list = xs_list_append(xs_list_new(), md5);
+                xs *list0 = xs_list_append(xs_list_new(), md5);
+                xs *list  = timeline_top_level(&snac, list0);
 
                 *body   = html_timeline(&snac, list, 0, 0, 0, 0, NULL, "/admin", 1, error);
                 *b_size = strlen(*body);
