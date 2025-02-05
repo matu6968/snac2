@@ -3145,7 +3145,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
             if (h != NULL) {
                 xs_html_add(entry,
-                    xs_html_tag("div",
+                    xs_html_tag("p",
                         xs_html_tag("a",
                             xs_html_attr("href", ctxt),
                             xs_html_text(L("Context")))),
