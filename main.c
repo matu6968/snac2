@@ -11,6 +11,7 @@
 #include "snac.h"
 
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 int usage(void)
 {
