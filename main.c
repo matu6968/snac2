@@ -676,19 +676,25 @@ int main(int argc, char *argv[])
 
         if (strcmp(url, "-e") == 0) {
             /* get the content from an editor */
+#define EDITOR "$EDITOR "
+            char cmd[] = EDITOR "/tmp/snac-XXXXXX";
             FILE *f;
+            int fd = mkstemp(cmd + strlen(EDITOR));
 
-            unlink("/tmp/snac-edit.txt");
-            system("$EDITOR /tmp/snac-edit.txt");
+            if (fd >= 0) {
+                int status = system(cmd);
 
-            if ((f = fopen("/tmp/snac-edit.txt", "r")) != NULL) {
-                content = xs_readall(f);
-                fclose(f);
-
-                unlink("/tmp/snac-edit.txt");
-            }
-            else {
-                printf("Nothing to send\n");
+                if (WIFEXITED(status) && WEXITSTATUS(status) == 0 && (f = fdopen(fd, "r")) != NULL) {
+                    content = xs_readall(f);
+                    fclose(f);
+                    unlink(cmd + strlen(EDITOR));
+                } else {
+                    printf("Nothing to send\n");
+                    close(fd);
+                    return 1;
+                }
+            } else {
+                fprintf(stderr, "Temp file creation failed\n");
                 return 1;
             }
         }
@@ -699,6 +705,11 @@ int main(int argc, char *argv[])
         }
         else
             content = xs_dup(url);
+
+        if (!content || !*content) {
+            printf("Nothing to send\n");
+            return 1;
+        }
 
         int scope = 0;
         if (strcmp(cmd, "note_mention") == 0)
