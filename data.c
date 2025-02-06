@@ -2601,7 +2601,7 @@ xs_list *inbox_list(void)
         if ((f = fopen(v, "r")) != NULL) {
             xs *line = xs_readline(f);
 
-            if (line) {
+            if (line && *line) {
                 line = xs_strip_i(line);
                 ibl  = xs_list_append(ibl, line);
             }
