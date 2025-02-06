@@ -274,7 +274,8 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
             l1 = xs_list_append(l1, vpo);
             l1 = xs_list_append(l1, vps);
 
-            p_vars = xs_dict_append(p_vars, vn, l1);
+            if (xs_is_string(vn))
+                p_vars = xs_dict_append(p_vars, vn, l1);
         }
         else {
             /* regular variable; just copy */
@@ -282,7 +283,8 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
             memcpy(vc, payload + po, ps);
             vc[ps] = '\0';
 
-            p_vars = xs_dict_append(p_vars, vn, vc);
+            if (xs_is_string(vn) && xs_is_string(vc))
+                p_vars = xs_dict_append(p_vars, vn, vc);
         }
 
         /* move on */
