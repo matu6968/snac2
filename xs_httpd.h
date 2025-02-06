@@ -71,7 +71,7 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
 
         *cnt++ = '\0';
         cnt += strspn(cnt, " \r\n\t\v\f");
-        xs_rstrip_chars_i(l, " \r\n\t\v\f");
+        l = xs_rstrip_chars_i(l, " \r\n\t\v\f");
 
         if (!xs_is_string(cnt))
             continue;
