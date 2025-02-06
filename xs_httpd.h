@@ -15,41 +15,48 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
 {
     xs *q_vars = NULL;
     xs *p_vars = NULL;
-    xs *l1, *l2;
+    xs *l1;
     const char *v;
+    char *saveptr;
 
     xs_socket_timeout(fileno(f), 2.0, 0.0);
 
     /* read the first line and split it */
     l1 = xs_strip_i(xs_readline(f));
-    l2 = xs_split(l1, " ");
+    char *raw_path;
+    const char *mtd;
+    const char *proto;
 
-    if (xs_list_len(l2) != 3) {
-        /* error or timeout */
+    if (!(mtd = strtok_r(l1, " ", &saveptr)) ||
+        !(raw_path = strtok_r(NULL, " ", &saveptr)) ||
+        !(proto = strtok_r(NULL, " ", &saveptr)) ||
+        strtok_r(NULL, " ", &saveptr))
         return NULL;
-    }
+
+    if (!xs_is_string(mtd) || !xs_is_string(raw_path) || !xs_is_string(proto))
+        return NULL;
 
     xs_dict *req = xs_dict_new();
 
-    req = xs_dict_append(req, "method", xs_list_get(l2, 0));
-    req = xs_dict_append(req, "raw_path", xs_list_get(l2, 1));
-    req = xs_dict_append(req, "proto",  xs_list_get(l2, 2));
+    req = xs_dict_append(req, "method", mtd);
+    req = xs_dict_append(req, "raw_path", raw_path);
+    req = xs_dict_append(req, "proto",  proto);
 
     {
-        /* split the path with its optional variables */
-        const xs_val *udp = xs_list_get(l2, 1);
-        xs *pnv = xs_split_n(udp, "?", 1);
-
-        /* store the path */
-        req = xs_dict_append(req, "path", xs_list_get(pnv, 0));
+        char *q = strchr(raw_path, '?');
 
         /* get the variables */
-        q_vars = xs_url_vars(xs_list_get(pnv, 1));
+        if (q) {
+                *q++ = '\0';
+                q_vars = xs_url_vars(q);
+        }
+        /* store the path */
+        req = xs_dict_append(req, "path", raw_path);
     }
 
     /* read the headers */
     for (;;) {
-        xs *l, *p = NULL;
+        xs *l;
 
         l = xs_strip_i(xs_readline(f));
 
@@ -58,11 +65,18 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
             break;
 
         /* split header and content */
-        p = xs_split_n(l, ": ", 1);
+        char *cnt = strchr(l, ':');
+        if (!cnt)
+            continue;
 
-        if (xs_list_len(p) == 2)
-            req = xs_dict_append(req, xs_tolower_i(
-                    (xs_str *)xs_list_get(p, 0)), xs_list_get(p, 1));
+        *cnt++ = '\0';
+        cnt += strspn(cnt, " \r\n\t\v\f");
+        xs_rstrip_chars_i(l, " \r\n\t\v\f");
+
+        if (!xs_is_string(cnt))
+            continue;
+
+        req = xs_dict_append(req, xs_tolower_i(l), cnt);
     }
 
     xs_socket_timeout(fileno(f), 5.0, 0.0);
