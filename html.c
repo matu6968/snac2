@@ -229,10 +229,11 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
         xs_html *date_text = xs_html_text(date_label);
 
         if (user && md5) {
-            xs *lpost_url = xs_fmt("%s/admin/p/%s",
-                                   user->actor, md5);
+            xs *lpost_url = xs_fmt("%s/admin/p/%s#%s_entry",
+                                   user->actor, md5, md5);
             date_text = xs_html_tag("a",
                                     xs_html_attr("href", lpost_url),
+                                    xs_html_attr("class", "snac-pubdate"),
                                     date_text);
         }
         else if (user && url) {
@@ -240,6 +241,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
                                    user->actor, xs_url_enc(url));
             date_text = xs_html_tag("a",
                                     xs_html_attr("href", lpost_url),
+                                    xs_html_attr("class", "snac-pubdate"),
                                     date_text);
         }
 
