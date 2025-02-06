@@ -6,11 +6,13 @@ Fixed a search bug.
 
 Each notification includes a link labelled `Context`, that leads to a page with the full conversation tree the post is a part of.
 
-Fixed more crashes (thank you very much to inz for helping me debugging this).
+Fixed more crashes (contributed by inz).
 
 Fixed link detection in posts (contributed by inz).
 
 Allow multiple editors for command-line posts (contributed by inz).
+
+Special thanks to fellow developer inz for bringing my attention to code places where I should have been more careful.
 
 ## 2.71
 
