@@ -14,6 +14,8 @@ Allow multiple editors for command-line posts (contributed by inz).
 
 Separated maximum and default timeline entry count, allowing larger timelines to be requested without having to increase the default (contributed by lxo).
 
+Turned message date into a link to the local post, so that it can be loaded into a separate tab for interacting with (contributed by lxo).
+
 Special thanks to fellow developer inz for bringing my attention to code places where I should have been more careful.
 
 ## 2.71

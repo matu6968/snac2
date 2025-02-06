@@ -13,6 +13,7 @@
 #include "xs_html.h"
 #include "xs_curl.h"
 #include "xs_unicode.h"
+#include "xs_url.h"
 
 #include "snac.h"
 
@@ -115,7 +116,8 @@ xs_str *actor_name(xs_dict *actor, const char *proxy)
 
 xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
                         const char *udate, const char *url, int priv,
-                        int in_people, const char *proxy, const char *lang)
+                        int in_people, const char *proxy, const char *lang,
+                        const char *md5)
 {
     xs_html *actor_icon = xs_html_tag("p", NULL);
 
@@ -224,12 +226,29 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
         if (xs_is_string(lang))
             date_title = xs_str_cat(date_title, " (", lang, ")");
 
+        xs_html *date_text = xs_html_text(date_label);
+
+        if (user && md5) {
+            xs *lpost_url = xs_fmt("%s/admin/p/%s",
+                                   user->actor, md5);
+            date_text = xs_html_tag("a",
+                                    xs_html_attr("href", lpost_url),
+                                    date_text);
+        }
+        else if (user && url) {
+            xs *lpost_url = xs_fmt("%s/admin?q=%s",
+                                   user->actor, xs_url_enc(url));
+            date_text = xs_html_tag("a",
+                                    xs_html_attr("href", lpost_url),
+                                    date_text);
+        }
+
         xs_html_add(actor_icon,
             xs_html_text(" "),
             xs_html_tag("time",
                 xs_html_attr("class", "dt-published snac-pubdate"),
                 xs_html_attr("title", date_title),
-                xs_html_text(date_label)));
+                date_text));
     }
 
     {
@@ -261,7 +280,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
 }
 
 
-xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, const char *proxy)
+xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, const char *proxy, const char *md5)
 {
     xs *actor = NULL;
     xs_html *actor_icon = NULL;
@@ -292,7 +311,7 @@ xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, con
         else
             lang = NULL;
 
-        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0, proxy, lang);
+        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0, proxy, lang, md5);
     }
 
     return actor_icon;
@@ -1706,7 +1725,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-origin"),
                     xs_html_text(L("follows you"))),
-                html_msg_icon(read_only ? NULL : user, xs_dict_get(msg, "actor"), msg, proxy)));
+                html_msg_icon(read_only ? NULL : user, xs_dict_get(msg, "actor"), msg, proxy, NULL)));
     }
     else
     if (!xs_match(type, POSTLIKE_OBJECT_TYPE)) {
@@ -1887,7 +1906,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     }
 
     xs_html_add(post_header,
-        html_msg_icon(read_only ? NULL : user, actor, msg, proxy));
+        html_msg_icon(read_only ? NULL : user, actor, msg, proxy, md5));
 
     /** post content **/
 
@@ -2820,7 +2839,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post-header"),
                     html_actor_icon(snac, actor, xs_dict_get(actor, "published"),
-                                    NULL, NULL, 0, 1, proxy, NULL)));
+                                    NULL, NULL, 0, 1, proxy, NULL, NULL)));
 
             /* content (user bio) */
             const char *c = xs_dict_get(actor, "summary");
@@ -3118,7 +3137,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
             xs_html_add(entry,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post"),
-                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy, NULL)));
+                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy, NULL, NULL)));
         }
         else
         if (strcmp(type, "Move") == 0) {
@@ -3132,7 +3151,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_add(entry,
                         xs_html_tag("div",
                             xs_html_attr("class", "snac-post"),
-                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0, proxy, NULL)));
+                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0, proxy, NULL, NULL)));
                 }
             }
         }
