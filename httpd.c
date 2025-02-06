@@ -219,7 +219,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
         if (xs_type(q_vars) == XSTYPE_DICT && (t = xs_dict_get(q_vars, "t"))) {
             /** search by tag **/
             int skip = 0;
-            int show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
+            int show = xs_number_get(xs_dict_get_def(srv_config, "def_timeline_entries", "50"));
             const char *v;
 
             if ((v = xs_dict_get(q_vars, "skip")) != NULL)

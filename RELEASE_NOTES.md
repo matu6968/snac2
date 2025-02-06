@@ -12,6 +12,8 @@ Fixed link detection in posts (contributed by inz).
 
 Allow multiple editors for command-line posts (contributed by inz).
 
+Separated maximum and default timeline entry count, allowing larger timelines to be requested without having to increase the default (contributed by lxo).
+
 Special thanks to fellow developer inz for bringing my attention to code places where I should have been more careful.
 
 ## 2.71

@@ -3306,7 +3306,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         cache = 0;
 
     int skip = 0;
-    int def_show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
+    int def_show = xs_number_get(xs_dict_get_def(srv_config, "def_timeline_entries", "50"));
     int show = def_show;
 
     if ((v = xs_dict_get(q_vars, "skip")) != NULL)
