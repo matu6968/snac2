@@ -2,9 +2,11 @@
 
 ## UNRELEASED
 
-Fixed a search bug.
+Each post can have more than one attachment from the web UI. The maximum number can be configured in `server.json` via the `max_attachments` value (default: 4).
 
 Each notification includes a link labelled `Context`, that leads to a page with the full conversation tree the post is a part of.
+
+Fixed a search bug (some matches were missed).
 
 Fixed more crashes (contributed by inz).
 
