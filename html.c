@@ -327,7 +327,7 @@ xs_html *html_note(snac *user, const char *summary,
                    const xs_val *cw_yn, const char *cw_text,
                    const xs_val *mnt_only, const char *redir,
                    const char *in_reply_to, int poll,
-                   const char *att_file, const char *att_alt_text,
+                   const xs_list *att_files, const xs_list *att_alt_texts,
                    int is_draft)
 /* Yes, this is a FUCKTON of arguments and I'm a bit embarrased */
 {
@@ -432,30 +432,71 @@ xs_html *html_note(snac *user, const char *summary,
         xs_html_tag("p", NULL),
         att = xs_html_tag("details",
             xs_html_tag("summary",
-                xs_html_text(L("Attachment..."))),
+                xs_html_text(L("Attachments..."))),
             xs_html_tag("p", NULL)));
 
-    if (att_file && *att_file)
-        xs_html_add(att,
-            xs_html_text(L("File:")),
-            xs_html_sctag("input",
-                xs_html_attr("type", "text"),
-                xs_html_attr("name", "attach_url"),
-                xs_html_attr("title", L("Clear this field to delete the attachment")),
-                xs_html_attr("value", att_file)));
-    else
+    int max_attachments = xs_number_get(xs_dict_get_def(srv_config, "max_attachments", "4"));
+    int att_n = 0;
+
+    /* fields for the currently existing attachments */
+    if (xs_is_list(att_files) && xs_is_list(att_alt_texts)) {
+        while (att_n < max_attachments) {
+            const char *att_file = xs_list_get(att_files, att_n);
+            const char *att_alt_text = xs_list_get(att_alt_texts, att_n);
+
+            if (!xs_is_string(att_file) || !xs_is_string(att_alt_text))
+                break;
+
+            xs *att_lbl = xs_fmt("attach_url_%d", att_n);
+            xs *alt_lbl = xs_fmt("alt_text_%d", att_n);
+
+            if (att_n)
+                xs_html_add(att,
+                    xs_html_sctag("br", NULL));
+
+            xs_html_add(att,
+                xs_html_text(L("File:")),
+                xs_html_sctag("input",
+                    xs_html_attr("type", "text"),
+                    xs_html_attr("name", att_lbl),
+                    xs_html_attr("title", L("Clear this field to delete the attachment")),
+                    xs_html_attr("value", att_file)));
+
+            xs_html_add(att,
+                xs_html_text(" "),
+                xs_html_sctag("input",
+                    xs_html_attr("type",    "text"),
+                    xs_html_attr("name",    alt_lbl),
+                    xs_html_attr("value",   att_alt_text),
+                    xs_html_attr("placeholder", L("Attachment description"))));
+
+            att_n++;
+        }
+    }
+
+    /* the rest of possible attachments */
+    while (att_n < max_attachments) {
+        xs *att_lbl = xs_fmt("attach_%d", att_n);
+        xs *alt_lbl = xs_fmt("alt_text_%d", att_n);
+
+        if (att_n)
+            xs_html_add(att,
+                xs_html_sctag("br", NULL));
+
         xs_html_add(att,
             xs_html_sctag("input",
                 xs_html_attr("type",    "file"),
-                xs_html_attr("name",    "attach")));
+                xs_html_attr("name",    att_lbl)));
 
-    xs_html_add(att,
-        xs_html_text(" "),
-        xs_html_sctag("input",
-            xs_html_attr("type",    "text"),
-            xs_html_attr("name",    "alt_text"),
-            xs_html_attr("value",   att_alt_text),
-            xs_html_attr("placeholder", L("Attachment description"))));
+        xs_html_add(att,
+            xs_html_text(" "),
+            xs_html_sctag("input",
+                xs_html_attr("type",    "text"),
+                xs_html_attr("name",    alt_lbl),
+                xs_html_attr("placeholder", L("Attachment description"))));
+
+        att_n++;
+    }
 
     /* add poll controls */
     if (poll) {
@@ -1059,7 +1100,7 @@ xs_html *html_top_controls(snac *snac)
             NULL, NULL,
             xs_stock(XSTYPE_FALSE), "",
             xs_stock(XSTYPE_FALSE), NULL,
-            NULL, 1, "", "", 0),
+            NULL, 1, NULL, NULL, 0),
 
         /** operations **/
         xs_html_tag("details",
@@ -1631,17 +1672,22 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
         xs *form_id = xs_fmt("%s_edit_form", md5);
         xs *redir   = xs_fmt("%s_entry", md5);
 
-        const char *att_file = "";
-        const char *att_alt_text = "";
+        xs *att_files = xs_list_new();
+        xs *att_alt_texts = xs_list_new();
+
         const xs_list *att_list = xs_dict_get(msg, "attachment");
 
-        /* does it have an attachment? */
-        if (xs_type(att_list) == XSTYPE_LIST && xs_list_len(att_list)) {
-            const xs_dict *d = xs_list_get(att_list, 0);
+        if (xs_is_list(att_list)) {
+            const xs_dict *d;
 
-            if (xs_type(d) == XSTYPE_DICT) {
-                att_file = xs_dict_get_def(d, "url", "");
-                att_alt_text = xs_dict_get_def(d, "name", "");
+            xs_list_foreach(att_list, d) {
+                const char *att_file = xs_dict_get(d, "url");
+                const char *att_alt_text = xs_dict_get(d, "name");
+
+                if (xs_is_string(att_file) && xs_is_string(att_alt_text)) {
+                    att_files = xs_list_append(att_files, att_file);
+                    att_alt_texts = xs_list_append(att_alt_texts, att_alt_text);
+                }
             }
         }
 
@@ -1653,7 +1699,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                NULL, 0, att_file, att_alt_text, is_draft(snac, id))),
+                NULL, 0, att_files, att_alt_texts, is_draft(snac, id))),
             xs_html_tag("p", NULL));
     }
 
@@ -1672,7 +1718,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                id, 0, "", "", 0)),
+                id, 0, NULL, NULL, 0)),
             xs_html_tag("p", NULL));
     }
 
@@ -2938,7 +2984,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                     NULL, actor_id,
                     xs_stock(XSTYPE_FALSE), "",
                     xs_stock(XSTYPE_FALSE), NULL,
-                    NULL, 0, "", "", 0),
+                    NULL, 0, NULL, NULL, 0),
                 xs_html_tag("p", NULL));
 
             xs_html_add(snac_post, snac_controls);
@@ -3966,52 +4012,56 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         /* post note */
         const xs_str *content      = xs_dict_get(p_vars, "content");
         const xs_str *in_reply_to  = xs_dict_get(p_vars, "in_reply_to");
-        const xs_str *attach_url   = xs_dict_get(p_vars, "attach_url");
-        const xs_list *attach_file = xs_dict_get(p_vars, "attach");
         const xs_str *to           = xs_dict_get(p_vars, "to");
         const xs_str *sensitive    = xs_dict_get(p_vars, "sensitive");
         const xs_str *summary      = xs_dict_get(p_vars, "summary");
         const xs_str *edit_id      = xs_dict_get(p_vars, "edit_id");
-        const xs_str *alt_text     = xs_dict_get(p_vars, "alt_text");
         int priv             = !xs_is_null(xs_dict_get(p_vars, "mentioned_only"));
         int store_as_draft   = !xs_is_null(xs_dict_get(p_vars, "is_draft"));
         xs *attach_list      = xs_list_new();
 
-        /* default alt text */
-        if (xs_is_null(alt_text))
-            alt_text = "";
+        /* iterate the attachments */
+        int max_attachments = xs_number_get(xs_dict_get_def(srv_config, "max_attachments", "4"));
 
-        /* is attach_url set? */
-        if (!xs_is_null(attach_url) && *attach_url != '\0') {
-            xs *l = xs_list_new();
+        for (int att_n = 0; att_n < max_attachments; att_n++) {
+            xs *url_lbl = xs_fmt("attach_url_%d", att_n);
+            xs *att_lbl = xs_fmt("attach_%d", att_n);
+            xs *alt_lbl = xs_fmt("alt_text_%d", att_n);
 
-            l = xs_list_append(l, attach_url);
-            l = xs_list_append(l, alt_text);
+            const char *attach_url     = xs_dict_get(p_vars, url_lbl);
+            const xs_list *attach_file = xs_dict_get(p_vars, att_lbl);
+            const char *alt_text       = xs_dict_get_def(p_vars, alt_lbl, "");
 
-            attach_list = xs_list_append(attach_list, l);
-        }
-
-        /* is attach_file set? */
-        if (!xs_is_null(attach_file) && xs_type(attach_file) == XSTYPE_LIST) {
-            const char *fn = xs_list_get(attach_file, 0);
-
-            if (*fn != '\0') {
-                char *ext = strrchr(fn, '.');
-                xs *hash  = xs_md5_hex(fn, strlen(fn));
-                xs *id    = xs_fmt("%s%s", hash, ext);
-                xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
-                int fo    = xs_number_get(xs_list_get(attach_file, 1));
-                int fs    = xs_number_get(xs_list_get(attach_file, 2));
-
-                /* store */
-                static_put(&snac, id, payload + fo, fs);
-
+            if (xs_is_string(attach_url) && *attach_url != '\0') {
                 xs *l = xs_list_new();
 
-                l = xs_list_append(l, url);
+                l = xs_list_append(l, attach_url);
                 l = xs_list_append(l, alt_text);
 
                 attach_list = xs_list_append(attach_list, l);
+            }
+            else
+            if (xs_is_list(attach_file)) {
+                const char *fn = xs_list_get(attach_file, 0);
+
+                if (xs_is_string(fn) && *fn != '\0') {
+                    char *ext = strrchr(fn, '.');
+                    xs *hash  = xs_md5_hex(fn, strlen(fn));
+                    xs *id    = xs_fmt("%s%s", hash, ext);
+                    xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
+                    int fo    = xs_number_get(xs_list_get(attach_file, 1));
+                    int fs    = xs_number_get(xs_list_get(attach_file, 2));
+
+                    /* store */
+                    static_put(&snac, id, payload + fo, fs);
+
+                    xs *l = xs_list_new();
+
+                    l = xs_list_append(l, url);
+                    l = xs_list_append(l, alt_text);
+
+                    attach_list = xs_list_append(attach_list, l);
+                }
             }
         }
 
