@@ -2706,6 +2706,29 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_attr("title", L("Post drafts")),
                         xs_html_text("drafts"))));
         }
+
+        /* the list of followed hashtags */
+        const char *followed_hashtags = xs_dict_get(user->config, "followed_hashtags");
+
+        if (xs_is_list(followed_hashtags) && xs_list_len(followed_hashtags)) {
+            xs_html *loht = xs_html_tag("ul",
+                xs_html_attr("class", "snac-list-of-lists"));
+            xs_html_add(body, loht);
+
+            const char *ht;
+
+            xs_list_foreach(followed_hashtags, ht) {
+                xs *url = xs_fmt("%s/admin?q=%s", user->actor, ht);
+                url = xs_replace_i(url, "#", "%23");
+
+                xs_html_add(loht,
+                    xs_html_tag("li",
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_attr("class", "snac-list-link"),
+                            xs_html_text(ht))));
+            }
+        }
     }
 
     xs_html_add(body,
