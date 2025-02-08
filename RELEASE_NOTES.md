@@ -6,6 +6,8 @@ Each post can have more than one attachment from the web UI. The maximum number 
 
 Each notification includes a link labelled `Context`, that leads to a page with the full conversation tree the post is a part of.
 
+Each followed hashtag has now a directly accesible link.
+
 Fixed a search bug (some matches were missed).
 
 Fixed more crashes (contributed by inz).
