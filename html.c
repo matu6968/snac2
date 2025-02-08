@@ -2099,16 +2099,17 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 const char *name       = xs_dict_get(v, "name");
                 const xs_dict *replies = xs_dict_get(v, "replies");
 
-                if (name && replies) {
-                    char *ti = (char *)xs_number_str(xs_dict_get(replies, "totalItems"));
+                if (xs_is_string(name) && xs_is_dict(replies)) {
+                    const char *ti = xs_number_str(xs_dict_get(replies, "totalItems"));
 
-                    xs_html_add(poll_result,
-                        xs_html_tag("tr",
-                            xs_html_tag("td",
-                                xs_html_text(name),
-                                xs_html_text(":")),
-                            xs_html_tag("td",
-                                xs_html_text(ti))));
+                    if (xs_is_string(ti))
+                        xs_html_add(poll_result,
+                            xs_html_tag("tr",
+                                xs_html_tag("td",
+                                    xs_html_text(name),
+                                    xs_html_text(":")),
+                                xs_html_tag("td",
+                                    xs_html_text(ti))));
                 }
             }
 
