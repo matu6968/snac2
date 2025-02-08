@@ -108,6 +108,7 @@ This will:
 - [Setting up Snac in OpenBSD (by Yonle)](https://wiki.ircnow.org/index.php?n=Openbsd.Snac).
 - [How to run your own social network with snac (by Giacomo Tesio)](https://encrypted.tesio.it/2024/12/18/how-to-run-your-own-social-network.html). Includes information on how to run snac as a CGI.
 - [Improving snac Performance with Nginx Proxy Cache (by Stefano Marinelli)](https://it-notes.dragas.net/2025/01/29/improving-snac-performance-with-nginx-proxy-cache/).
+- [Caching Snac Proxied Media With Nginx (by Stefano Marinelli)](https://it-notes.dragas.net/2025/02/08/caching-snac-proxied-media-with-nginx/).
 
 ## Incredibly awesome CSS themes for snac
 
