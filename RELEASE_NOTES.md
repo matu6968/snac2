@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.72
 
 Each post can have more than one attachment from the web UI. The maximum number can be configured in `server.json` via the `max_attachments` value (default: 4).
 
