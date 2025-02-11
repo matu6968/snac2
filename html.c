@@ -1839,7 +1839,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 xs_html_raw(" &#128204; ")));
     }
 
-    if (user && is_bookmarked(user, id)) {
+    if (user && !read_only && is_bookmarked(user, id)) {
         /* add a bookmark emoji */
         xs_html_add(score,
             xs_html_tag("span",
