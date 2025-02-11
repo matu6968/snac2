@@ -43,11 +43,13 @@ xs_list *xs_regex_split_n(const char *str, const char *rx, int count)
     while (count > 0 && !regexec(&re, (p = str + offset), 1, &rm, offset > 0 ? REG_NOTBOL : 0)) {
         /* add first the leading part of the string */
         xs *s1 = xs_str_new_sz(p, rm.rm_so);
-        list = xs_list_append(list, s1);
+
+        list = xs_list_append(list, xs_is_string(s1) ? s1 : "");
 
         /* add now the matched text as the separator */
         xs *s2 = xs_str_new_sz(p + rm.rm_so, rm.rm_eo - rm.rm_so);
-        list = xs_list_append(list, s2);
+
+        list = xs_list_append(list, xs_is_string(s2) ? s2 : "");
 
         /* move forward */
         offset += rm.rm_eo;
