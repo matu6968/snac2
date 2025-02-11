@@ -23,8 +23,12 @@ Ultrix machine in your grandfather basement, probably MacOS) support hard
 links on their native filesystems. Don't do fancy things like moving the
 subdirectories to different filesystems. Also, if you move your
 .Nm
-installation to another server, do it with a tool that respect hard
-link counts. Remember:
+installation to another server, do it with a tool that keeps hard
+links, like
+.Xr tar 1
+or
+.Xr rsync 1
+with the -H switch. Remember:
 .Nm
 is a very UNIXy program that loves hard links.
 .Ss Building and Installation
