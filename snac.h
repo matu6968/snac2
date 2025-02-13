@@ -16,6 +16,10 @@
 #define MAX_THREADS 256
 #endif
 
+#ifndef MAX_JSON_DEPTH
+#define MAX_JSON_DEPTH 8
+#endif
+
 #ifndef MAX_CONVERSATION_LEVELS
 #define MAX_CONVERSATION_LEVELS 48
 #endif
