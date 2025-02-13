@@ -553,6 +553,9 @@ void httpd_connection(FILE *f)
     headers = xs_dict_append(headers, "access-control-allow-origin", "*");
     headers = xs_dict_append(headers, "access-control-allow-headers", "*");
 
+    /* disable any form of fucking JavaScript */
+    headers = xs_dict_append(headers, "Content-Security-Policy", "script-src ;");
+
     if (p_state->use_fcgi)
         xs_fcgi_response(f, status, headers, body, b_size, fcgi_id);
     else
