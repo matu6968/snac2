@@ -2242,6 +2242,11 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             if (content && xs_str_in(content, o_href) != -1)
                 continue;
 
+            /* drop silently any attachment that may include JavaScript */
+            if (strcmp(type, "image/svg+xml") == 0 ||
+                strcmp(type, "text/html") == 0)
+                continue;
+
             /* do this attachment include an icon? */
             const xs_dict *icon = xs_dict_get(a, "icon");
             if (xs_type(icon) == XSTYPE_DICT) {
