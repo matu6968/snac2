@@ -4,6 +4,10 @@
 
 #define _XS_JSON_H
 
+#ifndef MAX_JSON_DEPTH
+#define MAX_JSON_DEPTH 32
+#endif
+
 int xs_json_dump(const xs_val *data, int indent, FILE *f);
 xs_str *xs_json_dumps(const xs_val *data, int indent);
 
