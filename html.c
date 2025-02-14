@@ -2896,7 +2896,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 }
 
 
-xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, const char *proxy)
+xs_html *html_people_list(snac *user, xs_list *list, char *header, char *t, const char *proxy)
 {
     xs_html *snac_posts;
     xs_html *people = xs_html_tag("div",
@@ -2921,7 +2921,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                     xs_html_attr("name", md5)),
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post-header"),
-                    html_actor_icon(snac, actor, xs_dict_get(actor, "published"),
+                    html_actor_icon(user, actor, xs_dict_get(actor, "published"),
                                     NULL, NULL, 0, 1, proxy, NULL, NULL)));
 
             /* content (user bio) */
@@ -2945,7 +2945,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
             }
 
             /* buttons */
-            xs *btn_form_action = xs_fmt("%s/admin/action", snac->actor);
+            xs *btn_form_action = xs_fmt("%s/admin/action", user->actor);
 
             xs_html *snac_controls = xs_html_tag("div",
                 xs_html_attr("class",   "snac-controls"));
@@ -2965,12 +2965,12 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
 
             xs_html_add(snac_controls, form);
 
-            if (following_check(snac, actor_id)) {
+            if (following_check(user, actor_id)) {
                 xs_html_add(form,
                     html_button("unfollow", L("Unfollow"),
                                 L("Stop following this user's activity")));
 
-                if (is_limited(snac, actor_id))
+                if (is_limited(user, actor_id))
                     xs_html_add(form,
                         html_button("unlimit", L("Unlimit"),
                                 L("Allow announces (boosts) from this user")));
@@ -2984,12 +2984,12 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                     html_button("follow", L("Follow"),
                                 L("Start following this user's activity")));
 
-                if (follower_check(snac, actor_id))
+                if (follower_check(user, actor_id))
                     xs_html_add(form,
                         html_button("delete", L("Delete"), L("Delete this user")));
             }
 
-            if (pending_check(snac, actor_id)) {
+            if (pending_check(user, actor_id)) {
                 xs_html_add(form,
                     html_button("approve", L("Approve"),
                                 L("Approve this follow request")));
@@ -2998,7 +2998,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                     html_button("discard", L("Discard"), L("Discard this follow request")));
             }
 
-            if (is_muted(snac, actor_id))
+            if (is_muted(user, actor_id))
                 xs_html_add(form,
                     html_button("unmute", L("Unmute"),
                                 L("Stop blocking activities from this user")));
@@ -3013,7 +3013,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
 
             xs_html_add(snac_controls,
                 xs_html_tag("p", NULL),
-                html_note(snac, L("Direct Message..."),
+                html_note(user, L("Direct Message..."),
                     dm_div_id, dm_form_id,
                     "", "",
                     NULL, actor_id,
