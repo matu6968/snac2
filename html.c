@@ -17,7 +17,7 @@
 
 #include "snac.h"
 
-int login(snac *snac, const xs_dict *headers)
+int login(snac *user, const xs_dict *headers)
 /* tries a login */
 {
     int logged_in = 0;
@@ -31,23 +31,23 @@ int login(snac *snac, const xs_dict *headers)
         xs *l1 = xs_split_n(s2, ":", 1);
 
         if (xs_list_len(l1) == 2) {
-            const char *user = xs_list_get(l1, 0);
+            const char *uid  = xs_list_get(l1, 0);
             const char *pwd  = xs_list_get(l1, 1);
             const char *addr = xs_or(xs_dict_get(headers, "remote-addr"),
                                      xs_dict_get(headers, "x-forwarded-for"));
 
-            if (badlogin_check(user, addr)) {
-                logged_in = check_password(user, pwd,
-                    xs_dict_get(snac->config, "passwd"));
+            if (badlogin_check(uid, addr)) {
+                logged_in = check_password(uid, pwd,
+                    xs_dict_get(user->config, "passwd"));
 
                 if (!logged_in)
-                    badlogin_inc(user, addr);
+                    badlogin_inc(uid, addr);
             }
         }
     }
 
     if (logged_in)
-        lastlog_write(snac, "web");
+        lastlog_write(user, "web");
 
     return logged_in;
 }
