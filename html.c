@@ -1091,16 +1091,16 @@ static xs_html *html_user_body(snac *user, int read_only)
 }
 
 
-xs_html *html_top_controls(snac *snac)
+xs_html *html_top_controls(snac *user)
 /* generates the top controls */
 {
-    xs *ops_action = xs_fmt("%s/admin/action", snac->actor);
+    xs *ops_action = xs_fmt("%s/admin/action", user->actor);
 
     xs_html *top_controls = xs_html_tag("div",
         xs_html_attr("class", "snac-top-controls"),
 
         /** new post **/
-        html_note(snac, L("New Post..."),
+        html_note(user, L("New Post..."),
             "new_post_div", "new_post_form",
             L("What's on your mind?"), "",
             NULL, NULL,
@@ -1170,53 +1170,53 @@ xs_html *html_top_controls(snac *snac)
     const char *email = "[disabled by admin]";
 
     if (xs_type(xs_dict_get(srv_config, "disable_email_notifications")) != XSTYPE_TRUE) {
-        email = xs_dict_get(snac->config_o, "email");
+        email = xs_dict_get(user->config_o, "email");
         if (xs_is_null(email)) {
-            email = xs_dict_get(snac->config, "email");
+            email = xs_dict_get(user->config, "email");
 
             if (xs_is_null(email))
                 email = "";
         }
     }
 
-    const char *cw = xs_dict_get(snac->config, "cw");
+    const char *cw = xs_dict_get(user->config, "cw");
     if (xs_is_null(cw))
         cw = "";
 
-    const char *telegram_bot = xs_dict_get(snac->config, "telegram_bot");
+    const char *telegram_bot = xs_dict_get(user->config, "telegram_bot");
     if (xs_is_null(telegram_bot))
         telegram_bot = "";
 
-    const char *telegram_chat_id = xs_dict_get(snac->config, "telegram_chat_id");
+    const char *telegram_chat_id = xs_dict_get(user->config, "telegram_chat_id");
     if (xs_is_null(telegram_chat_id))
         telegram_chat_id = "";
 
-    const char *ntfy_server = xs_dict_get(snac->config, "ntfy_server");
+    const char *ntfy_server = xs_dict_get(user->config, "ntfy_server");
     if (xs_is_null(ntfy_server))
         ntfy_server = "";
 
-    const char *ntfy_token = xs_dict_get(snac->config, "ntfy_token");
+    const char *ntfy_token = xs_dict_get(user->config, "ntfy_token");
     if (xs_is_null(ntfy_token))
         ntfy_token = "";
 
-    const char *purge_days = xs_dict_get(snac->config, "purge_days");
+    const char *purge_days = xs_dict_get(user->config, "purge_days");
     if (!xs_is_null(purge_days) && xs_type(purge_days) == XSTYPE_NUMBER)
         purge_days = (char *)xs_number_str(purge_days);
     else
         purge_days = "0";
 
-    const xs_val *d_dm_f_u  = xs_dict_get(snac->config, "drop_dm_from_unknown");
-    const xs_val *bot       = xs_dict_get(snac->config, "bot");
-    const xs_val *a_private = xs_dict_get(snac->config, "private");
-    const xs_val *auto_boost = xs_dict_get(snac->config, "auto_boost");
-    const xs_val *coll_thrds = xs_dict_get(snac->config, "collapse_threads");
-    const xs_val *pending    = xs_dict_get(snac->config, "approve_followers");
-    const xs_val *show_foll  = xs_dict_get(snac->config, "show_contact_metrics");
-    const char *latitude     = xs_dict_get_def(snac->config, "latitude", "");
-    const char *longitude    = xs_dict_get_def(snac->config, "longitude", "");
+    const xs_val *d_dm_f_u  = xs_dict_get(user->config, "drop_dm_from_unknown");
+    const xs_val *bot       = xs_dict_get(user->config, "bot");
+    const xs_val *a_private = xs_dict_get(user->config, "private");
+    const xs_val *auto_boost = xs_dict_get(user->config, "auto_boost");
+    const xs_val *coll_thrds = xs_dict_get(user->config, "collapse_threads");
+    const xs_val *pending    = xs_dict_get(user->config, "approve_followers");
+    const xs_val *show_foll  = xs_dict_get(user->config, "show_contact_metrics");
+    const char *latitude     = xs_dict_get_def(user->config, "latitude", "");
+    const char *longitude    = xs_dict_get_def(user->config, "longitude", "");
 
     xs *metadata = NULL;
-    const xs_dict *md = xs_dict_get(snac->config, "metadata");
+    const xs_dict *md = xs_dict_get(user->config, "metadata");
 
     if (xs_type(md) == XSTYPE_DICT) {
         const xs_str *k;
@@ -1238,7 +1238,7 @@ xs_html *html_top_controls(snac *snac)
     else
         metadata = xs_str_new(NULL);
 
-    xs *user_setup_action = xs_fmt("%s/admin/user-setup", snac->actor);
+    xs *user_setup_action = xs_fmt("%s/admin/user-setup", user->actor);
 
     xs_html_add(top_controls,
         xs_html_tag("details",
@@ -1257,7 +1257,7 @@ xs_html *html_top_controls(snac *snac)
                     xs_html_sctag("input",
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "name"),
-                        xs_html_attr("value", xs_dict_get(snac->config, "name")),
+                        xs_html_attr("value", xs_dict_get(user->config, "name")),
                         xs_html_attr("placeholder", L("Your name")))),
                 xs_html_tag("p",
                     xs_html_text(L("Avatar: ")),
@@ -1287,7 +1287,7 @@ xs_html *html_top_controls(snac *snac)
                         xs_html_attr("cols", "40"),
                         xs_html_attr("rows", "4"),
                         xs_html_attr("placeholder", L("Write about yourself here...")),
-                        xs_html_text(xs_dict_get(snac->config, "bio")))),
+                        xs_html_text(xs_dict_get(user->config, "bio")))),
                 xs_html_sctag("input",
                     xs_html_attr("type", "checkbox"),
                     xs_html_attr("name", "cw"),
@@ -1450,8 +1450,8 @@ xs_html *html_top_controls(snac *snac)
 
                 xs_html_tag("p", NULL)))));
 
-    xs *followed_hashtags_action = xs_fmt("%s/admin/followed-hashtags", snac->actor);
-    xs *followed_hashtags = xs_join(xs_dict_get_def(snac->config,
+    xs *followed_hashtags_action = xs_fmt("%s/admin/followed-hashtags", user->actor);
+    xs *followed_hashtags = xs_join(xs_dict_get_def(user->config,
                         "followed_hashtags", xs_stock(XSTYPE_LIST)), "\n");
 
     xs_html_add(top_controls,
