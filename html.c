@@ -1557,7 +1557,7 @@ xs_str *build_mentions(snac *user, const xs_dict *msg)
 }
 
 
-xs_html *html_entry_controls(snac *snac, const char *actor,
+xs_html *html_entry_controls(snac *user, const char *actor,
                             const xs_dict *msg, const char *md5)
 {
     const char *id    = xs_dict_get(msg, "id");
@@ -1566,7 +1566,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
     xs *likes   = object_likes(id);
     xs *boosts  = object_announces(id);
 
-    xs *action = xs_fmt("%s/admin/action", snac->actor);
+    xs *action = xs_fmt("%s/admin/action", user->actor);
     xs *redir  = xs_fmt("%s_entry", md5);
 
     xs_html *form;
@@ -1593,8 +1593,8 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
                 xs_html_attr("name",     "redir"),
                 xs_html_attr("value",    redir))));
 
-    if (!xs_startswith(id, snac->actor)) {
-        if (xs_list_in(likes, snac->md5) == -1) {
+    if (!xs_startswith(id, user->actor)) {
+        if (xs_list_in(likes, user->md5) == -1) {
             /* not already liked; add button */
             xs_html_add(form,
                 html_button("like", L("Like"), L("Say you like this post")));
@@ -1606,7 +1606,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
         }
     }
     else {
-        if (is_pinned(snac, id))
+        if (is_pinned(user, id))
             xs_html_add(form,
                 html_button("unpin", L("Unpin"), L("Unpin this post from your timeline")));
         else
@@ -1615,7 +1615,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
     }
 
     if (is_msg_public(msg)) {
-        if (xs_list_in(boosts, snac->md5) == -1) {
+        if (xs_list_in(boosts, user->md5) == -1) {
             /* not already boosted; add button */
             xs_html_add(form,
                 html_button("boost", L("Boost"), L("Announce this post to your followers")));
@@ -1627,16 +1627,16 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
         }
     }
 
-    if (is_bookmarked(snac, id))
+    if (is_bookmarked(user, id))
             xs_html_add(form,
                 html_button("unbookmark", L("Unbookmark"), L("Delete this post from your bookmarks")));
         else
             xs_html_add(form,
                 html_button("bookmark", L("Bookmark"), L("Add this post to your bookmarks")));
 
-    if (strcmp(actor, snac->actor) != 0) {
+    if (strcmp(actor, user->actor) != 0) {
         /* controls for other actors than this one */
-        if (following_check(snac, actor)) {
+        if (following_check(user, actor)) {
             xs_html_add(form,
                 html_button("unfollow", L("Unfollow"), L("Stop following this user's activity")));
         }
@@ -1646,7 +1646,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
         }
 
         if (!xs_is_null(group)) {
-            if (following_check(snac, group)) {
+            if (following_check(user, group)) {
                 xs_html_add(form,
                     html_button("unfollow", L("Unfollow Group"),
                         L("Stop following this group or channel")));
@@ -1672,7 +1672,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
 
     const char *prev_src = xs_dict_get(msg, "sourceContent");
 
-    if (!xs_is_null(prev_src) && strcmp(actor, snac->actor) == 0) { /** edit **/
+    if (!xs_is_null(prev_src) && strcmp(actor, user->actor) == 0) { /** edit **/
         /* post can be edited */
         xs *div_id  = xs_fmt("%s_edit", md5);
         xs *form_id = xs_fmt("%s_edit_form", md5);
@@ -1699,26 +1699,26 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
 
         xs_html_add(controls, xs_html_tag("div",
             xs_html_tag("p", NULL),
-            html_note(snac, L("Edit..."),
+            html_note(user, L("Edit..."),
                 div_id, form_id,
                 "", prev_src,
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                NULL, 0, att_files, att_alt_texts, is_draft(snac, id))),
+                NULL, 0, att_files, att_alt_texts, is_draft(user, id))),
             xs_html_tag("p", NULL));
     }
 
     { /** reply **/
         /* the post textarea */
-        xs *ct      = build_mentions(snac, msg);
+        xs *ct      = build_mentions(user, msg);
         xs *div_id  = xs_fmt("%s_reply", md5);
         xs *form_id = xs_fmt("%s_reply_form", md5);
         xs *redir   = xs_fmt("%s_entry", md5);
 
         xs_html_add(controls, xs_html_tag("div",
             xs_html_tag("p", NULL),
-            html_note(snac, L("Reply..."),
+            html_note(user, L("Reply..."),
                 div_id, form_id,
                 "", ct,
                 NULL, NULL,
