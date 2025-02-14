@@ -2585,10 +2585,8 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 }
 
 
-xs_html *html_footer(void)
+xs_html *html_footer(const snac *user)
 {
-    const snac *user = NULL;
-
     return xs_html_tag("div",
         xs_html_attr("class", "snac-footer"),
         xs_html_tag("a",
@@ -2895,7 +2893,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     }
 
     xs_html_add(body,
-        html_footer());
+        html_footer(user));
 
     return xs_html_render_s(html, "<!DOCTYPE html>\n");
 }
@@ -3064,7 +3062,7 @@ xs_str *html_people(snac *user)
         html_user_head(user, NULL, NULL),
         xs_html_add(html_user_body(user, 0),
             lists,
-            html_footer()));
+            html_footer(user)));
 
     return xs_html_render_s(html, "<!DOCTYPE html>\n");
 }
@@ -3314,7 +3312,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
     xs_set_free(&rep);
 
     xs_html_add(body,
-        html_footer());
+        html_footer(user));
 
     /* set the check time to now */
     xs *dummy = notify_check_time(user, 1);
@@ -3569,7 +3567,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                         html_user_head(&snac, NULL, NULL),
                         xs_html_add(html_user_body(&snac, 0),
                         page,
-                        html_footer()));
+                        html_footer(user)));
 
                     *body = xs_html_render_s(html, "<!DOCTYPE html>\n");
                     *b_size = strlen(*body);
