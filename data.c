@@ -13,6 +13,7 @@
 #include "xs_match.h"
 #include "xs_unicode.h"
 #include "xs_random.h"
+#include "xs_po.h"
 
 #include "snac.h"
 

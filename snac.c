@@ -24,6 +24,7 @@
 #include "xs_match.h"
 #include "xs_fcgi.h"
 #include "xs_html.h"
+#include "xs_po.h"
 
 #include "snac.h"
 
