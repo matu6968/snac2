@@ -1502,7 +1502,7 @@ static xs_html *html_button(char *clss, char *label, char *hint)
 }
 
 
-xs_str *build_mentions(snac *snac, const xs_dict *msg)
+xs_str *build_mentions(snac *user, const xs_dict *msg)
 /* returns a string with the mentions in msg */
 {
     xs_str *s = xs_str_new(NULL);
@@ -1516,7 +1516,7 @@ xs_str *build_mentions(snac *snac, const xs_dict *msg)
         const char *name = xs_dict_get(v, "name");
 
         if (type && strcmp(type, "Mention") == 0 &&
-            href && strcmp(href, snac->actor) != 0 && name) {
+            href && strcmp(href, user->actor) != 0 && name) {
             xs *s1 = NULL;
 
             if (name[0] != '@') {
