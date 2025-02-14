@@ -33,6 +33,7 @@ extern xs_str *srv_basedir;
 extern xs_dict *srv_config;
 extern xs_str *srv_baseurl;
 extern xs_str *srv_proxy_token_seed;
+extern xs_dict *srv_langs;
 
 extern int dbglevel;
 
@@ -444,3 +445,5 @@ xs_str *make_url(const char *href, const char *proxy, int by_token);
 
 int badlogin_check(const char *user, const char *addr);
 void badlogin_inc(const char *user, const char *addr);
+
+const char *lang_str(const char *str, const snac *user);
