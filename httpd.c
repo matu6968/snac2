@@ -211,6 +211,8 @@ int server_get_handler(xs_dict *req, const char *q_path,
 {
     int status = 0;
 
+    const snac *user = NULL;
+
     /* is it the server root? */
     if (*q_path == '\0' || strcmp(q_path, "/") == 0) {
         const xs_dict *q_vars = xs_dict_get(req, "q_vars");

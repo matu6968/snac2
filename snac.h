@@ -37,7 +37,7 @@ extern xs_dict *srv_langs;
 
 extern int dbglevel;
 
-#define L(s) (s)
+#define L(s) lang_str((s), user)
 
 #define POSTLIKE_OBJECT_TYPE "Note|Question|Page|Article|Video|Audio|Event"
 

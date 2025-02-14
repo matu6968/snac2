@@ -627,6 +627,9 @@ static xs_html *html_instance_body(void)
     const char *email    = xs_dict_get(srv_config, "admin_email");
     const char *acct     = xs_dict_get(srv_config, "admin_account");
 
+    /* for L() */
+    const snac *user = NULL;
+
     xs *blurb = xs_replace(snac_blurb, "%host%", host);
 
     xs_html *dl;
@@ -1486,7 +1489,7 @@ xs_html *html_top_controls(snac *user)
 }
 
 
-static xs_html *html_button(char *clss, char *label, char *hint)
+static xs_html *html_button(const char *clss, const char *label, const char *hint)
 {
     xs *c = xs_fmt("snac-btn-%s", clss);
 
@@ -2584,6 +2587,8 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
 xs_html *html_footer(void)
 {
+    const snac *user = NULL;
+
     return xs_html_tag("div",
         xs_html_attr("class", "snac-footer"),
         xs_html_tag("a",
@@ -2896,7 +2901,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 }
 
 
-xs_html *html_people_list(snac *user, xs_list *list, char *header, char *t, const char *proxy)
+xs_html *html_people_list(snac *user, xs_list *list, const char *header, const char *t, const char *proxy)
 {
     xs_html *snac_posts;
     xs_html *people = xs_html_tag("div",
@@ -3327,6 +3332,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 {
     const char *accept = xs_dict_get(req, "accept");
     int status = HTTP_STATUS_NOT_FOUND;
+    const snac *user = NULL;
     snac snac;
     xs *uid = NULL;
     const char *p_path;
@@ -3392,6 +3398,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         srv_debug(1, xs_fmt("html_get_handler bad user %s", uid));
         return HTTP_STATUS_NOT_FOUND;
     }
+
+    user = &snac;
 
     if (xs_is_true(xs_dict_get(srv_config, "proxy_media")))
         proxy = 1;
@@ -4016,6 +4024,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     (void)ctype;
 
     int status = 0;
+    const snac *user = NULL;
     snac snac;
     const char *uid;
     const char *p_path;
@@ -4038,6 +4047,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         *body  = xs_dup(uid);
         return HTTP_STATUS_UNAUTHORIZED;
     }
+
+    user = &snac;
 
     p_vars = xs_dict_get(req, "p_vars");
 
