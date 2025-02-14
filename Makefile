@@ -33,6 +33,13 @@ uninstall:
 	rm $(PREFIX_MAN)/man5/snac.5
 	rm $(PREFIX_MAN)/man8/snac.8
 
+update-po:
+	mkdir -p po
+	[ -f "po/en.po" ] || xgettext -o po/en.po --language=C --keyword=L --from-code=utf-8 *.c
+	for a in po/*.po ; do \
+		xgettext --omit-header -j -o $$a --language=C --keyword=L --from-code=utf-8 *.c ; \
+	done
+
 activitypub.o: activitypub.c xs.h xs_json.h xs_curl.h xs_mime.h \
  xs_openssl.h xs_regex.h xs_time.h xs_set.h xs_match.h xs_unicode.h \
  snac.h http_codes.h

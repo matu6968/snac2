@@ -1058,8 +1058,8 @@ static xs_html *html_user_body(snac *user, int read_only)
         const char *longitude = xs_dict_get_def(user->config, "longitude", "");
 
         if (*latitude && *longitude) {
-            xs *label = xs_fmt(L("%s,%s"), latitude, longitude);
-            xs *url   = xs_fmt(L("https://openstreetmap.org/search?query=%s,%s"),
+            xs *label = xs_fmt("%s,%s", latitude, longitude);
+            xs *url   = xs_fmt("https://openstreetmap.org/search?query=%s,%s",
                         latitude, longitude);
 
             xs_html_add(top_user,
