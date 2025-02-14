@@ -69,7 +69,7 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
 
         xs *style = xs_fmt("height: %dem; width: %dem; vertical-align: middle;", ems, ems);
 
-        const char *v;
+        const xs_dict *v;
         int c = 0;
 
         while (xs_list_next(tag_list, &v, &c)) {
@@ -77,19 +77,25 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
 
             if (t && strcmp(t, "Emoji") == 0) {
                 const char *n = xs_dict_get(v, "name");
-                const char *i = xs_dict_get(v, "icon");
+                const xs_dict *i = xs_dict_get(v, "icon");
 
-                if (n && i) {
+                if (xs_is_string(n) && xs_is_dict(i)) {
                     const char *u = xs_dict_get(i, "url");
-                    xs *url = make_url(u, proxy, 0);
+                    const char *mt = xs_dict_get(i, "mediaType");
 
-                    xs_html *img = xs_html_sctag("img",
-                        xs_html_attr("loading", "lazy"),
-                        xs_html_attr("src", url),
-                        xs_html_attr("style", style));
+                    if (xs_is_string(u) && xs_is_string(mt) && strcmp(mt, "image/svg+xml")) {
+                        xs *url = make_url(u, proxy, 0);
 
-                    xs *s1 = xs_html_render(img);
-                    s = xs_replace_i(s, n, s1);
+                        xs_html *img = xs_html_sctag("img",
+                            xs_html_attr("loading", "lazy"),
+                            xs_html_attr("src", url),
+                            xs_html_attr("style", style));
+
+                        xs *s1 = xs_html_render(img);
+                        s = xs_replace_i(s, n, s1);
+                    }
+                    else
+                        s = xs_replace_i(s, n, "");
                 }
             }
         }
