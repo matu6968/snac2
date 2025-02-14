@@ -744,8 +744,10 @@ xs_html *html_user_head(snac *user, const char *desc, const char *url)
         xs *fwers = follower_list(user);
         xs *fwing = following_list(user);
 
-        xs *s1 = xs_fmt(L("%d following, %d followers · "),
+        xs *s1 = xs_fmt(L("%d following, %d followers"),
             xs_list_len(fwing), xs_list_len(fwers));
+
+        s1 = xs_str_cat(s1, " · ");
 
         s_desc = xs_str_prepend_i(s_desc, s1);
     }
@@ -1078,7 +1080,7 @@ static xs_html *html_user_body(snac *user, int read_only)
             xs *fwers = follower_list(user);
             xs *fwing = following_list(user);
 
-            xs *s1 = xs_fmt(L("%d following %d followers"),
+            xs *s1 = xs_fmt(L("%d following, %d followers"),
                 xs_list_len(fwing), xs_list_len(fwers));
 
             xs_html_add(top_user,
