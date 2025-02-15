@@ -151,6 +151,7 @@ int srv_open(const char *basedir, int auto_upgrade)
 
     /* languages */
     srv_langs = xs_dict_new();
+    srv_langs = xs_dict_set(srv_langs, "en", xs_stock(XSTYPE_NULL));
 
     xs *l_dir = xs_fmt("%s/lang/", srv_basedir);
     mkdirx(l_dir);

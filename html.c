@@ -1243,6 +1243,28 @@ xs_html *html_top_controls(snac *user)
     else
         metadata = xs_str_new(NULL);
 
+    /* ui language */
+    xs_html *lang_select = xs_html_tag("select",
+        xs_html_attr("name", "web_ui_lang"));
+
+    const char *u_lang = xs_dict_get_def(user->config, "lang", "en");
+    const char *lang;
+    const xs_dict *langs;
+
+    xs_dict_foreach(srv_langs, lang, langs) {
+        if (strcmp(u_lang, lang) == 0)
+            xs_html_add(lang_select,
+                xs_html_tag("option",
+                    xs_html_text(lang),
+                    xs_html_attr("value", lang),
+                    xs_html_attr("selected", "selected")));
+        else
+            xs_html_add(lang_select,
+                xs_html_tag("option",
+                    xs_html_text(lang),
+                    xs_html_attr("value", lang)));
+    }
+
     xs *user_setup_action = xs_fmt("%s/admin/user-setup", user->actor);
 
     xs_html_add(top_controls,
@@ -1432,6 +1454,11 @@ xs_html *html_top_controls(snac *user)
                         xs_html_attr("placeholder", "Blog=https:/"
                             "/example.com/my-blog\nGPG Key=1FA54\n..."),
                     xs_html_text(metadata))),
+
+                xs_html_tag("p",
+                    xs_html_text(L("Web interface language:")),
+                    xs_html_sctag("br", NULL),
+                    lang_select),
 
                 xs_html_tag("p",
                     xs_html_text(L("New password:")),
@@ -4505,6 +4532,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_TRUE));
         else
             snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_FALSE));
+        if ((v = xs_dict_get(p_vars, "web_ui_lang")) != NULL)
+            snac.config = xs_dict_set(snac.config, "lang", v);
 
         snac.config = xs_dict_set(snac.config, "latitude", xs_dict_get_def(p_vars, "latitude", ""));
         snac.config = xs_dict_set(snac.config, "longitude", xs_dict_get_def(p_vars, "longitude", ""));
