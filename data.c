@@ -149,6 +149,28 @@ int srv_open(const char *basedir, int auto_upgrade)
         mkdirx(expdir);
     }
 
+    /* languages */
+    srv_langs = xs_dict_new();
+
+    xs *l_dir = xs_fmt("%s/lang/", srv_basedir);
+    mkdirx(l_dir);
+
+    l_dir = xs_str_cat(l_dir, "*.po");
+    xs *pos = xs_glob(l_dir, 0, 0);
+    const char *po;
+
+    xs_list_foreach(pos, po) {
+        xs *d = xs_po_to_dict(po);
+
+        if (xs_is_dict(d)) {
+            xs *l = xs_split(po, "/");
+            xs *id = xs_dup(xs_list_get(l, -1));
+            id = xs_replace_i(id, ".po", "");
+
+            srv_langs = xs_dict_set(srv_langs, id, d);
+        }
+    }
+
     return ret;
 }
 
