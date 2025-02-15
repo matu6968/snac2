@@ -4072,21 +4072,14 @@ void badlogin_inc(const char *user, const char *addr)
 const char *lang_str(const char *str, const snac *user)
 /* returns a translated string */
 {
-    if (user && xs_is_string(str) && xs_is_dict(srv_langs)) {
-        /* get user preference */
-        const char *lang = xs_dict_get(user->config, "lang");
+    const char *n_str = str;
 
-        if (xs_is_string(lang)) {
-            const xs_dict *strs = xs_dict_get(srv_langs, lang);
+    if (user && xs_is_dict(user->lang) && xs_is_string(str)) {
+        n_str = xs_dict_get(user->lang, str);
 
-            if (xs_is_dict(strs)) {
-                const char *n_str = xs_dict_get(strs, str);
-
-                if (xs_is_string(n_str))
-                    str = n_str;
-            }
-        }
+        if (xs_is_null(n_str) || *n_str == '\0')
+            n_str = str;
     }
 
-    return str;
+    return n_str;
 }

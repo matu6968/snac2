@@ -3326,6 +3326,17 @@ xs_str *html_notifications(snac *user, int skip, int show)
 }
 
 
+void set_user_lang(snac *user)
+/* sets the language dict according to user configuration */
+{
+    user->lang = NULL;
+    const char *lang = xs_dict_get(user->config, "lang");
+
+    if (xs_is_string(lang))
+        user->lang = xs_dict_get(srv_langs, lang);
+}
+
+
 int html_get_handler(const xs_dict *req, const char *q_path,
                      char **body, int *b_size, char **ctype,
                      xs_str **etag, xs_str **last_modified)
@@ -3399,7 +3410,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         return HTTP_STATUS_NOT_FOUND;
     }
 
-    user = &snac;
+    user = &snac; /* for L() */
+    set_user_lang(&snac);
 
     if (xs_is_true(xs_dict_get(srv_config, "proxy_media")))
         proxy = 1;
@@ -4048,7 +4060,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         return HTTP_STATUS_UNAUTHORIZED;
     }
 
-    user = &snac;
+    user = &snac; /* for L() */
+    set_user_lang(&snac);
 
     p_vars = xs_dict_get(req, "p_vars");
 

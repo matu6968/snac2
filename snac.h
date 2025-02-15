@@ -60,6 +60,7 @@ typedef struct {
     xs_dict *links;     /* validated links */
     xs_str *actor;      /* actor url */
     xs_str *md5;        /* actor url md5 */
+    const xs_dict *lang;/* string translation dict */
 } snac;
 
 typedef struct {
