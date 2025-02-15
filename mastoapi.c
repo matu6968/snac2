@@ -1676,7 +1676,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 else
                 if (strcmp(opt, "statuses") == 0) { /** **/
                     /* the public list of posts of a user */
-                    xs *timeline = timeline_simple_list(&snac2, "public", 0, 256);
+                    xs *timeline = timeline_simple_list(&snac2, "public", 0, 256, NULL);
                     xs_list *p   = timeline;
                     const xs_str *v;
 
@@ -2171,7 +2171,12 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
 
         {
             xs *d11 = xs_json_loads("{\"characters_reserved_per_url\":32,"
-                "\"max_characters\":100000,\"max_media_attachments\":8}");
+                "\"max_characters\":100000,\"max_media_attachments\":4}");
+
+            const xs_number *max_attachments = xs_dict_get(srv_config, "max_attachments");
+            if (xs_type(max_attachments) == XSTYPE_NUMBER)
+                d11 = xs_dict_set(d11, "max_media_attachments", max_attachments);
+
             cfg = xs_dict_append(cfg, "statuses", d11);
 
             xs *d12 = xs_json_loads("{\"max_featured_tags\":0}");

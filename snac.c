@@ -69,7 +69,7 @@ xs_str *tid(int offset)
 
     gettimeofday(&tv, NULL);
 
-    return xs_fmt("%10d.%06d", tv.tv_sec + offset, tv.tv_usec);
+    return xs_fmt("%010ld.%06ld", (long)tv.tv_sec + (long)offset, (long)tv.tv_usec);
 }
 
 

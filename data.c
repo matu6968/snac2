@@ -1399,11 +1399,13 @@ void timeline_update_indexes(snac *snac, const char *id)
         if (valid_status(object_get(id, &msg))) {
             /* if its ours and is public, also store in public */
             if (is_msg_public(msg)) {
-                object_user_cache_add(snac, id, "public");
-
-                /* also add it to the instance public timeline */
-                xs *ipt = xs_fmt("%s/public.idx", srv_basedir);
-                index_add(ipt, id);
+                if (object_user_cache_add(snac, id, "public") >= 0) {
+                    /* also add it to the instance public timeline */
+                    xs *ipt = xs_fmt("%s/public.idx", srv_basedir);
+                    index_add(ipt, id);
+                }
+                else
+                    srv_debug(1, xs_fmt("Not added to public instance index %s", id));
             }
         }
     }
@@ -1487,16 +1489,28 @@ xs_str *user_index_fn(snac *user, const char *idx_name)
 }
 
 
-xs_list *timeline_simple_list(snac *user, const char *idx_name, int skip, int show)
+xs_list *timeline_simple_list(snac *user, const char *idx_name, int skip, int show, int *more)
 /* returns a timeline (with all entries) */
 {
     xs *idx = user_index_fn(user, idx_name);
 
-    return index_list_desc(idx, skip, show);
+    /* if a more flag is sent, request one more */
+    xs_list *lst = index_list_desc(idx, skip, show + (more != NULL ? 1 : 0));
+
+    if (more != NULL) {
+        if (xs_list_len(lst) > show) {
+            *more = 1;
+            lst = xs_list_del(lst, -1);
+        }
+        else
+            *more = 0;
+    }
+
+    return lst;
 }
 
 
-xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show)
+xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show, int *more)
 /* returns a timeline (only top level entries) */
 {
     int c_max;
@@ -1508,9 +1522,30 @@ xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show)
     if (show > c_max)
         show = c_max;
 
-    xs *list = timeline_simple_list(snac, idx_name, skip, show);
+    xs *list = timeline_simple_list(snac, idx_name, skip, show, more);
 
     return timeline_top_level(snac, list);
+}
+
+
+void timeline_add_mark(snac *user)
+/* adds an "already seen" mark to the private timeline */
+{
+    xs *fn = xs_fmt("%s/private.idx", user->basedir);
+    char last_entry[MD5_HEX_SIZE] = "";
+    FILE *f;
+
+    /* get the last entry in the index */
+    if ((f = fopen(fn, "r")) != NULL) {
+        index_desc_first(f, last_entry, 0);
+        fclose(f);
+    }
+
+    /* is the last entry *not* a mark? */
+    if (strcmp(last_entry, MD5_ALREADY_SEEN_MARK) != 0) {
+        /* add it */
+        index_add_md5(fn, MD5_ALREADY_SEEN_MARK);
+    }
 }
 
 
@@ -1524,8 +1559,17 @@ xs_list *timeline_instance_list(int skip, int show)
 /* returns the timeline for the full instance */
 {
     xs *idx = instance_index_fn();
+    xs *lst = index_list_desc(idx, skip, show);
 
-    return index_list_desc(idx, skip, show);
+    /* make the list unique */
+    xs_set rep;
+    xs_set_init(&rep);
+    const char *md5;
+
+    xs_list_foreach(lst, md5)
+        xs_set_add(&rep, md5);
+
+    return xs_set_result(&rep);
 }
 
 
@@ -2557,7 +2601,7 @@ xs_list *inbox_list(void)
         if ((f = fopen(v, "r")) != NULL) {
             xs *line = xs_readline(f);
 
-            if (line) {
+            if (line && *line) {
                 line = xs_strip_i(line);
                 ibl  = xs_list_append(ibl, line);
             }
@@ -2698,9 +2742,9 @@ xs_list *content_search(snac *user, const char *regex,
     const char *md5s[3] = {0};
     int c[3] = {0};
 
-    tls[0] = timeline_simple_list(user, "public", 0, XS_ALL);   /* public */
+    tls[0] = timeline_simple_list(user, "public", 0, XS_ALL, NULL);   /* public */
     tls[1] = timeline_instance_list(0, XS_ALL); /* instance */
-    tls[2] = priv ? timeline_simple_list(user, "private", 0, XS_ALL) : xs_list_new(); /* private or none */
+    tls[2] = priv ? timeline_simple_list(user, "private", 0, XS_ALL, NULL) : xs_list_new(); /* private or none */
 
     /* first positioning */
     for (int n = 0; n < 3; n++)
@@ -2722,7 +2766,17 @@ xs_list *content_search(snac *user, const char *regex,
         for (int n = 0; n < 3; n++) {
             if (md5s[n] != NULL) {
                 xs *fn = _object_fn_by_md5(md5s[n], "content_search");
-                double mt = mtime(fn);
+                double mt;
+
+                while ((mt = mtime(fn)) == 0 && md5s[n] != NULL) {
+                    /* object is not here: move to the next one */
+                    if (xs_list_next(tls[n], &md5s[n], &c[n])) {
+                        xs_free(fn);
+                        fn = _object_fn_by_md5(md5s[n], "content_search_2");
+                    }
+                    else
+                        md5s[n] = NULL;
+                }
 
                 if (mt > mtime) {
                     newest = n;

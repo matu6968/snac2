@@ -114,7 +114,7 @@ xs_html *xs_html_text(const char *content)
     xs_html *a = XS_HTML_NEW();
 
     a->type    = XS_HTML_TEXT;
-    a->content = xs_html_encode(content);
+    a->content = xs_is_string(content) ? xs_html_encode(content) : xs_str_new(NULL);
 
     return a;
 }
@@ -126,7 +126,7 @@ xs_html *xs_html_raw(const char *content)
     xs_html *a = XS_HTML_NEW();
 
     a->type    = XS_HTML_TEXT;
-    a->content = xs_dup(content);
+    a->content = xs_is_string(content) ? xs_dup(content) : xs_str_new(NULL);
 
     return a;
 }

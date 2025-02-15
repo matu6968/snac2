@@ -1,5 +1,43 @@
 # Release Notes
 
+## 2.72
+
+Each post can have more than one attachment from the web UI. The maximum number can be configured in `server.json` via the `max_attachments` value (default: 4).
+
+Each notification includes a link labelled `Context`, that leads to a page with the full conversation tree the post is a part of.
+
+Each followed hashtag has now a directly accesible link.
+
+Fixed a search bug (some matches were missed).
+
+Fixed more crashes (contributed by inz).
+
+Fixed link detection in posts (contributed by inz).
+
+Allow multiple editors for command-line posts (contributed by inz).
+
+Separated maximum and default timeline entry count, allowing larger timelines to be requested without having to increase the default (contributed by lxo).
+
+Turned message date into a link to the local post, so that it can be loaded into a separate tab for interacting with (contributed by lxo).
+
+Special thanks to fellow developer inz for bringing my attention to code places where I should have been more careful.
+
+## 2.71
+
+Fixed memory leak (contributed by inz).
+
+Fixed crash.
+
+## 2.70
+
+Notifications are now shown in a more compact way (i.e. all reactions are shown just above your post, instead of repeating the post *ad nauseam* for every reaction).
+
+New command-line option `unmute` to, well, no-longer-mute an actor.
+
+The private timeline now includes an approximate mark between new posts and "already seen" ones.
+
+Fixed a spurious 404 error in the instance root URL for some configurations.
+
 ## 2.69 "Yin/Yang of Love"
 
 Added support for subscribing to LitePub (Pleroma-style) Fediverse Relays like e.g. https://fedi-relay.gyptazy.com to improve federation. See `snac(8)` (the Administrator Manual) for more information on how to use this feature.

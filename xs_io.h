@@ -14,7 +14,7 @@ xs_val *xs_readall(FILE *f);
 xs_str *xs_readline(FILE *f)
 /* reads a line from a file */
 {
-    xs_str *s = NULL;
+    xs_str *s = xs_str_new(NULL);
 
     errno = 0;
 
@@ -22,12 +22,11 @@ xs_str *xs_readline(FILE *f)
     if (!feof(f)) {
         int c;
 
-        s = xs_str_new(NULL);
-
         while ((c = fgetc(f)) != EOF) {
             unsigned char rc = c;
 
-            s = xs_append_m(s, (char *)&rc, 1);
+            if (xs_is_string((char *)&rc))
+                s = xs_append_m(s, (char *)&rc, 1);
 
             if (c == '\n')
                 break;

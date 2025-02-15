@@ -11,17 +11,56 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
 
 #ifdef XS_IMPLEMENTATION
 
+char *xs_url_dec_in(char *str, int qs)
+{
+    char *w = str;
+    char *r;
+
+    for (r = str; *r != '\0'; r++) {
+        switch (*r) {
+        case '%': {
+            unsigned hex;
+            if (!r[1] || !r[2])
+                return NULL;
+            if (sscanf(r + 1, "%2x", &hex) != 1)
+                return NULL;
+            *w++ = hex;
+            r += 2;
+            break;
+        }
+
+        case '+':
+            if (qs) {
+                *w++ = ' ';
+                break;
+            }
+            /* fall-through */
+        default:
+            *w++ = *r;
+        }
+    }
+
+    *w++ = '\0';
+    return str;
+}
+
 xs_str *xs_url_dec(const char *str)
 /* decodes an URL */
 {
     xs_str *s = xs_str_new(NULL);
 
     while (*str) {
+        if (!xs_is_string(str))
+            break;
+
         if (*str == '%') {
             unsigned int i;
 
             if (sscanf(str + 1, "%02x", &i) == 1) {
                 unsigned char uc = i;
+
+                if (!xs_is_string((char *)&uc))
+                    break;
 
                 s = xs_append_m(s, (char *)&uc, 1);
                 str += 2;
@@ -69,43 +108,45 @@ xs_dict *xs_url_vars(const char *str)
 
     vars = xs_dict_new();
 
-    if (str != NULL) {
-        /* split by arguments */
-        xs *args = xs_split(str, "&");
+    if (xs_is_string(str)) {
+        xs *dup = xs_dup(str);
+        char *k;
+        char *saveptr;
+        for (k = strtok_r(dup, "&", &saveptr);
+             k;
+             k = strtok_r(NULL, "&", &saveptr)) {
+            char *v = strchr(k, '=');
+            if (!v)
+                continue;
+            *v++ = '\0';
+            k = xs_url_dec_in(k, 1);
+            v = xs_url_dec_in(v, 1);
+            if (!xs_is_string(k) || !xs_is_string(v))
+                continue;
 
-        const xs_val *v;
-
-        xs_list_foreach(args, v) {
-            xs *dv = xs_url_dec(v);
-            xs *kv = xs_split_n(dv, "=", 1);
-
-            if (xs_list_len(kv) == 2) {
-                const char *key = xs_list_get(kv, 0);
-                const char *pv  = xs_dict_get(vars, key);
-
-                if (!xs_is_null(pv)) {
-                    /* there is a previous value: convert to a list and append */
-                    xs *vlist = NULL;
-                    if (xs_type(pv) == XSTYPE_LIST)
-                        vlist = xs_dup(pv);
-                    else {
-                        vlist = xs_list_new();
-                        vlist = xs_list_append(vlist, pv);
-                    }
-
-                    vlist = xs_list_append(vlist, xs_list_get(kv, 1));
-                    vars  = xs_dict_set(vars, key, vlist);
-                }
+            const char *pv  = xs_dict_get(vars, k);
+            if (!xs_is_null(pv)) {
+                /* there is a previous value: convert to a list and append */
+                xs *vlist = NULL;
+                if (xs_type(pv) == XSTYPE_LIST)
+                    vlist = xs_dup(pv);
                 else {
-                    /* ends with []? force to always be a list */
-                    if (xs_endswith(key, "[]")) {
-                        xs *vlist = xs_list_new();
-                        vlist = xs_list_append(vlist, xs_list_get(kv, 1));
-                        vars = xs_dict_append(vars, key, vlist);
-                    }
-                    else
-                        vars = xs_dict_append(vars, key, xs_list_get(kv, 1));
+                    vlist = xs_list_new();
+                    vlist = xs_list_append(vlist, pv);
                 }
+
+                vlist = xs_list_append(vlist, v);
+                vars  = xs_dict_set(vars, k, vlist);
+            }
+            else {
+                /* ends with []? force to always be a list */
+                if (xs_endswith(k, "[]")) {
+                    xs *vlist = xs_list_new();
+                    vlist = xs_list_append(vlist, v);
+                    vars = xs_dict_append(vars, k, vlist);
+                }
+                else
+                    vars = xs_dict_append(vars, k, v);
             }
         }
     }
@@ -233,7 +274,8 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
             l1 = xs_list_append(l1, vpo);
             l1 = xs_list_append(l1, vps);
 
-            p_vars = xs_dict_append(p_vars, vn, l1);
+            if (xs_is_string(vn))
+                p_vars = xs_dict_append(p_vars, vn, l1);
         }
         else {
             /* regular variable; just copy */
@@ -241,7 +283,8 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
             memcpy(vc, payload + po, ps);
             vc[ps] = '\0';
 
-            p_vars = xs_dict_append(p_vars, vn, vc);
+            if (xs_is_string(vn) && xs_is_string(vc))
+                p_vars = xs_dict_append(p_vars, vn, vc);
         }
 
         /* move on */

@@ -173,6 +173,9 @@ xs_dict *xs_fcgi_request(FILE *f, xs_str **payload, int *p_size, int *fcgi_id)
                     xs *v = xs_str_new_sz((char *)&buf[offset], vsz);
                     offset += vsz;
 
+                    if (!xs_is_string(k) || !xs_is_string(v))
+                        continue;
+
                     cgi_vars = xs_dict_append(cgi_vars, k, v);
 
                     if (strcmp(k, "REQUEST_METHOD") == 0)

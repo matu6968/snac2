@@ -11,6 +11,7 @@
 #include "snac.h"
 
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 int usage(void)
 {
@@ -49,6 +50,7 @@ int usage(void)
     printf("unblock {basedir} {instance_url}     Unblocks a full instance\n");
     printf("limit {basedir} {uid} {actor}        Limits an actor (drops their announces)\n");
     printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
+    printf("unmute {basedir} {uid} {actor}       Unmutes a previously muted actor\n");
     printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
     printf("search {basedir} {uid} {regex}       Searches posts by content\n");
     printf("export_csv {basedir} {uid}           Exports data as CSV files\n");
@@ -446,6 +448,18 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "unmute") == 0) { /** **/
+        if (is_muted(&snac, url)) {
+            unmute(&snac, url);
+
+            printf("%s unmuted\n", url);
+        }
+        else
+            printf("%s actor is not muted\n", url);
+
+        return 0;
+    }
+
     if (strcmp(cmd, "search") == 0) { /** **/
         int to;
 
@@ -663,19 +677,25 @@ int main(int argc, char *argv[])
 
         if (strcmp(url, "-e") == 0) {
             /* get the content from an editor */
+#define EDITOR "$EDITOR "
+            char cmd[] = EDITOR "/tmp/snac-XXXXXX";
             FILE *f;
+            int fd = mkstemp(cmd + strlen(EDITOR));
 
-            unlink("/tmp/snac-edit.txt");
-            system("$EDITOR /tmp/snac-edit.txt");
+            if (fd >= 0) {
+                int status = system(cmd);
 
-            if ((f = fopen("/tmp/snac-edit.txt", "r")) != NULL) {
-                content = xs_readall(f);
-                fclose(f);
-
-                unlink("/tmp/snac-edit.txt");
-            }
-            else {
-                printf("Nothing to send\n");
+                if (WIFEXITED(status) && WEXITSTATUS(status) == 0 && (f = fdopen(fd, "r")) != NULL) {
+                    content = xs_readall(f);
+                    fclose(f);
+                    unlink(cmd + strlen(EDITOR));
+                } else {
+                    printf("Nothing to send\n");
+                    close(fd);
+                    return 1;
+                }
+            } else {
+                fprintf(stderr, "Temp file creation failed\n");
                 return 1;
             }
         }
@@ -686,6 +706,11 @@ int main(int argc, char *argv[])
         }
         else
             content = xs_dup(url);
+
+        if (!content || !*content) {
+            printf("Nothing to send\n");
+            return 1;
+        }
 
         int scope = 0;
         if (strcmp(cmd, "note_mention") == 0)

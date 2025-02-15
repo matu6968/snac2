@@ -24,6 +24,7 @@ int xs_match(const char *str, const char *spec)
 retry:
 
     for (;;) {
+        const char *q = spec;
         char c = *str++;
         char p = *spec++;
 
@@ -63,8 +64,12 @@ retry:
                     spec = b_spec;
                     str  = ++b_str;
                 }
-                else
+                else {
+                    if (*q == '|')
+                        spec = q;
+
                     break;
+                }
             }
         }
     }

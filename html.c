@@ -13,6 +13,7 @@
 #include "xs_html.h"
 #include "xs_curl.h"
 #include "xs_unicode.h"
+#include "xs_url.h"
 
 #include "snac.h"
 
@@ -115,7 +116,8 @@ xs_str *actor_name(xs_dict *actor, const char *proxy)
 
 xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
                         const char *udate, const char *url, int priv,
-                        int in_people, const char *proxy, const char *lang)
+                        int in_people, const char *proxy, const char *lang,
+                        const char *md5)
 {
     xs_html *actor_icon = xs_html_tag("p", NULL);
 
@@ -224,12 +226,31 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
         if (xs_is_string(lang))
             date_title = xs_str_cat(date_title, " (", lang, ")");
 
+        xs_html *date_text = xs_html_text(date_label);
+
+        if (user && md5) {
+            xs *lpost_url = xs_fmt("%s/admin/p/%s#%s_entry",
+                                   user->actor, md5, md5);
+            date_text = xs_html_tag("a",
+                                    xs_html_attr("href", lpost_url),
+                                    xs_html_attr("class", "snac-pubdate"),
+                                    date_text);
+        }
+        else if (user && url) {
+            xs *lpost_url = xs_fmt("%s/admin?q=%s",
+                                   user->actor, xs_url_enc(url));
+            date_text = xs_html_tag("a",
+                                    xs_html_attr("href", lpost_url),
+                                    xs_html_attr("class", "snac-pubdate"),
+                                    date_text);
+        }
+
         xs_html_add(actor_icon,
             xs_html_text(" "),
             xs_html_tag("time",
                 xs_html_attr("class", "dt-published snac-pubdate"),
                 xs_html_attr("title", date_title),
-                xs_html_text(date_label)));
+                date_text));
     }
 
     {
@@ -261,7 +282,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
 }
 
 
-xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, const char *proxy)
+xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, const char *proxy, const char *md5)
 {
     xs *actor = NULL;
     xs_html *actor_icon = NULL;
@@ -292,7 +313,7 @@ xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, con
         else
             lang = NULL;
 
-        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0, proxy, lang);
+        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0, proxy, lang, md5);
     }
 
     return actor_icon;
@@ -306,7 +327,7 @@ xs_html *html_note(snac *user, const char *summary,
                    const xs_val *cw_yn, const char *cw_text,
                    const xs_val *mnt_only, const char *redir,
                    const char *in_reply_to, int poll,
-                   const char *att_file, const char *att_alt_text,
+                   const xs_list *att_files, const xs_list *att_alt_texts,
                    int is_draft)
 /* Yes, this is a FUCKTON of arguments and I'm a bit embarrased */
 {
@@ -411,30 +432,71 @@ xs_html *html_note(snac *user, const char *summary,
         xs_html_tag("p", NULL),
         att = xs_html_tag("details",
             xs_html_tag("summary",
-                xs_html_text(L("Attachment..."))),
+                xs_html_text(L("Attachments..."))),
             xs_html_tag("p", NULL)));
 
-    if (att_file && *att_file)
-        xs_html_add(att,
-            xs_html_text(L("File:")),
-            xs_html_sctag("input",
-                xs_html_attr("type", "text"),
-                xs_html_attr("name", "attach_url"),
-                xs_html_attr("title", L("Clear this field to delete the attachment")),
-                xs_html_attr("value", att_file)));
-    else
+    int max_attachments = xs_number_get(xs_dict_get_def(srv_config, "max_attachments", "4"));
+    int att_n = 0;
+
+    /* fields for the currently existing attachments */
+    if (xs_is_list(att_files) && xs_is_list(att_alt_texts)) {
+        while (att_n < max_attachments) {
+            const char *att_file = xs_list_get(att_files, att_n);
+            const char *att_alt_text = xs_list_get(att_alt_texts, att_n);
+
+            if (!xs_is_string(att_file) || !xs_is_string(att_alt_text))
+                break;
+
+            xs *att_lbl = xs_fmt("attach_url_%d", att_n);
+            xs *alt_lbl = xs_fmt("alt_text_%d", att_n);
+
+            if (att_n)
+                xs_html_add(att,
+                    xs_html_sctag("br", NULL));
+
+            xs_html_add(att,
+                xs_html_text(L("File:")),
+                xs_html_sctag("input",
+                    xs_html_attr("type", "text"),
+                    xs_html_attr("name", att_lbl),
+                    xs_html_attr("title", L("Clear this field to delete the attachment")),
+                    xs_html_attr("value", att_file)));
+
+            xs_html_add(att,
+                xs_html_text(" "),
+                xs_html_sctag("input",
+                    xs_html_attr("type",    "text"),
+                    xs_html_attr("name",    alt_lbl),
+                    xs_html_attr("value",   att_alt_text),
+                    xs_html_attr("placeholder", L("Attachment description"))));
+
+            att_n++;
+        }
+    }
+
+    /* the rest of possible attachments */
+    while (att_n < max_attachments) {
+        xs *att_lbl = xs_fmt("attach_%d", att_n);
+        xs *alt_lbl = xs_fmt("alt_text_%d", att_n);
+
+        if (att_n)
+            xs_html_add(att,
+                xs_html_sctag("br", NULL));
+
         xs_html_add(att,
             xs_html_sctag("input",
                 xs_html_attr("type",    "file"),
-                xs_html_attr("name",    "attach")));
+                xs_html_attr("name",    att_lbl)));
 
-    xs_html_add(att,
-        xs_html_text(" "),
-        xs_html_sctag("input",
-            xs_html_attr("type",    "text"),
-            xs_html_attr("name",    "alt_text"),
-            xs_html_attr("value",   att_alt_text),
-            xs_html_attr("placeholder", L("Attachment description"))));
+        xs_html_add(att,
+            xs_html_text(" "),
+            xs_html_sctag("input",
+                xs_html_attr("type",    "text"),
+                xs_html_attr("name",    alt_lbl),
+                xs_html_attr("placeholder", L("Attachment description"))));
+
+        att_n++;
+    }
 
     /* add poll controls */
     if (poll) {
@@ -553,10 +615,11 @@ xs_html *html_instance_head(void)
 
 static xs_html *html_instance_body(void)
 {
-    const char *host  = xs_dict_get(srv_config, "host");
-    const char *sdesc = xs_dict_get(srv_config, "short_description");
-    const char *email = xs_dict_get(srv_config, "admin_email");
-    const char *acct  = xs_dict_get(srv_config, "admin_account");
+    const char *host     = xs_dict_get(srv_config, "host");
+    const char *sdesc    = xs_dict_get(srv_config, "short_description");
+    const char *sdescraw = xs_dict_get(srv_config, "short_description_raw");
+    const char *email    = xs_dict_get(srv_config, "admin_email");
+    const char *acct     = xs_dict_get(srv_config, "admin_account");
 
     xs *blurb = xs_replace(snac_blurb, "%host%", host);
 
@@ -569,12 +632,21 @@ static xs_html *html_instance_body(void)
             dl = xs_html_tag("dl", NULL)));
 
     if (sdesc && *sdesc) {
-        xs_html_add(dl,
-            xs_html_tag("di",
-                xs_html_tag("dt",
-                    xs_html_text(L("Site description"))),
-                xs_html_tag("dd",
-                    xs_html_text(sdesc))));
+        if (!xs_is_null(sdescraw) && xs_type(sdescraw) == XSTYPE_TRUE) {
+            xs_html_add(dl,
+                xs_html_tag("di",
+                    xs_html_tag("dt",
+                        xs_html_text(L("Site description"))),
+                    xs_html_tag("dd",
+                        xs_html_raw(sdesc))));
+        } else {
+            xs_html_add(dl,
+                xs_html_tag("di",
+                    xs_html_tag("dt",
+                        xs_html_text(L("Site description"))),
+                    xs_html_tag("dd",
+                        xs_html_text(sdesc))));
+        }
     }
     if (email && *email) {
         xs *mailto = xs_fmt("mailto:%s", email);
@@ -1028,7 +1100,7 @@ xs_html *html_top_controls(snac *snac)
             NULL, NULL,
             xs_stock(XSTYPE_FALSE), "",
             xs_stock(XSTYPE_FALSE), NULL,
-            NULL, 1, "", "", 0),
+            NULL, 1, NULL, NULL, 0),
 
         /** operations **/
         xs_html_tag("details",
@@ -1600,17 +1672,22 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
         xs *form_id = xs_fmt("%s_edit_form", md5);
         xs *redir   = xs_fmt("%s_entry", md5);
 
-        const char *att_file = "";
-        const char *att_alt_text = "";
+        xs *att_files = xs_list_new();
+        xs *att_alt_texts = xs_list_new();
+
         const xs_list *att_list = xs_dict_get(msg, "attachment");
 
-        /* does it have an attachment? */
-        if (xs_type(att_list) == XSTYPE_LIST && xs_list_len(att_list)) {
-            const xs_dict *d = xs_list_get(att_list, 0);
+        if (xs_is_list(att_list)) {
+            const xs_dict *d;
 
-            if (xs_type(d) == XSTYPE_DICT) {
-                att_file = xs_dict_get_def(d, "url", "");
-                att_alt_text = xs_dict_get_def(d, "name", "");
+            xs_list_foreach(att_list, d) {
+                const char *att_file = xs_dict_get(d, "url");
+                const char *att_alt_text = xs_dict_get(d, "name");
+
+                if (xs_is_string(att_file) && xs_is_string(att_alt_text)) {
+                    att_files = xs_list_append(att_files, att_file);
+                    att_alt_texts = xs_list_append(att_alt_texts, att_alt_text);
+                }
             }
         }
 
@@ -1622,7 +1699,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                NULL, 0, att_file, att_alt_text, is_draft(snac, id))),
+                NULL, 0, att_files, att_alt_texts, is_draft(snac, id))),
             xs_html_tag("p", NULL));
     }
 
@@ -1641,7 +1718,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                id, 0, "", "", 0)),
+                id, 0, NULL, NULL, 0)),
             xs_html_tag("p", NULL));
     }
 
@@ -1696,7 +1773,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-origin"),
                     xs_html_text(L("follows you"))),
-                html_msg_icon(read_only ? NULL : user, xs_dict_get(msg, "actor"), msg, proxy)));
+                html_msg_icon(read_only ? NULL : user, xs_dict_get(msg, "actor"), msg, proxy, NULL)));
     }
     else
     if (!xs_match(type, POSTLIKE_OBJECT_TYPE)) {
@@ -1877,7 +1954,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     }
 
     xs_html_add(post_header,
-        html_msg_icon(read_only ? NULL : user, actor, msg, proxy));
+        html_msg_icon(read_only ? NULL : user, actor, msg, proxy, md5));
 
     /** post content **/
 
@@ -2022,16 +2099,17 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 const char *name       = xs_dict_get(v, "name");
                 const xs_dict *replies = xs_dict_get(v, "replies");
 
-                if (name && replies) {
-                    char *ti = (char *)xs_number_str(xs_dict_get(replies, "totalItems"));
+                if (xs_is_string(name) && xs_is_dict(replies)) {
+                    const char *ti = xs_number_str(xs_dict_get(replies, "totalItems"));
 
-                    xs_html_add(poll_result,
-                        xs_html_tag("tr",
-                            xs_html_tag("td",
-                                xs_html_text(name),
-                                xs_html_text(":")),
-                            xs_html_tag("td",
-                                xs_html_text(ti))));
+                    if (xs_is_string(ti))
+                        xs_html_add(poll_result,
+                            xs_html_tag("tr",
+                                xs_html_tag("td",
+                                    xs_html_text(name),
+                                    xs_html_text(":")),
+                                xs_html_tag("td",
+                                    xs_html_text(ti))));
                 }
             }
 
@@ -2629,6 +2707,29 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_attr("title", L("Post drafts")),
                         xs_html_text("drafts"))));
         }
+
+        /* the list of followed hashtags */
+        const char *followed_hashtags = xs_dict_get(user->config, "followed_hashtags");
+
+        if (xs_is_list(followed_hashtags) && xs_list_len(followed_hashtags)) {
+            xs_html *loht = xs_html_tag("ul",
+                xs_html_attr("class", "snac-list-of-lists"));
+            xs_html_add(body, loht);
+
+            const char *ht;
+
+            xs_list_foreach(followed_hashtags, ht) {
+                xs *url = xs_fmt("%s/admin?q=%s", user->actor, ht);
+                url = xs_replace_i(url, "#", "%23");
+
+                xs_html_add(loht,
+                    xs_html_tag("li",
+                        xs_html_tag("a",
+                            xs_html_attr("href", url),
+                            xs_html_attr("class", "snac-list-link"),
+                            xs_html_text(ht))));
+            }
+        }
     }
 
     xs_html_add(body,
@@ -2648,9 +2749,31 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     xs_html_add(body,
         posts);
 
+    int mark_shown = 0;
+
     while (xs_list_iter(&p, &v)) {
         xs *msg = NULL;
         int status;
+
+        /* "already seen" mark? */
+        if (strcmp(v, MD5_ALREADY_SEEN_MARK) == 0) {
+            if (skip == 0 && !mark_shown) {
+                xs *s = xs_fmt("%s/admin", user->actor);
+
+                xs_html_add(posts,
+                    xs_html_tag("div",
+                        xs_html_attr("class", "snac-no-more-unseen-posts"),
+                        xs_html_text(L("No more unseen posts")),
+                        xs_html_text(" - "),
+                        xs_html_tag("a",
+                            xs_html_attr("href", s),
+                            xs_html_text(L("Back to top")))));
+            }
+
+            mark_shown = 1;
+
+            continue;
+        }
 
         if (utl && user && !is_pinned_by_md5(user, v))
             status = timeline_get_by_md5(user, v, &msg);
@@ -2788,7 +2911,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post-header"),
                     html_actor_icon(snac, actor, xs_dict_get(actor, "published"),
-                                    NULL, NULL, 0, 1, proxy, NULL)));
+                                    NULL, NULL, 0, 1, proxy, NULL, NULL)));
 
             /* content (user bio) */
             const char *c = xs_dict_get(actor, "summary");
@@ -2885,7 +3008,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                     NULL, actor_id,
                     xs_stock(XSTYPE_FALSE), "",
                     xs_stock(XSTYPE_FALSE), NULL,
-                    NULL, 0, "", "", 0),
+                    NULL, 0, NULL, NULL, 0),
                 xs_html_tag("p", NULL));
 
             xs_html_add(snac_post, snac_controls);
@@ -2970,6 +3093,9 @@ xs_str *html_notifications(snac *user, int skip, int show)
     xs_set rep;
     xs_set_init(&rep);
 
+    /* dict to store previous notification labels */
+    xs *admiration_labels = xs_dict_new();
+
     const xs_str *v;
 
     xs_list_foreach(n_list, v) {
@@ -2983,6 +3109,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
         const char *utype = xs_dict_get(noti, "utype");
         const char *id    = xs_dict_get(noti, "objid");
         const char *date  = xs_dict_get(noti, "date");
+        const char *id2   = xs_dict_get_path(noti, "msg.id");
         xs *wrk = NULL;
 
         if (xs_is_null(id))
@@ -2991,12 +3118,15 @@ xs_str *html_notifications(snac *user, int skip, int show)
         if (is_hidden(user, id))
             continue;
 
+        if (xs_is_string(id2) && xs_set_add(&rep, id2) != 1)
+            continue;
+
         object_get(id, &obj);
 
         const char *msg_id = NULL;
 
-        if (xs_is_dict(obj) && (msg_id = xs_dict_get(obj, "id")) && xs_set_add(&rep, msg_id) != 1)
-            continue;
+        if (xs_is_dict(obj))
+            msg_id = xs_dict_get(obj, "id");
 
         const char *actor_id = xs_dict_get(noti, "actor");
         xs *actor = NULL;
@@ -3030,9 +3160,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
         xs *s_date = xs_crop_i(xs_dup(date), 0, 10);
 
-        xs_html *entry = xs_html_tag("div",
-            xs_html_attr("class", "snac-post-with-desc"),
-            xs_html_tag("p",
+        xs_html *this_html_label = xs_html_container(
                 xs_html_tag("b",
                     xs_html_text(label),
                     xs_html_text(" by "),
@@ -3043,13 +3171,45 @@ xs_str *html_notifications(snac *user, int skip, int show)
                 xs_html_tag("time",
                     xs_html_attr("class", "dt-published snac-pubdate"),
                     xs_html_attr("title", date),
-                    xs_html_text(s_date))));
+                    xs_html_text(s_date)));
+
+        xs_html *html_label = NULL;
+
+        if (xs_is_string(msg_id)) {
+            const xs_val *prev_label = xs_dict_get(admiration_labels, msg_id);
+
+            if (xs_type(prev_label) == XSTYPE_DATA) {
+                /* there is a previous list of admiration labels! */
+                xs_data_get(&html_label, prev_label);
+
+                xs_html_add(html_label,
+                    xs_html_sctag("br", NULL),
+                    this_html_label);
+
+                continue;
+            }
+        }
+
+        xs_html *entry = NULL;
+
+        html_label = xs_html_tag("p",
+            this_html_label);
+
+        /* store in the admiration labels dict */
+        xs *pl = xs_data_new(&html_label, sizeof(html_label));
+
+        if (xs_is_string(msg_id))
+            admiration_labels = xs_dict_set(admiration_labels, msg_id, pl);
+
+        entry = xs_html_tag("div",
+            xs_html_attr("class", "snac-post-with-desc"),
+            html_label);
 
         if (strcmp(type, "Follow") == 0 || strcmp(utype, "Follow") == 0 || strcmp(type, "Block") == 0) {
             xs_html_add(entry,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post"),
-                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy, NULL)));
+                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy, NULL, NULL)));
         }
         else
         if (strcmp(type, "Move") == 0) {
@@ -3063,18 +3223,23 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_add(entry,
                         xs_html_tag("div",
                             xs_html_attr("class", "snac-post"),
-                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0, proxy, NULL)));
+                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0, proxy, NULL, NULL)));
                 }
             }
         }
         else
         if (obj != NULL) {
             xs *md5 = xs_md5_hex(id, strlen(id));
+            xs *ctxt = xs_fmt("%s/admin/p/%s#%s_entry", user->actor, md5, md5);
 
             xs_html *h = html_entry(user, obj, 0, 0, md5, 1);
 
             if (h != NULL) {
                 xs_html_add(entry,
+                    xs_html_tag("p",
+                        xs_html_tag("a",
+                            xs_html_attr("href", ctxt),
+                            xs_html_text(L("Context")))),
                     h);
             }
         }
@@ -3111,8 +3276,6 @@ xs_str *html_notifications(snac *user, int skip, int show)
         }
     }
 
-    xs_set_free(&rep);
-
     if (noti_new == NULL && noti_seen == NULL)
         xs_html_add(body,
             xs_html_tag("h2",
@@ -3131,6 +3294,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_attr("href", url),
                     xs_html_text(L("More...")))));
     }
+
+    xs_set_free(&rep);
 
     xs_html_add(body,
         html_footer());
@@ -3232,7 +3397,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         cache = 0;
 
     int skip = 0;
-    int def_show = xs_number_get(xs_dict_get(srv_config, "max_timeline_entries"));
+    int def_show = xs_number_get(xs_dict_get_def(srv_config, "def_timeline_entries",
+                                 xs_dict_get_def(srv_config, "max_timeline_entries", "50")));
     int show = def_show;
 
     if ((v = xs_dict_get(q_vars, "skip")) != NULL)
@@ -3277,21 +3443,17 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
         else {
             xs *list = NULL;
-            xs *next = NULL;
+            int more = 0;
 
-            if (xs_is_true(xs_dict_get(srv_config, "strict_public_timelines"))) {
-                list = timeline_simple_list(&snac, "public", skip, show);
-                next = timeline_simple_list(&snac, "public", skip + show, 1);
-            }
-            else {
-                list = timeline_list(&snac, "public", skip, show);
-                next = timeline_list(&snac, "public", skip + show, 1);
-            }
+            if (xs_is_true(xs_dict_get(srv_config, "strict_public_timelines")))
+                list = timeline_simple_list(&snac, "public", skip, show, &more);
+            else 
+                list = timeline_list(&snac, "public", skip, show, &more);
 
             xs *pins = pinned_list(&snac);
             pins = xs_list_cat(pins, list);
 
-            *body = html_timeline(&snac, pins, 1, skip, show, xs_list_len(next), NULL, "", 1, error);
+            *body = html_timeline(&snac, pins, 1, skip, show, more, NULL, "", 1, error);
 
             *b_size = strlen(*body);
             status  = HTTP_STATUS_OK;
@@ -3440,6 +3602,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 }
             }
             else {
+                /** the private timeline **/
                 double t = history_mtime(&snac, "timeline.html_");
 
                 /* if enabled by admin, return a cached page if its timestamp is:
@@ -3453,19 +3616,22 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                                 xs_dict_get(req, "if-none-match"), etag);
                 }
                 else {
+                    int more = 0;
+
                     snac_debug(&snac, 1, xs_fmt("building timeline"));
 
-                    xs *list = timeline_list(&snac, "private", skip, show);
-                    xs *next = timeline_list(&snac, "private", skip + show, 1);
+                    xs *list = timeline_list(&snac, "private", skip, show, &more);
 
                     *body = html_timeline(&snac, list, 0, skip, show,
-                            xs_list_len(next), NULL, "/admin", 1, error);
+                            more, NULL, "/admin", 1, error);
 
                     *b_size = strlen(*body);
                     status  = HTTP_STATUS_OK;
 
                     if (save)
                         history_add(&snac, "timeline.html_", *body, *b_size, etag);
+
+                    timeline_add_mark(&snac);
                 }
             }
         }
@@ -3481,7 +3647,8 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             const char *md5 = xs_list_get(l, -1);
 
             if (md5 && *md5 && timeline_here(&snac, md5)) {
-                xs *list = xs_list_append(xs_list_new(), md5);
+                xs *list0 = xs_list_append(xs_list_new(), md5);
+                xs *list  = timeline_top_level(&snac, list0);
 
                 *body   = html_timeline(&snac, list, 0, 0, 0, 0, NULL, "/admin", 1, error);
                 *b_size = strlen(*body);
@@ -3665,7 +3832,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
         int cnt = xs_number_get(xs_dict_get_def(srv_config, "max_public_entries", "20"));
 
-        xs *elems = timeline_simple_list(&snac, "public", 0, cnt);
+        xs *elems = timeline_simple_list(&snac, "public", 0, cnt, NULL);
         xs *bio   = xs_dup(xs_dict_get(snac.config, "bio"));
 
         xs *rss_title = xs_fmt("%s (@%s@%s)",
@@ -3869,52 +4036,56 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         /* post note */
         const xs_str *content      = xs_dict_get(p_vars, "content");
         const xs_str *in_reply_to  = xs_dict_get(p_vars, "in_reply_to");
-        const xs_str *attach_url   = xs_dict_get(p_vars, "attach_url");
-        const xs_list *attach_file = xs_dict_get(p_vars, "attach");
         const xs_str *to           = xs_dict_get(p_vars, "to");
         const xs_str *sensitive    = xs_dict_get(p_vars, "sensitive");
         const xs_str *summary      = xs_dict_get(p_vars, "summary");
         const xs_str *edit_id      = xs_dict_get(p_vars, "edit_id");
-        const xs_str *alt_text     = xs_dict_get(p_vars, "alt_text");
         int priv             = !xs_is_null(xs_dict_get(p_vars, "mentioned_only"));
         int store_as_draft   = !xs_is_null(xs_dict_get(p_vars, "is_draft"));
         xs *attach_list      = xs_list_new();
 
-        /* default alt text */
-        if (xs_is_null(alt_text))
-            alt_text = "";
+        /* iterate the attachments */
+        int max_attachments = xs_number_get(xs_dict_get_def(srv_config, "max_attachments", "4"));
 
-        /* is attach_url set? */
-        if (!xs_is_null(attach_url) && *attach_url != '\0') {
-            xs *l = xs_list_new();
+        for (int att_n = 0; att_n < max_attachments; att_n++) {
+            xs *url_lbl = xs_fmt("attach_url_%d", att_n);
+            xs *att_lbl = xs_fmt("attach_%d", att_n);
+            xs *alt_lbl = xs_fmt("alt_text_%d", att_n);
 
-            l = xs_list_append(l, attach_url);
-            l = xs_list_append(l, alt_text);
+            const char *attach_url     = xs_dict_get(p_vars, url_lbl);
+            const xs_list *attach_file = xs_dict_get(p_vars, att_lbl);
+            const char *alt_text       = xs_dict_get_def(p_vars, alt_lbl, "");
 
-            attach_list = xs_list_append(attach_list, l);
-        }
-
-        /* is attach_file set? */
-        if (!xs_is_null(attach_file) && xs_type(attach_file) == XSTYPE_LIST) {
-            const char *fn = xs_list_get(attach_file, 0);
-
-            if (*fn != '\0') {
-                char *ext = strrchr(fn, '.');
-                xs *hash  = xs_md5_hex(fn, strlen(fn));
-                xs *id    = xs_fmt("%s%s", hash, ext);
-                xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
-                int fo    = xs_number_get(xs_list_get(attach_file, 1));
-                int fs    = xs_number_get(xs_list_get(attach_file, 2));
-
-                /* store */
-                static_put(&snac, id, payload + fo, fs);
-
+            if (xs_is_string(attach_url) && *attach_url != '\0') {
                 xs *l = xs_list_new();
 
-                l = xs_list_append(l, url);
+                l = xs_list_append(l, attach_url);
                 l = xs_list_append(l, alt_text);
 
                 attach_list = xs_list_append(attach_list, l);
+            }
+            else
+            if (xs_is_list(attach_file)) {
+                const char *fn = xs_list_get(attach_file, 0);
+
+                if (xs_is_string(fn) && *fn != '\0') {
+                    char *ext = strrchr(fn, '.');
+                    xs *hash  = xs_md5_hex(fn, strlen(fn));
+                    xs *id    = xs_fmt("%s%s", hash, ext);
+                    xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
+                    int fo    = xs_number_get(xs_list_get(attach_file, 1));
+                    int fs    = xs_number_get(xs_list_get(attach_file, 2));
+
+                    /* store */
+                    static_put(&snac, id, payload + fo, fs);
+
+                    xs *l = xs_list_new();
+
+                    l = xs_list_append(l, url);
+                    l = xs_list_append(l, alt_text);
+
+                    attach_list = xs_list_append(attach_list, l);
+                }
             }
         }
 
