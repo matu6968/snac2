@@ -2724,6 +2724,12 @@ int process_user_queue(snac *snac)
 }
 
 
+xs_str *str_status(int status)
+{
+    return xs_fmt("%d %s", status, status < 0 ? xs_curl_strerr(status) : http_status_text(status));
+}
+
+
 void process_queue_item(xs_dict *q_item)
 /* processes an item from the global queue */
 {
@@ -2780,7 +2786,9 @@ void process_queue_item(xs_dict *q_item)
         else
             payload = xs_str_new(NULL);
 
-        srv_log(xs_fmt("output message: sent to inbox %s %d%s", inbox, status, payload));
+        xs *s_status = str_status(status);
+
+        srv_log(xs_fmt("output message: sent to inbox %s (%s)%s", inbox, s_status, payload));
 
         if (!valid_status(status)) {
             retries++;
@@ -2798,10 +2806,10 @@ void process_queue_item(xs_dict *q_item)
                 || status == HTTP_STATUS_UNPROCESSABLE_CONTENT
                 || status < 0)
                 /* explicit error: discard */
-                srv_log(xs_fmt("output message: error %s %d", inbox, status));
+                srv_log(xs_fmt("output message: error %s (%s)", inbox, s_status));
             else
             if (retries > queue_retry_max)
-                srv_log(xs_fmt("output message: giving up %s %d", inbox, status));
+                srv_log(xs_fmt("output message: giving up %s (%s)", inbox, s_status));
             else {
                 /* requeue */
                 enqueue_output_raw(keyid, seckey, msg, inbox, retries, status);

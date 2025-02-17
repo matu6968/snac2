@@ -9,6 +9,8 @@ xs_dict *xs_http_request(const char *method, const char *url,
                         const xs_str *body, int b_size, int *status,
                         xs_str **payload, int *p_size, int timeout);
 
+const char *xs_curl_strerr(int errnum);
+
 #ifdef XS_IMPLEMENTATION
 
 #include <curl/curl.h>
@@ -193,6 +195,15 @@ xs_dict *xs_http_request(const char *method, const char *url,
 
     return response;
 }
+
+
+const char *xs_curl_strerr(int errnum)
+{
+    CURLcode cc = errnum < 0 ? -errnum : errnum;
+
+    return curl_easy_strerror(cc);
+}
+
 
 #endif /* XS_IMPLEMENTATION */
 
