@@ -211,6 +211,8 @@ int server_get_handler(xs_dict *req, const char *q_path,
 {
     int status = 0;
 
+    const snac *user = NULL;
+
     /* is it the server root? */
     if (*q_path == '\0' || strcmp(q_path, "/") == 0) {
         const xs_dict *q_vars = xs_dict_get(req, "q_vars");
@@ -552,6 +554,9 @@ void httpd_connection(FILE *f)
 
     headers = xs_dict_append(headers, "access-control-allow-origin", "*");
     headers = xs_dict_append(headers, "access-control-allow-headers", "*");
+
+    /* disable any form of fucking JavaScript */
+    headers = xs_dict_append(headers, "Content-Security-Policy", "script-src ;");
 
     if (p_state->use_fcgi)
         xs_fcgi_response(f, status, headers, body, b_size, fcgi_id);

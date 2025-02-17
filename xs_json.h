@@ -4,17 +4,23 @@
 
 #define _XS_JSON_H
 
+#ifndef MAX_JSON_DEPTH
+#define MAX_JSON_DEPTH 32
+#endif
+
 int xs_json_dump(const xs_val *data, int indent, FILE *f);
 xs_str *xs_json_dumps(const xs_val *data, int indent);
 
-xs_val *xs_json_load(FILE *f);
-xs_val *xs_json_loads(const xs_str *json);
+xs_val *xs_json_load_full(FILE *f, int maxdepth);
+xs_val *xs_json_loads_full(const xs_str *json, int maxdepth);
+#define xs_json_load(f) xs_json_load_full(f, MAX_JSON_DEPTH)
+#define xs_json_loads(s) xs_json_loads_full(s, MAX_JSON_DEPTH)
 
 xstype xs_json_load_type(FILE *f);
 int xs_json_load_array_iter(FILE *f, xs_val **value, xstype *pt, int *c);
 int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, xstype *pt, int *c);
-xs_list *xs_json_load_array(FILE *f);
-xs_dict *xs_json_load_object(FILE *f);
+xs_list *xs_json_load_array(FILE *f, int maxdepth);
+xs_dict *xs_json_load_object(FILE *f, int maxdepth);
 
 
 #ifdef XS_IMPLEMENTATION
@@ -371,7 +377,7 @@ int xs_json_load_array_iter(FILE *f, xs_val **value, xstype *pt, int *c)
 }
 
 
-xs_list *xs_json_load_array(FILE *f)
+xs_list *xs_json_load_array(FILE *f, int maxdepth)
 /* loads a full JSON array (after the initial OBRACK) */
 {
     xstype t;
@@ -387,12 +393,12 @@ xs_list *xs_json_load_array(FILE *f)
 
         if (r == 1) {
             /* partial load? */
-            if (v == NULL) {
+            if (v == NULL && maxdepth != 0) {
                 if (t == XSTYPE_LIST)
-                    v = xs_json_load_array(f);
+                    v = xs_json_load_array(f, maxdepth - 1);
                 else
                 if (t == XSTYPE_DICT)
-                    v = xs_json_load_object(f);
+                    v = xs_json_load_object(f, maxdepth - 1);
             }
 
             /* still null? fail */
@@ -459,7 +465,7 @@ int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, xstype *pt, 
 }
 
 
-xs_dict *xs_json_load_object(FILE *f)
+xs_dict *xs_json_load_object(FILE *f, int maxdepth)
 /* loads a full JSON object (after the initial OCURLY) */
 {
     xstype t;
@@ -476,12 +482,12 @@ xs_dict *xs_json_load_object(FILE *f)
 
         if (r == 1) {
             /* partial load? */
-            if (v == NULL) {
+            if (v == NULL && maxdepth != 0) {
                 if (t == XSTYPE_LIST)
-                    v = xs_json_load_array(f);
+                    v = xs_json_load_array(f, maxdepth - 1);
                 else
                 if (t == XSTYPE_DICT)
-                    v = xs_json_load_object(f);
+                    v = xs_json_load_object(f, maxdepth - 1);
             }
 
             /* still null? fail */
@@ -500,14 +506,14 @@ xs_dict *xs_json_load_object(FILE *f)
 }
 
 
-xs_val *xs_json_loads(const xs_str *json)
+xs_val *xs_json_loads_full(const xs_str *json, int maxdepth)
 /* loads a string in JSON format and converts to a multiple data */
 {
     FILE *f;
     xs_val *v = NULL;
 
     if ((f = fmemopen((char *)json, strlen(json), "r")) != NULL) {
-        v = xs_json_load(f);
+        v = xs_json_load_full(f, maxdepth);
         fclose(f);
     }
 
@@ -533,17 +539,17 @@ xstype xs_json_load_type(FILE *f)
 }
 
 
-xs_val *xs_json_load(FILE *f)
+xs_val *xs_json_load_full(FILE *f, int maxdepth)
 /* loads a JSON file */
 {
     xs_val *v = NULL;
     xstype t = xs_json_load_type(f);
 
     if (t == XSTYPE_LIST)
-        v = xs_json_load_array(f);
+        v = xs_json_load_array(f, maxdepth);
     else
     if (t == XSTYPE_DICT)
-        v = xs_json_load_object(f);
+        v = xs_json_load_object(f, maxdepth);
 
     return v;
 }

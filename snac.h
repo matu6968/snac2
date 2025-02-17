@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
-#define VERSION "2.72"
+#define VERSION "2.73-dev"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -14,6 +14,10 @@
 
 #ifndef MAX_THREADS
 #define MAX_THREADS 256
+#endif
+
+#ifndef MAX_JSON_DEPTH
+#define MAX_JSON_DEPTH 8
 #endif
 
 #ifndef MAX_CONVERSATION_LEVELS
@@ -29,10 +33,11 @@ extern xs_str *srv_basedir;
 extern xs_dict *srv_config;
 extern xs_str *srv_baseurl;
 extern xs_str *srv_proxy_token_seed;
+extern xs_dict *srv_langs;
 
 extern int dbglevel;
 
-#define L(s) (s)
+#define L(s) lang_str((s), user)
 
 #define POSTLIKE_OBJECT_TYPE "Note|Question|Page|Article|Video|Audio|Event"
 
@@ -55,6 +60,7 @@ typedef struct {
     xs_dict *links;     /* validated links */
     xs_str *actor;      /* actor url */
     xs_str *md5;        /* actor url md5 */
+    const xs_dict *lang;/* string translation dict */
 } snac;
 
 typedef struct {
@@ -441,3 +447,5 @@ xs_str *make_url(const char *href, const char *proxy, int by_token);
 
 int badlogin_check(const char *user, const char *addr);
 void badlogin_inc(const char *user, const char *addr);
+
+const char *lang_str(const char *str, const snac *user);

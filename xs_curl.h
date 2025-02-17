@@ -13,6 +13,8 @@ int xs_smtp_request(const char *url, const char *user, const char *pass,
                    const char *from, const char *to, const xs_str *body,
                    int use_ssl);
 
+const char *xs_curl_strerr(int errnum);
+
 #ifdef XS_IMPLEMENTATION
 
 #include <curl/curl.h>
@@ -239,6 +241,15 @@ int xs_smtp_request(const char *url, const char *user, const char *pass,
 
     return (int)res;
 }
+
+
+const char *xs_curl_strerr(int errnum)
+{
+    CURLcode cc = errnum < 0 ? -errnum : errnum;
+
+    return curl_easy_strerror(cc);
+}
+
 
 #endif /* XS_IMPLEMENTATION */
 

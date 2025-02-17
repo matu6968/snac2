@@ -24,6 +24,7 @@
 #include "xs_match.h"
 #include "xs_fcgi.h"
 #include "xs_html.h"
+#include "xs_po.h"
 
 #include "snac.h"
 
@@ -34,6 +35,7 @@ xs_str *srv_basedir = NULL;
 xs_dict *srv_config = NULL;
 xs_str *srv_baseurl = NULL;
 xs_str *srv_proxy_token_seed = NULL;
+xs_dict *srv_langs = NULL;
 
 int dbglevel = 0;
 
@@ -179,6 +181,7 @@ const char *http_status_text(int status)
 /* translate status codes to canonical status texts */
 {
     switch (status) {
+        case 399: return "Timeout";
 #define HTTP_STATUS(code, name, text) case HTTP_STATUS_ ## name: return #text;
 #include "http_codes.h"
 #undef HTTP_STATUS

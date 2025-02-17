@@ -13,6 +13,7 @@
 #include "xs_match.h"
 #include "xs_unicode.h"
 #include "xs_random.h"
+#include "xs_po.h"
 
 #include "snac.h"
 
@@ -98,6 +99,9 @@ int srv_open(const char *basedir, int auto_upgrade)
     if (error != NULL)
         srv_log(error);
 
+    if (!ret)
+        return ret;
+
     /* create the queue/ subdir, just in case */
     xs *qdir = xs_fmt("%s/queue", srv_basedir);
     mkdirx(qdir);
@@ -146,6 +150,29 @@ int srv_open(const char *basedir, int auto_upgrade)
 
         mkdirx(impdir);
         mkdirx(expdir);
+    }
+
+    /* languages */
+    srv_langs = xs_dict_new();
+    srv_langs = xs_dict_set(srv_langs, "en", xs_stock(XSTYPE_NULL));
+
+    xs *l_dir = xs_fmt("%s/lang/", srv_basedir);
+    mkdirx(l_dir);
+
+    l_dir = xs_str_cat(l_dir, "*.po");
+    xs *pos = xs_glob(l_dir, 0, 0);
+    const char *po;
+
+    xs_list_foreach(pos, po) {
+        xs *d = xs_po_to_dict(po);
+
+        if (xs_is_dict(d)) {
+            xs *l = xs_split(po, "/");
+            xs *id = xs_dup(xs_list_get(l, -1));
+            id = xs_replace_i(id, ".po", "");
+
+            srv_langs = xs_dict_set(srv_langs, id, d);
+        }
     }
 
     return ret;
@@ -4063,4 +4090,22 @@ void badlogin_inc(const char *user, const char *addr)
 
         pthread_mutex_unlock(&data_mutex);
     }
+}
+
+
+/** language strings **/
+
+const char *lang_str(const char *str, const snac *user)
+/* returns a translated string */
+{
+    const char *n_str = str;
+
+    if (user && xs_is_dict(user->lang) && xs_is_string(str)) {
+        n_str = xs_dict_get(user->lang, str);
+
+        if (xs_is_null(n_str) || *n_str == '\0')
+            n_str = str;
+    }
+
+    return n_str;
 }

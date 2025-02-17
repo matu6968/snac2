@@ -17,7 +17,7 @@
 
 #include "snac.h"
 
-int login(snac *snac, const xs_dict *headers)
+int login(snac *user, const xs_dict *headers)
 /* tries a login */
 {
     int logged_in = 0;
@@ -31,23 +31,23 @@ int login(snac *snac, const xs_dict *headers)
         xs *l1 = xs_split_n(s2, ":", 1);
 
         if (xs_list_len(l1) == 2) {
-            const char *user = xs_list_get(l1, 0);
+            const char *uid  = xs_list_get(l1, 0);
             const char *pwd  = xs_list_get(l1, 1);
             const char *addr = xs_or(xs_dict_get(headers, "remote-addr"),
                                      xs_dict_get(headers, "x-forwarded-for"));
 
-            if (badlogin_check(user, addr)) {
-                logged_in = check_password(user, pwd,
-                    xs_dict_get(snac->config, "passwd"));
+            if (badlogin_check(uid, addr)) {
+                logged_in = check_password(uid, pwd,
+                    xs_dict_get(user->config, "passwd"));
 
                 if (!logged_in)
-                    badlogin_inc(user, addr);
+                    badlogin_inc(uid, addr);
             }
         }
     }
 
     if (logged_in)
-        lastlog_write(snac, "web");
+        lastlog_write(user, "web");
 
     return logged_in;
 }
@@ -69,7 +69,7 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
 
         xs *style = xs_fmt("height: %dem; width: %dem; vertical-align: middle;", ems, ems);
 
-        const char *v;
+        const xs_dict *v;
         int c = 0;
 
         while (xs_list_next(tag_list, &v, &c)) {
@@ -77,19 +77,25 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
 
             if (t && strcmp(t, "Emoji") == 0) {
                 const char *n = xs_dict_get(v, "name");
-                const char *i = xs_dict_get(v, "icon");
+                const xs_dict *i = xs_dict_get(v, "icon");
 
-                if (n && i) {
+                if (xs_is_string(n) && xs_is_dict(i)) {
                     const char *u = xs_dict_get(i, "url");
-                    xs *url = make_url(u, proxy, 0);
+                    const char *mt = xs_dict_get(i, "mediaType");
 
-                    xs_html *img = xs_html_sctag("img",
-                        xs_html_attr("loading", "lazy"),
-                        xs_html_attr("src", url),
-                        xs_html_attr("style", style));
+                    if (xs_is_string(u) && xs_is_string(mt) && strcmp(mt, "image/svg+xml")) {
+                        xs *url = make_url(u, proxy, 0);
 
-                    xs *s1 = xs_html_render(img);
-                    s = xs_replace_i(s, n, s1);
+                        xs_html *img = xs_html_sctag("img",
+                            xs_html_attr("loading", "lazy"),
+                            xs_html_attr("src", url),
+                            xs_html_attr("style", style));
+
+                        xs *s1 = xs_html_render(img);
+                        s = xs_replace_i(s, n, s1);
+                    }
+                    else
+                        s = xs_replace_i(s, n, "");
                 }
             }
         }
@@ -621,6 +627,9 @@ static xs_html *html_instance_body(void)
     const char *email    = xs_dict_get(srv_config, "admin_email");
     const char *acct     = xs_dict_get(srv_config, "admin_account");
 
+    /* for L() */
+    const snac *user = NULL;
+
     xs *blurb = xs_replace(snac_blurb, "%host%", host);
 
     xs_html *dl;
@@ -735,8 +744,10 @@ xs_html *html_user_head(snac *user, const char *desc, const char *url)
         xs *fwers = follower_list(user);
         xs *fwing = following_list(user);
 
-        xs *s1 = xs_fmt(L("%d following, %d followers · "),
+        xs *s1 = xs_fmt(L("%d following, %d followers"),
             xs_list_len(fwing), xs_list_len(fwers));
+
+        s1 = xs_str_cat(s1, " · ");
 
         s_desc = xs_str_prepend_i(s_desc, s1);
     }
@@ -1052,8 +1063,8 @@ static xs_html *html_user_body(snac *user, int read_only)
         const char *longitude = xs_dict_get_def(user->config, "longitude", "");
 
         if (*latitude && *longitude) {
-            xs *label = xs_fmt(L("%s,%s"), latitude, longitude);
-            xs *url   = xs_fmt(L("https://openstreetmap.org/search?query=%s,%s"),
+            xs *label = xs_fmt("%s,%s", latitude, longitude);
+            xs *url   = xs_fmt("https://openstreetmap.org/search?query=%s,%s",
                         latitude, longitude);
 
             xs_html_add(top_user,
@@ -1069,7 +1080,7 @@ static xs_html *html_user_body(snac *user, int read_only)
             xs *fwers = follower_list(user);
             xs *fwing = following_list(user);
 
-            xs *s1 = xs_fmt(L("%d following %d followers"),
+            xs *s1 = xs_fmt(L("%d following, %d followers"),
                 xs_list_len(fwing), xs_list_len(fwers));
 
             xs_html_add(top_user,
@@ -1085,16 +1096,16 @@ static xs_html *html_user_body(snac *user, int read_only)
 }
 
 
-xs_html *html_top_controls(snac *snac)
+xs_html *html_top_controls(snac *user)
 /* generates the top controls */
 {
-    xs *ops_action = xs_fmt("%s/admin/action", snac->actor);
+    xs *ops_action = xs_fmt("%s/admin/action", user->actor);
 
     xs_html *top_controls = xs_html_tag("div",
         xs_html_attr("class", "snac-top-controls"),
 
         /** new post **/
-        html_note(snac, L("New Post..."),
+        html_note(user, L("New Post..."),
             "new_post_div", "new_post_form",
             L("What's on your mind?"), "",
             NULL, NULL,
@@ -1164,53 +1175,53 @@ xs_html *html_top_controls(snac *snac)
     const char *email = "[disabled by admin]";
 
     if (xs_type(xs_dict_get(srv_config, "disable_email_notifications")) != XSTYPE_TRUE) {
-        email = xs_dict_get(snac->config_o, "email");
+        email = xs_dict_get(user->config_o, "email");
         if (xs_is_null(email)) {
-            email = xs_dict_get(snac->config, "email");
+            email = xs_dict_get(user->config, "email");
 
             if (xs_is_null(email))
                 email = "";
         }
     }
 
-    const char *cw = xs_dict_get(snac->config, "cw");
+    const char *cw = xs_dict_get(user->config, "cw");
     if (xs_is_null(cw))
         cw = "";
 
-    const char *telegram_bot = xs_dict_get(snac->config, "telegram_bot");
+    const char *telegram_bot = xs_dict_get(user->config, "telegram_bot");
     if (xs_is_null(telegram_bot))
         telegram_bot = "";
 
-    const char *telegram_chat_id = xs_dict_get(snac->config, "telegram_chat_id");
+    const char *telegram_chat_id = xs_dict_get(user->config, "telegram_chat_id");
     if (xs_is_null(telegram_chat_id))
         telegram_chat_id = "";
 
-    const char *ntfy_server = xs_dict_get(snac->config, "ntfy_server");
+    const char *ntfy_server = xs_dict_get(user->config, "ntfy_server");
     if (xs_is_null(ntfy_server))
         ntfy_server = "";
 
-    const char *ntfy_token = xs_dict_get(snac->config, "ntfy_token");
+    const char *ntfy_token = xs_dict_get(user->config, "ntfy_token");
     if (xs_is_null(ntfy_token))
         ntfy_token = "";
 
-    const char *purge_days = xs_dict_get(snac->config, "purge_days");
+    const char *purge_days = xs_dict_get(user->config, "purge_days");
     if (!xs_is_null(purge_days) && xs_type(purge_days) == XSTYPE_NUMBER)
         purge_days = (char *)xs_number_str(purge_days);
     else
         purge_days = "0";
 
-    const xs_val *d_dm_f_u  = xs_dict_get(snac->config, "drop_dm_from_unknown");
-    const xs_val *bot       = xs_dict_get(snac->config, "bot");
-    const xs_val *a_private = xs_dict_get(snac->config, "private");
-    const xs_val *auto_boost = xs_dict_get(snac->config, "auto_boost");
-    const xs_val *coll_thrds = xs_dict_get(snac->config, "collapse_threads");
-    const xs_val *pending    = xs_dict_get(snac->config, "approve_followers");
-    const xs_val *show_foll  = xs_dict_get(snac->config, "show_contact_metrics");
-    const char *latitude     = xs_dict_get_def(snac->config, "latitude", "");
-    const char *longitude    = xs_dict_get_def(snac->config, "longitude", "");
+    const xs_val *d_dm_f_u  = xs_dict_get(user->config, "drop_dm_from_unknown");
+    const xs_val *bot       = xs_dict_get(user->config, "bot");
+    const xs_val *a_private = xs_dict_get(user->config, "private");
+    const xs_val *auto_boost = xs_dict_get(user->config, "auto_boost");
+    const xs_val *coll_thrds = xs_dict_get(user->config, "collapse_threads");
+    const xs_val *pending    = xs_dict_get(user->config, "approve_followers");
+    const xs_val *show_foll  = xs_dict_get(user->config, "show_contact_metrics");
+    const char *latitude     = xs_dict_get_def(user->config, "latitude", "");
+    const char *longitude    = xs_dict_get_def(user->config, "longitude", "");
 
     xs *metadata = NULL;
-    const xs_dict *md = xs_dict_get(snac->config, "metadata");
+    const xs_dict *md = xs_dict_get(user->config, "metadata");
 
     if (xs_type(md) == XSTYPE_DICT) {
         const xs_str *k;
@@ -1232,7 +1243,29 @@ xs_html *html_top_controls(snac *snac)
     else
         metadata = xs_str_new(NULL);
 
-    xs *user_setup_action = xs_fmt("%s/admin/user-setup", snac->actor);
+    /* ui language */
+    xs_html *lang_select = xs_html_tag("select",
+        xs_html_attr("name", "web_ui_lang"));
+
+    const char *u_lang = xs_dict_get_def(user->config, "lang", "en");
+    const char *lang;
+    const xs_dict *langs;
+
+    xs_dict_foreach(srv_langs, lang, langs) {
+        if (strcmp(u_lang, lang) == 0)
+            xs_html_add(lang_select,
+                xs_html_tag("option",
+                    xs_html_text(lang),
+                    xs_html_attr("value", lang),
+                    xs_html_attr("selected", "selected")));
+        else
+            xs_html_add(lang_select,
+                xs_html_tag("option",
+                    xs_html_text(lang),
+                    xs_html_attr("value", lang)));
+    }
+
+    xs *user_setup_action = xs_fmt("%s/admin/user-setup", user->actor);
 
     xs_html_add(top_controls,
         xs_html_tag("details",
@@ -1251,7 +1284,7 @@ xs_html *html_top_controls(snac *snac)
                     xs_html_sctag("input",
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "name"),
-                        xs_html_attr("value", xs_dict_get(snac->config, "name")),
+                        xs_html_attr("value", xs_dict_get(user->config, "name")),
                         xs_html_attr("placeholder", L("Your name")))),
                 xs_html_tag("p",
                     xs_html_text(L("Avatar: ")),
@@ -1281,7 +1314,7 @@ xs_html *html_top_controls(snac *snac)
                         xs_html_attr("cols", "40"),
                         xs_html_attr("rows", "4"),
                         xs_html_attr("placeholder", L("Write about yourself here...")),
-                        xs_html_text(xs_dict_get(snac->config, "bio")))),
+                        xs_html_text(xs_dict_get(user->config, "bio")))),
                 xs_html_sctag("input",
                     xs_html_attr("type", "checkbox"),
                     xs_html_attr("name", "cw"),
@@ -1423,6 +1456,11 @@ xs_html *html_top_controls(snac *snac)
                     xs_html_text(metadata))),
 
                 xs_html_tag("p",
+                    xs_html_text(L("Web interface language:")),
+                    xs_html_sctag("br", NULL),
+                    lang_select),
+
+                xs_html_tag("p",
                     xs_html_text(L("New password:")),
                     xs_html_sctag("br", NULL),
                     xs_html_sctag("input",
@@ -1444,8 +1482,8 @@ xs_html *html_top_controls(snac *snac)
 
                 xs_html_tag("p", NULL)))));
 
-    xs *followed_hashtags_action = xs_fmt("%s/admin/followed-hashtags", snac->actor);
-    xs *followed_hashtags = xs_join(xs_dict_get_def(snac->config,
+    xs *followed_hashtags_action = xs_fmt("%s/admin/followed-hashtags", user->actor);
+    xs *followed_hashtags = xs_join(xs_dict_get_def(user->config,
                         "followed_hashtags", xs_stock(XSTYPE_LIST)), "\n");
 
     xs_html_add(top_controls,
@@ -1480,7 +1518,7 @@ xs_html *html_top_controls(snac *snac)
 }
 
 
-static xs_html *html_button(char *clss, char *label, char *hint)
+static xs_html *html_button(const char *clss, const char *label, const char *hint)
 {
     xs *c = xs_fmt("snac-btn-%s", clss);
 
@@ -1496,7 +1534,7 @@ static xs_html *html_button(char *clss, char *label, char *hint)
 }
 
 
-xs_str *build_mentions(snac *snac, const xs_dict *msg)
+xs_str *build_mentions(snac *user, const xs_dict *msg)
 /* returns a string with the mentions in msg */
 {
     xs_str *s = xs_str_new(NULL);
@@ -1510,7 +1548,7 @@ xs_str *build_mentions(snac *snac, const xs_dict *msg)
         const char *name = xs_dict_get(v, "name");
 
         if (type && strcmp(type, "Mention") == 0 &&
-            href && strcmp(href, snac->actor) != 0 && name) {
+            href && strcmp(href, user->actor) != 0 && name) {
             xs *s1 = NULL;
 
             if (name[0] != '@') {
@@ -1551,7 +1589,7 @@ xs_str *build_mentions(snac *snac, const xs_dict *msg)
 }
 
 
-xs_html *html_entry_controls(snac *snac, const char *actor,
+xs_html *html_entry_controls(snac *user, const char *actor,
                             const xs_dict *msg, const char *md5)
 {
     const char *id    = xs_dict_get(msg, "id");
@@ -1560,7 +1598,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
     xs *likes   = object_likes(id);
     xs *boosts  = object_announces(id);
 
-    xs *action = xs_fmt("%s/admin/action", snac->actor);
+    xs *action = xs_fmt("%s/admin/action", user->actor);
     xs *redir  = xs_fmt("%s_entry", md5);
 
     xs_html *form;
@@ -1587,8 +1625,8 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
                 xs_html_attr("name",     "redir"),
                 xs_html_attr("value",    redir))));
 
-    if (!xs_startswith(id, snac->actor)) {
-        if (xs_list_in(likes, snac->md5) == -1) {
+    if (!xs_startswith(id, user->actor)) {
+        if (xs_list_in(likes, user->md5) == -1) {
             /* not already liked; add button */
             xs_html_add(form,
                 html_button("like", L("Like"), L("Say you like this post")));
@@ -1600,7 +1638,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
         }
     }
     else {
-        if (is_pinned(snac, id))
+        if (is_pinned(user, id))
             xs_html_add(form,
                 html_button("unpin", L("Unpin"), L("Unpin this post from your timeline")));
         else
@@ -1609,7 +1647,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
     }
 
     if (is_msg_public(msg)) {
-        if (xs_list_in(boosts, snac->md5) == -1) {
+        if (xs_list_in(boosts, user->md5) == -1) {
             /* not already boosted; add button */
             xs_html_add(form,
                 html_button("boost", L("Boost"), L("Announce this post to your followers")));
@@ -1621,16 +1659,16 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
         }
     }
 
-    if (is_bookmarked(snac, id))
+    if (is_bookmarked(user, id))
             xs_html_add(form,
                 html_button("unbookmark", L("Unbookmark"), L("Delete this post from your bookmarks")));
         else
             xs_html_add(form,
                 html_button("bookmark", L("Bookmark"), L("Add this post to your bookmarks")));
 
-    if (strcmp(actor, snac->actor) != 0) {
+    if (strcmp(actor, user->actor) != 0) {
         /* controls for other actors than this one */
-        if (following_check(snac, actor)) {
+        if (following_check(user, actor)) {
             xs_html_add(form,
                 html_button("unfollow", L("Unfollow"), L("Stop following this user's activity")));
         }
@@ -1640,7 +1678,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
         }
 
         if (!xs_is_null(group)) {
-            if (following_check(snac, group)) {
+            if (following_check(user, group)) {
                 xs_html_add(form,
                     html_button("unfollow", L("Unfollow Group"),
                         L("Stop following this group or channel")));
@@ -1666,7 +1704,7 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
 
     const char *prev_src = xs_dict_get(msg, "sourceContent");
 
-    if (!xs_is_null(prev_src) && strcmp(actor, snac->actor) == 0) { /** edit **/
+    if (!xs_is_null(prev_src) && strcmp(actor, user->actor) == 0) { /** edit **/
         /* post can be edited */
         xs *div_id  = xs_fmt("%s_edit", md5);
         xs *form_id = xs_fmt("%s_edit_form", md5);
@@ -1693,26 +1731,26 @@ xs_html *html_entry_controls(snac *snac, const char *actor,
 
         xs_html_add(controls, xs_html_tag("div",
             xs_html_tag("p", NULL),
-            html_note(snac, L("Edit..."),
+            html_note(user, L("Edit..."),
                 div_id, form_id,
                 "", prev_src,
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                NULL, 0, att_files, att_alt_texts, is_draft(snac, id))),
+                NULL, 0, att_files, att_alt_texts, is_draft(user, id))),
             xs_html_tag("p", NULL));
     }
 
     { /** reply **/
         /* the post textarea */
-        xs *ct      = build_mentions(snac, msg);
+        xs *ct      = build_mentions(user, msg);
         xs *div_id  = xs_fmt("%s_reply", md5);
         xs *form_id = xs_fmt("%s_reply_form", md5);
         xs *redir   = xs_fmt("%s_entry", md5);
 
         xs_html_add(controls, xs_html_tag("div",
             xs_html_tag("p", NULL),
-            html_note(snac, L("Reply..."),
+            html_note(user, L("Reply..."),
                 div_id, form_id,
                 "", ct,
                 NULL, NULL,
@@ -1839,7 +1877,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 xs_html_raw(" &#128204; ")));
     }
 
-    if (user && is_bookmarked(user, id)) {
+    if (user && !read_only && is_bookmarked(user, id)) {
         /* add a bookmark emoji */
         xs_html_add(score,
             xs_html_tag("span",
@@ -2242,6 +2280,11 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             if (content && xs_str_in(content, o_href) != -1)
                 continue;
 
+            /* drop silently any attachment that may include JavaScript */
+            if (strcmp(type, "image/svg+xml") == 0 ||
+                strcmp(type, "text/html") == 0)
+                continue;
+
             /* do this attachment include an icon? */
             const xs_dict *icon = xs_dict_get(a, "icon");
             if (xs_type(icon) == XSTYPE_DICT) {
@@ -2571,7 +2614,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 }
 
 
-xs_html *html_footer(void)
+xs_html *html_footer(const snac *user)
 {
     return xs_html_tag("div",
         xs_html_attr("class", "snac-footer"),
@@ -2879,13 +2922,13 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     }
 
     xs_html_add(body,
-        html_footer());
+        html_footer(user));
 
     return xs_html_render_s(html, "<!DOCTYPE html>\n");
 }
 
 
-xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, const char *proxy)
+xs_html *html_people_list(snac *user, xs_list *list, const char *header, const char *t, const char *proxy)
 {
     xs_html *snac_posts;
     xs_html *people = xs_html_tag("div",
@@ -2910,7 +2953,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                     xs_html_attr("name", md5)),
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post-header"),
-                    html_actor_icon(snac, actor, xs_dict_get(actor, "published"),
+                    html_actor_icon(user, actor, xs_dict_get(actor, "published"),
                                     NULL, NULL, 0, 1, proxy, NULL, NULL)));
 
             /* content (user bio) */
@@ -2934,7 +2977,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
             }
 
             /* buttons */
-            xs *btn_form_action = xs_fmt("%s/admin/action", snac->actor);
+            xs *btn_form_action = xs_fmt("%s/admin/action", user->actor);
 
             xs_html *snac_controls = xs_html_tag("div",
                 xs_html_attr("class",   "snac-controls"));
@@ -2954,12 +2997,12 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
 
             xs_html_add(snac_controls, form);
 
-            if (following_check(snac, actor_id)) {
+            if (following_check(user, actor_id)) {
                 xs_html_add(form,
                     html_button("unfollow", L("Unfollow"),
                                 L("Stop following this user's activity")));
 
-                if (is_limited(snac, actor_id))
+                if (is_limited(user, actor_id))
                     xs_html_add(form,
                         html_button("unlimit", L("Unlimit"),
                                 L("Allow announces (boosts) from this user")));
@@ -2973,12 +3016,12 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                     html_button("follow", L("Follow"),
                                 L("Start following this user's activity")));
 
-                if (follower_check(snac, actor_id))
+                if (follower_check(user, actor_id))
                     xs_html_add(form,
                         html_button("delete", L("Delete"), L("Delete this user")));
             }
 
-            if (pending_check(snac, actor_id)) {
+            if (pending_check(user, actor_id)) {
                 xs_html_add(form,
                     html_button("approve", L("Approve"),
                                 L("Approve this follow request")));
@@ -2987,7 +3030,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
                     html_button("discard", L("Discard"), L("Discard this follow request")));
             }
 
-            if (is_muted(snac, actor_id))
+            if (is_muted(user, actor_id))
                 xs_html_add(form,
                     html_button("unmute", L("Unmute"),
                                 L("Stop blocking activities from this user")));
@@ -3002,7 +3045,7 @@ xs_html *html_people_list(snac *snac, xs_list *list, char *header, char *t, cons
 
             xs_html_add(snac_controls,
                 xs_html_tag("p", NULL),
-                html_note(snac, L("Direct Message..."),
+                html_note(user, L("Direct Message..."),
                     dm_div_id, dm_form_id,
                     "", "",
                     NULL, actor_id,
@@ -3048,7 +3091,7 @@ xs_str *html_people(snac *user)
         html_user_head(user, NULL, NULL),
         xs_html_add(html_user_body(user, 0),
             lists,
-            html_footer()));
+            html_footer(user)));
 
     return xs_html_render_s(html, "<!DOCTYPE html>\n");
 }
@@ -3298,7 +3341,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
     xs_set_free(&rep);
 
     xs_html_add(body,
-        html_footer());
+        html_footer(user));
 
     /* set the check time to now */
     xs *dummy = notify_check_time(user, 1);
@@ -3310,12 +3353,24 @@ xs_str *html_notifications(snac *user, int skip, int show)
 }
 
 
+void set_user_lang(snac *user)
+/* sets the language dict according to user configuration */
+{
+    user->lang = NULL;
+    const char *lang = xs_dict_get(user->config, "lang");
+
+    if (xs_is_string(lang))
+        user->lang = xs_dict_get(srv_langs, lang);
+}
+
+
 int html_get_handler(const xs_dict *req, const char *q_path,
                      char **body, int *b_size, char **ctype,
                      xs_str **etag, xs_str **last_modified)
 {
     const char *accept = xs_dict_get(req, "accept");
     int status = HTTP_STATUS_NOT_FOUND;
+    const snac *user = NULL;
     snac snac;
     xs *uid = NULL;
     const char *p_path;
@@ -3381,6 +3436,9 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         srv_debug(1, xs_fmt("html_get_handler bad user %s", uid));
         return HTTP_STATUS_NOT_FOUND;
     }
+
+    user = &snac; /* for L() */
+    set_user_lang(&snac);
 
     if (xs_is_true(xs_dict_get(srv_config, "proxy_media")))
         proxy = 1;
@@ -3550,7 +3608,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                         html_user_head(&snac, NULL, NULL),
                         xs_html_add(html_user_body(&snac, 0),
                         page,
-                        html_footer()));
+                        html_footer(user)));
 
                     *body = xs_html_render_s(html, "<!DOCTYPE html>\n");
                     *b_size = strlen(*body);
@@ -4005,6 +4063,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     (void)ctype;
 
     int status = 0;
+    const snac *user = NULL;
     snac snac;
     const char *uid;
     const char *p_path;
@@ -4027,6 +4086,9 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         *body  = xs_dup(uid);
         return HTTP_STATUS_UNAUTHORIZED;
     }
+
+    user = &snac; /* for L() */
+    set_user_lang(&snac);
 
     p_vars = xs_dict_get(req, "p_vars");
 
@@ -4470,6 +4532,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_TRUE));
         else
             snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_FALSE));
+        if ((v = xs_dict_get(p_vars, "web_ui_lang")) != NULL)
+            snac.config = xs_dict_set(snac.config, "lang", v);
 
         snac.config = xs_dict_set(snac.config, "latitude", xs_dict_get_def(p_vars, "latitude", ""));
         snac.config = xs_dict_set(snac.config, "longitude", xs_dict_get_def(p_vars, "longitude", ""));
