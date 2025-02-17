@@ -99,6 +99,9 @@ int srv_open(const char *basedir, int auto_upgrade)
     if (error != NULL)
         srv_log(error);
 
+    if (!ret)
+        return ret;
+
     /* create the queue/ subdir, just in case */
     xs *qdir = xs_fmt("%s/queue", srv_basedir);
     mkdirx(qdir);
