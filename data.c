@@ -3174,7 +3174,7 @@ static xs_dict *_enqueue_put(const char *fn, xs_dict *msg)
 }
 
 
-static xs_dict *_new_qmsg(const char *type, const xs_val *msg, int retries)
+static xs_dict *_new_qmsg(const char *type, xs_dict *msg, int retries)
 /* creates a queue message */
 {
     int qrt  = xs_number_get(xs_dict_get(srv_config, "queue_retry_minutes"));
@@ -3276,9 +3276,10 @@ void enqueue_output_by_actor(snac *snac, const xs_dict *msg,
 }
 
 
-void enqueue_email(const xs_dict *msg, int retries)
+void enqueue_email(xs_dict *msg, int retries)
 /* enqueues an email message to be sent */
 {
+    /* qmsg owns msg */
     xs *qmsg   = _new_qmsg("email", msg, retries);
     const char *ntid = xs_dict_get(qmsg, "ntid");
     xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
