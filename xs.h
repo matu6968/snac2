@@ -398,6 +398,7 @@ xs_val *xs_dup(const xs_val *data)
 xs_val *xs_expand(xs_val *data, int offset, int size)
 /* opens a hole in data */
 {
+    xstype type = xs_type(data);
     int sz = xs_size(data);
     int n;
 
@@ -410,9 +411,9 @@ xs_val *xs_expand(xs_val *data, int offset, int size)
     for (n = sz - 1; n >= offset + size; n--)
         data[n] = data[n - size];
 
-    if (xs_type(data) == XSTYPE_LIST ||
-        xs_type(data) == XSTYPE_DICT ||
-        xs_type(data) == XSTYPE_DATA)
+    if (type == XSTYPE_LIST ||
+        type == XSTYPE_DICT ||
+        type == XSTYPE_DATA)
         _xs_put_size(data, sz);
 
     return data;
