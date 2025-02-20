@@ -1026,9 +1026,9 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
                     from, email, subject);
 
         xs *mailinfo = xs_dict_new();
-        xs_dict_append(mailinfo, "from", from);
-        xs_dict_append(mailinfo, "to", email);
-        xs_dict_append(mailinfo, "body", xs_fmt("%s%s", header, body));
+        mailinfo = xs_dict_append(mailinfo, "from", from);
+        mailinfo = xs_dict_append(mailinfo, "to", email);
+        mailinfo = xs_dict_append(mailinfo, "body", xs_fmt("%s%s", header, body));
 
         enqueue_email(mailinfo, 0);
     }
