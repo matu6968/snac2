@@ -274,7 +274,7 @@ void enqueue_output(snac *snac, const xs_dict *msg,
                     const xs_str *inbox, int retries, int p_status);
 void enqueue_output_by_actor(snac *snac, const xs_dict *msg,
                              const xs_str *actor, int retries);
-void enqueue_email(xs_dict *msg, int retries);
+void enqueue_email(const xs_str *msg, int retries);
 void enqueue_telegram(const xs_str *msg, const char *bot, const char *chat_id);
 void enqueue_ntfy(const xs_str *msg, const char *ntfy_server, const char *ntfy_token);
 void enqueue_message(snac *snac, const xs_dict *msg);
