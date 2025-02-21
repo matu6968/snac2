@@ -185,18 +185,16 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
 
     /* iterate searching the boundaries */
     while ((p = xs_memmem(payload + offset, p_size - offset, boundary, bsz)) != NULL) {
-        xs *s1 = NULL;
-        xs *l1 = NULL;
-        const char *vn = NULL;
-        const char *fn = NULL;
-        const char *ct = NULL;
+        xs *vn = NULL;
+        xs *fn = NULL;
+        xs *ct = NULL;
         char *q;
         int po, ps;
 
         /* final boundary? */
         p += bsz;
 
-        if (p[0] == '-' && p[1] == '-')
+        if ((p - payload) + 2 > p_size || (p[0] == '-' && p[1] == '-'))
             break;
 
         /* skip the \r\n */
@@ -205,9 +203,11 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
         /* Tokodon sends also a Content-Type headers,
            let's use it to determine the file type */
         do {
-            if (p[0] == 13 && p[1] == 10)
+            xs *s1 = NULL;
+            xs *l1 = NULL;
+            if (p[0] == '\r' && p[1] == '\n')
                 break;
-            q = strchr(p, '\r');
+            q = memchr(p, '\r', p_size - (p - payload));
 
             /* unexpected formatting, fail immediately */
             if (q == NULL)
@@ -222,12 +222,12 @@ xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *hea
                 l1 = xs_split(s1, "\"");
 
                 /* get the variable name */
-                vn = xs_list_get(l1, 1);
+                vn = xs_dup(xs_list_get(l1, 1));
 
                 /* is it an attached file? */
                 if (xs_list_len(l1) >= 4 && strcmp(xs_list_get(l1, 2), "; filename=") == 0) {
                     /* get the file name */
-                    fn = xs_list_get(l1, 3);
+                    fn = xs_dup(xs_list_get(l1, 3));
                 }
             }
             else
