@@ -2352,6 +2352,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                     /* bring the actor */
                     xs *who_o = NULL;
 
+                    if (blocked_hashtag_check(snac, a_msg))
+                        snac_debug(snac, 1, xs_fmt("blocked by hashtag %s", object));
+                    else
                     if (valid_status(actor_request(snac, who, &who_o))) {
                         /* don't account as such announces by our own relay */
                         xs *this_relay = xs_fmt("%s/relay", srv_baseurl);
