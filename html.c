@@ -1514,6 +1514,38 @@ xs_html *html_top_controls(snac *user)
                     xs_html_attr("class", "button"),
                     xs_html_attr("value", L("Update hashtags")))))));
 
+    xs *blocked_hashtags_action = xs_fmt("%s/admin/blocked-hashtags", user->actor);
+    xs *blocked_hashtags = xs_join(xs_dict_get_def(user->config,
+                        "blocked_hashtags", xs_stock(XSTYPE_LIST)), "\n");
+
+    xs_html_add(top_controls,
+        xs_html_tag("details",
+        xs_html_tag("summary",
+            xs_html_text(L("Blocked hashtags..."))),
+        xs_html_tag("p",
+            xs_html_text(L("One hashtag per line"))),
+        xs_html_tag("div",
+            xs_html_attr("class", "snac-blocked-hashtags"),
+            xs_html_tag("form",
+                xs_html_attr("autocomplete", "off"),
+                xs_html_attr("method", "post"),
+                xs_html_attr("action", blocked_hashtags_action),
+                xs_html_attr("enctype", "multipart/form-data"),
+
+                xs_html_tag("textarea",
+                    xs_html_attr("name", "blocked_hashtags"),
+                    xs_html_attr("cols", "40"),
+                    xs_html_attr("rows", "4"),
+                    xs_html_attr("placeholder", "#cats\n#windowfriday\n#classicalmusic"),
+                    xs_html_text(blocked_hashtags)),
+
+                xs_html_tag("br", NULL),
+
+                xs_html_sctag("input",
+                    xs_html_attr("type", "submit"),
+                    xs_html_attr("class", "button"),
+                    xs_html_attr("value", L("Update hashtags")))))));
+
     return top_controls;
 }
 
@@ -4678,6 +4710,35 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             }
 
             snac.config = xs_dict_set(snac.config, "followed_hashtags", new_hashtags);
+            user_persist(&snac, 0);
+        }
+
+        status = HTTP_STATUS_SEE_OTHER;
+    }
+    else
+    if (p_path && strcmp(p_path, "admin/blocked-hashtags") == 0) { /** **/
+        const char *hashtags = xs_dict_get(p_vars, "blocked_hashtags");
+
+        if (xs_is_string(hashtags)) {
+            xs *new_hashtags = xs_list_new();
+            xs *l = xs_split(hashtags, "\n");
+            const char *v;
+
+            xs_list_foreach(l, v) {
+                xs *s1 = xs_strip_i(xs_dup(v));
+                s1 = xs_replace_i(s1, " ", "");
+
+                if (*s1 == '\0')
+                    continue;
+
+                xs *s2 = xs_utf8_to_lower(s1);
+                if (*s2 != '#')
+                    s2 = xs_str_prepend_i(s2, "#");
+
+                new_hashtags = xs_list_append(new_hashtags, s2);
+            }
+
+            snac.config = xs_dict_set(snac.config, "blocked_hashtags", new_hashtags);
             user_persist(&snac, 0);
         }
 
