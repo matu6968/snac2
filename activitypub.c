@@ -590,7 +590,7 @@ int is_msg_from_private_user(const xs_dict *msg)
 int hashtag_in_msg(const xs_list *hashtags, const xs_dict *msg)
 /* returns 1 if the message contains any of the list of hashtags */
 {
-    if (xs_is_list(hashtags)) {
+    if (xs_is_list(hashtags) && xs_is_dict(msg)) {
         const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
 
         if (xs_is_list(tags_in_msg)) {
@@ -620,7 +620,7 @@ int hashtag_in_msg(const xs_list *hashtags, const xs_dict *msg)
 
 
 int followed_hashtag_check(snac *user, const xs_dict *msg)
-/* returns true if this message contains a hashtag followed by me */
+/* returns 1 if this message contains a hashtag followed by me */
 {
     return hashtag_in_msg(xs_dict_get(user->config, "followed_hashtags"), msg);
 }
@@ -656,6 +656,13 @@ void followed_hashtag_distribute(const xs_dict *msg)
 }
 
 
+int blocked_hashtag_check(snac *user, const xs_dict *msg)
+/* returns 1 if this message contains a hashtag blocked by me */
+{
+    return hashtag_in_msg(xs_dict_get(user->config, "blocked_hashtags"), msg);
+}
+
+
 int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 /* checks if this message is for me */
 {
@@ -678,23 +685,25 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         if (!xs_is_string(object))
             return 0;
 
+        xs *obj = NULL;
+        if (!valid_status(object_get(object, &obj)))
+            return 0;
+
         /* if it's about one of our posts, accept it */
         if (xs_startswith(object, snac->actor))
             return 2;
+
+        /* blocked by hashtag? */
+        if (blocked_hashtag_check(snac, obj))
+            return 0;
 
         /* if it's by someone we follow, accept it */
         if (following_check(snac, actor))
             return 1;
 
         /* do we follow any hashtag? */
-        if (xs_is_list(xs_dict_get(snac->config, "followed_hashtags"))) {
-            xs *obj = NULL;
-
-            /* if the admired object contains any followed hashtag, accept it */
-            if (valid_status(object_get(object, &obj)) &&
-                followed_hashtag_check(snac, obj))
-                return 7;
-        }
+        if (followed_hashtag_check(snac, obj))
+            return 7;
 
         return 0;
     }
@@ -726,13 +735,20 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         return 1;
     }
 
+    const xs_dict *msg = xs_dict_get(c_msg, "object");
+
+    /* any blocked hashtag? reject */
+    if (blocked_hashtag_check(snac, msg)) {
+        snac_debug(snac, 1, xs_fmt("blocked by hashtag %s", xs_dict_get(msg, "id")));
+        return 0;
+    }
+
     int pub_msg = is_msg_public(c_msg);
 
     /* if this message is public and we follow the actor of this post, allow */
     if (pub_msg && following_check(snac, actor))
         return 1;
 
-    const xs_dict *msg = xs_dict_get(c_msg, "object");
     xs *rcpts = recipient_list(snac, msg, 0);
     xs_list *p = rcpts;
     const xs_str *v;
