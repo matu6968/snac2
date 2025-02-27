@@ -587,12 +587,10 @@ int is_msg_from_private_user(const xs_dict *msg)
 }
 
 
-int followed_hashtag_check(snac *user, const xs_dict *msg)
-/* returns true if this message contains a hashtag followed by me */
+int hashtag_in_msg(const xs_list *hashtags, const xs_dict *msg)
+/* returns 1 if the message contains any of the list of hashtags */
 {
-    const xs_list *fw_tags = xs_dict_get(user->config, "followed_hashtags");
-
-    if (xs_is_list(fw_tags)) {
+    if (xs_is_list(hashtags)) {
         const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
 
         if (xs_is_list(tags_in_msg)) {
@@ -608,7 +606,7 @@ int followed_hashtag_check(snac *user, const xs_dict *msg)
                         if (strcmp(type, "Hashtag") == 0) {
                             xs *lc_name = xs_utf8_to_lower(name);
 
-                            if (xs_list_in(fw_tags, lc_name) != -1)
+                            if (xs_list_in(hashtags, lc_name) != -1)
                                 return 1;
                         }
                     }
@@ -618,6 +616,13 @@ int followed_hashtag_check(snac *user, const xs_dict *msg)
     }
 
     return 0;
+}
+
+
+int followed_hashtag_check(snac *user, const xs_dict *msg)
+/* returns true if this message contains a hashtag followed by me */
+{
+    return hashtag_in_msg(xs_dict_get(user->config, "followed_hashtags"), msg);
 }
 
 
