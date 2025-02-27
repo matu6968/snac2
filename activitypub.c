@@ -329,6 +329,52 @@ xs_list *get_attachments(const xs_dict *msg)
 }
 
 
+int hashtag_in_msg(const xs_list *hashtags, const xs_dict *msg)
+/* returns 1 if the message contains any of the list of hashtags */
+{
+    if (xs_is_list(hashtags) && xs_is_dict(msg)) {
+        const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
+
+        if (xs_is_list(tags_in_msg)) {
+            const xs_dict *te;
+
+            /* iterate the tags in the message */
+            xs_list_foreach(tags_in_msg, te) {
+                if (xs_is_dict(te)) {
+                    const char *type = xs_dict_get(te, "type");
+                    const char *name = xs_dict_get(te, "name");
+
+                    if (xs_is_string(type) && xs_is_string(name)) {
+                        if (strcmp(type, "Hashtag") == 0) {
+                            xs *lc_name = xs_utf8_to_lower(name);
+
+                            if (xs_list_in(hashtags, lc_name) != -1)
+                                return 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+int followed_hashtag_check(snac *user, const xs_dict *msg)
+/* returns 1 if this message contains a hashtag followed by me */
+{
+    return hashtag_in_msg(xs_dict_get(user->config, "followed_hashtags"), msg);
+}
+
+
+int blocked_hashtag_check(snac *user, const xs_dict *msg)
+/* returns 1 if this message contains a hashtag blocked by me */
+{
+    return hashtag_in_msg(xs_dict_get(user->config, "blocked_hashtags"), msg);
+}
+
+
 int timeline_request(snac *snac, const char **id, xs_str **wrk, int level)
 /* ensures that an entry and its ancestors are in the timeline */
 {
@@ -384,6 +430,9 @@ int timeline_request(snac *snac, const char **id, xs_str **wrk, int level)
                 if (xs_match(type, POSTLIKE_OBJECT_TYPE)) {
                     if (content_match("filter_reject.txt", object))
                         snac_log(snac, xs_fmt("timeline_request rejected by content %s", nid));
+                    else
+                    if (blocked_hashtag_check(snac, object))
+                        snac_log(snac, xs_fmt("timeline_request rejected by hashtag %s", nid));
                     else {
                         const char *actor = get_atto(object);
 
@@ -587,45 +636,6 @@ int is_msg_from_private_user(const xs_dict *msg)
 }
 
 
-int hashtag_in_msg(const xs_list *hashtags, const xs_dict *msg)
-/* returns 1 if the message contains any of the list of hashtags */
-{
-    if (xs_is_list(hashtags) && xs_is_dict(msg)) {
-        const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
-
-        if (xs_is_list(tags_in_msg)) {
-            const xs_dict *te;
-
-            /* iterate the tags in the message */
-            xs_list_foreach(tags_in_msg, te) {
-                if (xs_is_dict(te)) {
-                    const char *type = xs_dict_get(te, "type");
-                    const char *name = xs_dict_get(te, "name");
-
-                    if (xs_is_string(type) && xs_is_string(name)) {
-                        if (strcmp(type, "Hashtag") == 0) {
-                            xs *lc_name = xs_utf8_to_lower(name);
-
-                            if (xs_list_in(hashtags, lc_name) != -1)
-                                return 1;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return 0;
-}
-
-
-int followed_hashtag_check(snac *user, const xs_dict *msg)
-/* returns 1 if this message contains a hashtag followed by me */
-{
-    return hashtag_in_msg(xs_dict_get(user->config, "followed_hashtags"), msg);
-}
-
-
 void followed_hashtag_distribute(const xs_dict *msg)
 /* distribute this post to all users following the included hashtags */
 {
@@ -653,13 +663,6 @@ void followed_hashtag_distribute(const xs_dict *msg)
             user_free(&user);
         }
     }
-}
-
-
-int blocked_hashtag_check(snac *user, const xs_dict *msg)
-/* returns 1 if this message contains a hashtag blocked by me */
-{
-    return hashtag_in_msg(xs_dict_get(user->config, "blocked_hashtags"), msg);
 }
 
 
@@ -2352,9 +2355,6 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                     /* bring the actor */
                     xs *who_o = NULL;
 
-                    if (blocked_hashtag_check(snac, a_msg))
-                        snac_debug(snac, 1, xs_fmt("blocked by hashtag %s", object));
-                    else
                     if (valid_status(actor_request(snac, who, &who_o))) {
                         /* don't account as such announces by our own relay */
                         xs *this_relay = xs_fmt("%s/relay", srv_baseurl);
