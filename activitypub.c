@@ -390,71 +390,71 @@ int timeline_request(snac *snac, const char **id, xs_str **wrk, int level)
         }
 
         /* is the object already there? */
-        if (!valid_status(object_get(*id, &msg))) {
+        if (!valid_status((status = object_get(*id, &msg)))) {
             /* no; download it */
             status = activitypub_request(snac, *id, &msg);
+        }
 
-            if (valid_status(status)) {
-                const xs_dict *object = msg;
-                const char *type = xs_dict_get(object, "type");
+        if (valid_status(status)) {
+            const xs_dict *object = msg;
+            const char *type = xs_dict_get(object, "type");
 
-                /* get the id again from the object, as it may be different */
-                const char *nid = xs_dict_get(object, "id");
+            /* get the id again from the object, as it may be different */
+            const char *nid = xs_dict_get(object, "id");
 
-                if (xs_type(nid) != XSTYPE_STRING)
-                    return 0;
+            if (xs_type(nid) != XSTYPE_STRING)
+                return 0;
 
-                if (wrk && strcmp(nid, *id) != 0) {
-                    snac_debug(snac, 1,
-                        xs_fmt("timeline_request canonical id for %s is %s", *id, nid));
+            if (wrk && strcmp(nid, *id) != 0) {
+                snac_debug(snac, 1,
+                    xs_fmt("timeline_request canonical id for %s is %s", *id, nid));
 
-                    *wrk = xs_dup(nid);
-                    *id  = *wrk;
+                *wrk = xs_dup(nid);
+                *id  = *wrk;
+            }
+
+            if (xs_is_null(type))
+                type = "(null)";
+
+            srv_debug(2, xs_fmt("timeline_request type %s '%s'", nid, type));
+
+            if (strcmp(type, "Create") == 0) {
+                /* some software like lemmy nest Announce + Create + Note */
+                if (!xs_is_null(object = xs_dict_get(object, "object"))) {
+                    type = xs_dict_get(object, "type");
+                    nid  = xs_dict_get(object, "id");
                 }
-
-                if (xs_is_null(type))
+                else
                     type = "(null)";
+            }
 
-                srv_debug(2, xs_fmt("timeline_request type %s '%s'", nid, type));
+            if (xs_match(type, POSTLIKE_OBJECT_TYPE)) {
+                if (content_match("filter_reject.txt", object))
+                    snac_log(snac, xs_fmt("timeline_request rejected by content %s", nid));
+                else
+                if (blocked_hashtag_check(snac, object))
+                    snac_log(snac, xs_fmt("timeline_request rejected by hashtag %s", nid));
+                else {
+                    const char *actor = get_atto(object);
 
-                if (strcmp(type, "Create") == 0) {
-                    /* some software like lemmy nest Announce + Create + Note */
-                    if (!xs_is_null(object = xs_dict_get(object, "object"))) {
-                        type = xs_dict_get(object, "type");
-                        nid  = xs_dict_get(object, "id");
-                    }
-                    else
-                        type = "(null)";
-                }
-
-                if (xs_match(type, POSTLIKE_OBJECT_TYPE)) {
-                    if (content_match("filter_reject.txt", object))
-                        snac_log(snac, xs_fmt("timeline_request rejected by content %s", nid));
-                    else
-                    if (blocked_hashtag_check(snac, object))
-                        snac_log(snac, xs_fmt("timeline_request rejected by hashtag %s", nid));
-                    else {
-                        const char *actor = get_atto(object);
-
-                        if (!xs_is_null(actor)) {
-                            /* request (and drop) the actor for this entry */
-                            if (!valid_status(actor_request(snac, actor, NULL))) {
-                                /* failed? retry later */
-                                enqueue_actor_refresh(snac, actor, 60);
-                            }
-
-                            /* does it have an ancestor? */
-                            const char *in_reply_to = get_in_reply_to(object);
-
-                            /* store */
-                            timeline_add(snac, nid, object);
-
-                            /* redistribute to lists for this user */
-                            list_distribute(snac, actor, object);
-
-                            /* recurse! */
-                            timeline_request(snac, &in_reply_to, NULL, level + 1);
+                    if (!xs_is_null(actor)) {
+                        /* request (and drop) the actor for this entry */
+                        if (!valid_status(actor_request(snac, actor, NULL))) {
+                            /* failed? retry later */
+                            enqueue_actor_refresh(snac, actor, 60);
                         }
+
+                        /* does it have an ancestor? */
+                        const char *in_reply_to = get_in_reply_to(object);
+
+                        /* store */
+                        timeline_add(snac, nid, object);
+
+                        /* redistribute to lists for this user */
+                        list_distribute(snac, actor, object);
+
+                        /* recurse! */
+                        timeline_request(snac, &in_reply_to, NULL, level + 1);
                     }
                 }
             }
@@ -2360,7 +2360,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                         xs *this_relay = xs_fmt("%s/relay", srv_baseurl);
 
                         if (strcmp(actor, this_relay) != 0) {
-                            if (timeline_admire(snac, object, actor, 0) == HTTP_STATUS_CREATED)
+                            if (valid_status(timeline_admire(snac, object, actor, 0)))
                                 snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
                             else
                                 snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",
