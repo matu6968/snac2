@@ -677,17 +677,20 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 
     if (xs_match(type, "Like|Announce|EmojiReact")) {
         const char *object = xs_dict_get(c_msg, "object");
+        xs *obj = NULL;
 
-        if (xs_is_dict(object))
+        if (xs_is_dict(object)) {
+            obj = xs_dup(object);
             object = xs_dict_get(object, "id");
+        }
 
         /* bad object id? reject */
         if (!xs_is_string(object))
             return 0;
 
-        xs *obj = NULL;
-        if (!valid_status(object_get(object, &obj)))
-            return 0;
+        /* try to get the object */
+        if (!xs_is_dict(obj))
+            object_get(object, &obj);
 
         /* if it's about one of our posts, accept it */
         if (xs_startswith(object, snac->actor))
