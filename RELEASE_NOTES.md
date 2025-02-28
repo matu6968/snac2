@@ -1,5 +1,15 @@
 # Release Notes
 
+## UNRELEASED
+
+New user support for blocking hashtags from the web UI.
+
+The `Content-Security-Policy` HTTP header is now always sent to disable any JavaScript, instead of just being suggested in the documentation.
+
+Image attachments in SVG format are now disabled by default; you can enable them back by setting the `enable_svg` value to `true` in `server.json`.
+
+Several fixes (contributed by inz).
+
 ## 2.72
 
 Each post can have more than one attachment from the web UI. The maximum number can be configured in `server.json` via the `max_attachments` value (default: 4).
