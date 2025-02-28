@@ -620,6 +620,32 @@ hashtags.
 Please take note that subscribing to relays can increase the traffic towards your instance
 significantly. In any case, lowering the "Maximum days to keep posts" value for the relay
 special user is recommended (e.g. setting to just 1 day).
+.Ss Web interface language
+Since version 2.73, the web UI can be localized via simple .po files (they are directly
+parsed, no support for gettext is needed).
+.Pp
+No language file is installed by default; the administrator must copy any desired .po files
+to the
+.Pa lang/
+subdirectory in the base directory. Once the server is restarted, users can select the
+new language from the user settings. The
+.Nm
+source distribution may include .po files in the
+.Pa po/
+subdirectory. You don't need to copy the English language one, as it's the default.
+.Pp
+To create new language files, create a copy of
+.Pa en.po ,
+rename it to a reasonable value like
+.Pa pl.po
+or
+.Pa pt_BR.po ,
+change the translator to yourself and fill the msgstr strings with your translation. If
+you have any doubt on how to modify .po files, there are many tutorials out there.
+If you want your language file to be included in the standard
+.Nm
+distribution, please send it to me via the Fediverse as an attachment to @grunfink@comam.es
+or make a PR via the Git repository.
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev DEBUG
