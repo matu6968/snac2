@@ -98,15 +98,6 @@ int main(int argc, char *argv[])
         return snac_init(basedir);
     }
 
-    if (strcmp(cmd, "markdown") == 0) { /** **/
-        /* undocumented, for testing only */
-        xs *c = xs_readall(stdin);
-        xs *fc = not_really_markdown(c, NULL, NULL);
-
-        printf("<html>\n%s\n</html>\n", fc);
-        return 0;
-    }
-
     if ((basedir = getenv("SNAC_BASEDIR")) == NULL) {
         if ((basedir = GET_ARGV()) == NULL)
             return usage();
