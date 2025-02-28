@@ -83,16 +83,20 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                     const char *u = xs_dict_get(i, "url");
                     const char *mt = xs_dict_get(i, "mediaType");
 
-                    if (xs_is_string(u) && xs_is_string(mt) && strcmp(mt, "image/svg+xml")) {
-                        xs *url = make_url(u, proxy, 0);
+                    if (xs_is_string(u) && xs_is_string(mt)) {
+                        if (strcmp(mt, "image/svg+xml") == 0 && !xs_is_true(xs_dict_get(srv_config, "enable_svg")))
+                            s = xs_replace_i(s, n, "");
+                        else {
+                            xs *url = make_url(u, proxy, 0);
 
-                        xs_html *img = xs_html_sctag("img",
-                            xs_html_attr("loading", "lazy"),
-                            xs_html_attr("src", url),
-                            xs_html_attr("style", style));
+                            xs_html *img = xs_html_sctag("img",
+                                xs_html_attr("loading", "lazy"),
+                                xs_html_attr("src", url),
+                                xs_html_attr("style", style));
 
-                        xs *s1 = xs_html_render(img);
-                        s = xs_replace_i(s, n, s1);
+                            xs *s1 = xs_html_render(img);
+                            s = xs_replace_i(s, n, s1);
+                        }
                     }
                     else
                         s = xs_replace_i(s, n, "");
@@ -2313,8 +2317,10 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 continue;
 
             /* drop silently any attachment that may include JavaScript */
-            if (strcmp(type, "image/svg+xml") == 0 ||
-                strcmp(type, "text/html") == 0)
+            if (strcmp(type, "text/html") == 0)
+                continue;
+
+            if (strcmp(type, "image/svg+xml") == 0 && !xs_is_true(xs_dict_get(srv_config, "enable_svg")))
                 continue;
 
             /* do this attachment include an icon? */
