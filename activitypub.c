@@ -1555,7 +1555,7 @@ xs_dict *msg_follow(snac *snac, const char *q)
 
 xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
                   const xs_str *in_reply_to, const xs_list *attach,
-                  int scope, const char *lang_str)
+                  int scope, const char *lang_str, const char *msg_date)
 /* creates a 'Note' message */
 /* scope: 0, public; 1, private (mentioned only); 2, "quiet public"; 3, followers only */
 {
@@ -1569,7 +1569,12 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     xs *irt  = NULL;
     xs *tag  = xs_list_new();
     xs *atls = xs_list_new();
-    xs_dict *msg = msg_base(snac, "Note", id, NULL, "@now", NULL);
+
+    /* discard non-parseable dates */
+    if (!xs_is_string(msg_date) || xs_parse_iso_date(msg_date, 0) == 0)
+        msg_date = NULL;
+
+    xs_dict *msg = msg_base(snac, "Note", id, NULL, xs_or(msg_date, "@now"), NULL);
     xs_list *p;
     const xs_val *v;
 
@@ -1782,7 +1787,7 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
                       const xs_list *opts, int multiple, int end_secs)
 /* creates a Question message */
 {
-    xs_dict *msg = msg_note(user, content, NULL, NULL, attach, 0, NULL);
+    xs_dict *msg = msg_note(user, content, NULL, NULL, attach, 0, NULL, NULL);
     int max      = 8;
     xs_set seen;
 
