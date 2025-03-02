@@ -268,7 +268,8 @@ argument is -e, the external editor defined by the EDITOR
 environment variable will be invoked to prepare a message; if
 it's - (a lonely hyphen), the post content will be read from stdin.
 The rest of command line arguments are treated as media files to be
-attached to the post.
+attached to the post. The LANG environment variable (if defined) is used
+as the post language.
 .It Cm note_unlisted Ar basedir Ar uid Ar text Op file file ...
 Like the previous one, but creates an "unlisted" (or "quiet public") post.
 .It Cm note_mention Ar basedir Ar uid Ar text Op file file ...
@@ -407,6 +408,8 @@ variable. Set it to an integer value. The higher, the deeper in meaningless
 verbiage you'll find yourself into.
 .It Ev EDITOR
 The user-preferred interactive text editor to prepare messages.
+.It Ev LANG
+The language of the post when sending messages.
 .El
 .Sh SEE ALSO
 .Xr snac 5 ,
