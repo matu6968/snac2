@@ -710,7 +710,7 @@ int main(int argc, char *argv[])
         if (strcmp(cmd, "note_unlisted") == 0)
             scope = 2;
 
-        msg = msg_note(&snac, content, NULL, NULL, attl, scope, getenv("LANG"), getenv("DATE"));
+        msg = msg_note(&snac, content, NULL, NULL, attl, scope, getenv("LANG"), NULL);
 
         c_msg = msg_create(&snac, msg);
 

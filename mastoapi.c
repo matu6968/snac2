@@ -2628,7 +2628,6 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             const char *summary    = xs_dict_get(args, "spoiler_text");
             const char *media_ids  = xs_dict_get(args, "media_ids");
             const char *language   = xs_dict_get(args, "language");
-            const char *sched_date = xs_dict_get(args, "scheduled_at");
 
             if (xs_is_null(media_ids))
                 media_ids = xs_dict_get(args, "media_ids[]");
@@ -2685,7 +2684,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             if (strcmp(visibility, "public") == 0)
                 scope = 0;
 
-            xs *msg = msg_note(&snac, content, NULL, irt, attach_list, scope, language, sched_date);
+            xs *msg = msg_note(&snac, content, NULL, irt, attach_list, scope, language, NULL);
 
             if (!xs_is_null(summary) && *summary) {
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));
