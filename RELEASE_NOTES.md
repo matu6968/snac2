@@ -4,6 +4,8 @@
 
 Added Spanish (Spain, Argentina and Uruguay) translation (contributed by gnemmi).
 
+Added Czech translation (contributed by pmjv).
+
 ## 2.73
 
 Added support for customizing and translating the web UI language via simple `.po` files. For more information on how to install language files or create new ones, please see `snac(8)` (the administrator manual).
