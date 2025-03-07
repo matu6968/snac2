@@ -2,9 +2,11 @@
 
 ## UNRELEASED
 
-Added Spanish (Spain, Argentina and Uruguay) translation (contributed by gnemmi).
+Added Spanish (default, Argentina and Uruguay) translation (contributed by gnemmi).
 
 Added Czech translation (contributed by pmjv).
+
+Added Brazilian Portuguese translation (contributed by daltux).
 
 ## 2.73
 
