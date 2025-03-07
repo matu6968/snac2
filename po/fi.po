@@ -1,0 +1,693 @@
+# snac message translation file
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: snac\n"
+"Last-Translator: inz\n"
+"Language: fi\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+#: html.c:371
+msgid "Sensitive content: "
+msgstr "Arkaluontoista sisältöä: "
+
+#: html.c:379
+msgid "Sensitive content description"
+msgstr "Arkaluontoisen sisällön kuvaus"
+
+#: html.c:392
+msgid "Only for mentioned people: "
+msgstr "Vain mainituille: "
+
+#: html.c:415
+msgid "Reply to (URL): "
+msgstr "Vastaus (osoite): "
+
+#: html.c:424
+msgid "Don't send, but store as a draft"
+msgstr "Älä lähetä, tallenna luonnoksena"
+
+#: html.c:425
+msgid "Draft:"
+msgstr "Luonnos:"
+
+#: html.c:445
+msgid "Attachments..."
+msgstr "Liitteet..."
+
+#: html.c:468
+msgid "File:"
+msgstr "Tiedosto:"
+
+#: html.c:472
+msgid "Clear this field to delete the attachment"
+msgstr "Tyhjennä kenttä poistaaksesi liiteen"
+
+#: html.c:481 html.c:506
+msgid "Attachment description"
+msgstr "Liitteen kuvaus"
+
+#: html.c:517
+msgid "Poll..."
+msgstr "Kysely..."
+
+#: html.c:519
+msgid "Poll options (one per line, up to 8):"
+msgstr "Kyselyn vaihtoehdot (riveittäin, korkeintaan 8):"
+
+#: html.c:531
+msgid "One choice"
+msgstr "Yksi valinta"
+
+#: html.c:534
+msgid "Multiple choices"
+msgstr "Monta valintaa"
+
+#: html.c:540
+msgid "End in 5 minutes"
+msgstr "Päättyy viiden minuutin päästä"
+
+#: html.c:544
+msgid "End in 1 hour"
+msgstr "Päättyy tunnin päästä"
+
+#: html.c:547
+msgid "End in 1 day"
+msgstr "Päättyy päivän päästä"
+
+#: html.c:555
+msgid "Post"
+msgstr "Julkaise"
+
+#: html.c:652 html.c:659
+msgid "Site description"
+msgstr "Sivuston kuvaus"
+
+#: html.c:670
+msgid "Admin email"
+msgstr "Ylläpitäjän sähköposti"
+
+#: html.c:683
+msgid "Admin account"
+msgstr "Ylläpitäjän tili"
+
+#: html.c:751 html.c:1087
+#, c-format
+msgid "%d following, %d followers"
+msgstr "Seuraa %d, %d seuraajaa"
+
+#: html.c:841
+msgid "RSS"
+msgstr "RSS"
+
+#: html.c:846 html.c:874
+msgid "private"
+msgstr "yksityinen"
+
+#: html.c:870
+msgid "public"
+msgstr "julkinen"
+
+#: html.c:878
+msgid "notifications"
+msgstr "ilmoitukset"
+
+#: html.c:883
+msgid "people"
+msgstr "ihmiset"
+
+#: html.c:887
+msgid "instance"
+msgstr "palvelin"
+
+#: html.c:896
+msgid ""
+"Search posts by URL or content (regular expression), @user@host accounts, or "
+"#tag"
+msgstr ""
+"Etsi julkaisuja osoitteella tai sisällön perusteella, @käyttäjä@palvelin "
+" tai #tagi"
+
+#: html.c:897
+msgid "Content search"
+msgstr "Sisälöhaku"
+
+#: html.c:1019
+msgid "verified link"
+msgstr "varmistettu linkki"
+
+#: html.c:1076 html.c:2458 html.c:2471 html.c:2480
+msgid "Location: "
+msgstr "Sijainti: "
+
+#: html.c:1112
+msgid "New Post..."
+msgstr "Uusi julkaisu..."
+
+#: html.c:1114
+msgid "What's on your mind?"
+msgstr "Mitä on mielessäsi?"
+
+#: html.c:1123
+msgid "Operations..."
+msgstr "Toiminnot..."
+
+#: html.c:1138 html.c:1713 html.c:3054 html.c:4371
+msgid "Follow"
+msgstr "Seuraa"
+
+#: html.c:1140
+msgid "(by URL or user@host)"
+msgstr "(osoite tai käyttäjä@palvelin)"
+
+#: html.c:1155 html.c:1689 html.c:4323
+msgid "Boost"
+msgstr "Tehosta"
+
+#: html.c:1157 html.c:1174
+msgid "(by URL)"
+msgstr "(osoite)"
+
+#: html.c:1172 html.c:1668 html.c:4314
+msgid "Like"
+msgstr "Tykkää"
+
+#: html.c:1277
+msgid "User Settings..."
+msgstr "Käyttäjäasetukset..."
+
+#: html.c:1286
+msgid "Display name:"
+msgstr "Näytetty nimi:"
+
+#: html.c:1292
+msgid "Your name"
+msgstr "Nimesi"
+
+#: html.c:1294
+msgid "Avatar: "
+msgstr "Avatar: "
+
+#: html.c:1302
+msgid "Delete current avatar"
+msgstr "Poista nykyinen avatar"
+
+#: html.c:1304
+msgid "Header image (banner): "
+msgstr "Otsikkokuva: "
+
+#: html.c:1312
+msgid "Delete current header image"
+msgstr "Poista nykyinen otsikkokuva"
+
+#: html.c:1314
+msgid "Bio:"
+msgstr "Kuvaus:"
+
+#: html.c:1320
+msgid "Write about yourself here..."
+msgstr "Kirjoita itsestäsi tähän..."
+
+#: html.c:1329
+msgid "Always show sensitive content"
+msgstr "Näytä arkaluontoinen sisältö aina"
+
+#: html.c:1331
+msgid "Email address for notifications:"
+msgstr "Sähköposti ilmoituksille:"
+
+#: html.c:1339
+msgid "Telegram notifications (bot key and chat id):"
+msgstr "Telegram-ilmoitukset (botin avain ja chat id):"
+
+#: html.c:1353
+msgid "ntfy notifications (ntfy server and token):"
+msgstr "nfty-ilmoitukset (ntfy-palvelin ja token):"
+
+#: html.c:1367
+msgid "Maximum days to keep posts (0: server settings):"
+msgstr "Säilytä julkaisut korkeintaan (päivää, 0: palvelimen asetukset)"
+
+#: html.c:1381
+msgid "Drop direct messages from people you don't follow"
+msgstr "Poista yksityisviestit ihmisiltä, joita et seuraa"
+
+#: html.c:1390
+msgid "This account is a bot"
+msgstr "Tämä tili on botti"
+
+#: html.c:1399
+msgid "Auto-boost all mentions to this account"
+msgstr "Tehosta tilin maininnat automaattisesti"
+
+#: html.c:1408
+msgid "This account is private (posts are not shown through the web)"
+msgstr "Tili on yksityinen (julkaisuja ei näytetä sivustolla)"
+
+#: html.c:1418
+msgid "Collapse top threads by default"
+msgstr "Avaa säikeet automaattisesti"
+
+#: html.c:1427
+msgid "Follow requests must be approved"
+msgstr "Vaadi hyväksyntä seurantapyynnöille"
+
+#: html.c:1436
+msgid "Publish follower and following metrics"
+msgstr "Julkaise seuraamistilastot"
+
+#: html.c:1438
+msgid "Current location:"
+msgstr "Nykyinen sijainti:"
+
+#: html.c:1452
+msgid "Profile metadata (key=value pairs in each line):"
+msgstr "Profiilin metadata (avain=arvo, riveittäin):"
+
+#: html.c:1463
+msgid "Web interface language:"
+msgstr "Käyttöliitymän kieli:"
+
+#: html.c:1468
+msgid "New password:"
+msgstr "Uusi salasana:"
+
+#: html.c:1475
+msgid "Repeat new password:"
+msgstr "Toista salasana:"
+
+#: html.c:1485
+msgid "Update user info"
+msgstr "Päivitä käyttäjätiedot"
+
+#: html.c:1496
+msgid "Followed hashtags..."
+msgstr "Seuratut aihetunnisteet..."
+
+#: html.c:1498 html.c:1530
+msgid "One hashtag per line"
+msgstr "Aihetunnisteet, riveittäin"
+
+#: html.c:1519 html.c:1551
+msgid "Update hashtags"
+msgstr "Päivitä aihetunnisteet"
+
+#: html.c:1668
+msgid "Say you like this post"
+msgstr "Tykkää tästä julkaisusta"
+
+#: html.c:1673 html.c:4332
+msgid "Unlike"
+msgstr "Poista tykkäys"
+
+#: html.c:1673
+msgid "Nah don't like it that much"
+msgstr "Ei ole omaan makuuni"
+
+#: html.c:1679 html.c:4464
+msgid "Unpin"
+msgstr "Poista kiinnitys"
+
+#: html.c:1679
+msgid "Unpin this post from your timeline"
+msgstr "Poista julkaisun kiinnitys aikajanalle"
+
+#: html.c:1682 html.c:4459
+msgid "Pin"
+msgstr "Kiinnitä"
+
+#: html.c:1682
+msgid "Pin this post to the top of your timeline"
+msgstr "Kiinnitä julkaisu aikajanasi alkuun"
+
+#: html.c:1689
+msgid "Announce this post to your followers"
+msgstr "Ilmoita julkaisusta seuraajillesi"
+
+#: html.c:1694 html.c:4340
+msgid "Unboost"
+msgstr "Poista tehostus"
+
+#: html.c:1694
+msgid "I regret I boosted this"
+msgstr "Kadun tehostaneeni tätä"
+
+#: html.c:1700 html.c:4474
+msgid "Unbookmark"
+msgstr "Poista kirjanmerkki"
+
+#: html.c:1700
+msgid "Delete this post from your bookmarks"
+msgstr "Poista julkaisu kirjanmerkeistäsi"
+
+#: html.c:1703 html.c:4469
+msgid "Bookmark"
+msgstr "Lisää kirjanmerkki"
+
+#: html.c:1703
+msgid "Add this post to your bookmarks"
+msgstr "Lisää julkaisu kirjanmerkkeihisi"
+
+#: html.c:1709 html.c:3040 html.c:3228 html.c:4384
+msgid "Unfollow"
+msgstr "Älä seuraa"
+
+#: html.c:1709 html.c:3041
+msgid "Stop following this user's activity"
+msgstr "Lakkaa seuraamasta käyttäjän toimintaa"
+
+#: html.c:1713 html.c:3055
+msgid "Start following this user's activity"
+msgstr "Seuraa käyttäjän toimintaa"
+
+#: html.c:1719 html.c:4414
+msgid "Unfollow Group"
+msgstr "Älä seuraa ryhmää"
+
+#: html.c:1720
+msgid "Stop following this group or channel"
+msgstr "Lopeta ryhnän tai kanavan seuraaminen"
+
+#: html.c:1724 html.c:4401
+msgid "Follow Group"
+msgstr "Seuraa ryhmää"
+
+#: html.c:1725
+msgid "Start following this group or channel"
+msgstr "Seuraa tätä ryhmää tai kanavaa"
+
+#: html.c:1730 html.c:3077 html.c:4348
+msgid "MUTE"
+msgstr "VAIMENNA"
+
+#: html.c:1731
+msgid "Block any activity from this user forever"
+msgstr "Estä kaikki toiminta tältä käyttäjältä"
+
+#: html.c:1736 html.c:3059 html.c:4431
+msgid "Delete"
+msgstr "Poista"
+
+#: html.c:1736
+msgid "Delete this post"
+msgstr "Poista julkaisu"
+
+#: html.c:1739 html.c:4356
+msgid "Hide"
+msgstr "Piilota"
+
+#: html.c:1739
+msgid "Hide this post and its children"
+msgstr "Piilota julkaisu ja vastaukset"
+
+#: html.c:1770
+msgid "Edit..."
+msgstr "Muokkaa..."
+
+#: html.c:1789
+msgid "Reply..."
+msgstr "Vastaa..."
+
+#: html.c:1840
+msgid "Truncated (too deep)"
+msgstr "Katkaistu (liian syvä)"
+
+#: html.c:1849
+msgid "follows you"
+msgstr "seuraa sinua"
+
+#: html.c:1912
+msgid "Pinned"
+msgstr "Kiinnitetty"
+
+#: html.c:1920
+msgid "Bookmarked"
+msgstr "Kirjanmerkitty"
+
+#: html.c:1928
+msgid "Poll"
+msgstr "Kysely"
+
+#: html.c:1935
+msgid "Voted"
+msgstr "Äänestetty"
+
+#: html.c:1944
+msgid "Event"
+msgstr "Tapahtuma"
+
+#: html.c:1976 html.c:2005
+msgid "boosted"
+msgstr "tehostettu"
+
+#: html.c:2021
+msgid "in reply to"
+msgstr "vastauksena"
+
+#: html.c:2072
+msgid " [SENSITIVE CONTENT]"
+msgstr " [ARKALUONTOISTA SISÄLTÖÄ]"
+
+#: html.c:2249
+msgid "Vote"
+msgstr "Äänestä"
+
+#: html.c:2259
+msgid "Closed"
+msgstr "Sulkeutunut"
+
+#: html.c:2284
+msgid "Closes in"
+msgstr "Sulkeutuu"
+
+#: html.c:2365
+msgid "Video"
+msgstr "Video"
+
+#: html.c:2380
+msgid "Audio"
+msgstr "Ääni"
+
+#: html.c:2402
+msgid "Attachment"
+msgstr "Liite"
+
+#: html.c:2416
+msgid "Alt..."
+msgstr "Kuvaus..."
+
+#: html.c:2429
+msgid "Source channel or community"
+msgstr "Lähdekanava tai -yhteisö"
+
+#: html.c:2523
+msgid "Time: "
+msgstr "Aika: "
+
+#: html.c:2598
+msgid "Older..."
+msgstr "Vanhemmat..."
+
+#: html.c:2661
+msgid "about this site"
+msgstr "tietoa sivustosta"
+
+#: html.c:2663
+msgid "powered by "
+msgstr "moottorina "
+
+#: html.c:2728
+msgid "Dismiss"
+msgstr "Kuittaa"
+
+#: html.c:2745
+#, c-format
+msgid "Timeline for list '%s'"
+msgstr "Listan ”%s” aikajana"
+
+#: html.c:2764 html.c:3805
+msgid "Pinned posts"
+msgstr "Kiinnitetyt julkaisut"
+
+#: html.c:2776 html.c:3820
+msgid "Bookmarked posts"
+msgstr "Kirjanmerkit"
+
+#: html.c:2788 html.c:3835
+msgid "Post drafts"
+msgstr "Vedokset"
+
+#: html.c:2847
+msgid "No more unseen posts"
+msgstr "Ei lukemattonia julkaisuja"
+
+#: html.c:2851 html.c:2951
+msgid "Back to top"
+msgstr "Takaisin"
+
+#: html.c:2904
+msgid "History"
+msgstr "Historia"
+
+#: html.c:2956 html.c:3376
+msgid "More..."
+msgstr "Enemmän..."
+
+#: html.c:3045 html.c:4367
+msgid "Unlimit"
+msgstr "Poista rajoitus"
+
+#: html.c:3046
+msgid "Allow announces (boosts) from this user"
+msgstr "Salli tehostukset käyttäjältä"
+
+#: html.c:3049 html.c:4363
+msgid "Limit"
+msgstr "Rajoita"
+
+#: html.c:3050
+msgid "Block announces (boosts) from this user"
+msgstr "Kiellö tehostukset käyttäjältä"
+
+#: html.c:3059
+msgid "Delete this user"
+msgstr "Poista käyttäjä"
+
+#: html.c:3064 html.c:4479
+msgid "Approve"
+msgstr "Hyväksy"
+
+#: html.c:3065
+msgid "Approve this follow request"
+msgstr "Hyväksy seurantapyyntö"
+
+#: html.c:3068 html.c:4503
+msgid "Discard"
+msgstr "Hylkää"
+
+#: html.c:3068
+msgid "Discard this follow request"
+msgstr "Hylkää seurantapyyntö"
+
+#: html.c:3073 html.c:4352
+msgid "Unmute"
+msgstr "Poista vaimennus"
+
+#: html.c:3074
+msgid "Stop blocking activities from this user"
+msgstr "Salli toiminta käyttäjältä"
+
+#: html.c:3078
+msgid "Block any activity from this user"
+msgstr "Estä kaikki toiminnat käyttäjältä"
+
+#: html.c:3086
+msgid "Direct Message..."
+msgstr "Yksityisviesti..."
+
+#: html.c:3121
+msgid "Pending follow confirmations"
+msgstr "Hyväksymistä odottavat seurantapyynnöt"
+
+#: html.c:3125
+msgid "People you follow"
+msgstr "Seuraamasi ihniset"
+
+#: html.c:3126
+msgid "People that follow you"
+msgstr "Sinua seuraavat"
+
+#: html.c:3165
+msgid "Clear all"
+msgstr "Tyhjennä"
+
+#: html.c:3222
+msgid "Mention"
+msgstr "Mainitse"
+
+#: html.c:3225
+msgid "Finished poll"
+msgstr "Päättynyt kysely"
+
+#: html.c:3240
+msgid "Follow Request"
+msgstr "Seurantapyyntö"
+
+#: html.c:3323
+msgid "Context"
+msgstr "Konteksti"
+
+#: html.c:3334
+msgid "New"
+msgstr "Uusi"
+
+#: html.c:3349
+msgid "Already seen"
+msgstr "Nähty"
+
+#: html.c:3364
+msgid "None"
+msgstr "Ei ilmoituksia"
+
+#: html.c:3630
+#, c-format
+msgid "Search results for account %s"
+msgstr "Hakutulokset tilille %s"
+
+#: html.c:3637
+#, c-format
+msgid "Account %s not found"
+msgstr "Tiliä %s ei löytynyt"
+
+#: html.c:3668
+#, c-format
+msgid "Search results for tag %s"
+msgstr "Hakutulokset aihetunnisteelle %s"
+
+#: html.c:3668
+#, c-format
+msgid "Nothing found for tag %s"
+msgstr "Aihetunnisteella %s ei löytynyt tuloksia"
+
+#: html.c:3684
+#, c-format
+msgid "Search results for '%s' (may be more)"
+msgstr "Tulokset haulle ”%s” (mahdollisesti enemmän tuloksia)"
+
+#: html.c:3687
+#, c-format
+msgid "Search results for '%s'"
+msgstr "Tulokset haulle ”%s”"
+
+#: html.c:3690
+#, c-format
+msgid "No more matches for '%s'"
+msgstr "Ei enempää tuloksia haulle ”%s”"
+
+#: html.c:3692
+#, c-format
+msgid "Nothing found for '%s'"
+msgstr "Haulla ”%s” ei löytynyt tuloksia"
+
+#: html.c:3790
+msgid "Showing instance timeline"
+msgstr "Palvelimen aikajana"
+
+#: html.c:3858
+#, c-format
+msgid "Showing timeline for list '%s'"
+msgstr "Listan ”%s” aikajana"
+
+#: httpd.c:250
+#, c-format
+msgid "Search results for tag #%s"
+msgstr "Hakutulokset aihetunnisteelle #%s"
+
+#: httpd.c:259
+msgid "Recent posts by users in this instance"
+msgstr "Viimeaikaisia julkaisuja tällä palvelimella"
+
+#: html.c:1528
+msgid "Blocked hashtags..."
+msgstr "Estetyt aihetunnisteet..."
