@@ -34,7 +34,7 @@ msgstr "Brouillon :"
 
 #: html.c:441
 msgid "Attachments..."
-msgstr "Attachements…"
+msgstr "Pièces jointes…"
 
 #: html.c:464
 msgid "File:"
@@ -78,7 +78,7 @@ msgstr "Se termine dans 1 jour"
 
 #: html.c:551
 msgid "Post"
-msgstr "Message"
+msgstr "Envoyer"
 
 #: html.c:648 html.c:655
 msgid "Site description"
@@ -295,7 +295,7 @@ msgstr "Mettre à jour les hashtags"
 
 #: html.c:1664
 msgid "Say you like this post"
-msgstr "Dire que vous aimer ce message"
+msgstr "Dire que vous aimez ce message"
 
 #: html.c:1669 html.c:4326
 msgid "Unlike"
@@ -307,11 +307,11 @@ msgstr "Nan, j'aime pas tant que ça"
 
 #: html.c:1675 html.c:4458
 msgid "Unpin"
-msgstr "Désépingler"
+msgstr "Dés-épingler"
 
 #: html.c:1675
 msgid "Unpin this post from your timeline"
-msgstr "Désépingler ce message de votre chronogramme"
+msgstr "Dés-épingler ce message de votre chronologie"
 
 #: html.c:1678 html.c:4453
 msgid "Pin"
@@ -690,4 +690,4 @@ msgstr "Messages récents des utilisateurs de cette instance"
 
 #: html.c:1524
 msgid "Blocked hashtags..."
-msgstr "Hashtags bloqué…"
+msgstr "Hashtags bloqués…"
