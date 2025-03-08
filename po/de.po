@@ -322,7 +322,7 @@ msgstr "Pinne diesen Beitrag an den Anfang deiner Timeline"
 
 #: html.c:1689
 msgid "Announce this post to your followers"
-msgstr "Kündigige diesen Beitrag Deinen Followern an"
+msgstr "Diesen Beitrag an deine Follower weiterschicken"
 
 #: html.c:1694 html.c:4340
 msgid "Unboost"
@@ -358,7 +358,7 @@ msgstr "Aktivitäten dieses Benutzers nicht mehr folgen"
 
 #: html.c:1713 html.c:3055
 msgid "Start following this user's activity"
-msgstr "Starte, den Aktivitäten dieses Benutzers zu folgen"
+msgstr "Folge den Aktivitäten dieses Benutzers"
 
 #: html.c:1719 html.c:4414
 msgid "Unfollow Group"
@@ -398,7 +398,7 @@ msgstr "Verstecken"
 
 #: html.c:1739
 msgid "Hide this post and its children"
-msgstr "Verstecke diesen Beitrag und seinen Kommentaren"
+msgstr "Verstecke diesen Beitrag und seine Kommentare"
 
 #: html.c:1770
 msgid "Edit..."
