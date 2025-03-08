@@ -416,7 +416,7 @@ xs_html *html_note(snac *user, const char *summary,
             xs_html_sctag("input",
                 xs_html_attr("type",     "url"),
                 xs_html_attr("name",     "in_reply_to"),
-                xs_html_attr("placeholder", "Optional URL to reply to")));
+                xs_html_attr("placeholder", L("Optional URL to reply to"))));
 
     xs_html_add(form,
         xs_html_tag("p", NULL),
@@ -523,7 +523,7 @@ xs_html *html_note(snac *user, const char *summary,
                         xs_html_attr("name",     "poll_options"),
                         xs_html_attr("rows",     "4"),
                         xs_html_attr("wrap",     "virtual"),
-                        xs_html_attr("placeholder", "Option 1...\nOption 2...\nOption 3...\n..."))),
+                        xs_html_attr("placeholder", L("Option 1...\nOption 2...\nOption 3...\n...")))),
                 xs_html_tag("select",
                     xs_html_attr("name",    "poll_multiple"),
                     xs_html_tag("option",
@@ -1342,13 +1342,13 @@ xs_html *html_top_controls(snac *user)
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "telegram_bot"),
                         xs_html_attr("value", telegram_bot),
-                        xs_html_attr("placeholder", "Bot API key")),
+                        xs_html_attr("placeholder", L("Bot API key"))),
                     xs_html_text(" "),
                     xs_html_sctag("input",
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "telegram_chat_id"),
                         xs_html_attr("value", telegram_chat_id),
-                        xs_html_attr("placeholder", "Chat id"))),
+                        xs_html_attr("placeholder", L("Chat id")))),
                 xs_html_tag("p",
                     xs_html_text(L("ntfy notifications (ntfy server and token):")),
                     xs_html_sctag("br", NULL),
@@ -1356,13 +1356,13 @@ xs_html *html_top_controls(snac *user)
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "ntfy_server"),
                         xs_html_attr("value", ntfy_server),
-                        xs_html_attr("placeholder", "ntfy server - full URL (example: https://ntfy.sh/YourTopic)")),
+                        xs_html_attr("placeholder", L("ntfy server - full URL (example: https://ntfy.sh/YourTopic)"))),
                     xs_html_text(" "),
                     xs_html_sctag("input",
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "ntfy_token"),
                         xs_html_attr("value", ntfy_token),
-                        xs_html_attr("placeholder", "ntfy token - if needed"))),
+                        xs_html_attr("placeholder", L("ntfy token - if needed")))),
                 xs_html_tag("p",
                     xs_html_text(L("Maximum days to keep posts (0: server settings):")),
                     xs_html_sctag("br", NULL),
@@ -2762,7 +2762,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_attr("href", url),
                         xs_html_attr("class", "snac-list-link"),
                         xs_html_attr("title", L("Pinned posts")),
-                        xs_html_text("pinned"))));
+                        xs_html_text(L("pinned")))));
         }
 
         {
@@ -2774,7 +2774,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_attr("href", url),
                         xs_html_attr("class", "snac-list-link"),
                         xs_html_attr("title", L("Bookmarked posts")),
-                        xs_html_text("bookmarks"))));
+                        xs_html_text(L("bookmarks")))));
         }
 
         {
@@ -2786,7 +2786,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_attr("href", url),
                         xs_html_attr("class", "snac-list-link"),
                         xs_html_attr("title", L("Post drafts")),
-                        xs_html_text("drafts"))));
+                        xs_html_text(L("drafts")))));
         }
 
         /* the list of followed hashtags */
