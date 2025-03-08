@@ -162,7 +162,7 @@ msgstr "(mit URL oder user@host)"
 
 #: html.c:1155 html.c:1689 html.c:4323
 msgid "Boost"
-msgstr "Boost"
+msgstr "Boosten"
 
 #: html.c:1157 html.c:1174
 msgid "(by URL)"
