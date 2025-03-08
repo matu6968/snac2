@@ -78,7 +78,7 @@ msgstr "Endet in 1 Tag"
 
 #: html.c:555
 msgid "Post"
-msgstr "Beitrag"
+msgstr "Beitrag senden"
 
 #: html.c:652 html.c:659
 msgid "Site description"
