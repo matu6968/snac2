@@ -14,6 +14,8 @@ Added French translation (contributed by Popolon).
 
 Added Russian translation (contributed by sn4il).
 
+Added Chinese translation (contributed by mistivia).
+
 ## 2.73
 
 Added support for customizing and translating the web UI language via simple `.po` files. For more information on how to install language files or create new ones, please see `snac(8)` (the administrator manual).
