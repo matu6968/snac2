@@ -83,16 +83,20 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                     const char *u = xs_dict_get(i, "url");
                     const char *mt = xs_dict_get(i, "mediaType");
 
-                    if (xs_is_string(u) && xs_is_string(mt) && strcmp(mt, "image/svg+xml")) {
-                        xs *url = make_url(u, proxy, 0);
+                    if (xs_is_string(u) && xs_is_string(mt)) {
+                        if (strcmp(mt, "image/svg+xml") == 0 && !xs_is_true(xs_dict_get(srv_config, "enable_svg")))
+                            s = xs_replace_i(s, n, "");
+                        else {
+                            xs *url = make_url(u, proxy, 0);
 
-                        xs_html *img = xs_html_sctag("img",
-                            xs_html_attr("loading", "lazy"),
-                            xs_html_attr("src", url),
-                            xs_html_attr("style", style));
+                            xs_html *img = xs_html_sctag("img",
+                                xs_html_attr("loading", "lazy"),
+                                xs_html_attr("src", url),
+                                xs_html_attr("style", style));
 
-                        xs *s1 = xs_html_render(img);
-                        s = xs_replace_i(s, n, s1);
+                            xs *s1 = xs_html_render(img);
+                            s = xs_replace_i(s, n, s1);
+                        }
                     }
                     else
                         s = xs_replace_i(s, n, "");
@@ -412,7 +416,7 @@ xs_html *html_note(snac *user, const char *summary,
             xs_html_sctag("input",
                 xs_html_attr("type",     "url"),
                 xs_html_attr("name",     "in_reply_to"),
-                xs_html_attr("placeholder", "Optional URL to reply to")));
+                xs_html_attr("placeholder", L("Optional URL to reply to"))));
 
     xs_html_add(form,
         xs_html_tag("p", NULL),
@@ -519,7 +523,7 @@ xs_html *html_note(snac *user, const char *summary,
                         xs_html_attr("name",     "poll_options"),
                         xs_html_attr("rows",     "4"),
                         xs_html_attr("wrap",     "virtual"),
-                        xs_html_attr("placeholder", "Option 1...\nOption 2...\nOption 3...\n..."))),
+                        xs_html_attr("placeholder", L("Option 1...\nOption 2...\nOption 3...\n...")))),
                 xs_html_tag("select",
                     xs_html_attr("name",    "poll_multiple"),
                     xs_html_tag("option",
@@ -1338,13 +1342,13 @@ xs_html *html_top_controls(snac *user)
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "telegram_bot"),
                         xs_html_attr("value", telegram_bot),
-                        xs_html_attr("placeholder", "Bot API key")),
+                        xs_html_attr("placeholder", L("Bot API key"))),
                     xs_html_text(" "),
                     xs_html_sctag("input",
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "telegram_chat_id"),
                         xs_html_attr("value", telegram_chat_id),
-                        xs_html_attr("placeholder", "Chat id"))),
+                        xs_html_attr("placeholder", L("Chat id")))),
                 xs_html_tag("p",
                     xs_html_text(L("ntfy notifications (ntfy server and token):")),
                     xs_html_sctag("br", NULL),
@@ -1352,13 +1356,13 @@ xs_html *html_top_controls(snac *user)
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "ntfy_server"),
                         xs_html_attr("value", ntfy_server),
-                        xs_html_attr("placeholder", "ntfy server - full URL (example: https://ntfy.sh/YourTopic)")),
+                        xs_html_attr("placeholder", L("ntfy server - full URL (example: https://ntfy.sh/YourTopic)"))),
                     xs_html_text(" "),
                     xs_html_sctag("input",
                         xs_html_attr("type", "text"),
                         xs_html_attr("name", "ntfy_token"),
                         xs_html_attr("value", ntfy_token),
-                        xs_html_attr("placeholder", "ntfy token - if needed"))),
+                        xs_html_attr("placeholder", L("ntfy token - if needed")))),
                 xs_html_tag("p",
                     xs_html_text(L("Maximum days to keep posts (0: server settings):")),
                     xs_html_sctag("br", NULL),
@@ -1506,6 +1510,38 @@ xs_html *html_top_controls(snac *user)
                     xs_html_attr("rows", "4"),
                     xs_html_attr("placeholder", "#cats\n#windowfriday\n#classicalmusic"),
                     xs_html_text(followed_hashtags)),
+
+                xs_html_tag("br", NULL),
+
+                xs_html_sctag("input",
+                    xs_html_attr("type", "submit"),
+                    xs_html_attr("class", "button"),
+                    xs_html_attr("value", L("Update hashtags")))))));
+
+    xs *blocked_hashtags_action = xs_fmt("%s/admin/blocked-hashtags", user->actor);
+    xs *blocked_hashtags = xs_join(xs_dict_get_def(user->config,
+                        "blocked_hashtags", xs_stock(XSTYPE_LIST)), "\n");
+
+    xs_html_add(top_controls,
+        xs_html_tag("details",
+        xs_html_tag("summary",
+            xs_html_text(L("Blocked hashtags..."))),
+        xs_html_tag("p",
+            xs_html_text(L("One hashtag per line"))),
+        xs_html_tag("div",
+            xs_html_attr("class", "snac-blocked-hashtags"),
+            xs_html_tag("form",
+                xs_html_attr("autocomplete", "off"),
+                xs_html_attr("method", "post"),
+                xs_html_attr("action", blocked_hashtags_action),
+                xs_html_attr("enctype", "multipart/form-data"),
+
+                xs_html_tag("textarea",
+                    xs_html_attr("name", "blocked_hashtags"),
+                    xs_html_attr("cols", "40"),
+                    xs_html_attr("rows", "4"),
+                    xs_html_attr("placeholder", "#cats\n#windowfriday\n#classicalmusic"),
+                    xs_html_text(blocked_hashtags)),
 
                 xs_html_tag("br", NULL),
 
@@ -2281,8 +2317,10 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 continue;
 
             /* drop silently any attachment that may include JavaScript */
-            if (strcmp(type, "image/svg+xml") == 0 ||
-                strcmp(type, "text/html") == 0)
+            if (strcmp(type, "text/html") == 0)
+                continue;
+
+            if (strcmp(type, "image/svg+xml") == 0 && !xs_is_true(xs_dict_get(srv_config, "enable_svg")))
                 continue;
 
             /* do this attachment include an icon? */
@@ -2724,7 +2762,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_attr("href", url),
                         xs_html_attr("class", "snac-list-link"),
                         xs_html_attr("title", L("Pinned posts")),
-                        xs_html_text("pinned"))));
+                        xs_html_text(L("pinned")))));
         }
 
         {
@@ -2736,7 +2774,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_attr("href", url),
                         xs_html_attr("class", "snac-list-link"),
                         xs_html_attr("title", L("Bookmarked posts")),
-                        xs_html_text("bookmarks"))));
+                        xs_html_text(L("bookmarks")))));
         }
 
         {
@@ -2748,7 +2786,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_attr("href", url),
                         xs_html_attr("class", "snac-list-link"),
                         xs_html_attr("title", L("Post drafts")),
-                        xs_html_text("drafts"))));
+                        xs_html_text(L("drafts")))));
         }
 
         /* the list of followed hashtags */
@@ -3982,7 +4020,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             const char *b64 = xs_dict_get(q_vars, "content");
             int sz;
             xs *content = xs_base64_dec(b64, &sz);
-            xs *msg = msg_note(&snac, content, NULL, NULL, NULL, 0, NULL);
+            xs *msg = msg_note(&snac, content, NULL, NULL, NULL, 0, NULL, NULL);
             xs *c_msg = msg_create(&snac, msg);
 
             timeline_add(&snac, xs_dict_get(msg, "id"), msg);
@@ -4182,7 +4220,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 enqueue_close_question(&snac, xs_dict_get(msg, "id"), end_secs);
             }
             else
-                msg = msg_note(&snac, content_2, to, in_reply_to, attach_list, priv, NULL);
+                msg = msg_note(&snac, content_2, to, in_reply_to, attach_list, priv, NULL, NULL);
 
             if (sensitive != NULL) {
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));
@@ -4621,7 +4659,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         int c = 0;
 
         while (xs_list_next(ls, &v, &c)) {
-            xs *msg = msg_note(&snac, "", actor, irt, NULL, 1, NULL);
+            xs *msg = msg_note(&snac, "", actor, irt, NULL, 1, NULL, NULL);
 
             /* set the option */
             msg = xs_dict_append(msg, "name", v);
@@ -4678,6 +4716,35 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             }
 
             snac.config = xs_dict_set(snac.config, "followed_hashtags", new_hashtags);
+            user_persist(&snac, 0);
+        }
+
+        status = HTTP_STATUS_SEE_OTHER;
+    }
+    else
+    if (p_path && strcmp(p_path, "admin/blocked-hashtags") == 0) { /** **/
+        const char *hashtags = xs_dict_get(p_vars, "blocked_hashtags");
+
+        if (xs_is_string(hashtags)) {
+            xs *new_hashtags = xs_list_new();
+            xs *l = xs_split(hashtags, "\n");
+            const char *v;
+
+            xs_list_foreach(l, v) {
+                xs *s1 = xs_strip_i(xs_dup(v));
+                s1 = xs_replace_i(s1, " ", "");
+
+                if (*s1 == '\0')
+                    continue;
+
+                xs *s2 = xs_utf8_to_lower(s1);
+                if (*s2 != '#')
+                    s2 = xs_str_prepend_i(s2, "#");
+
+                new_hashtags = xs_list_append(new_hashtags, s2);
+            }
+
+            snac.config = xs_dict_set(snac.config, "blocked_hashtags", new_hashtags);
             user_persist(&snac, 0);
         }
 

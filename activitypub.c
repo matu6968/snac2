@@ -329,6 +329,52 @@ xs_list *get_attachments(const xs_dict *msg)
 }
 
 
+int hashtag_in_msg(const xs_list *hashtags, const xs_dict *msg)
+/* returns 1 if the message contains any of the list of hashtags */
+{
+    if (xs_is_list(hashtags) && xs_is_dict(msg)) {
+        const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
+
+        if (xs_is_list(tags_in_msg)) {
+            const xs_dict *te;
+
+            /* iterate the tags in the message */
+            xs_list_foreach(tags_in_msg, te) {
+                if (xs_is_dict(te)) {
+                    const char *type = xs_dict_get(te, "type");
+                    const char *name = xs_dict_get(te, "name");
+
+                    if (xs_is_string(type) && xs_is_string(name)) {
+                        if (strcmp(type, "Hashtag") == 0) {
+                            xs *lc_name = xs_utf8_to_lower(name);
+
+                            if (xs_list_in(hashtags, lc_name) != -1)
+                                return 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+
+int followed_hashtag_check(snac *user, const xs_dict *msg)
+/* returns 1 if this message contains a hashtag followed by me */
+{
+    return hashtag_in_msg(xs_dict_get(user->config, "followed_hashtags"), msg);
+}
+
+
+int blocked_hashtag_check(snac *user, const xs_dict *msg)
+/* returns 1 if this message contains a hashtag blocked by me */
+{
+    return hashtag_in_msg(xs_dict_get(user->config, "blocked_hashtags"), msg);
+}
+
+
 int timeline_request(snac *snac, const char **id, xs_str **wrk, int level)
 /* ensures that an entry and its ancestors are in the timeline */
 {
@@ -344,68 +390,71 @@ int timeline_request(snac *snac, const char **id, xs_str **wrk, int level)
         }
 
         /* is the object already there? */
-        if (!valid_status(object_get(*id, &msg))) {
+        if (!valid_status((status = object_get(*id, &msg)))) {
             /* no; download it */
             status = activitypub_request(snac, *id, &msg);
+        }
 
-            if (valid_status(status)) {
-                const xs_dict *object = msg;
-                const char *type = xs_dict_get(object, "type");
+        if (valid_status(status)) {
+            const xs_dict *object = msg;
+            const char *type = xs_dict_get(object, "type");
 
-                /* get the id again from the object, as it may be different */
-                const char *nid = xs_dict_get(object, "id");
+            /* get the id again from the object, as it may be different */
+            const char *nid = xs_dict_get(object, "id");
 
-                if (xs_type(nid) != XSTYPE_STRING)
-                    return 0;
+            if (xs_type(nid) != XSTYPE_STRING)
+                return 0;
 
-                if (wrk && strcmp(nid, *id) != 0) {
-                    snac_debug(snac, 1,
-                        xs_fmt("timeline_request canonical id for %s is %s", *id, nid));
+            if (wrk && strcmp(nid, *id) != 0) {
+                snac_debug(snac, 1,
+                    xs_fmt("timeline_request canonical id for %s is %s", *id, nid));
 
-                    *wrk = xs_dup(nid);
-                    *id  = *wrk;
+                *wrk = xs_dup(nid);
+                *id  = *wrk;
+            }
+
+            if (xs_is_null(type))
+                type = "(null)";
+
+            srv_debug(2, xs_fmt("timeline_request type %s '%s'", nid, type));
+
+            if (strcmp(type, "Create") == 0) {
+                /* some software like lemmy nest Announce + Create + Note */
+                if (!xs_is_null(object = xs_dict_get(object, "object"))) {
+                    type = xs_dict_get(object, "type");
+                    nid  = xs_dict_get(object, "id");
                 }
-
-                if (xs_is_null(type))
+                else
                     type = "(null)";
+            }
 
-                srv_debug(2, xs_fmt("timeline_request type %s '%s'", nid, type));
+            if (xs_match(type, POSTLIKE_OBJECT_TYPE)) {
+                if (content_match("filter_reject.txt", object))
+                    snac_log(snac, xs_fmt("timeline_request rejected by content %s", nid));
+                else
+                if (blocked_hashtag_check(snac, object))
+                    snac_log(snac, xs_fmt("timeline_request rejected by hashtag %s", nid));
+                else {
+                    const char *actor = get_atto(object);
 
-                if (strcmp(type, "Create") == 0) {
-                    /* some software like lemmy nest Announce + Create + Note */
-                    if (!xs_is_null(object = xs_dict_get(object, "object"))) {
-                        type = xs_dict_get(object, "type");
-                        nid  = xs_dict_get(object, "id");
-                    }
-                    else
-                        type = "(null)";
-                }
-
-                if (xs_match(type, POSTLIKE_OBJECT_TYPE)) {
-                    if (content_match("filter_reject.txt", object))
-                        snac_log(snac, xs_fmt("timeline_request rejected by content %s", nid));
-                    else {
-                        const char *actor = get_atto(object);
-
-                        if (!xs_is_null(actor)) {
-                            /* request (and drop) the actor for this entry */
-                            if (!valid_status(actor_request(snac, actor, NULL))) {
-                                /* failed? retry later */
-                                enqueue_actor_refresh(snac, actor, 60);
-                            }
-
-                            /* does it have an ancestor? */
-                            const char *in_reply_to = get_in_reply_to(object);
-
-                            /* store */
-                            timeline_add(snac, nid, object);
-
-                            /* redistribute to lists for this user */
-                            list_distribute(snac, actor, object);
-
-                            /* recurse! */
-                            timeline_request(snac, &in_reply_to, NULL, level + 1);
+                    if (!xs_is_null(actor)) {
+                        /* request (and drop) the actor for this entry */
+                        if (!valid_status(actor_request(snac, actor, NULL))) {
+                            /* failed? retry later */
+                            enqueue_actor_refresh(snac, actor, 60);
                         }
+
+                        /* does it have an ancestor? */
+                        const char *in_reply_to = get_in_reply_to(object);
+
+                        /* store */
+                        timeline_add(snac, nid, object);
+
+                        /* redistribute to lists for this user */
+                        list_distribute(snac, actor, object);
+
+                        /* recurse! */
+                        timeline_request(snac, &in_reply_to, NULL, level + 1);
                     }
                 }
             }
@@ -587,40 +636,6 @@ int is_msg_from_private_user(const xs_dict *msg)
 }
 
 
-int followed_hashtag_check(snac *user, const xs_dict *msg)
-/* returns true if this message contains a hashtag followed by me */
-{
-    const xs_list *fw_tags = xs_dict_get(user->config, "followed_hashtags");
-
-    if (xs_is_list(fw_tags)) {
-        const xs_list *tags_in_msg = xs_dict_get(msg, "tag");
-
-        if (xs_is_list(tags_in_msg)) {
-            const xs_dict *te;
-
-            /* iterate the tags in the message */
-            xs_list_foreach(tags_in_msg, te) {
-                if (xs_is_dict(te)) {
-                    const char *type = xs_dict_get(te, "type");
-                    const char *name = xs_dict_get(te, "name");
-
-                    if (xs_is_string(type) && xs_is_string(name)) {
-                        if (strcmp(type, "Hashtag") == 0) {
-                            xs *lc_name = xs_utf8_to_lower(name);
-
-                            if (xs_list_in(fw_tags, lc_name) != -1)
-                                return 1;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return 0;
-}
-
-
 void followed_hashtag_distribute(const xs_dict *msg)
 /* distribute this post to all users following the included hashtags */
 {
@@ -665,31 +680,36 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 
     if (xs_match(type, "Like|Announce|EmojiReact")) {
         const char *object = xs_dict_get(c_msg, "object");
+        xs *obj = NULL;
 
-        if (xs_is_dict(object))
+        if (xs_is_dict(object)) {
+            obj = xs_dup(object);
             object = xs_dict_get(object, "id");
+        }
 
         /* bad object id? reject */
         if (!xs_is_string(object))
             return 0;
 
+        /* try to get the object */
+        if (!xs_is_dict(obj))
+            object_get(object, &obj);
+
         /* if it's about one of our posts, accept it */
         if (xs_startswith(object, snac->actor))
             return 2;
+
+        /* blocked by hashtag? */
+        if (blocked_hashtag_check(snac, obj))
+            return 0;
 
         /* if it's by someone we follow, accept it */
         if (following_check(snac, actor))
             return 1;
 
         /* do we follow any hashtag? */
-        if (xs_is_list(xs_dict_get(snac->config, "followed_hashtags"))) {
-            xs *obj = NULL;
-
-            /* if the admired object contains any followed hashtag, accept it */
-            if (valid_status(object_get(object, &obj)) &&
-                followed_hashtag_check(snac, obj))
-                return 7;
-        }
+        if (followed_hashtag_check(snac, obj))
+            return 7;
 
         return 0;
     }
@@ -721,13 +741,20 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
         return 1;
     }
 
+    const xs_dict *msg = xs_dict_get(c_msg, "object");
+
+    /* any blocked hashtag? reject */
+    if (blocked_hashtag_check(snac, msg)) {
+        snac_debug(snac, 1, xs_fmt("blocked by hashtag %s", xs_dict_get(msg, "id")));
+        return 0;
+    }
+
     int pub_msg = is_msg_public(c_msg);
 
     /* if this message is public and we follow the actor of this post, allow */
     if (pub_msg && following_check(snac, actor))
         return 1;
 
-    const xs_dict *msg = xs_dict_get(c_msg, "object");
     xs *rcpts = recipient_list(snac, msg, 0);
     xs_list *p = rcpts;
     const xs_str *v;
@@ -1531,7 +1558,7 @@ xs_dict *msg_follow(snac *snac, const char *q)
 
 xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
                   const xs_str *in_reply_to, const xs_list *attach,
-                  int scope, const char *lang_str)
+                  int scope, const char *lang_str, const char *msg_date)
 /* creates a 'Note' message */
 /* scope: 0, public; 1, private (mentioned only); 2, "quiet public"; 3, followers only */
 {
@@ -1545,7 +1572,12 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     xs *irt  = NULL;
     xs *tag  = xs_list_new();
     xs *atls = xs_list_new();
-    xs_dict *msg = msg_base(snac, "Note", id, NULL, "@now", NULL);
+
+    /* discard non-parseable dates */
+    if (!xs_is_string(msg_date) || xs_parse_iso_date(msg_date, 0) == 0)
+        msg_date = NULL;
+
+    xs_dict *msg = msg_base(snac, "Note", id, NULL, xs_or(msg_date, "@now"), NULL);
     xs_list *p;
     const xs_val *v;
 
@@ -1758,7 +1790,7 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
                       const xs_list *opts, int multiple, int end_secs)
 /* creates a Question message */
 {
-    xs_dict *msg = msg_note(user, content, NULL, NULL, attach, 0, NULL);
+    xs_dict *msg = msg_note(user, content, NULL, NULL, attach, 0, NULL, NULL);
     int max      = 8;
     xs_set seen;
 
@@ -2336,7 +2368,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                         xs *this_relay = xs_fmt("%s/relay", srv_baseurl);
 
                         if (strcmp(actor, this_relay) != 0) {
-                            if (timeline_admire(snac, object, actor, 0) == HTTP_STATUS_CREATED)
+                            if (valid_status(timeline_admire(snac, object, actor, 0)))
                                 snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
                             else
                                 snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",

@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
-#define VERSION "2.73-dev"
+#define VERSION "2.73"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -329,7 +329,7 @@ xs_dict *msg_follow(snac *snac, const char *actor);
 
 xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
                   const xs_str *in_reply_to, const xs_list *attach,
-                  int scope, const char *lang);
+                  int scope, const char *lang_str, const char *msg_date);
 
 xs_dict *msg_undo(snac *snac, const xs_val *object);
 xs_dict *msg_delete(snac *snac, const char *id);

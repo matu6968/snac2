@@ -1,5 +1,35 @@
 # Release Notes
 
+## UNRELEASED
+
+Added Spanish (default, Argentina and Uruguay) translation (contributed by gnemmi).
+
+Added Czech translation (contributed by pmjv).
+
+Added Brazilian Portuguese translation (contributed by daltux).
+
+Added Finnish translation (contributed by inz).
+
+Added French translation (contributed by Popolon).
+
+Added Russian translation (contributed by sn4il).
+
+Added Chinese translation (contributed by mistivia).
+
+Added German translation (contributed by zen).
+
+## 2.73
+
+Added support for customizing and translating the web UI language via simple `.po` files. For more information on how to install language files or create new ones, please see `snac(8)` (the administrator manual).
+
+New user support for blocking hashtags from the web UI.
+
+The `Content-Security-Policy` HTTP header is now always sent to disable any JavaScript, instead of just being suggested in the documentation.
+
+Image attachments in SVG format are now disabled by default; you can enable them back by setting the `enable_svg` value to `true` in `server.json`.
+
+Several fixes (contributed by inz).
+
 ## 2.72
 
 Each post can have more than one attachment from the web UI. The maximum number can be configured in `server.json` via the `max_attachments` value (default: 4).
