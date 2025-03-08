@@ -34,11 +34,11 @@ msgstr "Entwurf"
 
 #: html.c:445
 msgid "Attachments..."
-msgstr "Anhang"
+msgstr "Anhänge..."
 
 #: html.c:468
 msgid "File:"
-msgstr "Datei"
+msgstr "Datei:"
 
 #: html.c:472
 msgid "Clear this field to delete the attachment"
@@ -50,7 +50,7 @@ msgstr "Beschreibung des Anhangs"
 
 #: html.c:517
 msgid "Poll..."
-msgstr "Umfrage"
+msgstr "Umfrage..."
 
 #: html.c:519
 msgid "Poll options (one per line, up to 8):"
@@ -103,11 +103,11 @@ msgstr "RSS"
 
 #: html.c:846 html.c:874
 msgid "private"
-msgstr "privat"
+msgstr "Privat"
 
 #: html.c:870
 msgid "public"
-msgstr "öffentlich"
+msgstr "Öffentlich"
 
 #: html.c:878
 msgid "notifications"
@@ -119,7 +119,7 @@ msgstr "Personen"
 
 #: html.c:887
 msgid "instance"
-msgstr Instanz""
+msgstr "Instanz"
 
 #: html.c:896
 msgid ""
@@ -138,11 +138,11 @@ msgstr "verifizierter Link"
 
 #: html.c:1076 html.c:2458 html.c:2471 html.c:2480
 msgid "Location: "
-msgstr "Ort"
+msgstr "Ort: "
 
 #: html.c:1112
 msgid "New Post..."
-msgstr "Neuer Beitrag"
+msgstr "Neuer Beitrag..."
 
 #: html.c:1114
 msgid "What's on your mind?"
@@ -150,7 +150,7 @@ msgstr "Was beschäftigt dich?"
 
 #: html.c:1123
 msgid "Operations..."
-msgstr "Funktionen"
+msgstr "Funktionen..."
 
 #: html.c:1138 html.c:1713 html.c:3054 html.c:4371
 msgid "Follow"
@@ -162,7 +162,7 @@ msgstr "(über URL oder user@host)"
 
 #: html.c:1155 html.c:1689 html.c:4323
 msgid "Boost"
-msgstr "Erwähnung"
+msgstr "Weiterschicken"
 
 #: html.c:1157 html.c:1174
 msgid "(by URL)"
@@ -174,11 +174,11 @@ msgstr "Gefällt mir"
 
 #: html.c:1277
 msgid "User Settings..."
-msgstr "Benutzer Einstellungen"
+msgstr "Benutzer Einstellungen..."
 
 #: html.c:1286
 msgid "Display name:"
-msgstr "Name anzeigen"
+msgstr "Name anzeigen:"
 
 #: html.c:1292
 msgid "Your name"
@@ -194,7 +194,7 @@ msgstr "Den aktuellen Avatar löschen"
 
 #: html.c:1304
 msgid "Header image (banner): "
-msgstr "Banner"
+msgstr "Banner: "
 
 #: html.c:1312
 msgid "Delete current header image"
@@ -202,7 +202,7 @@ msgstr "Das aktuelle Banner löschen"
 
 #: html.c:1314
 msgid "Bio:"
-msgstr "Bio"
+msgstr "Bio:"
 
 #: html.c:1320
 msgid "Write about yourself here..."
@@ -218,19 +218,19 @@ msgstr "Email Adresse für Benachrichtigungen"
 
 #: html.c:1339
 msgid "Telegram notifications (bot key and chat id):"
-msgstr "Telegram Benachrichtigungen (Bot Schlüssel und Chat ID)"
+msgstr "Telegram Benachrichtigungen (Bot Schlüssel und Chat ID):"
 
 #: html.c:1353
 msgid "ntfy notifications (ntfy server and token):"
-msgstr "ntfy Benachrichtigungen (ntfy Server und Token)"
+msgstr "ntfy Benachrichtigungen (ntfy Server und Token):"
 
 #: html.c:1367
 msgid "Maximum days to keep posts (0: server settings):"
-msgstr "Maximale Tage, um Beiträge aufzubewahren (0: Servereinstellung)"
+msgstr "Maximale Tage, um Beiträge aufzubewahren (0: Servereinstellung):"
 
 #: html.c:1381
 msgid "Drop direct messages from people you don't follow"
-msgstr "Direktnachrichten von Personen, denen du nicht folgst, löschen"
+msgstr "Lösche Direktnachrichten von Personen, denen du nicht folgst"
 
 #: html.c:1390
 msgid "This account is a bot"
@@ -238,7 +238,7 @@ msgstr "Dieses Konto ist ein Bot"
 
 #: html.c:1399
 msgid "Auto-boost all mentions to this account"
-msgstr "Alle Erwähnungen automatisch zu diesem Konto hinzufügen"
+msgstr "Alle Ankündigungen automatisch zu diesem Konto hinzufügen"
 
 #: html.c:1408
 msgid "This account is private (posts are not shown through the web)"
@@ -258,23 +258,23 @@ msgstr "Gefolgte- und Folgende-Metriken veröffentlichen"
 
 #: html.c:1438
 msgid "Current location:"
-msgstr "Aktueller Ort"
+msgstr "Aktueller Ort:"
 
 #: html.c:1452
 msgid "Profile metadata (key=value pairs in each line):"
-msgstr "Profil-Metadaten (Begriff=Wert einer pro Zeile)"
+msgstr "Profil-Metadaten (Begriff=Wert einer pro Zeile):"
 
 #: html.c:1463
 msgid "Web interface language:"
-msgstr "Sprache der Weboberfläche"
+msgstr "Sprache der Weboberfläche:"
 
 #: html.c:1468
 msgid "New password:"
-msgstr "Neues Passwort"
+msgstr "Neues Passwort:"
 
 #: html.c:1475
 msgid "Repeat new password:"
-msgstr "Neues Passwort wiederholen"
+msgstr "Neues Passwort wiederholen:"
 
 #: html.c:1485
 msgid "Update user info"
@@ -282,7 +282,7 @@ msgstr "Benutzer Info aktualisieren"
 
 #: html.c:1496
 msgid "Followed hashtags..."
-msgstr "Gefolgte Hashtags"
+msgstr "Gefolgte Hashtags..."
 
 #: html.c:1498 html.c:1530
 msgid "One hashtag per line"
@@ -326,7 +326,7 @@ msgstr "Diesen Beitrag an deine Follower weiterschicken"
 
 #: html.c:1694 html.c:4340
 msgid "Unboost"
-msgstr "Erwähnung zurücknehmen"
+msgstr "Boost zurücknehmen"
 
 #: html.c:1694
 msgid "I regret I boosted this"
@@ -402,11 +402,11 @@ msgstr "Verstecke diesen Beitrag und seine Kommentare"
 
 #: html.c:1770
 msgid "Edit..."
-msgstr "Bearbeiten"
+msgstr "Bearbeiten..."
 
 #: html.c:1789
 msgid "Reply..."
-msgstr "Antworten"
+msgstr "Antworten..."
 
 #: html.c:1840
 msgid "Truncated (too deep)"
@@ -482,7 +482,7 @@ msgstr "Kanalquelle oder -gemeinschaft"
 
 #: html.c:2523
 msgid "Time: "
-msgstr "Zeit"
+msgstr "Zeit: "
 
 #: html.c:2598
 msgid "Older..."
@@ -547,7 +547,7 @@ msgstr "Limit"
 
 #: html.c:3050
 msgid "Block announces (boosts) from this user"
-msgstr "Ankündigungen (Boosts) dieses Benutzers zulassen"
+msgstr "Blocke Ankündigungen (Boosts) dieses Benutzers"
 
 #: html.c:3059
 msgid "Delete this user"
@@ -594,8 +594,8 @@ msgid "People you follow"
 msgstr "Personen, denen du folgst"
 
 #: html.c:3126
-msgid "Personen, die dir folgen"
-msgstr ""
+msgid "People that follow you"
+msgstr "Personen, die dir folgen"
 
 #: html.c:3165
 msgid "Clear all"
@@ -652,7 +652,7 @@ msgstr "Nicht gefunden zu Hashtag %s"
 #: html.c:3684
 #, c-format
 msgid "Search results for '%s' (may be more)"
-msgstr "Suchergebnisse für '%s'"
+msgstr "Suchergebnisse für '%s' (können noch mehr sein)"
 
 #: html.c:3687
 #, c-format
@@ -689,7 +689,7 @@ msgstr "Letzte Beiträge von Benutzern dieser Instanz"
 
 #: html.c:1528
 msgid "Blocked hashtags..."
-msgstr "Geblockte Hashtags"
+msgstr "Geblockte Hashtags..."
 
 #: html.c:419
 msgid "Optional URL to reply to"
