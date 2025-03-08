@@ -78,7 +78,7 @@ msgstr "Endet in 1 Tag"
 
 #: html.c:555
 msgid "Post"
-msgstr "Beitrag"
+msgstr ""
 
 #: html.c:652 html.c:659
 msgid "Site description"
@@ -154,19 +154,19 @@ msgstr "Funktionen..."
 
 #: html.c:1138 html.c:1713 html.c:3054 html.c:4371
 msgid "Follow"
-msgstr "Folgen"
+msgstr ""
 
 #: html.c:1140
 msgid "(by URL or user@host)"
-msgstr "(über URL oder user@host)"
+msgstr "(mit URL oder user@host)"
 
 #: html.c:1155 html.c:1689 html.c:4323
 msgid "Boost"
-msgstr "Weiterschicken"
+msgstr ""
 
 #: html.c:1157 html.c:1174
 msgid "(by URL)"
-msgstr "(über URL)"
+msgstr "(mit URL)"
 
 #: html.c:1172 html.c:1668 html.c:4314
 msgid "Like"
@@ -278,7 +278,7 @@ msgstr "Neues Passwort wiederholen:"
 
 #: html.c:1485
 msgid "Update user info"
-msgstr "Benutzer Info aktualisieren"
+msgstr ""
 
 #: html.c:1496
 msgid "Followed hashtags..."
@@ -290,7 +290,7 @@ msgstr "Ein Hashtag pro Zeile"
 
 #: html.c:1519 html.c:1551
 msgid "Update hashtags"
-msgstr "Hashtags aktualisieren"
+msgstr ""
 
 #: html.c:1668
 msgid "Say you like this post"
