@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: snac\n"
-"Last-Translator: oliver hartmann\n"
+"Last-Translator: oliver zen hartmann\n"
 "Language: de\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
