@@ -330,7 +330,7 @@ msgstr "Erwähnung zurücknehmen"
 
 #: html.c:1694
 msgid "I regret I boosted this"
-msgstr "Ich bedauere dass ich das erwähnt habe"
+msgstr "Ich bedauere dass ich das weiterverschickt habe"
 
 #: html.c:1700 html.c:4474
 msgid "Unbookmark"
@@ -474,7 +474,7 @@ msgstr "Anhang"
 
 #: html.c:2416
 msgid "Alt..."
-msgstr "Alt..."
+msgstr "Alt.-Text..."
 
 #: html.c:2429
 msgid "Source channel or community"
@@ -539,11 +539,11 @@ msgstr "Unbegrenzt"
 
 #: html.c:3046
 msgid "Allow announces (boosts) from this user"
-msgstr ""
+msgstr "Erlaube Boosts von diesem Benutzer"
 
 #: html.c:3049 html.c:4363
 msgid "Limit"
-msgstr ""
+msgstr "Limit"
 
 #: html.c:3050
 msgid "Block announces (boosts) from this user"
