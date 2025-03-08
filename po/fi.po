@@ -126,8 +126,8 @@ msgid ""
 "Search posts by URL or content (regular expression), @user@host accounts, or "
 "#tag"
 msgstr ""
-"Etsi julkaisuja osoitteella tai sisällön perusteella, @käyttäjä@palvelin "
-" tai #tagi"
+"Etsi julkaisuja osoitteella tai sisällön perusteella, @käyttäjä@palvelin  "
+"tai #tagi"
 
 #: html.c:897
 msgid "Content search"
@@ -691,3 +691,43 @@ msgstr "Viimeaikaisia julkaisuja tällä palvelimella"
 #: html.c:1528
 msgid "Blocked hashtags..."
 msgstr "Estetyt aihetunnisteet..."
+
+#: html.c:419
+msgid "Optional URL to reply to"
+msgstr ""
+
+#: html.c:526
+msgid ""
+"Option 1...\n"
+"Option 2...\n"
+"Option 3...\n"
+"..."
+msgstr ""
+
+#: html.c:1345
+msgid "Bot API key"
+msgstr ""
+
+#: html.c:1351
+msgid "Chat id"
+msgstr ""
+
+#: html.c:1359
+msgid "ntfy server - full URL (example: https://ntfy.sh/YourTopic)"
+msgstr ""
+
+#: html.c:1365
+msgid "ntfy token - if needed"
+msgstr ""
+
+#: html.c:2765
+msgid "pinned"
+msgstr ""
+
+#: html.c:2777
+msgid "bookmarks"
+msgstr ""
+
+#: html.c:2789
+msgid "drafts"
+msgstr ""
