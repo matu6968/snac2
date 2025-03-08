@@ -150,7 +150,7 @@ msgstr "Was beschäftigt dich?"
 
 #: html.c:1123
 msgid "Operations..."
-msgstr "Funktionen..."
+msgstr "Aktionen..."
 
 #: html.c:1138 html.c:1713 html.c:3054 html.c:4371
 msgid "Follow"
@@ -174,7 +174,7 @@ msgstr "Gefällt mir"
 
 #: html.c:1277
 msgid "User Settings..."
-msgstr "Benutzer Einstellungen..."
+msgstr "Einstellungen..."
 
 #: html.c:1286
 msgid "Display name:"
