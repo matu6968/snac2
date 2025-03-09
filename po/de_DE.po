@@ -58,11 +58,11 @@ msgstr "Umfrageoptionen (eine pro Zeile, bis zu 8):"
 
 #: html.c:531
 msgid "One choice"
-msgstr "Eine Möglichkeit"
+msgstr "Einfachauswahl"
 
 #: html.c:534
 msgid "Multiple choices"
-msgstr "Mehrere Möglichkeiten"
+msgstr "Mehrfachauswahl"
 
 #: html.c:540
 msgid "End in 5 minutes"
@@ -78,7 +78,7 @@ msgstr "Endet in 1 Tag"
 
 #: html.c:555
 msgid "Post"
-msgstr "Beitrag senden"
+msgstr "Beitrag veröffentlichen"
 
 #: html.c:652 html.c:659
 msgid "Site description"
@@ -213,7 +213,7 @@ msgid "Always show sensitive content"
 msgstr "Sensiblen Inhalt immer anzeigen"
 
 #: html.c:1331
-msgid "email address for notifications:"
+msgid "Email address for notifications:"
 msgstr "E-Mail Adresse für Benachrichtigungen:"
 
 #: html.c:1339
@@ -226,7 +226,7 @@ msgstr "ntfy Benachrichtigungen (ntfy Server und Token):"
 
 #: html.c:1367
 msgid "Maximum days to keep posts (0: server settings):"
-msgstr "Maximale Tage, um Beiträge aufzubewahren (0: Servereinstellung):"
+msgstr "Maximale Aubewahrungsfrist der Beiträge in Tagen (0: Servereinstellung):"
 
 #: html.c:1381
 msgid "Drop direct messages from people you don't follow"
@@ -242,7 +242,7 @@ msgstr "Automatisches Boosten bei Erwähnungen dieses Kontos"
 
 #: html.c:1408
 msgid "This account is private (posts are not shown through the web)"
-msgstr "Dieses Konto ist privat (Beiträge werden nicht im Internet angezeigt)"
+msgstr "Dieses Konto ist privat (Beiträge werden nicht in der Weboberfläche angezeigt)"
 
 #: html.c:1418
 msgid "Collapse top threads by default"
@@ -310,7 +310,7 @@ msgstr "Pin entfernen"
 
 #: html.c:1679
 msgid "Unpin this post from your timeline"
-msgstr "Entpinne diesen Beitrag aus deiner Chronik"
+msgstr "Entpinne diesen Beitrag aus deiner Zeitleiste"
 
 #: html.c:1682 html.c:4459
 msgid "Pin"
@@ -318,7 +318,7 @@ msgstr "Anpinnen"
 
 #: html.c:1682
 msgid "Pin this post to the top of your timeline"
-msgstr "Pinne diesen Beitrag an den Anfang deiner Chronik"
+msgstr "Pinne diesen Beitrag an den Anfang deiner Zeitleiste"
 
 #: html.c:1689
 msgid "Announce this post to your followers"
@@ -490,11 +490,11 @@ msgstr "Älter..."
 
 #: html.c:2661
 msgid "about this site"
-msgstr "über diese Seite"
+msgstr "Über diese Seite"
 
 #: html.c:2663
 msgid "powered by "
-msgstr "betrieben mit "
+msgstr "powered by "
 
 #: html.c:2728
 msgid "Dismiss"
@@ -503,7 +503,7 @@ msgstr "Ablehnen"
 #: html.c:2745
 #, c-format
 msgid "Timeline for list '%s'"
-msgstr "Chronik für Liste '%s'"
+msgstr "Zeitleiste für Liste '%s'"
 
 #: html.c:2764 html.c:3805
 msgid "Pinned posts"
@@ -519,7 +519,7 @@ msgstr "Entwurf veröffentlichen"
 
 #: html.c:2847
 msgid "No more unseen posts"
-msgstr "Keine weiteren ungesehenen Beträge"
+msgstr "Keine weiteren ungesehenen Beiträge"
 
 #: html.c:2851 html.c:2951
 msgid "Back to top"
@@ -539,7 +539,7 @@ msgstr "Unbegrenzt"
 
 #: html.c:3046
 msgid "Allow announces (boosts) from this user"
-msgstr "Erlaube Ankündigungen (Boosts) von diesem Benutzer"
+msgstr "Erlaube Ankündigungen (Boosts) dieses Benutzers"
 
 #: html.c:3049 html.c:4363
 msgid "Limit"
@@ -615,7 +615,7 @@ msgstr "Folge-Anfrage"
 
 #: html.c:3323
 msgid "Context"
-msgstr "Zusammenhang"
+msgstr "Zusammenhang anzeigen"
 
 #: html.c:3334
 msgid "New"
@@ -671,12 +671,12 @@ msgstr "Nichts gefunden für '%s'"
 
 #: html.c:3790
 msgid "Showing instance timeline"
-msgstr "Instanz-Chronik anzeigen"
+msgstr "Instanz-Zeitleiste anzeigen"
 
 #: html.c:3858
 #, c-format
 msgid "Showing timeline for list '%s'"
-msgstr "Chronik anzeigen für Liste '%s'"
+msgstr "Zeitleiste anzeigen für Liste '%s'"
 
 #: httpd.c:250
 #, c-format
