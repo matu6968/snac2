@@ -10,7 +10,7 @@ msgstr ""
 
 #: html.c:371
 msgid "Sensitive content: "
-msgstr "Sensibler Inhalt"
+msgstr "Sensibler Inhalt: "
 
 #: html.c:379
 msgid "Sensitive content description"
@@ -18,11 +18,11 @@ msgstr "Beschreibung des sensiblen Inhalts"
 
 #: html.c:392
 msgid "Only for mentioned people: "
-msgstr "Nur für erwähnte Personen"
+msgstr "Nur für erwähnte Personen: "
 
 #: html.c:415
 msgid "Reply to (URL): "
-msgstr "Antwort an (URL)"
+msgstr "Antwort an (URL): "
 
 #: html.c:424
 msgid "Don't send, but store as a draft"
@@ -30,7 +30,7 @@ msgstr "Nicht senden, aber als Entwurf speichern"
 
 #: html.c:425
 msgid "Draft:"
-msgstr "Entwurf"
+msgstr "Entwurf:"
 
 #: html.c:445
 msgid "Attachments..."
@@ -54,7 +54,7 @@ msgstr "Umfrage..."
 
 #: html.c:519
 msgid "Poll options (one per line, up to 8):"
-msgstr "Umfrageoptionen (eine pro Zeile, bis zu 8)"
+msgstr "Umfrageoptionen (eine pro Zeile, bis zu 8):"
 
 #: html.c:531
 msgid "One choice"
@@ -78,7 +78,7 @@ msgstr "Endet in 1 Tag"
 
 #: html.c:555
 msgid "Post"
-msgstr "Beitrag"
+msgstr "Beitrag senden"
 
 #: html.c:652 html.c:659
 msgid "Site description"
@@ -150,7 +150,7 @@ msgstr "Was beschäftigt dich?"
 
 #: html.c:1123
 msgid "Operations..."
-msgstr "Funktionen..."
+msgstr "Aktionen..."
 
 #: html.c:1138 html.c:1713 html.c:3054 html.c:4371
 msgid "Follow"
@@ -158,15 +158,15 @@ msgstr "Folgen"
 
 #: html.c:1140
 msgid "(by URL or user@host)"
-msgstr "(über URL oder user@host)"
+msgstr "(mit URL oder user@host)"
 
 #: html.c:1155 html.c:1689 html.c:4323
 msgid "Boost"
-msgstr "Weiterschicken"
+msgstr "Boosten"
 
 #: html.c:1157 html.c:1174
 msgid "(by URL)"
-msgstr "(über URL)"
+msgstr "(mit URL)"
 
 #: html.c:1172 html.c:1668 html.c:4314
 msgid "Like"
@@ -174,7 +174,7 @@ msgstr "Gefällt mir"
 
 #: html.c:1277
 msgid "User Settings..."
-msgstr "Benutzer Einstellungen..."
+msgstr "Einstellungen..."
 
 #: html.c:1286
 msgid "Display name:"
@@ -198,7 +198,7 @@ msgstr "Banner: "
 
 #: html.c:1312
 msgid "Delete current header image"
-msgstr "Das aktuelle Banner löschen"
+msgstr "Aktuelles Banner löschen"
 
 #: html.c:1314
 msgid "Bio:"
@@ -214,7 +214,7 @@ msgstr "Sensiblen Inhalt immer anzeigen"
 
 #: html.c:1331
 msgid "Email address for notifications:"
-msgstr "Email Adresse für Benachrichtigungen"
+msgstr "Email Adresse für Benachrichtigungen:"
 
 #: html.c:1339
 msgid "Telegram notifications (bot key and chat id):"
@@ -238,7 +238,7 @@ msgstr "Dieses Konto ist ein Bot"
 
 #: html.c:1399
 msgid "Auto-boost all mentions to this account"
-msgstr "Alle Ankündigungen automatisch zu diesem Konto hinzufügen"
+msgstr "Alle Boosts automatisch zu diesem Konto hinzufügen"
 
 #: html.c:1408
 msgid "This account is private (posts are not shown through the web)"
@@ -278,7 +278,7 @@ msgstr "Neues Passwort wiederholen:"
 
 #: html.c:1485
 msgid "Update user info"
-msgstr "Benutzer Info aktualisieren"
+msgstr "Benutzerinformationen aktualisieren"
 
 #: html.c:1496
 msgid "Followed hashtags..."
@@ -310,7 +310,7 @@ msgstr "Pin entfernen"
 
 #: html.c:1679
 msgid "Unpin this post from your timeline"
-msgstr "Entpinne diesen Beitrag aus deiner Zeitleiste"
+msgstr "Entpinne diesen Beitrag aus deiner Chronik"
 
 #: html.c:1682 html.c:4459
 msgid "Pin"
@@ -503,7 +503,7 @@ msgstr "Ablehnen"
 #: html.c:2745
 #, c-format
 msgid "Timeline for list '%s'"
-msgstr "Zeitleiste für Liste '%s'"
+msgstr "Chronik für Liste '%s'"
 
 #: html.c:2764 html.c:3805
 msgid "Pinned posts"
@@ -539,7 +539,7 @@ msgstr "Unbegrenzt"
 
 #: html.c:3046
 msgid "Allow announces (boosts) from this user"
-msgstr "Erlaube Boosts von diesem Benutzer"
+msgstr "Erlaube Ankündigungen (Boosts) von diesem Benutzer"
 
 #: html.c:3049 html.c:4363
 msgid "Limit"
@@ -571,7 +571,7 @@ msgstr "Diese Folgeanfrage verwerfen"
 
 #: html.c:3073 html.c:4352
 msgid "Unmute"
-msgstr "Aufheben der Stummschaltung"
+msgstr "Stummschaltung aufheben"
 
 #: html.c:3074
 msgid "Stop blocking activities from this user"
@@ -671,12 +671,12 @@ msgstr "Nichts gefunden für '%s'"
 
 #: html.c:3790
 msgid "Showing instance timeline"
-msgstr "Zeitleiste der Instanz anzeigen"
+msgstr "Instanz-Chronik anzeigen"
 
 #: html.c:3858
 #, c-format
 msgid "Showing timeline for list '%s'"
-msgstr "Zeitleiste anzeigen für Liste '%s'"
+msgstr "Chronik anzeigen für Liste '%s'"
 
 #: httpd.c:250
 #, c-format
