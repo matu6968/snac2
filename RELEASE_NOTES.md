@@ -16,7 +16,7 @@ Added Russian translation (contributed by sn4il).
 
 Added Chinese translation (contributed by mistivia).
 
-Added German translation (contributed by zen).
+Added German translation (contributed by zen and Menel).
 
 ## 2.73
 
