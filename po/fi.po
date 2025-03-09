@@ -694,7 +694,7 @@ msgstr "Estetyt aihetunnisteet..."
 
 #: html.c:419
 msgid "Optional URL to reply to"
-msgstr ""
+msgstr "Vastaus julkaisuun (osoite, valinnainen)"
 
 #: html.c:526
 msgid ""
@@ -703,31 +703,35 @@ msgid ""
 "Option 3...\n"
 "..."
 msgstr ""
+"Vaihtoehto 1...\n"
+"Vaihtoehto 2...\n"
+"Vaihtoehto 3...\n"
+"..."
 
 #: html.c:1345
 msgid "Bot API key"
-msgstr ""
+msgstr "botin API-avain"
 
 #: html.c:1351
 msgid "Chat id"
-msgstr ""
+msgstr "chat id"
 
 #: html.c:1359
 msgid "ntfy server - full URL (example: https://ntfy.sh/YourTopic)"
-msgstr ""
+msgstr "ntfy-palvelin - täydellinen osoite (esim: https://ntfy.sh/YourTopic)"
 
 #: html.c:1365
 msgid "ntfy token - if needed"
-msgstr ""
+msgstr "ntfy token - tarvittaessa"
 
 #: html.c:2765
 msgid "pinned"
-msgstr ""
+msgstr "kiinnitetyt"
 
 #: html.c:2777
 msgid "bookmarks"
-msgstr ""
+msgstr "kirjanmerkit"
 
 #: html.c:2789
 msgid "drafts"
-msgstr ""
+msgstr "vedokset"
