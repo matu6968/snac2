@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: snac\n"
-"Last-Translator: oliver zen hartmann\n"
-"Language: de\n"
+"Last-Translator: oliver zen hartmann, Menel\n"
+"Language: de_DE\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
 #: html.c:371
@@ -58,11 +58,11 @@ msgstr "Umfrageoptionen (eine pro Zeile, bis zu 8):"
 
 #: html.c:531
 msgid "One choice"
-msgstr "Eine Möglichkeit"
+msgstr "Einfachauswahl"
 
 #: html.c:534
 msgid "Multiple choices"
-msgstr "Mehrere Möglichkeiten"
+msgstr "Mehrfachauswahl"
 
 #: html.c:540
 msgid "End in 5 minutes"
@@ -78,19 +78,19 @@ msgstr "Endet in 1 Tag"
 
 #: html.c:555
 msgid "Post"
-msgstr "Beitrag senden"
+msgstr "Beitrag veröffentlichen"
 
 #: html.c:652 html.c:659
 msgid "Site description"
-msgstr "Beschreibung der Seite"
+msgstr "Seitenbeschreibung"
 
 #: html.c:670
 msgid "Admin email"
-msgstr "Admin Email"
+msgstr "Admin E-Mail"
 
 #: html.c:683
 msgid "Admin account"
-msgstr "Admin Konto"
+msgstr "Admin-Konto"
 
 #: html.c:751 html.c:1087
 #, c-format
@@ -130,7 +130,7 @@ msgstr "Durchsuche Beiträge nach URL oder Inhalt (regulärer Ausdruck), @user@h
 
 #: html.c:897
 msgid "Content search"
-msgstr "Suche nach Inhalten"
+msgstr "Inhaltssuche"
 
 #: html.c:1019
 msgid "verified link"
@@ -178,7 +178,7 @@ msgstr "Einstellungen..."
 
 #: html.c:1286
 msgid "Display name:"
-msgstr "Name anzeigen:"
+msgstr "Anzeigename:"
 
 #: html.c:1292
 msgid "Your name"
@@ -190,19 +190,19 @@ msgstr "Avatar: "
 
 #: html.c:1302
 msgid "Delete current avatar"
-msgstr "Den aktuellen Avatar löschen"
+msgstr "Aktuellen Avatar löschen"
 
 #: html.c:1304
 msgid "Header image (banner): "
-msgstr "Banner: "
+msgstr "Titelbild (Banner): "
 
 #: html.c:1312
 msgid "Delete current header image"
-msgstr "Aktuelles Banner löschen"
+msgstr "Aktuelles Titelbild löschen"
 
 #: html.c:1314
 msgid "Bio:"
-msgstr "Bio:"
+msgstr "Über dich:"
 
 #: html.c:1320
 msgid "Write about yourself here..."
@@ -214,7 +214,7 @@ msgstr "Sensiblen Inhalt immer anzeigen"
 
 #: html.c:1331
 msgid "Email address for notifications:"
-msgstr "Email Adresse für Benachrichtigungen:"
+msgstr "E-Mail Adresse für Benachrichtigungen:"
 
 #: html.c:1339
 msgid "Telegram notifications (bot key and chat id):"
@@ -226,7 +226,7 @@ msgstr "ntfy Benachrichtigungen (ntfy Server und Token):"
 
 #: html.c:1367
 msgid "Maximum days to keep posts (0: server settings):"
-msgstr "Maximale Tage, um Beiträge aufzubewahren (0: Servereinstellung):"
+msgstr "Maximale Aubewahrungsfrist der Beiträge in Tagen (0: Servereinstellung):"
 
 #: html.c:1381
 msgid "Drop direct messages from people you don't follow"
@@ -238,15 +238,15 @@ msgstr "Dieses Konto ist ein Bot"
 
 #: html.c:1399
 msgid "Auto-boost all mentions to this account"
-msgstr "Alle Boosts automatisch zu diesem Konto hinzufügen"
+msgstr "Automatisches Boosten bei Erwähnungen dieses Kontos"
 
 #: html.c:1408
 msgid "This account is private (posts are not shown through the web)"
-msgstr "Dieses Konto ist privat (Beiträge werden nicht im Internet angezeigt)"
+msgstr "Dieses Konto ist privat (Beiträge werden nicht in der Weboberfläche angezeigt)"
 
 #: html.c:1418
 msgid "Collapse top threads by default"
-msgstr "Oberste Themen standardmäßig einklappen"
+msgstr "Themen standardmäßig einklappen"
 
 #: html.c:1427
 msgid "Follow requests must be approved"
@@ -254,7 +254,7 @@ msgstr "Folgeanfragen müssen genehmigt werden"
 
 #: html.c:1436
 msgid "Publish follower and following metrics"
-msgstr "Gefolgte- und Folgende-Metriken veröffentlichen"
+msgstr "Gefolgte- und Folgende-Anzahl veröffentlichen"
 
 #: html.c:1438
 msgid "Current location:"
@@ -262,7 +262,7 @@ msgstr "Aktueller Ort:"
 
 #: html.c:1452
 msgid "Profile metadata (key=value pairs in each line):"
-msgstr "Profil-Metadaten (Begriff=Wert einer pro Zeile):"
+msgstr "Profil-Metadaten (Begriff=Wert Paare, einer pro Zeile):"
 
 #: html.c:1463
 msgid "Web interface language:"
@@ -298,7 +298,7 @@ msgstr "Sag, dass dir dieser Beiträg gefällt"
 
 #: html.c:1673 html.c:4332
 msgid "Unlike"
-msgstr "Gefällt nicht"
+msgstr "Gefällt mir zurücknehmen"
 
 #: html.c:1673
 msgid "Nah don't like it that much"
@@ -310,7 +310,7 @@ msgstr "Pin entfernen"
 
 #: html.c:1679
 msgid "Unpin this post from your timeline"
-msgstr "Entpinne diesen Beitrag aus deiner Chronik"
+msgstr "Entpinne diesen Beitrag aus deiner Zeitleiste"
 
 #: html.c:1682 html.c:4459
 msgid "Pin"
@@ -318,7 +318,7 @@ msgstr "Anpinnen"
 
 #: html.c:1682
 msgid "Pin this post to the top of your timeline"
-msgstr "Pinne diesen Beitrag an den Anfang deiner Timeline"
+msgstr "Pinne diesen Beitrag an den Anfang deiner Zeitleiste"
 
 #: html.c:1689
 msgid "Announce this post to your followers"
@@ -330,7 +330,7 @@ msgstr "Boost zurücknehmen"
 
 #: html.c:1694
 msgid "I regret I boosted this"
-msgstr "Ich bedauere dass ich das weiterverschickt habe"
+msgstr "Ich bedauere, dass ich das weiterverschickt habe"
 
 #: html.c:1700 html.c:4474
 msgid "Unbookmark"
@@ -422,7 +422,7 @@ msgstr "Angeheftet"
 
 #: html.c:1920
 msgid "Bookmarked"
-msgstr "Mit Lesezeichen versehen"
+msgstr "Lesezeichen gesetzt"
 
 #: html.c:1928
 msgid "Poll"
@@ -438,7 +438,7 @@ msgstr "Ereignis"
 
 #: html.c:1976 html.c:2005
 msgid "boosted"
-msgstr "erwähnt"
+msgstr "geteilt"
 
 #: html.c:2021
 msgid "in reply to"
@@ -458,7 +458,7 @@ msgstr "Geschlossen"
 
 #: html.c:2284
 msgid "Closes in"
-msgstr "Schliesst in"
+msgstr "Beendet in"
 
 #: html.c:2365
 msgid "Video"
@@ -490,11 +490,11 @@ msgstr "Älter..."
 
 #: html.c:2661
 msgid "about this site"
-msgstr "über diese Seite"
+msgstr "Über diese Seite"
 
 #: html.c:2663
 msgid "powered by "
-msgstr "betrieben mit "
+msgstr "powered by "
 
 #: html.c:2728
 msgid "Dismiss"
@@ -503,7 +503,7 @@ msgstr "Ablehnen"
 #: html.c:2745
 #, c-format
 msgid "Timeline for list '%s'"
-msgstr "Chronik für Liste '%s'"
+msgstr "Zeitleiste für Liste '%s'"
 
 #: html.c:2764 html.c:3805
 msgid "Pinned posts"
@@ -519,7 +519,7 @@ msgstr "Entwurf veröffentlichen"
 
 #: html.c:2847
 msgid "No more unseen posts"
-msgstr "Keine weiteren ungesehenen Beträge"
+msgstr "Keine weiteren ungesehenen Beiträge"
 
 #: html.c:2851 html.c:2951
 msgid "Back to top"
@@ -539,7 +539,7 @@ msgstr "Unbegrenzt"
 
 #: html.c:3046
 msgid "Allow announces (boosts) from this user"
-msgstr "Erlaube Ankündigungen (Boosts) von diesem Benutzer"
+msgstr "Erlaube Ankündigungen (Boosts) dieses Benutzers"
 
 #: html.c:3049 html.c:4363
 msgid "Limit"
@@ -591,11 +591,11 @@ msgstr "Ausstehende Folgebestätigungen"
 
 #: html.c:3125
 msgid "People you follow"
-msgstr "Personen, denen du folgst"
+msgstr "Personen denen du folgst"
 
 #: html.c:3126
 msgid "People that follow you"
-msgstr "Personen, die dir folgen"
+msgstr "Personen die dir folgen"
 
 #: html.c:3165
 msgid "Clear all"
@@ -615,7 +615,7 @@ msgstr "Folge-Anfrage"
 
 #: html.c:3323
 msgid "Context"
-msgstr "Zusammenhang"
+msgstr "Zusammenhang anzeigen"
 
 #: html.c:3334
 msgid "New"
@@ -623,7 +623,7 @@ msgstr "Neu"
 
 #: html.c:3349
 msgid "Already seen"
-msgstr "Schon gesehen"
+msgstr "Bereits gesehen"
 
 #: html.c:3364
 msgid "None"
@@ -652,7 +652,7 @@ msgstr "Nicht gefunden zu Hashtag %s"
 #: html.c:3684
 #, c-format
 msgid "Search results for '%s' (may be more)"
-msgstr "Suchergebnisse für '%s' (können noch mehr sein)"
+msgstr "Suchergebnisse für '%s' (könnten mehr sein)"
 
 #: html.c:3687
 #, c-format
@@ -671,12 +671,12 @@ msgstr "Nichts gefunden für '%s'"
 
 #: html.c:3790
 msgid "Showing instance timeline"
-msgstr "Instanz-Chronik anzeigen"
+msgstr "Instanz-Zeitleiste anzeigen"
 
 #: html.c:3858
 #, c-format
 msgid "Showing timeline for list '%s'"
-msgstr "Chronik anzeigen für Liste '%s'"
+msgstr "Zeitleiste anzeigen für Liste '%s'"
 
 #: httpd.c:250
 #, c-format
@@ -685,7 +685,7 @@ msgstr "Suchergebnisse für Hashtag #%s"
 
 #: httpd.c:259
 msgid "Recent posts by users in this instance"
-msgstr "Letzte Beiträge von Benutzern dieser Instanz"
+msgstr "Neueste Beiträge von Benutzern dieser Instanz"
 
 #: html.c:1528
 msgid "Blocked hashtags..."
