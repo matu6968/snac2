@@ -26,7 +26,7 @@ This is not the manual; man pages `snac(1)` (user manual), `snac(5)` (formats) a
 
 ## Building and installation
 
-This program is written in highly portable C. The only external dependencies are `openssl` and `curl`.
+This program is written in highly portable C. It uses the `__attribute__((__cleanup__))` GNU extension, that is supported at least by the `gcc`, `clang` and `tcc` C compilers. The only external dependencies are `openssl` and `curl`.
 
 On Debian/Ubuntu, you can satisfy these requirements by running
 
@@ -124,4 +124,6 @@ See the LICENSE file for details.
 
 grunfink [@grunfink@comam.es](https://comam.es/snac/grunfink) with the help of others.
 
-Buy grunfink a coffee: https://ko-fi.com/grunfink
+Buy grunfink a coffee: https://ko-fi.com/grunfink/
+
+Contribute via LiberaPay: https://liberapay.com/grunfink/
