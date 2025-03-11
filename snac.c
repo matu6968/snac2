@@ -181,7 +181,7 @@ const char *http_status_text(int status)
 /* translate status codes to canonical status texts */
 {
     switch (status) {
-        case 399: return "Timeout";
+        case 599: return "Timeout";
 #define HTTP_STATUS(code, name, text) case HTTP_STATUS_ ## name: return #text;
 #include "http_codes.h"
 #undef HTTP_STATUS
