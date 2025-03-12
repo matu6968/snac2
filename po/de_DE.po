@@ -596,7 +596,7 @@ msgstr "Personen die dir folgen"
 
 #: html.c:3165
 msgid "Clear all"
-msgstr "Alles löschen"
+msgstr "Aufräumen"
 
 #: html.c:3222
 msgid "Mention"
