@@ -1,8 +1,5 @@
 # snac message translation file
 #
-#, fuzzy
-msgid ""
-msgstr ""
 "Project-Id-Version: snac\n"
 "Last-Translator: oliver zen hartmann, Menel\n"
 "Language: de_DE\n"
@@ -30,7 +27,7 @@ msgstr "Nicht senden, aber als Entwurf speichern"
 
 #: html.c:425
 msgid "Draft:"
-msgstr "Entwurf:"
+msgstr "Entwurf: "
 
 #: html.c:445
 msgid "Attachments..."
@@ -138,7 +135,7 @@ msgstr "verifizierter Link"
 
 #: html.c:1076 html.c:2458 html.c:2471 html.c:2480
 msgid "Location: "
-msgstr "Ort: "
+msgstr "Standort: "
 
 #: html.c:1112
 msgid "New Post..."
@@ -206,11 +203,11 @@ msgstr "Über dich:"
 
 #: html.c:1320
 msgid "Write about yourself here..."
-msgstr "Erzähle etwas von dir ..."
+msgstr "Erzähle etwas von dir..."
 
 #: html.c:1329
 msgid "Always show sensitive content"
-msgstr "Sensiblen Inhalt immer anzeigen"
+msgstr "Sensible Inhalte immer anzeigen"
 
 #: html.c:1331
 msgid "Email address for notifications:"
@@ -222,15 +219,15 @@ msgstr "Telegram Benachrichtigungen (Bot Schlüssel und Chat ID):"
 
 #: html.c:1353
 msgid "ntfy notifications (ntfy server and token):"
-msgstr "ntfy Benachrichtigungen (ntfy Server und Token):"
+msgstr "NTFY Benachrichtigungen (ntfy Server und Token):"
 
 #: html.c:1367
 msgid "Maximum days to keep posts (0: server settings):"
-msgstr "Maximale Aubewahrungsfrist der Beiträge in Tagen (0: Servereinstellung):"
+msgstr "Aufbewahrungsfrist der Beiträge in Tagen (0 = Serverstandard):"
 
 #: html.c:1381
 msgid "Drop direct messages from people you don't follow"
-msgstr "Lösche Direktnachrichten von Personen, denen du nicht folgst"
+msgstr "Blocke Direktnachrichten von Personen denen du nicht folgst"
 
 #: html.c:1390
 msgid "This account is a bot"
@@ -254,11 +251,11 @@ msgstr "Folgeanfragen müssen genehmigt werden"
 
 #: html.c:1436
 msgid "Publish follower and following metrics"
-msgstr "Gefolgte- und Folgende-Anzahl veröffentlichen"
+msgstr "Veröffentliche die Anzahl von Followern und Gefolgten."
 
 #: html.c:1438
 msgid "Current location:"
-msgstr "Aktueller Ort:"
+msgstr "Standort:"
 
 #: html.c:1452
 msgid "Profile metadata (key=value pairs in each line):"
@@ -310,7 +307,7 @@ msgstr "Pin entfernen"
 
 #: html.c:1679
 msgid "Unpin this post from your timeline"
-msgstr "Entpinne diesen Beitrag aus deiner Zeitleiste"
+msgstr "Pin für diesen Beitrag aus deiner Zeitleiste entfernen"
 
 #: html.c:1682 html.c:4459
 msgid "Pin"
@@ -410,7 +407,7 @@ msgstr "Antworten..."
 
 #: html.c:1840
 msgid "Truncated (too deep)"
-msgstr "Abgeschnitten (zu viel)"
+msgstr "Abgeschnitten (zu tief)"
 
 #: html.c:1849
 msgid "follows you"
@@ -438,7 +435,7 @@ msgstr "Ereignis"
 
 #: html.c:1976 html.c:2005
 msgid "boosted"
-msgstr "geteilt"
+msgstr "teilte"
 
 #: html.c:2021
 msgid "in reply to"
@@ -478,7 +475,7 @@ msgstr "Alt.-Text..."
 
 #: html.c:2429
 msgid "Source channel or community"
-msgstr "Kanalquelle oder -gemeinschaft"
+msgstr "Ursprungskanal oder -gemeinschaft"
 
 #: html.c:2523
 msgid "Time: "
@@ -535,19 +532,19 @@ msgstr "Mehr..."
 
 #: html.c:3045 html.c:4367
 msgid "Unlimit"
-msgstr "Unbegrenzt"
+msgstr "Nicht mehr limitieren"
 
 #: html.c:3046
 msgid "Allow announces (boosts) from this user"
-msgstr "Erlaube Ankündigungen (Boosts) dieses Benutzers"
+msgstr "Erlaube Boosts dieses Benutzers"
 
 #: html.c:3049 html.c:4363
 msgid "Limit"
-msgstr "Limit"
+msgstr "Limitieren"
 
 #: html.c:3050
 msgid "Block announces (boosts) from this user"
-msgstr "Blocke Ankündigungen (Boosts) dieses Benutzers"
+msgstr "Blocke Boosts dieses Benutzers"
 
 #: html.c:3059
 msgid "Delete this user"
@@ -599,7 +596,7 @@ msgstr "Personen die dir folgen"
 
 #: html.c:3165
 msgid "Clear all"
-msgstr "Alles löschen"
+msgstr "Aufräumen"
 
 #: html.c:3222
 msgid "Mention"
@@ -671,12 +668,12 @@ msgstr "Nichts gefunden für '%s'"
 
 #: html.c:3790
 msgid "Showing instance timeline"
-msgstr "Instanz-Zeitleiste anzeigen"
+msgstr "Zeitleiste der Instanz anzeigen"
 
 #: html.c:3858
 #, c-format
 msgid "Showing timeline for list '%s'"
-msgstr "Zeitleiste anzeigen für Liste '%s'"
+msgstr "Zeitleiste der Liste '%s' anzeigen"
 
 #: httpd.c:250
 #, c-format
