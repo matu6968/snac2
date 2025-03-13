@@ -2180,25 +2180,32 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     if (strcmp(type, "Undo") == 0) { /** **/
         const char *id = xs_dict_get(object, "object");
 
-        if (xs_type(object) != XSTYPE_DICT)
+        if (xs_type(object) != XSTYPE_DICT) {
+            snac_debug(snac, 1, xs_fmt("undo: overriding utype %s | %s | %s",
+                        utype, id, actor));
             utype = "Follow";
+        }
 
         if (strcmp(utype, "Follow") == 0) { /** **/
-            if (id && strcmp(id, snac->actor) != 0)
-                snac_debug(snac, 1, xs_fmt("Undo + Follow from %s not for us (%s)", actor, id));
-            else {
-                if (valid_status(follower_del(snac, actor))) {
-                    snac_log(snac, xs_fmt("no longer following us %s", actor));
-                    do_notify = 1;
-                }
-                else
-                if (pending_check(snac, actor)) {
-                    pending_del(snac, actor);
-                    snac_log(snac, xs_fmt("cancelled pending follow from %s", actor));
-                }
-                else
-                    snac_log(snac, xs_fmt("error deleting follower %s", actor));
+            if (!id) {
+                snac_log(snac, xs_fmt("no id (msg.object.object) when "
+                      "handling follow: %s", actor));
+                return 1;
             }
+            if (strcmp(id, snac->actor) != 0)
+                snac_debug(snac, 1, xs_fmt("Undo + Follow from %s not for us (%s)", actor, id));
+            else
+            if (valid_status(follower_del(snac, actor))) {
+                snac_log(snac, xs_fmt("no longer following us %s", actor));
+                do_notify = 1;
+            }
+            else
+            if (pending_check(snac, actor)) {
+                pending_del(snac, actor);
+                snac_log(snac, xs_fmt("cancelled pending follow from %s", actor));
+            }
+            else
+                snac_log(snac, xs_fmt("error deleting follower %s", actor));
         }
         else
         if (strcmp(utype, "Like") == 0 || strcmp(utype, "EmojiReact") == 0) { /** **/
