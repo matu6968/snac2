@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: snac\n"
-"Last-Translator: Daltux <https://snac.daltux.net>\n"
+"Last-Translator: Daltux <https://daltux.net>\n"
 "Language: pt_BR\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "X-Generator: Poedit 3.5\n"
@@ -695,7 +695,7 @@ msgstr "Hashtags bloqueadas..."
 
 #: html.c:419
 msgid "Optional URL to reply to"
-msgstr ""
+msgstr "URL opcional para a qual responder"
 
 #: html.c:526
 msgid ""
@@ -704,31 +704,35 @@ msgid ""
 "Option 3...\n"
 "..."
 msgstr ""
+"Opção 1...\n"
+"Opção 2...\n"
+"Opção 3...\n"
+"..."
 
 #: html.c:1345
 msgid "Bot API key"
-msgstr ""
+msgstr "Chave de API do robô"
 
 #: html.c:1351
 msgid "Chat id"
-msgstr ""
+msgstr "ID da conversa"
 
 #: html.c:1359
 msgid "ntfy server - full URL (example: https://ntfy.sh/YourTopic)"
-msgstr ""
+msgstr "Servidor ntfy - URL completa (exemplo: https://ntfy.sh/SeuTópico)"
 
 #: html.c:1365
 msgid "ntfy token - if needed"
-msgstr ""
+msgstr "Token ntfy - se necessário"
 
 #: html.c:2765
 msgid "pinned"
-msgstr ""
+msgstr "afixadas"
 
 #: html.c:2777
 msgid "bookmarks"
-msgstr ""
+msgstr "marcadores"
 
 #: html.c:2789
 msgid "drafts"
-msgstr ""
+msgstr "rascunhos"
