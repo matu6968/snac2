@@ -881,7 +881,7 @@ void import_csv(snac *user)
             if (*l) {
                 xs *post = NULL;
 
-                if (!object_get(l, &post)) {
+                if (!valid_status(object_get(l, &post))) {
                     if (!valid_status(activitypub_request(user, l, &post))) {
                         snac_log(user, xs_fmt("Error getting object %s for bookmarking", l));
                         continue;
