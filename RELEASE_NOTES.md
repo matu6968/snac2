@@ -28,6 +28,8 @@ Improved Undo+Follow logic (contributed by rozenglass).
 
 Reverted (temporarily) the Markdown code that converted text between underscores to italics, because it was causing more problems that what it was worth.
 
+Fixed bug in bookmark CSV import.
+
 ## 2.73
 
 Added support for customizing and translating the web UI language via simple `.po` files. For more information on how to install language files or create new ones, please see `snac(8)` (the administrator manual).
