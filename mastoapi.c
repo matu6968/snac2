@@ -2125,9 +2125,8 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
             xs *current = xs_dict_new();
             if (xs_startswith(v, "https://") && xs_startswith((xs_mime_by_ext(v)), "image/")) {
                 /* remove first and last colon */
-                char *shortcode = (char *)k;
-                shortcode[strlen(k) - 1] = '\0';
-                current = xs_dict_append(current, "shortcode", shortcode + 1);
+                xs *shortcode = xs_replace(k, ":", "");
+                current = xs_dict_append(current, "shortcode", shortcode);
                 current = xs_dict_append(current, "url", v);
                 current = xs_dict_append(current, "static_url", v);
                 current = xs_dict_append(current, "visible_in_picker", xs_stock(XSTYPE_TRUE));
