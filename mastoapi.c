@@ -2116,8 +2116,25 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/custom_emojis") == 0) { /** **/
-        /* are you kidding me? */
-        *body  = xs_dup("[]");
+        xs *emo = emojis();
+        xs *list = xs_list_new();
+        int c = 0;
+        const xs_str *k;
+        const xs_val *v;
+        while(xs_dict_next(emo, &k, &v, &c)) {
+            xs *current = xs_dict_new();
+            if (xs_startswith(v, "https://") && xs_startswith((xs_mime_by_ext(v)), "image/")) {
+                /* remove first and last colon */
+                char *shortcode = (char *)k;
+                shortcode[strlen(k) - 1] = '\0';
+                current = xs_dict_append(current, "shortcode", shortcode + 1);
+                current = xs_dict_append(current, "url", v);
+                current = xs_dict_append(current, "static_url", v);
+                current = xs_dict_append(current, "visible_in_picker", xs_stock(XSTYPE_TRUE));
+                list = xs_list_append(list, current);
+            }
+        }
+        *body  = xs_json_dumps(list, 0);
         *ctype = "application/json";
         status = HTTP_STATUS_OK;
     }

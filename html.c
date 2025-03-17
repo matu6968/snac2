@@ -92,6 +92,7 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                             xs_html *img = xs_html_sctag("img",
                                 xs_html_attr("loading", "lazy"),
                                 xs_html_attr("src", url),
+                                xs_html_attr("alt", n),
                                 xs_html_attr("style", style));
 
                             xs *s1 = xs_html_render(img);
