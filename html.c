@@ -2585,6 +2585,12 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             xs_html_add(entry,
                 ch_details);
 
+            xs_html *fch_container = xs_html_tag("div",
+                xs_html_attr("class", "snac-thread-cont"));
+
+            xs_html_add(ch_details,
+                fch_container);
+
             xs_html *ch_container = xs_html_tag("div",
                 xs_html_attr("class", level < 4 ? "snac-children" : "snac-children-too-deep"));
 
@@ -2599,12 +2605,40 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                             xs_html_text(L("Older...")))));
             }
 
-            xs_list *p = children;
+            int ctxt = 0;
             const char *cmd5;
             int cnt = 0;
             int o_cnt = 0;
 
-            while (xs_list_iter(&p, &cmd5)) {
+            /* get the first child */
+            xs_list_next(children, &cmd5, &ctxt);
+            xs *f_chd = NULL;
+
+            if (user)
+                timeline_get_by_md5(user, cmd5, &f_chd);
+            else
+                object_get_by_md5(cmd5, &f_chd);
+
+            if (f_chd != NULL && xs_is_null(xs_dict_get(f_chd, "name"))) {
+                const char *p_author = get_atto(msg);
+                const char *author   = get_atto(f_chd);
+
+                /* is the first child from the same author? */
+                if (xs_is_string(p_author) && xs_is_string(author) && strcmp(p_author, author) == 0) {
+                    /* then, don't add it to the children container,
+                       so that it appears unindented just before the parent
+                       like a fucking Twitter-like thread */
+                    xs_html_add(fch_container,
+                        html_entry(user, f_chd, read_only, level + 1, cmd5, hide_children));
+
+                    cnt++;
+                    left--;
+                }
+                else
+                    ctxt = 0; /* restart from the beginning */
+            }
+
+            while (xs_list_next(children, &cmd5, &ctxt)) {
                 xs *chd = NULL;
 
                 if (user)
