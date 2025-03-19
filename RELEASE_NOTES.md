@@ -30,6 +30,8 @@ Reverted (temporarily) the Markdown code that converted text between underscores
 
 Fixed bug in bookmark CSV import.
 
+Don't indent Twitter-like "threads" (i.e. chains of short posts from the same author that are self-replies).
+
 ## 2.73
 
 Added support for customizing and translating the web UI language via simple `.po` files. For more information on how to install language files or create new ones, please see `snac(8)` (the administrator manual).
