@@ -2609,6 +2609,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             const char *cmd5;
             int cnt = 0;
             int o_cnt = 0;
+            int f_cnt = 0;
 
             /* get the first child */
             xs_list_next(children, &cmd5, &ctxt);
@@ -2632,6 +2633,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                         html_entry(user, f_chd, read_only, level + 1, cmd5, hide_children));
 
                     cnt++;
+                    f_cnt++;
                     left--;
                 }
                 else
@@ -2679,6 +2681,10 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
             if (o_cnt == 0 && ch_older)
                 xs_html_add(ch_older,
+                    xs_html_attr("style", "display: none"));
+
+            if (f_cnt == 0)
+                xs_html_add(fch_container,
                     xs_html_attr("style", "display: none"));
         }
     }
