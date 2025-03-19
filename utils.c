@@ -59,6 +59,7 @@ static const char *default_css =
     ".snac-top-controls { padding-bottom: 1.5em }\n"
     ".snac-post { border-top: 1px solid #a0a0a0; padding-top: 0.5em; padding-bottom: 0.5em; }\n"
     ".snac-children { padding-left: 1em; border-left: 1px solid #a0a0a0; }\n"
+    ".snac-thread-cont { border-top: 1px dashed #a0a0a0; }\n"
     ".snac-textarea { font-family: inherit; width: 100% }\n"
     ".snac-history { border: 1px solid #606060; border-radius: 3px; margin: 2.5em 0; padding: 0 2em }\n"
     ".snac-btn-mute { float: right; margin-left: 0.5em }\n"
