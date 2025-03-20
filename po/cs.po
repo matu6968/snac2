@@ -588,7 +588,7 @@ msgstr "Soukomá zpráva..."
 
 #: html.c:3162
 msgid "Pending follow confirmations"
-msgstr "Dosud nepotvrzené žádosti o sledován"
+msgstr "Dosud nepotvrzené žádosti o sledování"
 
 #: html.c:3166
 msgid "People you follow"
@@ -694,7 +694,7 @@ msgstr "Blokované hashtagy..."
 
 #: html.c:420
 msgid "Optional URL to reply to"
-msgstr ""
+msgstr "URL adresa příspěvku, na který odpovědět"
 
 #: html.c:527
 msgid ""
@@ -703,31 +703,35 @@ msgid ""
 "Option 3...\n"
 "..."
 msgstr ""
+"Možnost 1...\n"
+"Možnost 2...\n"
+"Možnost 3...\n"
+"..."
 
 #: html.c:1346
 msgid "Bot API key"
-msgstr ""
+msgstr "API klíč Bota"
 
 #: html.c:1352
 msgid "Chat id"
-msgstr ""
+msgstr "Chat id"
 
 #: html.c:1360
 msgid "ntfy server - full URL (example: https://ntfy.sh/YourTopic)"
-msgstr ""
+msgstr "ntfy server - celá URL adresa (např: https://ntfy.sh/VaseTema)"
 
 #: html.c:1366
 msgid "ntfy token - if needed"
-msgstr ""
+msgstr "ntfy token - pokud je zapotřebí"
 
 #: html.c:2806
 msgid "pinned"
-msgstr ""
+msgstr "připnuté"
 
 #: html.c:2818
 msgid "bookmarks"
-msgstr ""
+msgstr "záložky"
 
 #: html.c:2830
 msgid "drafts"
-msgstr ""
+msgstr "rozepsané"
