@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.74
 
 Added Spanish (default, Argentina and Uruguay) translation (contributed by gnemmi).
 
