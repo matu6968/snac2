@@ -446,7 +446,7 @@ msgstr "Событие"
 
 #: html.c:1976 html.c:2005
 msgid "boosted"
-msgstr "продвинуто"
+msgstr "поделился"
 
 #: html.c:2021
 msgid "in reply to"
