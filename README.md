@@ -82,6 +82,8 @@ From version 2.68, Linux Landlock sandboxing is included (not supported on Linux
 make CFLAGS=-DWITH_LINUX_SANDBOX
 ```
 
+From version 2.73, the language of the web UI can be configured; the `po/` source subdirectory includes a set of translation files, one per language. After initializing your instance, copy whatever language file you want to use to the `lang/` subdirectory of the base directory.
+
 See the administrator manual on how to proceed from here.
 
 ## Testing via Docker

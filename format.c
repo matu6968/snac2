@@ -94,7 +94,6 @@ static xs_str *format_line(const char *line, xs_list **attach)
             "`[^`]+`"                           "|"
             "~~[^~]+~~"                         "|"
             "\\*\\*?\\*?[^\\*]+\\*?\\*?\\*"     "|"
-            "_[^_]+_"                           "|" //anzu
             "__[^_]+__"                         "|" //anzu
             "!\\[[^]]+\\]\\([^\\)]+\\)"         "|"
             "\\[[^]]+\\]\\([^\\)]+\\)"          "|"
@@ -136,12 +135,6 @@ static xs_str *format_line(const char *line, xs_list **attach)
             if (xs_startswith(v, "__")) {
                 xs *s1 = xs_strip_chars_i(xs_dup(v), "_");
                 xs *s2 = xs_fmt("<u>%s</u>", s1);
-                s = xs_str_cat(s, s2);
-            }
-            else
-            if (xs_startswith(v, "_")) {
-                xs *s1 = xs_strip_chars_i(xs_dup(v), "_");
-                xs *s2 = xs_fmt("<i>%s</i>", s1);
                 s = xs_str_cat(s, s2);
             }
             //anzu - end

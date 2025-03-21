@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.74
 
 Added Spanish (default, Argentina and Uruguay) translation (contributed by gnemmi).
 
@@ -21,6 +21,16 @@ Added German translation (contributed by zen and Menel).
 Added Greek translation (contributed by uhuru).
 
 Added Italian translation (contributed by anzu).
+
+Mastodon API: added support for /api/v1/custom_emojis (contributed by violette).
+
+Improved Undo+Follow logic (contributed by rozenglass).
+
+Reverted (temporarily) the Markdown code that converted text between underscores to italics, because it was causing more problems that what it was worth.
+
+Fixed bug in bookmark CSV import.
+
+Don't indent Twitter-like "threads" (i.e. chains of short posts from the same author that are self-replies).
 
 ## 2.73
 
