@@ -2259,8 +2259,18 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     if (strcmp(cmd, "/v1/instance/peers") == 0) { /** **/
         /* get the collected inbox list as the instances "this domain is aware of" */
         xs *list = inbox_list();
+        xs *peers = xs_list_new();
+        const char *inbox;
 
-        *body  = xs_json_dumps(list, 4);
+        xs_list_foreach(list, inbox) {
+            xs *l = xs_split(inbox, "/");
+            const char *domain = xs_list_get(l, 2);
+
+            if (xs_is_string(domain))
+                peers = xs_list_append(peers, domain);
+        }
+
+        *body  = xs_json_dumps(peers, 4);
         *ctype = "application/json";
         status = HTTP_STATUS_OK;
     }
