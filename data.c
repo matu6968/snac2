@@ -2619,10 +2619,9 @@ xs_list *inbox_list(void)
     xs_list *ibl = xs_list_new();
     xs *spec     = xs_fmt("%s/inbox/" "*", srv_basedir);
     xs *files    = xs_glob(spec, 0, 0);
-    xs_list *p   = files;
     const xs_val *v;
 
-    while (xs_list_iter(&p, &v)) {
+    xs_list_foreach(files, v) {
         FILE *f;
 
         if ((f = fopen(v, "r")) != NULL) {
@@ -2630,7 +2629,9 @@ xs_list *inbox_list(void)
 
             if (line && *line) {
                 line = xs_strip_i(line);
-                ibl  = xs_list_append(ibl, line);
+
+                if (!is_instance_blocked(line))
+                    ibl = xs_list_append(ibl, line);
             }
 
             fclose(f);
