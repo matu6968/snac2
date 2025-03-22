@@ -2256,6 +2256,15 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         status = HTTP_STATUS_OK;
     }
     else
+    if (strcmp(cmd, "/v1/instance/peers") == 0) { /** **/
+        /* get the collected inbox list as the instances "this domain is aware of" */
+        xs *list = inbox_list();
+
+        *body  = xs_json_dumps(list, 4);
+        *ctype = "application/json";
+        status = HTTP_STATUS_OK;
+    }
+    else
     if (xs_startswith(cmd, "/v1/statuses/")) { /** **/
         /* information about a status */
         if (logged_in) {
