@@ -69,6 +69,7 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
         }
 
         xs *style = xs_fmt("height: %dem; width: %dem; vertical-align: middle;", ems, ems);
+        xs *class = xs_fmt("snac-emoji snac-emoji-%d-em", ems);
 
         const xs_dict *v;
         int c = 0;
@@ -108,7 +109,7 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                                 xs_html_attr("src", url),
                                 xs_html_attr("alt", n),
                                 xs_html_attr("title", n),
-                                xs_html_attr("class", "snac-emoji"),
+                                xs_html_attr("class", class),
                                 xs_html_attr("style", style));
 
                             xs *s1 = xs_html_render(img);
