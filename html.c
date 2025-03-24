@@ -980,10 +980,16 @@ static xs_html *html_user_body(snac *user, int read_only)
         xs_dict_get(user->config, "uid"),
         xs_dict_get(srv_config, "host"));
 
+    // also try to make emojis render in local usernames, specifically in the user info thing in the web ui
+    xs *name_tags = xs_list_new();
+    xs *name1 = not_really_markdown(xs_dict_get(user->config, "name"), NULL, &name_tags);
+    xs *name2 = sanitize(name1);
+    name2 = replace_shortnames(name2, name_tags, 1, proxy);
+
     xs_html_add(top_user,
         xs_html_tag("p",
             xs_html_attr("class", "p-name snac-top-user-name"),
-            xs_html_text(xs_dict_get(user->config, "name"))),
+            xs_html_raw(name2)),
         xs_html_tag("p",
             xs_html_attr("class", "snac-top-user-id"),
             xs_html_text(handle)));
