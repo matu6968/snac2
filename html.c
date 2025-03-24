@@ -3350,7 +3350,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
             continue;
 
         xs *a_name = actor_name(actor, proxy);
-        const char *label = type;
+        xs *label_sanatized = sanitize(type);
+        const char *label = label_sanatized;
 
         if (strcmp(type, "Create") == 0)
             label = L("Mention");
@@ -3365,7 +3366,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
             const char *content = xs_dict_get_path(noti, "msg.content");
 
             if (xs_type(content) == XSTYPE_STRING) {
-                wrk = xs_fmt("%s (%s)", type, content);
+                xs *emoji = replace_shortnames(xs_dup(content), xs_dict_get_path(noti, "msg.tag"), 1, proxy);
+                wrk = xs_fmt("%s (%s)", type, emoji);
                 label = wrk;
             }
         }
@@ -3377,7 +3379,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
         xs_html *this_html_label = xs_html_container(
                 xs_html_tag("b",
-                    xs_html_text(label),
+                    xs_html_raw(label),
                     xs_html_text(" by "),
                     xs_html_tag("a",
                         xs_html_attr("href", actor_id),
