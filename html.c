@@ -3362,7 +3362,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
         if (strcmp(type, "Undo") == 0 && strcmp(utype, "Follow") == 0)
             label = L("Unfollow");
         else
-        if (strcmp(type, "EmojiReact") == 0) {
+        if (strcmp(type, "EmojiReact") == 0 || strcmp(type, "Like") == 0) {
             const char *content = xs_dict_get_path(noti, "msg.content");
 
             if (xs_type(content) == XSTYPE_STRING) {
