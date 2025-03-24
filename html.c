@@ -72,12 +72,19 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
         const xs_dict *v;
         int c = 0;
 
+        xs_set rep_emoji;
+        xs_set_init(&rep_emoji);
+
         while (xs_list_next(tag_list, &v, &c)) {
             const char *t = xs_dict_get(v, "type");
 
             if (t && strcmp(t, "Emoji") == 0) {
                 const char *n = xs_dict_get(v, "name");
                 const xs_dict *i = xs_dict_get(v, "icon");
+
+                /* avoid repeated emojis (Misskey seems to return this) */
+                if (xs_set_add(&rep_emoji, n) == 0)
+                    continue;
 
                 if (xs_is_string(n) && xs_is_dict(i)) {
                     const char *u = xs_dict_get(i, "url");
@@ -104,6 +111,8 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                 }
             }
         }
+
+        xs_set_free(&rep_emoji);
     }
 
     return s;
