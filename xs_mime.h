@@ -16,6 +16,7 @@ extern const char *xs_mime_types[];
 const char *xs_mime_types[] = {
     "3gp",      "video/3gpp",
     "aac",      "audio/aac",
+    "apng",     "image/apng",
     "avif",     "image/avif",
     "css",      "text/css",
     "flac",     "audio/flac",
@@ -38,7 +39,6 @@ const char *xs_mime_types[] = {
     "ogv",      "video/ogg",
     "opus",     "audio/ogg",
     "png",      "image/png",
-    "apng",     "image/apng",
     "svg",      "image/svg+xml",
     "svgz",     "image/svg+xml",
     "txt",      "text/plain",
