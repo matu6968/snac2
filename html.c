@@ -95,14 +95,10 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                         // on akkoma instances mediaType is not present.
                         // but we need to to know if the image is an svg or not.
                         // for now, i just use the file extention, which may not be the most reliable...
-                        int is_svg = 0;
-                        if (xs_is_string(mt)) {
-                            is_svg = (strcmp(mt, "image/svg+xml") == 0);
-                        } else {
-                            is_svg = xs_endswith(u, ".svg");
-                        }
+                        if (!xs_is_string(mt))
+                            mt = xs_mime_by_ext(u);
 
-                        if (is_svg && !xs_is_true(xs_dict_get(srv_config, "enable_svg")))
+                        if (strcmp(mt, "image/svg+xml") == 0 && !xs_is_true(xs_dict_get(srv_config, "enable_svg")))
                             s = xs_replace_i(s, n, "");
                         else {
                             xs *url = make_url(u, proxy, 0);
