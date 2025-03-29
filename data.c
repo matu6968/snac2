@@ -1215,6 +1215,14 @@ int follower_check(snac *snac, const char *actor)
 }
 
 
+int follower_list_len(snac *snac)
+/* returns the number followers */
+{
+    xs *list = object_user_cache_list(snac, "followers", XS_ALL, 0);
+    return xs_list_len(list);
+}
+
+
 xs_list *follower_list(snac *snac)
 /* returns the list of followers */
 {
@@ -1706,6 +1714,15 @@ int following_get(snac *snac, const char *actor, xs_dict **data)
         status = HTTP_STATUS_NOT_FOUND;
 
     return status;
+}
+
+
+int following_list_len(snac *snac)
+/* returns number of people being followed */
+{
+    xs *spec = xs_fmt("%s/following/" "*_a.json", snac->basedir);
+    xs *glist = xs_glob(spec, 0, 0);
+    return xs_list_len(glist);
 }
 
 

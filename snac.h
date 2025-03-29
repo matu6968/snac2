@@ -153,6 +153,7 @@ int follower_add(snac *snac, const char *actor);
 int follower_del(snac *snac, const char *actor);
 int follower_check(snac *snac, const char *actor);
 xs_list *follower_list(snac *snac);
+int follower_list_len(snac *snac);
 
 int pending_add(snac *user, const char *actor, const xs_dict *msg);
 int pending_check(snac *user, const char *actor);
@@ -184,6 +185,7 @@ int following_del(snac *snac, const char *actor);
 int following_check(snac *snac, const char *actor);
 int following_get(snac *snac, const char *actor, xs_dict **data);
 xs_list *following_list(snac *snac);
+int following_list_len(snac *snac);
 
 void mute(snac *snac, const char *actor);
 void unmute(snac *snac, const char *actor);
