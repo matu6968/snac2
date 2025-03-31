@@ -1,0 +1,43 @@
+#!/usr/bin/env fish
+##
+## SNAC-ADMIN
+##  a simple script that is supposed to improve
+##  a snac admin's life, especially when snac
+##  is being run as a systemd.unit with
+##  DynamicUser=yes enabled.
+##  Please make sure to adjust SNAC_BASEDIR
+##  down below according to your setup.
+##
+## USAGE
+##  snac-admin state
+##  snac-admin adduser rikkert
+##
+## Author: @chris@social.shtrophic.net
+## 
+## Released into the public domain 
+##
+
+set -l SNAC_PID 	$(pidof snac)
+set -l SNAC_BASEDIR	/var/lib/snac
+
+if test -z $SNAC_PID
+	echo "no such process" 1>&2
+	exit 1
+end
+
+if test $(id -u) -ne 0
+	echo "not root" 1>&2
+	exit 1
+end
+
+if ! test -d $SNAC_BASEDIR
+	echo "$SNAC_BASEDIR does not exist" 1>&2
+	exit 1
+end
+
+if test -z $argv[1]
+	echo "no arguments" 1>&2
+	exit 1
+end
+
+nsenter -ae -S follow -G follow -t $SNAC_PID -- snac $argv[1] $SNAC_BASEDIR $argv[2..]
