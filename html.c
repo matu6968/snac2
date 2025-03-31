@@ -559,6 +559,30 @@ xs_html *html_note(snac *user, const char *summary,
                         xs_html_text(L("End in 1 day"))))));
     }
 
+#if 0
+    /* scheduled post data */
+    xs *sched_date = xs_dup("");
+    xs *sched_time = xs_dup("");
+
+    xs_html_add(form,
+        xs_html_tag("p", NULL),
+        xs_html_tag("details",
+            xs_html_tag("summary",
+                xs_html_text(L("Scheduled post..."))),
+            xs_html_tag("p",
+                xs_html_text(L("Post date: ")),
+                xs_html_sctag("input",
+                    xs_html_attr("type", "date"),
+                    xs_html_attr("value", sched_date),
+                    xs_html_attr("name", "post_date")),
+                xs_html_text(" "),
+                xs_html_text(L("Post time: ")),
+                xs_html_sctag("input",
+                    xs_html_attr("type", "time"),
+                    xs_html_attr("value", sched_time),
+                    xs_html_attr("name", "post_time")))));
+#endif
+
     xs_html_add(form,
         xs_html_tag("p", NULL),
         xs_html_sctag("input",
@@ -4186,12 +4210,14 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         snac_debug(&snac, 1, xs_fmt("web action '%s' received", p_path));
 
         /* post note */
-        const xs_str *content      = xs_dict_get(p_vars, "content");
-        const xs_str *in_reply_to  = xs_dict_get(p_vars, "in_reply_to");
-        const xs_str *to           = xs_dict_get(p_vars, "to");
-        const xs_str *sensitive    = xs_dict_get(p_vars, "sensitive");
-        const xs_str *summary      = xs_dict_get(p_vars, "summary");
-        const xs_str *edit_id      = xs_dict_get(p_vars, "edit_id");
+        const char *content      = xs_dict_get(p_vars, "content");
+        const char *in_reply_to  = xs_dict_get(p_vars, "in_reply_to");
+        const char *to           = xs_dict_get(p_vars, "to");
+        const char *sensitive    = xs_dict_get(p_vars, "sensitive");
+        const char *summary      = xs_dict_get(p_vars, "summary");
+        const char *edit_id      = xs_dict_get(p_vars, "edit_id");
+        const char *post_date    = xs_dict_get_def(p_vars, "post_date", "");
+        const char *post_time    = xs_dict_get_def(p_vars, "post_time", "");
         int priv             = !xs_is_null(xs_dict_get(p_vars, "mentioned_only"));
         int store_as_draft   = !xs_is_null(xs_dict_get(p_vars, "is_draft"));
         xs *attach_list      = xs_list_new();
@@ -4277,6 +4303,23 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             if (sensitive != NULL) {
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));
                 msg = xs_dict_set(msg, "summary",   xs_is_null(summary) ? "..." : summary);
+            }
+
+            if (*post_date) {
+                /* scheduled post */
+                xs *sched_date = xs_fmt("%sT%s:00", post_date, *post_time ? post_time : "12:00");
+                time_t t = xs_parse_localtime(sched_date, "%Y-%m-%dT%H:%M:%S");
+
+                if (t != 0) {
+                    xs *iso_date = xs_str_iso_date(t);
+                    msg = xs_dict_set(msg, "published", iso_date);
+
+                    snac_debug(&snac, 1, xs_fmt("Scheduled date: [%s]", iso_date));
+                }
+                else {
+                    snac_log(&snac, xs_fmt("Invalid scheduled date: [%s]", sched_date));
+                    post_date = "";
+                }
             }
 
             if (xs_is_null(edit_id)) {
