@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+Added support for scheduled posts.
+
 Mastodon API: added support for `/api/v1/instance/peers`.
 
 Some Czech and Russian translation fixes.
