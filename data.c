@@ -1966,6 +1966,33 @@ xs_list *scheduled_list(snac *user)
 }
 
 
+void scheduled_process(snac *user)
+/* processes the scheduled list, sending those ready to be sent */
+{
+    xs *posts = scheduled_list(user);
+    const char *md5;
+    xs *right_now = xs_str_utctime(0, ISO_DATE_SPEC);
+
+    xs_list_foreach(posts, md5) {
+        xs *msg = NULL;
+
+        if (valid_status(object_get_by_md5(md5, &msg))) {
+            if (strcmp(xs_dict_get(msg, "published"), right_now) < 0) {
+                /* due date! */
+                const char *id = xs_dict_get(msg, "id");
+
+                timeline_add(user, id, msg);
+
+                xs *c_msg = msg_create(user, msg);
+                enqueue_message(user, c_msg);
+
+                schedule_del(user, id);
+            }
+        }
+    }
+}
+
+
 /** hiding **/
 
 xs_str *_hidden_fn(snac *snac, const char *id)
@@ -3734,7 +3761,7 @@ void purge_user(snac *snac)
     _purge_user_subdir(snac, "public",  pub_days);
 
     const char *idxs[] = { "followers.idx", "private.idx", "public.idx",
-                           "pinned.idx", "bookmark.idx", "draft.idx", NULL };
+                           "pinned.idx", "bookmark.idx", "draft.idx", "sched.idx", NULL };
 
     for (n = 0; idxs[n]; n++) {
         xs *idx = xs_fmt("%s/%s", snac->basedir, idxs[n]);
