@@ -350,7 +350,7 @@ xs_html *html_note(snac *user, const char *summary,
                    const xs_val *mnt_only, const char *redir,
                    const char *in_reply_to, int poll,
                    const xs_list *att_files, const xs_list *att_alt_texts,
-                   int is_draft)
+                   int is_draft, const char *published)
 /* Yes, this is a FUCKTON of arguments and I'm a bit embarrased */
 {
     xs *action = xs_fmt("%s/admin/note", user->actor);
@@ -439,6 +439,34 @@ xs_html *html_note(snac *user, const char *summary,
                 xs_html_attr("type", "checkbox"),
                 xs_html_attr("name", "is_draft"),
                 xs_html_attr(is_draft ? "checked" : "", NULL))));
+
+    /* post date and time */
+    xs *post_date = NULL;
+    xs *post_time = NULL;
+
+    if (xs_is_string(published)) {
+        time_t t = xs_parse_iso_date(published, 0);
+
+        if (t > 0) {
+            post_date = xs_str_time(t, "%Y-%m-%d", 1);
+            post_time = xs_str_time(t, "%H:%M:%S", 1);
+        }
+    }
+
+    xs_html_add(form,
+        xs_html_tag("p",
+            xs_html_text(L("Post date and time (empty, right now; in the future, schedule for later):")),
+            xs_html_sctag("br", NULL),
+            xs_html_sctag("input",
+                xs_html_attr("type",  "date"),
+                xs_html_attr("value", post_date ? post_date : ""),
+                xs_html_attr("name",  "post_date")),
+            xs_html_text(" "),
+            xs_html_sctag("input",
+                xs_html_attr("type",  "time"),
+                xs_html_attr("value", post_time ? post_time : ""),
+                xs_html_attr("step",  "1"),
+                xs_html_attr("name",  "post_time"))));
 
     if (edit_id)
         xs_html_add(form,
@@ -558,30 +586,6 @@ xs_html *html_note(snac *user, const char *summary,
                         xs_html_attr("value", "86400"),
                         xs_html_text(L("End in 1 day"))))));
     }
-
-#if 0
-    /* scheduled post data */
-    xs *sched_date = xs_dup("");
-    xs *sched_time = xs_dup("");
-
-    xs_html_add(form,
-        xs_html_tag("p", NULL),
-        xs_html_tag("details",
-            xs_html_tag("summary",
-                xs_html_text(L("Scheduled post..."))),
-            xs_html_tag("p",
-                xs_html_text(L("Post date: ")),
-                xs_html_sctag("input",
-                    xs_html_attr("type", "date"),
-                    xs_html_attr("value", sched_date),
-                    xs_html_attr("name", "post_date")),
-                xs_html_text(" "),
-                xs_html_text(L("Post time: ")),
-                xs_html_sctag("input",
-                    xs_html_attr("type", "time"),
-                    xs_html_attr("value", sched_time),
-                    xs_html_attr("name", "post_time")))));
-#endif
 
     xs_html_add(form,
         xs_html_tag("p", NULL),
@@ -1151,7 +1155,7 @@ xs_html *html_top_controls(snac *user)
             NULL, NULL,
             xs_stock(XSTYPE_FALSE), "",
             xs_stock(XSTYPE_FALSE), NULL,
-            NULL, 1, NULL, NULL, 0),
+            NULL, 1, NULL, NULL, 0, NULL),
 
         /** operations **/
         xs_html_tag("details",
@@ -1809,7 +1813,8 @@ xs_html *html_entry_controls(snac *user, const char *actor,
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                NULL, 0, att_files, att_alt_texts, is_draft(user, id))),
+                NULL, 0, att_files, att_alt_texts, is_draft(user, id),
+                xs_dict_get(msg, "published"))),
             xs_html_tag("p", NULL));
     }
 
@@ -1828,7 +1833,7 @@ xs_html *html_entry_controls(snac *user, const char *actor,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                id, 0, NULL, NULL, 0)),
+                id, 0, NULL, NULL, 0, NULL)),
             xs_html_tag("p", NULL));
     }
 
@@ -3165,7 +3170,7 @@ xs_html *html_people_list(snac *user, xs_list *list, const char *header, const c
                     NULL, actor_id,
                     xs_stock(XSTYPE_FALSE), "",
                     xs_stock(XSTYPE_FALSE), NULL,
-                    NULL, 0, NULL, NULL, 0),
+                    NULL, 0, NULL, NULL, 0, NULL),
                 xs_html_tag("p", NULL));
 
             xs_html_add(snac_post, snac_controls);
@@ -4305,22 +4310,28 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 msg = xs_dict_set(msg, "summary",   xs_is_null(summary) ? "..." : summary);
             }
 
-            if (*post_date) {
-                /* scheduled post */
-                xs *sched_date = xs_fmt("%sT%s:00", post_date, *post_time ? post_time : "12:00");
-                time_t t = xs_parse_localtime(sched_date, "%Y-%m-%dT%H:%M:%S");
+            if (xs_is_string(post_date) && *post_date) {
+                xs *local_pubdate = xs_fmt("%sT%s", post_date,
+                    xs_is_string(post_time) && *post_time ? post_time : "00:00:00");
+
+                time_t t = xs_parse_iso_date(local_pubdate, 1);
 
                 if (t != 0) {
                     xs *iso_date = xs_str_iso_date(t);
                     msg = xs_dict_set(msg, "published", iso_date);
 
-                    snac_debug(&snac, 1, xs_fmt("Scheduled date: [%s]", iso_date));
+                    snac_debug(&snac, 1, xs_fmt("Published date: [%s]", iso_date));
                 }
-                else {
-                    snac_log(&snac, xs_fmt("Invalid scheduled date: [%s]", sched_date));
-                    post_date = "";
-                }
+                else
+                    snac_log(&snac, xs_fmt("Invalid post date: [%s]", local_pubdate));
             }
+
+            /* is the published date from the future? */
+            int future_post = 0;
+            xs *right_now = xs_str_utctime(0, ISO_DATE_SPEC);
+
+            if (strcmp(xs_dict_get(msg, "published"), right_now) > 0)
+                future_post = 1;
 
             if (xs_is_null(edit_id)) {
                 /* new message */
@@ -4328,6 +4339,10 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
                 if (store_as_draft) {
                     draft_add(&snac, id, msg);
+                }
+                else
+                if (future_post) {
+                    snac_log(&snac, xs_fmt("DUMMY scheduled post 1 %s", id));
                 }
                 else {
                     c_msg = msg_create(&snac, msg);
@@ -4340,7 +4355,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
                 if (valid_status(object_get(edit_id, &p_msg))) {
                     /* copy relevant fields from previous version */
-                    char *fields[] = { "id", "context", "url", "published",
+                    char *fields[] = { "id", "context", "url",
                                        "to", "inReplyTo", NULL };
                     int n;
 
@@ -4356,15 +4371,23 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                     if (is_draft(&snac, edit_id)) {
                         /* message was previously a draft; it's a create activity */
 
-                        /* set the published field to now */
-                        xs *published = xs_str_utctime(0, ISO_DATE_SPEC);
-                        msg = xs_dict_set(msg, "published", published);
+                        /* if the date is from the past, overwrite it with right_now */
+                        if (strcmp(xs_dict_get(msg, "published"), right_now) < 0) {
+                            snac_debug(&snac, 1, xs_fmt("setting draft ancient date to %s", right_now));
+                            msg = xs_dict_set(msg, "published", right_now);
+                        }
 
                         /* overwrite object */
                         object_add_ow(edit_id, msg);
 
-                        c_msg = msg_create(&snac, msg);
-                        timeline_add(&snac, edit_id, msg);
+                        if (future_post) {
+                            snac_log(&snac, xs_fmt("DUMMY scheduled post 2 %s", edit_id));
+                        }
+                        else {
+                            c_msg = msg_create(&snac, msg);
+                            timeline_add(&snac, edit_id, msg);
+                        }
+
                         draft_del(&snac, edit_id);
                     }
                     else {
