@@ -2870,6 +2870,18 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_text(L("drafts")))));
         }
 
+        {
+            /* show the list of scheduled posts */
+            xs *url = xs_fmt("%s/sched", user->actor);
+            xs_html_add(lol,
+                xs_html_tag("li",
+                    xs_html_tag("a",
+                        xs_html_attr("href", url),
+                        xs_html_attr("class", "snac-list-link"),
+                        xs_html_attr("title", L("Scheduled posts")),
+                        xs_html_text(L("scheduled posts")))));
+        }
+
         /* the list of followed hashtags */
         const char *followed_hashtags = xs_dict_get(user->config, "followed_hashtags");
 
@@ -3919,6 +3931,21 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
     }
     else
+    if (strcmp(p_path, "sched") == 0) { /** list of scheduled posts **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = HTTP_STATUS_UNAUTHORIZED;
+        }
+        else {
+            xs *list = scheduled_list(&snac);
+
+            *body = html_timeline(&snac, list, 0, skip, show,
+                0, L("Scheduled posts"), "", 0, error);
+            *b_size = strlen(*body);
+            status  = HTTP_STATUS_OK;
+        }
+    }
+    else
     if (xs_startswith(p_path, "list/")) { /** list timelines **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
@@ -4342,7 +4369,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 }
                 else
                 if (future_post) {
-                    snac_log(&snac, xs_fmt("DUMMY scheduled post 1 %s", id));
+                    schedule_add(&snac, id, msg);
                 }
                 else {
                     c_msg = msg_create(&snac, msg);
@@ -4381,7 +4408,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                         object_add_ow(edit_id, msg);
 
                         if (future_post) {
-                            snac_log(&snac, xs_fmt("DUMMY scheduled post 2 %s", edit_id));
+                            schedule_add(&snac, edit_id, msg);
                         }
                         else {
                             c_msg = msg_create(&snac, msg);
@@ -4390,7 +4417,15 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
                         draft_del(&snac, edit_id);
                     }
+                    else
+                    if (is_scheduled(&snac, edit_id)) {
+                        /* editing an scheduled post; just update it */
+                        schedule_add(&snac, edit_id, msg);
+                    }
                     else {
+                        /* ignore the (possibly changed) published date */
+                        msg = xs_dict_set(msg, "published", xs_dict_get(p_msg, "published"));
+
                         /* set the updated field */
                         xs *updated = xs_str_utctime(0, ISO_DATE_SPEC);
                         msg = xs_dict_set(msg, "updated", updated);
@@ -4474,6 +4509,9 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         if (strcmp(action, L("Hide")) == 0) { /** **/
             if (is_draft(&snac, id))
                 draft_del(&snac, id);
+            else
+            if (is_scheduled(&snac, id))
+                schedule_del(&snac, id);
             else
                 hide(&snac, id);
         }
@@ -4569,6 +4607,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 timeline_del(&snac, id);
 
                 draft_del(&snac, id);
+
+                schedule_del(&snac, id);
 
                 snac_log(&snac, xs_fmt("deleted entry %s", id));
             }

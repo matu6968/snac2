@@ -1929,6 +1929,43 @@ xs_list *draft_list(snac *user)
 }
 
 
+/** scheduled posts **/
+
+int is_scheduled(snac *user, const char *id)
+/* returns true if this note is scheduled for future sending */
+{
+    return object_user_cache_in(user, id, "sched");
+}
+
+
+void schedule_del(snac *user, const char *id)
+/* deletes an scheduled post */
+{
+    object_user_cache_del(user, id, "sched");
+}
+
+
+void schedule_add(snac *user, const char *id, const xs_dict *msg)
+/* schedules this post for later */
+{
+    /* delete from the index, in case it was already there */
+    schedule_del(user, id);
+
+    /* overwrite object */
+    object_add_ow(id, msg);
+
+    /* [re]add to the index */
+    object_user_cache_add(user, id, "sched");
+}
+
+
+xs_list *scheduled_list(snac *user)
+/* return the list of scheduled posts */
+{
+    return object_user_cache_list(user, "sched", XS_ALL, 1);
+}
+
+
 /** hiding **/
 
 xs_str *_hidden_fn(snac *snac, const char *id)

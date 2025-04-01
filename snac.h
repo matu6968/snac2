@@ -205,6 +205,11 @@ void draft_del(snac *user, const char *id);
 void draft_add(snac *user, const char *id, const xs_dict *msg);
 xs_list *draft_list(snac *user);
 
+int is_scheduled(snac *user, const char *id);
+void schedule_del(snac *user, const char *id);
+void schedule_add(snac *user, const char *id, const xs_dict *msg);
+xs_list *scheduled_list(snac *user);
+
 int limited(snac *user, const char *id, int cmd);
 #define is_limited(user, id) limited((user), (id), 0)
 #define limit(user, id) limited((user), (id), 1)
