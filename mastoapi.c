@@ -2726,14 +2726,24 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 msg = xs_dict_set(msg, "summary",   summary);
             }
 
-            /* store */
-            timeline_add(&snac, xs_dict_get(msg, "id"), msg);
+            /* scheduled? */
+            const char *scheduled_at = xs_dict_get(args, "scheduled_at");
 
-            /* 'Create' message */
-            xs *c_msg = msg_create(&snac, msg);
-            enqueue_message(&snac, c_msg);
+            if (xs_is_string(scheduled_at) && *scheduled_at) {
+                msg = xs_dict_set(msg, "published", scheduled_at);
 
-            timeline_touch(&snac);
+                schedule_add(&snac, xs_dict_get(msg, "id"), msg);
+            }
+            else {
+                /* store */
+                timeline_add(&snac, xs_dict_get(msg, "id"), msg);
+
+                /* 'Create' message */
+                xs *c_msg = msg_create(&snac, msg);
+                enqueue_message(&snac, c_msg);
+
+                timeline_touch(&snac);
+            }
 
             /* convert to a mastodon status as a response code */
             xs *st = mastoapi_status(&snac, msg);
