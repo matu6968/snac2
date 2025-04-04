@@ -4824,6 +4824,9 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             /* set the option */
             msg = xs_dict_append(msg, "name", v);
 
+            /* delete the content */
+            msg = xs_dict_del(msg, "content");
+
             xs *c_msg = msg_create(&snac, msg);
 
             enqueue_message(&snac, c_msg);
