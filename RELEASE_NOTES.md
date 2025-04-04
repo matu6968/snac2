@@ -4,6 +4,8 @@
 
 Added support for scheduled posts.
 
+Fixed incorrect poll vote format, which was causing problems in platforms like GotoSocial.
+
 Mastodon API: added support for `/api/v1/instance/peers`.
 
 Some Czech and Russian translation fixes.
