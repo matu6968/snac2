@@ -2734,7 +2734,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     /* add an invisible hr, to help differentiate between posts in text browsers */
     xs_html_add(entry_top,
         xs_html_sctag("hr",
-            xs_html_attr("style", "display: none")));
+            xs_html_attr("hidden", NULL)));
 
     return entry_top;
 }
