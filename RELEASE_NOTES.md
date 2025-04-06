@@ -1,6 +1,16 @@
 # Release Notes
 
-## 2.74
+## UNRELEASED
+
+Added support for scheduled posts.
+
+Fixed incorrect poll vote format, which was causing problems in platforms like GotoSocial.
+
+Mastodon API: added support for `/api/v1/instance/peers`.
+
+Some Czech and Russian translation fixes.
+
+## 2.74 "The Days of Nicole, the Fediverse Chick"
 
 Added Spanish (default, Argentina and Uruguay) translation (contributed by gnemmi).
 
@@ -22,7 +32,7 @@ Added Greek translation (contributed by uhuru).
 
 Added Italian translation (contributed by anzu).
 
-Mastodon API: added support for /api/v1/custom_emojis (contributed by violette).
+Mastodon API: added support for `/api/v1/custom_emojis` (contributed by violette).
 
 Improved Undo+Follow logic (contributed by rozenglass).
 

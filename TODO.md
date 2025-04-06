@@ -6,15 +6,11 @@ Investigate the problem with boosts inside the same instance (see https://codebe
 
 Editing / Updating a post does not index newly added hashtags.
 
-Wrong level of message visibility when using the Mastodon API: https://codeberg.org/grunfink/snac2/issues/200#issuecomment-2351042
-
 Unfollowing guppe groups seems to work (http status of 200), but messages continue to arrive as if it didn't.
 
 Important: deleting a follower should do more that just delete the object, see https://codeberg.org/grunfink/snac2/issues/43#issuecomment-956721
 
 ## Wishlist
-
-Each notification should show a link to the full thread, to see it in context.
 
 The instance timeline should also show boosts from users.
 
@@ -30,13 +26,9 @@ Integrate "Added handling for International Domain Names" PR https://codeberg.or
 
 Do something about Akkoma and Misskey's quoted replies (they use the `quoteUrl` field instead of `inReplyTo`).
 
-Add a list of hashtags to drop.
-
 Take a look at crashes in the brittle Mastodon official app (crashes when hitting the reply button, crashes or 'ownVotes is null' errors when trying to show polls).
 
 The 'history' pages are just monthly HTML snapshots of the local timeline. This is ok and cheap and easy, but is problematic if you e.g. intentionally delete a post because it will remain there in the history forever. If you activate local timeline purging, purged entries will remain in the history as 'ghosts', which may or may not be what the user wants.
-
-The actual storage system wastes too much disk space (lots of small files that really consume 4k of storage). Consider alternatives.
 
 ## Closed
 
@@ -367,3 +359,11 @@ Add support for /authorize_interaction (whatever it is) (2025-01-16T14:45:28+010
 Implement following of hashtags (this is not trivial) (2025-01-30T16:12:16+0100).
 
 Add support for subscribing and posting to relays (see https://codeberg.org/grunfink/snac2/issues/216 for more information) (2025-01-30T16:12:34+0100).
+
+Wrong level of message visibility when using the Mastodon API: https://codeberg.org/grunfink/snac2/issues/200#issuecomment-2351042 (2025-03-23T15:44:35+0100).
+
+Each notification should show a link to the full thread, to see it in context (2025-03-23T15:44:50+0100).
+
+Add a list of hashtags to drop (2025-03-23T15:45:30+0100).
+
+The actual storage system wastes too much disk space (lots of small files that really consume 4k of storage). Consider alternatives (2025-03-23T15:46:02+0100).

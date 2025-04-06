@@ -14,6 +14,7 @@
 #include "xs_curl.h"
 #include "xs_unicode.h"
 #include "xs_url.h"
+#include "xs_random.h"
 
 #include "snac.h"
 
@@ -72,12 +73,19 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
         const xs_dict *v;
         int c = 0;
 
+        xs_set rep_emoji;
+        xs_set_init(&rep_emoji);
+
         while (xs_list_next(tag_list, &v, &c)) {
             const char *t = xs_dict_get(v, "type");
 
             if (t && strcmp(t, "Emoji") == 0) {
                 const char *n = xs_dict_get(v, "name");
                 const xs_dict *i = xs_dict_get(v, "icon");
+
+                /* avoid repeated emojis (Misskey seems to return this) */
+                if (xs_set_add(&rep_emoji, n) == 0)
+                    continue;
 
                 if (xs_is_string(n) && xs_is_dict(i)) {
                     const char *u = xs_dict_get(i, "url");
@@ -93,6 +101,8 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                                 xs_html_attr("loading", "lazy"),
                                 xs_html_attr("src", url),
                                 xs_html_attr("alt", n),
+                                xs_html_attr("title", n),
+                                xs_html_attr("class", "snac-emoji"),
                                 xs_html_attr("style", style));
 
                             xs *s1 = xs_html_render(img);
@@ -104,6 +114,8 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                 }
             }
         }
+
+        xs_set_free(&rep_emoji);
     }
 
     return s;
@@ -339,7 +351,7 @@ xs_html *html_note(snac *user, const char *summary,
                    const xs_val *mnt_only, const char *redir,
                    const char *in_reply_to, int poll,
                    const xs_list *att_files, const xs_list *att_alt_texts,
-                   int is_draft)
+                   int is_draft, const char *published)
 /* Yes, this is a FUCKTON of arguments and I'm a bit embarrased */
 {
     xs *action = xs_fmt("%s/admin/note", user->actor);
@@ -428,6 +440,36 @@ xs_html *html_note(snac *user, const char *summary,
                 xs_html_attr("type", "checkbox"),
                 xs_html_attr("name", "is_draft"),
                 xs_html_attr(is_draft ? "checked" : "", NULL))));
+
+    /* post date and time */
+    xs *post_date = NULL;
+    xs *post_time = NULL;
+
+    if (xs_is_string(published)) {
+        time_t t = xs_parse_iso_date(published, 0);
+
+        if (t > 0) {
+            post_date = xs_str_time(t, "%Y-%m-%d", 1);
+            post_time = xs_str_time(t, "%H:%M:%S", 1);
+        }
+    }
+
+    if (edit_id == NULL || is_draft || is_scheduled(user, edit_id)) {
+        xs_html_add(form,
+            xs_html_tag("p",
+                xs_html_text(L("Post date and time (empty, right now; in the future, schedule for later):")),
+                xs_html_sctag("br", NULL),
+                xs_html_sctag("input",
+                    xs_html_attr("type",  "date"),
+                    xs_html_attr("value", post_date ? post_date : ""),
+                    xs_html_attr("name",  "post_date")),
+                xs_html_text(" "),
+                xs_html_sctag("input",
+                    xs_html_attr("type",  "time"),
+                    xs_html_attr("value", post_time ? post_time : ""),
+                    xs_html_attr("step",  "1"),
+                    xs_html_attr("name",  "post_time"))));
+    }
 
     if (edit_id)
         xs_html_add(form,
@@ -1116,7 +1158,7 @@ xs_html *html_top_controls(snac *user)
             NULL, NULL,
             xs_stock(XSTYPE_FALSE), "",
             xs_stock(XSTYPE_FALSE), NULL,
-            NULL, 1, NULL, NULL, 0),
+            NULL, 1, NULL, NULL, 0, NULL),
 
         /** operations **/
         xs_html_tag("details",
@@ -1774,7 +1816,8 @@ xs_html *html_entry_controls(snac *user, const char *actor,
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                NULL, 0, att_files, att_alt_texts, is_draft(user, id))),
+                NULL, 0, att_files, att_alt_texts, is_draft(user, id),
+                xs_dict_get(msg, "published"))),
             xs_html_tag("p", NULL));
     }
 
@@ -1793,7 +1836,7 @@ xs_html *html_entry_controls(snac *user, const char *actor,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                id, 0, NULL, NULL, 0)),
+                id, 0, NULL, NULL, 0, NULL)),
             xs_html_tag("p", NULL));
     }
 
@@ -2689,6 +2732,11 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         }
     }
 
+    /* add an invisible hr, to help differentiate between posts in text browsers */
+    xs_html_add(entry_top,
+        xs_html_sctag("hr",
+            xs_html_attr("hidden", NULL)));
+
     return entry_top;
 }
 
@@ -2828,6 +2876,18 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_attr("class", "snac-list-link"),
                         xs_html_attr("title", L("Post drafts")),
                         xs_html_text(L("drafts")))));
+        }
+
+        {
+            /* show the list of scheduled posts */
+            xs *url = xs_fmt("%s/sched", user->actor);
+            xs_html_add(lol,
+                xs_html_tag("li",
+                    xs_html_tag("a",
+                        xs_html_attr("href", url),
+                        xs_html_attr("class", "snac-list-link"),
+                        xs_html_attr("title", L("Scheduled posts")),
+                        xs_html_text(L("scheduled posts")))));
         }
 
         /* the list of followed hashtags */
@@ -3130,7 +3190,7 @@ xs_html *html_people_list(snac *user, xs_list *list, const char *header, const c
                     NULL, actor_id,
                     xs_stock(XSTYPE_FALSE), "",
                     xs_stock(XSTYPE_FALSE), NULL,
-                    NULL, 0, NULL, NULL, 0),
+                    NULL, 0, NULL, NULL, 0, NULL),
                 xs_html_tag("p", NULL));
 
             xs_html_add(snac_post, snac_controls);
@@ -3879,6 +3939,21 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         }
     }
     else
+    if (strcmp(p_path, "sched") == 0) { /** list of scheduled posts **/
+        if (!login(&snac, req)) {
+            *body  = xs_dup(uid);
+            status = HTTP_STATUS_UNAUTHORIZED;
+        }
+        else {
+            xs *list = scheduled_list(&snac);
+
+            *body = html_timeline(&snac, list, 0, skip, show,
+                0, L("Scheduled posts"), "", 0, error);
+            *b_size = strlen(*body);
+            status  = HTTP_STATUS_OK;
+        }
+    }
+    else
     if (xs_startswith(p_path, "list/")) { /** list timelines **/
         if (!login(&snac, req)) {
             *body  = xs_dup(uid);
@@ -4175,12 +4250,14 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         snac_debug(&snac, 1, xs_fmt("web action '%s' received", p_path));
 
         /* post note */
-        const xs_str *content      = xs_dict_get(p_vars, "content");
-        const xs_str *in_reply_to  = xs_dict_get(p_vars, "in_reply_to");
-        const xs_str *to           = xs_dict_get(p_vars, "to");
-        const xs_str *sensitive    = xs_dict_get(p_vars, "sensitive");
-        const xs_str *summary      = xs_dict_get(p_vars, "summary");
-        const xs_str *edit_id      = xs_dict_get(p_vars, "edit_id");
+        const char *content      = xs_dict_get(p_vars, "content");
+        const char *in_reply_to  = xs_dict_get(p_vars, "in_reply_to");
+        const char *to           = xs_dict_get(p_vars, "to");
+        const char *sensitive    = xs_dict_get(p_vars, "sensitive");
+        const char *summary      = xs_dict_get(p_vars, "summary");
+        const char *edit_id      = xs_dict_get(p_vars, "edit_id");
+        const char *post_date    = xs_dict_get_def(p_vars, "post_date", "");
+        const char *post_time    = xs_dict_get_def(p_vars, "post_time", "");
         int priv             = !xs_is_null(xs_dict_get(p_vars, "mentioned_only"));
         int store_as_draft   = !xs_is_null(xs_dict_get(p_vars, "is_draft"));
         xs *attach_list      = xs_list_new();
@@ -4210,9 +4287,12 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 const char *fn = xs_list_get(attach_file, 0);
 
                 if (xs_is_string(fn) && *fn != '\0') {
-                    char *ext = strrchr(fn, '.');
-                    xs *hash  = xs_md5_hex(fn, strlen(fn));
-                    xs *id    = xs_fmt("%s%s", hash, ext);
+                    char rnd[32];
+                    xs_rnd_buf(rnd, sizeof(rnd));
+
+                    const char *ext = strrchr(fn, '.');
+                    xs *hash  = xs_md5_hex(rnd, strlen(rnd));
+                    xs *id    = xs_fmt("post-%s%s", hash, ext ? ext : "");
                     xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
                     int fo    = xs_number_get(xs_list_get(attach_file, 1));
                     int fs    = xs_number_get(xs_list_get(attach_file, 2));
@@ -4268,12 +4348,39 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 msg = xs_dict_set(msg, "summary",   xs_is_null(summary) ? "..." : summary);
             }
 
+            if (xs_is_string(post_date) && *post_date) {
+                xs *local_pubdate = xs_fmt("%sT%s", post_date,
+                    xs_is_string(post_time) && *post_time ? post_time : "00:00:00");
+
+                time_t t = xs_parse_iso_date(local_pubdate, 1);
+
+                if (t != 0) {
+                    xs *iso_date = xs_str_iso_date(t);
+                    msg = xs_dict_set(msg, "published", iso_date);
+
+                    snac_debug(&snac, 1, xs_fmt("Published date: [%s]", iso_date));
+                }
+                else
+                    snac_log(&snac, xs_fmt("Invalid post date: [%s]", local_pubdate));
+            }
+
+            /* is the published date from the future? */
+            int future_post = 0;
+            xs *right_now = xs_str_utctime(0, ISO_DATE_SPEC);
+
+            if (strcmp(xs_dict_get(msg, "published"), right_now) > 0)
+                future_post = 1;
+
             if (xs_is_null(edit_id)) {
                 /* new message */
                 const char *id = xs_dict_get(msg, "id");
 
                 if (store_as_draft) {
                     draft_add(&snac, id, msg);
+                }
+                else
+                if (future_post) {
+                    schedule_add(&snac, id, msg);
                 }
                 else {
                     c_msg = msg_create(&snac, msg);
@@ -4286,7 +4393,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
                 if (valid_status(object_get(edit_id, &p_msg))) {
                     /* copy relevant fields from previous version */
-                    char *fields[] = { "id", "context", "url", "published",
+                    char *fields[] = { "id", "context", "url",
                                        "to", "inReplyTo", NULL };
                     int n;
 
@@ -4302,18 +4409,34 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                     if (is_draft(&snac, edit_id)) {
                         /* message was previously a draft; it's a create activity */
 
-                        /* set the published field to now */
-                        xs *published = xs_str_utctime(0, ISO_DATE_SPEC);
-                        msg = xs_dict_set(msg, "published", published);
+                        /* if the date is from the past, overwrite it with right_now */
+                        if (strcmp(xs_dict_get(msg, "published"), right_now) < 0) {
+                            snac_debug(&snac, 1, xs_fmt("setting draft ancient date to %s", right_now));
+                            msg = xs_dict_set(msg, "published", right_now);
+                        }
 
                         /* overwrite object */
                         object_add_ow(edit_id, msg);
 
-                        c_msg = msg_create(&snac, msg);
-                        timeline_add(&snac, edit_id, msg);
+                        if (future_post) {
+                            schedule_add(&snac, edit_id, msg);
+                        }
+                        else {
+                            c_msg = msg_create(&snac, msg);
+                            timeline_add(&snac, edit_id, msg);
+                        }
+
                         draft_del(&snac, edit_id);
                     }
+                    else
+                    if (is_scheduled(&snac, edit_id)) {
+                        /* editing an scheduled post; just update it */
+                        schedule_add(&snac, edit_id, msg);
+                    }
                     else {
+                        /* ignore the (possibly changed) published date */
+                        msg = xs_dict_set(msg, "published", xs_dict_get(p_msg, "published"));
+
                         /* set the updated field */
                         xs *updated = xs_str_utctime(0, ISO_DATE_SPEC);
                         msg = xs_dict_set(msg, "updated", updated);
@@ -4397,6 +4520,9 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         if (strcmp(action, L("Hide")) == 0) { /** **/
             if (is_draft(&snac, id))
                 draft_del(&snac, id);
+            else
+            if (is_scheduled(&snac, id))
+                schedule_del(&snac, id);
             else
                 hide(&snac, id);
         }
@@ -4492,6 +4618,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 timeline_del(&snac, id);
 
                 draft_del(&snac, id);
+
+                schedule_del(&snac, id);
 
                 snac_log(&snac, xs_fmt("deleted entry %s", id));
             }
@@ -4636,7 +4764,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                     if (xs_startswith(mimetype, "image/")) {
                         const char *ext = strrchr(fn, '.');
                         xs *hash        = xs_md5_hex(fn, strlen(fn));
-                        xs *id          = xs_fmt("%s%s", hash, ext);
+                        xs *id          = xs_fmt("%s-%s%s", uploads[n], hash, ext ? ext : "");
                         xs *url         = xs_fmt("%s/s/%s", snac.actor, id);
                         int fo          = xs_number_get(xs_list_get(uploaded_file, 1));
                         int fs          = xs_number_get(xs_list_get(uploaded_file, 2));
@@ -4704,6 +4832,9 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
             /* set the option */
             msg = xs_dict_append(msg, "name", v);
+
+            /* delete the content */
+            msg = xs_dict_del(msg, "content");
 
             xs *c_msg = msg_create(&snac, msg);
 
