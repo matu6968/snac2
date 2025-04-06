@@ -14,6 +14,7 @@
 #include "xs_curl.h"
 #include "xs_unicode.h"
 #include "xs_url.h"
+#include "xs_random.h"
 
 #include "snac.h"
 
@@ -4286,9 +4287,12 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 const char *fn = xs_list_get(attach_file, 0);
 
                 if (xs_is_string(fn) && *fn != '\0') {
+                    char rnd[32];
+                    xs_rnd_buf(rnd, sizeof(rnd));
+
                     char *ext = strrchr(fn, '.');
-                    xs *hash  = xs_md5_hex(fn, strlen(fn));
-                    xs *id    = xs_fmt("%s%s", hash, ext);
+                    xs *hash  = xs_md5_hex(rnd, strlen(rnd));
+                    xs *id    = xs_fmt("p-%s%s", hash, ext ? ext : "");
                     xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
                     int fo    = xs_number_get(xs_list_get(attach_file, 1));
                     int fs    = xs_number_get(xs_list_get(attach_file, 2));
