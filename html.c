@@ -143,6 +143,26 @@ xs_str *actor_name(xs_dict *actor, const char *proxy)
 }
 
 
+xs_str *format_text_with_emoji(snac *user, const char *text, int ems, const char *proxy)
+/* needed when we have local text with no tags attached */
+{
+    xs *tags = xs_list_new();
+    xs *name1 = not_really_markdown(text, NULL, &tags);
+
+    xs_str *name3;
+    if (user) {
+        xs *name2 = process_tags(user, name1, &tags);
+        name3 = sanitize(name2);
+    }
+    else {
+        name3 = sanitize(name1);
+        name3 = xs_replace_i(name3, "<br>", "");
+    }
+
+    return replace_shortnames(name3, tags, ems, proxy);
+}
+
+
 xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
                         const char *udate, const char *url, int priv,
                         int in_people, const char *proxy, const char *lang,
@@ -976,16 +996,12 @@ static xs_html *html_user_body(snac *user, int read_only)
         xs_dict_get(user->config, "uid"),
         xs_dict_get(srv_config, "host"));
 
-    // also try to make emojis render in local usernames, specifically in the user info thing in the web ui
-    xs *name_tags = xs_list_new();
-    xs *name1 = not_really_markdown(xs_dict_get(user->config, "name"), NULL, &name_tags);
-    xs *name2 = sanitize(name1);
-    name2 = replace_shortnames(name2, name_tags, 1, proxy);
+    xs *display_name = format_text_with_emoji(NULL, xs_dict_get(user->config, "name"), 1, proxy);
 
     xs_html_add(top_user,
         xs_html_tag("p",
             xs_html_attr("class", "p-name snac-top-user-name"),
-            xs_html_raw(name2)),
+            xs_html_raw(display_name)),
         xs_html_tag("p",
             xs_html_attr("class", "snac-top-user-id"),
             xs_html_text(handle)));
@@ -1013,16 +1029,11 @@ static xs_html *html_user_body(snac *user, int read_only)
     }
 
     if (read_only) {
-        xs *tags = xs_list_new();
-        xs *bio1 = not_really_markdown(xs_dict_get(user->config, "bio"), NULL, &tags);
-        xs *bio2 = process_tags(user, bio1, &tags);
-        xs *bio3 = sanitize(bio2);
-
-        bio3 = replace_shortnames(bio3, tags, 2, proxy);
+        xs *bio = format_text_with_emoji(user, xs_dict_get(user->config, "bio"), 2, proxy);
 
         xs_html *top_user_bio = xs_html_tag("div",
             xs_html_attr("class", "p-note snac-top-user-bio"),
-            xs_html_raw(bio3)); /* already sanitized */
+            xs_html_raw(bio)); /* already sanitized */
 
         xs_html_add(top_user,
             top_user_bio);
@@ -3675,7 +3686,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
             if (xs_is_true(xs_dict_get(srv_config, "strict_public_timelines")))
                 list = timeline_simple_list(&snac, "public", skip, show, &more);
-            else 
+            else
                 list = timeline_list(&snac, "public", skip, show, &more);
 
             xs *pins = pinned_list(&snac);
