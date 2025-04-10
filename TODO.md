@@ -12,6 +12,8 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
+Add account reporting.
+
 The instance timeline should also show boosts from users.
 
 Mastoapi: implement /v1/conversations.
