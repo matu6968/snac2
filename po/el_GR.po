@@ -14,120 +14,120 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.5\n"
 
-#: html.c:372
+#: html.c:384
 msgid "Sensitive content: "
 msgstr "Ευαίσθητο περιεχόμενο: "
 
-#: html.c:380
+#: html.c:392
 msgid "Sensitive content description"
 msgstr "Περιγραφή ευαίσθητου περιεχομένου"
 
-#: html.c:393
+#: html.c:405
 msgid "Only for mentioned people: "
 msgstr "Μόνο για αναφερόμενα άτομα: "
 
-#: html.c:416
+#: html.c:428
 msgid "Reply to (URL): "
 msgstr "Απάντηση σε (URL): "
 
-#: html.c:425
+#: html.c:437
 msgid "Don't send, but store as a draft"
 msgstr "Μη δημοσιεύσεις, αλλά αποθήκευσε σαν προσχέδιο"
 
-#: html.c:426
+#: html.c:438
 msgid "Draft:"
 msgstr "Προσχέδιο:"
 
-#: html.c:446
+#: html.c:492
 msgid "Attachments..."
 msgstr "Επισυνάψεις..."
 
-#: html.c:469
+#: html.c:515
 msgid "File:"
 msgstr "Αρχείο:"
 
-#: html.c:473
+#: html.c:519
 msgid "Clear this field to delete the attachment"
 msgstr "Καθάρισε αυτό το πεδίο για να διαγράψεις την επισύναψη"
 
-#: html.c:482 html.c:507
+#: html.c:528 html.c:553
 msgid "Attachment description"
 msgstr "Περιγραφή επισύναψης"
 
-#: html.c:518
+#: html.c:564
 msgid "Poll..."
 msgstr "Δημοσκόπηση..."
 
-#: html.c:520
+#: html.c:566
 msgid "Poll options (one per line, up to 8):"
 msgstr "Επιλογές δημοσκόπησης (μία ανά σειρά, μέχρι 8):"
 
-#: html.c:532
+#: html.c:578
 msgid "One choice"
 msgstr "Μία επιλογή"
 
-#: html.c:535
+#: html.c:581
 msgid "Multiple choices"
 msgstr "Πολλαπλές επιλογές"
 
-#: html.c:541
+#: html.c:587
 msgid "End in 5 minutes"
 msgstr "Τελειώνει σε 5 λεπτά"
 
-#: html.c:545
+#: html.c:591
 msgid "End in 1 hour"
 msgstr "Τελειώνει σε 1 ώρα"
 
-#: html.c:548
+#: html.c:594
 msgid "End in 1 day"
 msgstr "Τελειώνει σε 1 ημέρα"
 
-#: html.c:556
+#: html.c:602
 msgid "Post"
 msgstr "Δημοσίευση"
 
-#: html.c:653 html.c:660
+#: html.c:699 html.c:706
 msgid "Site description"
 msgstr "Περιγραφή ιστότοπου"
 
-#: html.c:671
+#: html.c:717
 msgid "Admin email"
 msgstr "Email διαχειριστή"
 
-#: html.c:684
+#: html.c:730
 msgid "Admin account"
 msgstr "Διαχειριστής"
 
-#: html.c:752 html.c:1088
+#: html.c:798 html.c:1134
 #, c-format
 msgid "%d following, %d followers"
 msgstr "%d ακολουθείτε, %d ακόλουθοι"
 
-#: html.c:842
+#: html.c:888
 msgid "RSS"
 msgstr "RSS"
 
-#: html.c:847 html.c:875
+#: html.c:893 html.c:921
 msgid "private"
 msgstr "ιδιωτικό"
 
-#: html.c:871
+#: html.c:917
 msgid "public"
 msgstr "δημόσιο"
 
-#: html.c:879
+#: html.c:925
 msgid "notifications"
 msgstr "ειδοποιήσεις"
 
-#: html.c:884
+#: html.c:930
 msgid "people"
 msgstr "άνθρωποι"
 
-#: html.c:888
+#: html.c:934
 msgid "instance"
 msgstr "διακομιστής"
 
-#: html.c:897
+#: html.c:943
 msgid ""
 "Search posts by URL or content (regular expression), @user@host accounts, or "
 "#tag"
@@ -135,554 +135,554 @@ msgstr ""
 "Αναζήτηση δημοσιεύσεων με URL ή περιεχόμενο (κανονική έκφραση), "
 "@χρήστης@διακομιστής, ή #ετικέτα"
 
-#: html.c:898
+#: html.c:944
 msgid "Content search"
 msgstr "Αναζήτηση περιεχομένου"
 
-#: html.c:1020
+#: html.c:1066
 msgid "verified link"
 msgstr "πιστοποιημένος σύνδεσμος"
 
-#: html.c:1077 html.c:2459 html.c:2472 html.c:2481
+#: html.c:1123 html.c:2512 html.c:2525 html.c:2534
 msgid "Location: "
 msgstr "Τοποθεσία: "
 
-#: html.c:1113
+#: html.c:1159
 msgid "New Post..."
 msgstr "Νέα Δημοσίευση..."
 
-#: html.c:1115
+#: html.c:1161
 msgid "What's on your mind?"
 msgstr "Τι έχεις στο μυαλό σου;"
 
-#: html.c:1124
+#: html.c:1170
 msgid "Operations..."
 msgstr "Λειτουργίες..."
 
-#: html.c:1139 html.c:1714 html.c:3095 html.c:4412
+#: html.c:1185 html.c:1760 html.c:3165 html.c:4548
 msgid "Follow"
 msgstr "Ακολούθησε"
 
-#: html.c:1141
+#: html.c:1187
 msgid "(by URL or user@host)"
 msgstr "(με URL ή user@host)"
 
-#: html.c:1156 html.c:1690 html.c:4364
+#: html.c:1202 html.c:1736 html.c:4497
 msgid "Boost"
 msgstr "Ενίσχυση"
 
-#: html.c:1158 html.c:1175
+#: html.c:1204 html.c:1221
 msgid "(by URL)"
 msgstr "(από URL)"
 
-#: html.c:1173 html.c:1669 html.c:4355
+#: html.c:1219 html.c:1715 html.c:4488
 msgid "Like"
 msgstr "Μου αρέσει"
 
-#: html.c:1278
+#: html.c:1324
 msgid "User Settings..."
 msgstr "Ρυθμίσεις Χρήστη..."
 
-#: html.c:1287
+#: html.c:1333
 msgid "Display name:"
 msgstr "Προβαλλόμενο όνομα:"
 
-#: html.c:1293
+#: html.c:1339
 msgid "Your name"
 msgstr "Το όνομα σου"
 
-#: html.c:1295
+#: html.c:1341
 msgid "Avatar: "
 msgstr "Εικόνα προφίλ: "
 
-#: html.c:1303
+#: html.c:1349
 msgid "Delete current avatar"
 msgstr "Διαγραφή τρέχουσας εικόνας προφίλ"
 
-#: html.c:1305
+#: html.c:1351
 msgid "Header image (banner): "
 msgstr "Εικόνα κεφαλίδας (banner): "
 
-#: html.c:1313
+#: html.c:1359
 msgid "Delete current header image"
 msgstr "Διαγραφή τρέχουσας εικόνας κεφαλίδας"
 
-#: html.c:1315
+#: html.c:1361
 msgid "Bio:"
 msgstr "Βιογραφικό:"
 
-#: html.c:1321
+#: html.c:1367
 msgid "Write about yourself here..."
 msgstr "Γράψε για τον εαυτό σου εδώ..."
 
-#: html.c:1330
+#: html.c:1376
 msgid "Always show sensitive content"
 msgstr "Πάντα πρόβαλε ευαίσθητο περιεχόμενο"
 
-#: html.c:1332
+#: html.c:1378
 msgid "Email address for notifications:"
 msgstr "Διεύθυνση email για ειδοποιήσεις:"
 
-#: html.c:1340
+#: html.c:1386
 msgid "Telegram notifications (bot key and chat id):"
 msgstr "Ειδοποιήσεις Telegram (κλειδί bot και chat id):"
 
-#: html.c:1354
+#: html.c:1400
 msgid "ntfy notifications (ntfy server and token):"
 msgstr "ειδοποιήσεις ntfy (διακομιστής ntfy και token):"
 
-#: html.c:1368
+#: html.c:1414
 msgid "Maximum days to keep posts (0: server settings):"
 msgstr "Διατήρηση δημοσιεύσεων για ημέρες (0: ρυθμίσεις διακομιστή):"
 
-#: html.c:1382
+#: html.c:1428
 msgid "Drop direct messages from people you don't follow"
 msgstr "Απόρριψη άμεσων μηνυμάτων από άτομα που δεν ακολουθείτε"
 
-#: html.c:1391
+#: html.c:1437
 msgid "This account is a bot"
 msgstr "Αυτός ο λογαριασμός είναι αυτοματοποιημένος (bot)"
 
-#: html.c:1400
+#: html.c:1446
 msgid "Auto-boost all mentions to this account"
 msgstr "Αυτόματη ενίσχυση όλων των αναφορών σε αυτό το λογαριασμό"
 
-#: html.c:1409
+#: html.c:1455
 msgid "This account is private (posts are not shown through the web)"
 msgstr ""
 "Αυτός ο λογαριασμός είναι ιδιωτικός (οι δημοσιεύσεις δεν εμφανίζονται στο "
 "διαδίκτυο)"
 
-#: html.c:1419
+#: html.c:1465
 msgid "Collapse top threads by default"
 msgstr "Αναδίπλωση κορυφαίων συζητήσεων εξ'ορισμού"
 
-#: html.c:1428
+#: html.c:1474
 msgid "Follow requests must be approved"
 msgstr "Τα αιτήματα ακόλουθων πρέπει να εγκρίνονται"
 
-#: html.c:1437
+#: html.c:1483
 msgid "Publish follower and following metrics"
 msgstr "Δημοσίευση στατιστικών ακόλουθων και ακολουθούμενων"
 
-#: html.c:1439
+#: html.c:1485
 msgid "Current location:"
 msgstr "Τρέχουσα τοποθεσία:"
 
-#: html.c:1453
+#: html.c:1499
 msgid "Profile metadata (key=value pairs in each line):"
 msgstr "Μεταστοιχεία προφίλ (κλειδί=τιμή ζευγάρια σε κάθε γραμμή):"
 
-#: html.c:1464
+#: html.c:1510
 msgid "Web interface language:"
 msgstr "Γλώσσα περιβάλλοντος web:"
 
-#: html.c:1469
+#: html.c:1515
 msgid "New password:"
 msgstr "Νέος κωδικός:"
 
-#: html.c:1476
+#: html.c:1522
 msgid "Repeat new password:"
 msgstr "Επανάληψη νέου κωδικού:"
 
-#: html.c:1486
+#: html.c:1532
 msgid "Update user info"
 msgstr "Ενημέρωση στοιχείων χρήστη"
 
-#: html.c:1497
+#: html.c:1543
 msgid "Followed hashtags..."
 msgstr "Ετικέτες που ακολουθείτε..."
 
-#: html.c:1499 html.c:1531
+#: html.c:1545 html.c:1577
 msgid "One hashtag per line"
 msgstr "Μία ετικέτα ανά γραμμή"
 
-#: html.c:1520 html.c:1552
+#: html.c:1566 html.c:1598
 msgid "Update hashtags"
 msgstr "Ενημέρωση ετικετών"
 
-#: html.c:1669
+#: html.c:1715
 msgid "Say you like this post"
 msgstr "Ανάφερε ότι σου αρέσει αυτή η δημοσίευση"
 
-#: html.c:1674 html.c:4373
+#: html.c:1720 html.c:4506
 msgid "Unlike"
 msgstr "Αναίρεση μου αρέσει"
 
-#: html.c:1674
+#: html.c:1720
 msgid "Nah don't like it that much"
 msgstr "Μπα δεν μ' αρέσει τόσο"
 
-#: html.c:1680 html.c:4505
+#: html.c:1726 html.c:4643
 msgid "Unpin"
 msgstr "Ξεκαρφίτσωμα"
 
-#: html.c:1680
+#: html.c:1726
 msgid "Unpin this post from your timeline"
 msgstr "Ξεκαρφίτσωμα αυτής της δημοσίευσης από τη ροή σας"
 
-#: html.c:1683 html.c:4500
+#: html.c:1729 html.c:4638
 msgid "Pin"
 msgstr "Καρφίτσωμα"
 
-#: html.c:1683
+#: html.c:1729
 msgid "Pin this post to the top of your timeline"
 msgstr "Καρφίτσωμα αυτής της δημοσίευσης στη κορυφή της ροής σας"
 
-#: html.c:1690
+#: html.c:1736
 msgid "Announce this post to your followers"
 msgstr "Ανακοίνωση αυτής της δημοσίευσης στους ακόλουθους σας"
 
-#: html.c:1695 html.c:4381
+#: html.c:1741 html.c:4514
 msgid "Unboost"
 msgstr "Αφαίρεση ενίσχυσης"
 
-#: html.c:1695
+#: html.c:1741
 msgid "I regret I boosted this"
 msgstr "Μετάνιωσα που το ενίσχυσα"
 
-#: html.c:1701 html.c:4515
+#: html.c:1747 html.c:4653
 msgid "Unbookmark"
 msgstr "Αφαίρεση σελιδοδείκτη"
 
-#: html.c:1701
+#: html.c:1747
 msgid "Delete this post from your bookmarks"
 msgstr "Διαγραφή αυτής της δημοσίευσης από τους σελιδοδείκτες σου"
 
-#: html.c:1704 html.c:4510
+#: html.c:1750 html.c:4648
 msgid "Bookmark"
 msgstr "Εισαγωγή σελιδοδείκτη"
 
-#: html.c:1704
+#: html.c:1750
 msgid "Add this post to your bookmarks"
 msgstr "Προσθήκη αυτής της δημοσίευσης στους σελιδοδείκτες σου"
 
-#: html.c:1710 html.c:3081 html.c:3269 html.c:4425
+#: html.c:1756 html.c:3151 html.c:3339 html.c:4561
 msgid "Unfollow"
 msgstr "Αναίρεση ακολουθίας"
 
-#: html.c:1710 html.c:3082
+#: html.c:1756 html.c:3152
 msgid "Stop following this user's activity"
 msgstr "Σταμάτα να ακολουθείς τη δραστηριότητα αυτού του χρήστη"
 
-#: html.c:1714 html.c:3096
+#: html.c:1760 html.c:3166
 msgid "Start following this user's activity"
 msgstr "Ξεκίνα να ακολουθείς τη δραστηριότητα αυτού του χρήστη"
 
-#: html.c:1720 html.c:4455
+#: html.c:1766 html.c:4591
 msgid "Unfollow Group"
 msgstr "Αναίρεση ακολουθίας ομάδας"
 
-#: html.c:1721
+#: html.c:1767
 msgid "Stop following this group or channel"
 msgstr "Σταμάτα να ακολουθείς αυτή την ομάδα ή κανάλι"
 
-#: html.c:1725 html.c:4442
+#: html.c:1771 html.c:4578
 msgid "Follow Group"
 msgstr "Ακολούθησε την Ομάδα"
 
-#: html.c:1726
+#: html.c:1772
 msgid "Start following this group or channel"
 msgstr "Ξεκίνα να ακολουθείς αυτή την ομάδα ή κανάλι"
 
-#: html.c:1731 html.c:3118 html.c:4389
+#: html.c:1777 html.c:3188 html.c:4522
 msgid "MUTE"
 msgstr "ΣΙΓΑΣΗ"
 
-#: html.c:1732
+#: html.c:1778
 msgid "Block any activity from this user forever"
 msgstr "Αποκλεισμός οποιασδήποτε δραστηριότητας από αυτόν τον χρήστη για πάντα"
 
-#: html.c:1737 html.c:3100 html.c:4472
+#: html.c:1783 html.c:3170 html.c:4608
 msgid "Delete"
 msgstr "Διαγραφή"
 
-#: html.c:1737
+#: html.c:1783
 msgid "Delete this post"
 msgstr "Διαγραφή αυτής της δημοσίευσης"
 
-#: html.c:1740 html.c:4397
+#: html.c:1786 html.c:4530
 msgid "Hide"
 msgstr "Απόκρυψη"
 
-#: html.c:1740
+#: html.c:1786
 msgid "Hide this post and its children"
 msgstr "Απόκρυψη αυτής της δημοσίευσης και των απαντήσεων της"
 
-#: html.c:1771
+#: html.c:1817
 msgid "Edit..."
 msgstr "Επεξεργασία..."
 
-#: html.c:1790
+#: html.c:1837
 msgid "Reply..."
 msgstr "Απάντηση..."
 
-#: html.c:1841
+#: html.c:1888
 msgid "Truncated (too deep)"
 msgstr "Έγινε περικοπή (πολύ βαθύ)"
 
-#: html.c:1850
+#: html.c:1897
 msgid "follows you"
 msgstr "σε ακολουθεί"
 
-#: html.c:1913
+#: html.c:1960
 msgid "Pinned"
 msgstr "Καρφιτσωμένο"
 
-#: html.c:1921
+#: html.c:1968
 msgid "Bookmarked"
 msgstr "Εισήχθηκε σελιδοδείκτης"
 
-#: html.c:1929
+#: html.c:1976
 msgid "Poll"
 msgstr "Δημοσκόπηση"
 
-#: html.c:1936
+#: html.c:1983
 msgid "Voted"
 msgstr "Ψήφισες"
 
-#: html.c:1945
+#: html.c:1992
 msgid "Event"
 msgstr "Εκδήλωση"
 
-#: html.c:1977 html.c:2006
+#: html.c:2024 html.c:2053
 msgid "boosted"
 msgstr "ενισχύθηκε"
 
-#: html.c:2022
+#: html.c:2069
 msgid "in reply to"
 msgstr "σε απάντηση του"
 
-#: html.c:2073
+#: html.c:2120
 msgid " [SENSITIVE CONTENT]"
 msgstr " [ΕΥΑΙΣΘΗΤΟ ΠΕΡΙΕΧΟΜΕΝΟ]"
 
-#: html.c:2250
+#: html.c:2297
 msgid "Vote"
 msgstr "Ψήφισε"
 
-#: html.c:2260
+#: html.c:2307
 msgid "Closed"
 msgstr "Έκλεισε"
 
-#: html.c:2285
+#: html.c:2332
 msgid "Closes in"
 msgstr "Κλείνει σε"
 
-#: html.c:2366
+#: html.c:2413
 msgid "Video"
 msgstr "Βίντεο"
 
-#: html.c:2381
+#: html.c:2428
 msgid "Audio"
 msgstr "Ήχος"
 
-#: html.c:2403
+#: html.c:2456
 msgid "Attachment"
 msgstr "Επισύναψη"
 
-#: html.c:2417
+#: html.c:2470
 msgid "Alt..."
 msgstr "Εναλλακτικό κείμενο..."
 
-#: html.c:2430
+#: html.c:2483
 msgid "Source channel or community"
 msgstr "Πηγή κανάλι ή κοινότητα"
 
-#: html.c:2524
+#: html.c:2577
 msgid "Time: "
 msgstr "Ώρα: "
 
-#: html.c:2605
+#: html.c:2658
 msgid "Older..."
 msgstr "Παλαιότερα..."
 
-#: html.c:2702
+#: html.c:2760
 msgid "about this site"
 msgstr "σχετικά με αυτό τον ιστότοπο"
 
-#: html.c:2704
+#: html.c:2762
 msgid "powered by "
 msgstr "λειτουργεί με "
 
-#: html.c:2769
+#: html.c:2827
 msgid "Dismiss"
 msgstr "Απόρριψη"
 
-#: html.c:2786
+#: html.c:2844
 #, c-format
 msgid "Timeline for list '%s'"
 msgstr "Ροή για λίστα '%s'"
 
-#: html.c:2805 html.c:3846
+#: html.c:2863 html.c:3916
 msgid "Pinned posts"
 msgstr "Καρφιτσωμένες δημοσιεύσεις"
 
-#: html.c:2817 html.c:3861
+#: html.c:2875 html.c:3931
 msgid "Bookmarked posts"
 msgstr "Σελιδοδείκτες"
 
-#: html.c:2829 html.c:3876
+#: html.c:2887 html.c:3946
 msgid "Post drafts"
 msgstr "Προσχέδια δημοσιεύσεων"
 
-#: html.c:2888
+#: html.c:2958
 msgid "No more unseen posts"
 msgstr "Δεν υπάρχουν άλλες αδιάβαστες δημοσιεύσεις"
 
-#: html.c:2892 html.c:2992
+#: html.c:2962 html.c:3062
 msgid "Back to top"
 msgstr "Πίσω στη κορυφή"
 
-#: html.c:2945
+#: html.c:3015
 msgid "History"
 msgstr "Ιστορικό"
 
-#: html.c:2997 html.c:3417
+#: html.c:3067 html.c:3487
 msgid "More..."
 msgstr "Περισσότερα..."
 
-#: html.c:3086 html.c:4408
+#: html.c:3156 html.c:4544
 msgid "Unlimit"
 msgstr "Αφαίρεση περιορισμού"
 
-#: html.c:3087
+#: html.c:3157
 msgid "Allow announces (boosts) from this user"
 msgstr "Επέτρεψε ανακοινώσεις (ενισχύσεις) από αυτό το χρήστη"
 
-#: html.c:3090 html.c:4404
+#: html.c:3160 html.c:4540
 msgid "Limit"
 msgstr "Περιορισμός"
 
-#: html.c:3091
+#: html.c:3161
 msgid "Block announces (boosts) from this user"
 msgstr "Απέκλεισε ανακοινώσεις (ενισχύσεις) από αυτό το χρήστη"
 
-#: html.c:3100
+#: html.c:3170
 msgid "Delete this user"
 msgstr "Διαγραφή αυτού του χρήστη"
 
-#: html.c:3105 html.c:4520
+#: html.c:3175 html.c:4658
 msgid "Approve"
 msgstr "Έγκριση"
 
-#: html.c:3106
+#: html.c:3176
 msgid "Approve this follow request"
 msgstr "Έγκριση αυτού του αιτήματος ακόλουθου"
 
-#: html.c:3109 html.c:4544
+#: html.c:3179 html.c:4682
 msgid "Discard"
 msgstr "Απόρριψη"
 
-#: html.c:3109
+#: html.c:3179
 msgid "Discard this follow request"
 msgstr "Απόρριψη αυτού του αιτήματος ακόλουθου"
 
-#: html.c:3114 html.c:4393
+#: html.c:3184 html.c:4526
 msgid "Unmute"
 msgstr "Αφαίρεση σίγασης"
 
-#: html.c:3115
+#: html.c:3185
 msgid "Stop blocking activities from this user"
 msgstr "Διακοπή αποκλεισμού δραστηριοτήτων από αυτό το χρήστη"
 
-#: html.c:3119
+#: html.c:3189
 msgid "Block any activity from this user"
 msgstr "Αποκλεισμός οποιασδήποτε δραστηριότητας από αυτό τον χρήστη"
 
-#: html.c:3127
+#: html.c:3197
 msgid "Direct Message..."
 msgstr "Απευθείας Μήνυμα..."
 
-#: html.c:3162
+#: html.c:3232
 msgid "Pending follow confirmations"
 msgstr "Εκκεμείς επιβεβαιώσεις ακολουθήσεων"
 
-#: html.c:3166
+#: html.c:3236
 msgid "People you follow"
 msgstr "Άνθρωποι που ακολουθείτε"
 
-#: html.c:3167
+#: html.c:3237
 msgid "People that follow you"
 msgstr "Άνθρωποι που σας ακολουθούν"
 
-#: html.c:3206
+#: html.c:3276
 msgid "Clear all"
 msgstr "Εκκαθάριση όλων"
 
-#: html.c:3263
+#: html.c:3333
 msgid "Mention"
 msgstr "Αναφορά"
 
-#: html.c:3266
+#: html.c:3336
 msgid "Finished poll"
 msgstr "Ολοκληρωμένη δημοσκόπηση"
 
-#: html.c:3281
+#: html.c:3351
 msgid "Follow Request"
 msgstr "Αίτημα Ακόλουθου"
 
-#: html.c:3364
+#: html.c:3434
 msgid "Context"
 msgstr "Περιεχόμενο"
 
-#: html.c:3375
+#: html.c:3445
 msgid "New"
 msgstr "Νέο"
 
-#: html.c:3390
+#: html.c:3460
 msgid "Already seen"
 msgstr "Έχει ήδη προβληθεί"
 
-#: html.c:3405
+#: html.c:3475
 msgid "None"
 msgstr "Κανένα"
 
-#: html.c:3671
+#: html.c:3741
 #, c-format
 msgid "Search results for account %s"
 msgstr "Αποτελέσματα αναζήτηση για λογαριασμό %s"
 
-#: html.c:3678
+#: html.c:3748
 #, c-format
 msgid "Account %s not found"
 msgstr "Ο λογαριασμός %s δεν βρέθηκε"
 
-#: html.c:3709
+#: html.c:3779
 #, c-format
 msgid "Search results for tag %s"
 msgstr "Αποτελέσματα αναζήτησης για ετικέτα %s"
 
-#: html.c:3709
+#: html.c:3779
 #, c-format
 msgid "Nothing found for tag %s"
 msgstr "Δε βρέθηκε κάτι για ετικέτα %s"
 
-#: html.c:3725
+#: html.c:3795
 #, c-format
 msgid "Search results for '%s' (may be more)"
 msgstr "Αποτελέσματα αναζήτησης για '%s' (μπορεί να υπάρχουν περισσότερα)"
 
-#: html.c:3728
+#: html.c:3798
 #, c-format
 msgid "Search results for '%s'"
 msgstr "Αποτελέσματα αναζήτησης για '%s'"
 
-#: html.c:3731
+#: html.c:3801
 #, c-format
 msgid "No more matches for '%s'"
 msgstr "Δεν υπάρχουν άλλα αποτελέσματα για '%s'"
 
-#: html.c:3733
+#: html.c:3803
 #, c-format
 msgid "Nothing found for '%s'"
 msgstr "Δε βρέθηκε κάτι για '%s'"
 
-#: html.c:3831
+#: html.c:3901
 msgid "Showing instance timeline"
 msgstr "Προβάλλεται η ροή του διακομιστή"
 
-#: html.c:3899
+#: html.c:3984
 #, c-format
 msgid "Showing timeline for list '%s'"
 msgstr "Προβάλετε η ροή της λίστας '%s'"
@@ -696,15 +696,15 @@ msgstr "Αποτελέσματα αναζήτησης για ετικέτα #%s"
 msgid "Recent posts by users in this instance"
 msgstr "Πρόσφατες αναρτήσεις από χρήστες σε αυτό τον ιστότοπο"
 
-#: html.c:1529
+#: html.c:1575
 msgid "Blocked hashtags..."
 msgstr "Αποκλεισμένες ετικέτες..."
 
-#: html.c:420
+#: html.c:432
 msgid "Optional URL to reply to"
 msgstr ""
 
-#: html.c:527
+#: html.c:573
 msgid ""
 "Option 1...\n"
 "Option 2...\n"
@@ -712,30 +712,46 @@ msgid ""
 "..."
 msgstr ""
 
-#: html.c:1346
+#: html.c:1392
 msgid "Bot API key"
 msgstr ""
 
-#: html.c:1352
+#: html.c:1398
 msgid "Chat id"
 msgstr ""
 
-#: html.c:1360
+#: html.c:1406
 msgid "ntfy server - full URL (example: https://ntfy.sh/YourTopic)"
 msgstr ""
 
-#: html.c:1366
+#: html.c:1412
 msgid "ntfy token - if needed"
 msgstr ""
 
-#: html.c:2806
+#: html.c:2864
 msgid "pinned"
 msgstr ""
 
-#: html.c:2818
+#: html.c:2876
 msgid "bookmarks"
 msgstr ""
 
-#: html.c:2830
+#: html.c:2888
 msgid "drafts"
+msgstr ""
+
+#: html.c:462
+msgid "Scheduled post..."
+msgstr ""
+
+#: html.c:464
+msgid "Post date and time:"
+msgstr ""
+
+#: html.c:2899 html.c:3961
+msgid "Scheduled posts"
+msgstr ""
+
+#: html.c:2900
+msgid "scheduled posts"
 msgstr ""
