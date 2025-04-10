@@ -2439,13 +2439,19 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 name = NULL;
             }
             else {
+                xs *d_href = xs_dup(o_href);
+                if (strlen(d_href) > 64) {
+                    d_href[64] = '\0';
+                    d_href = xs_str_cat(d_href, "...");
+                }
+
                 xs_html_add(content_attachments,
                     xs_html_tag("p",
                         xs_html_tag("a",
                             xs_html_attr("href", o_href),
                             xs_html_text(L("Attachment")),
                             xs_html_text(": "),
-                            xs_html_text(o_href))));
+                            xs_html_text(d_href))));
 
                 /* do not generate an Alt... */
                 name = NULL;
