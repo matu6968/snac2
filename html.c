@@ -455,7 +455,7 @@ xs_html *html_note(snac *user, const char *summary,
     }
 
     if (edit_id == NULL || is_draft || is_scheduled(user, edit_id)) {
-        xs *pdat = xs_fmt(L("Post date and time (timezone: %s):"), xs_dict_get_def(user->config, "tz", "UTC"));
+        xs *pdat = xs_fmt(L("Post date and time (timezone: %s):"), user->tz);
 
         xs_html_add(form,
             xs_html_tag("p",
@@ -4367,9 +4367,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 time_t t = xs_parse_iso_date(post_pubdate, 0);
 
                 if (t != 0) {
-                    const char *tz = xs_dict_get_def(snac.config, "tz", "UTC");
-
-                    t -= xs_tz_offset(tz);
+                    t -= xs_tz_offset(snac.tz);
 
                     xs *iso_date = xs_str_iso_date(t);
                     msg = xs_dict_set(msg, "published", iso_date);

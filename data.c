@@ -282,6 +282,8 @@ int user_open(snac *user, const char *uid)
             }
             else
                 srv_log(xs_fmt("error parsing '%s'", cfg_file));
+
+            user->tz = xs_dict_get_def(user->config, "tz", "UTC");
         }
         else
             srv_debug(2, xs_fmt("error opening '%s' %d", cfg_file, errno));
