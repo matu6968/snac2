@@ -10,7 +10,6 @@
 #include "xs_match.h"
 
 #include "snac.h"
-#include <string.h>
 
 /* emoticons, people laughing and such */
 const char *smileys[] = {

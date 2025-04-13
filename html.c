@@ -3136,10 +3136,6 @@ xs_html *html_people_list(snac *user, xs_list *list, const char *header, const c
 
             if (!xs_is_null(c)) {
                 xs *sc = sanitize(c);
-
-                // replace shortnames in bio
-                // bug: this somehow fires twice on one specific user
-                // @ielenia@ck.catwithaclari.net
                 sc = replace_shortnames(sc, xs_dict_get(actor, "tag"), 2, proxy);
 
                 xs_html *snac_content = xs_html_tag("div",
