@@ -3375,7 +3375,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
             if (xs_type(content) == XSTYPE_STRING) {
                 xs *emoji = replace_shortnames(xs_dup(content), xs_dict_get_path(noti, "msg.tag"), 1, proxy);
-                wrk = xs_fmt("%s (%s)", type, emoji);
+                wrk = xs_fmt("%s (%s&#xFE0F;)", type, emoji);
                 label = wrk;
             }
         }
