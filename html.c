@@ -1318,6 +1318,27 @@ xs_html *html_top_controls(snac *user)
                     xs_html_attr("value", lang)));
     }
 
+    /* timezone */
+    xs_html *tz_select = xs_html_tag("select",
+        xs_html_attr("name", "tz"));
+
+    xs *tzs = xs_tz_list();
+    const char *tz;
+
+    xs_list_foreach(tzs, tz) {
+        if (strcmp(tz, user->tz) == 0)
+            xs_html_add(tz_select,
+                xs_html_tag("option",
+                xs_html_text(tz),
+                xs_html_attr("value", tz),
+                xs_html_attr("selected", "selected")));
+        else
+            xs_html_add(tz_select,
+                xs_html_tag("option",
+                xs_html_text(tz),
+                xs_html_attr("value", tz)));
+    }
+
     xs *user_setup_action = xs_fmt("%s/admin/user-setup", user->actor);
 
     xs_html_add(top_controls,
@@ -1512,6 +1533,11 @@ xs_html *html_top_controls(snac *user)
                     xs_html_text(L("Web interface language:")),
                     xs_html_sctag("br", NULL),
                     lang_select),
+
+                xs_html_tag("p",
+                    xs_html_text(L("Time zone:")),
+                    xs_html_sctag("br", NULL),
+                    tz_select),
 
                 xs_html_tag("p",
                     xs_html_text(L("New password:")),
@@ -4755,6 +4781,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_FALSE));
         if ((v = xs_dict_get(p_vars, "web_ui_lang")) != NULL)
             snac.config = xs_dict_set(snac.config, "lang", v);
+        if ((v = xs_dict_get(p_vars, "tz")) != NULL)
+            snac.config = xs_dict_set(snac.config, "tz", v);
 
         snac.config = xs_dict_set(snac.config, "latitude", xs_dict_get_def(p_vars, "latitude", ""));
         snac.config = xs_dict_set(snac.config, "longitude", xs_dict_get_def(p_vars, "longitude", ""));
