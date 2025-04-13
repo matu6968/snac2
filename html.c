@@ -4359,19 +4359,23 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             }
 
             if (xs_is_string(post_date) && *post_date) {
-                xs *local_pubdate = xs_fmt("%sT%s", post_date,
+                xs *post_pubdate = xs_fmt("%sT%s", post_date,
                     xs_is_string(post_time) && *post_time ? post_time : "00:00:00");
 
-                time_t t = xs_parse_iso_date(local_pubdate, 1);
+                time_t t = xs_parse_iso_date(post_pubdate, 0);
 
                 if (t != 0) {
+                    const char *tz = xs_dict_get_def(snac.config, "tz", "UTC");
+
+                    t -= xs_tz_offset(tz);
+
                     xs *iso_date = xs_str_iso_date(t);
                     msg = xs_dict_set(msg, "published", iso_date);
 
                     snac_debug(&snac, 1, xs_fmt("Published date: [%s]", iso_date));
                 }
                 else
-                    snac_log(&snac, xs_fmt("Invalid post date: [%s]", local_pubdate));
+                    snac_log(&snac, xs_fmt("Invalid post date: [%s]", post_pubdate));
             }
 
             /* is the published date from the future? */

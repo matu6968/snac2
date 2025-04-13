@@ -15,6 +15,8 @@ time_t xs_parse_time(const char *str, const char *fmt, int local);
 #define xs_parse_localtime(str, fmt) xs_parse_time(str, fmt, 1)
 #define xs_parse_utctime(str, fmt) xs_parse_time(str, fmt, 0)
 xs_str *xs_str_time_diff(time_t time_diff);
+xs_list *xs_tz_list(void);
+int xs_tz_offset(const char *tz);
 
 #ifdef XS_IMPLEMENTATION
 
@@ -103,6 +105,75 @@ time_t xs_parse_iso_date(const char *iso_date, int local)
 #endif /* WITHOUT_STRPTIME */
 
     return t;
+}
+
+
+/** timezones **/
+
+/* intentionally dead simple */
+
+struct {
+    const char *tz; /* timezone name */
+    float h_offset; /* hour offset */
+} xs_tz[] = {
+    { "UTC",      0 },
+    { "GMT",      0 },
+    { "GMT+1",    -1 },
+    { "GMT+2",    -2 },
+    { "GMT+3",    -3 },
+    { "GMT+4",    -4 },
+    { "GMT+5",    -5 },
+    { "GMT+6",    -6 },
+    { "GMT+7",    -7 },
+    { "GMT+8",    -8 },
+    { "GMT+9",    -9 },
+    { "GMT+10",   -10 },
+    { "GMT+11",   -11 },
+    { "GMT+12",   -12 },
+    { "GMT-1",    1 },
+    { "GMT-2",    2 },
+    { "GMT-3",    3 },
+    { "GMT-4",    4 },
+    { "GMT-5",    5 },
+    { "GMT-6",    6 },
+    { "GMT-7",    7 },
+    { "GMT-8",    8 },
+    { "GMT-9",    9 },
+    { "GMT-10",   10 },
+    { "GMT-11",   11 },
+    { "GMT-12",   12 },
+    { "GMT-13",   13 },
+    { "GMT-14",   14 },
+    { "GMT-15",   15 },
+    { "CET",      -1 },
+    { "CST",      -6 },
+    { "MST",      -7 },
+    { "PST",      -8 },
+    { NULL,       0 }
+};
+
+
+xs_list *xs_tz_list(void)
+/* returns the list of supported timezones */
+{
+    xs_list *l = xs_list_new();
+
+    for (int n = 0; xs_tz[n].tz != NULL; n++)
+        l = xs_list_append(l, xs_tz[n].tz);
+
+    return l;
+}
+
+
+int xs_tz_offset(const char *tz)
+/* returns the offset in seconds from the specified Time Zone to UTC */
+{
+    for (int n = 0; xs_tz[n].tz != NULL; n++) {
+        if (strcmp(xs_tz[n].tz, tz) == 0)
+            return xs_tz[n].h_offset * 3600;
+    }
+
+    return 0;
 }
 
 
