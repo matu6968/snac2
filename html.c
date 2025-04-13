@@ -455,13 +455,15 @@ xs_html *html_note(snac *user, const char *summary,
     }
 
     if (edit_id == NULL || is_draft || is_scheduled(user, edit_id)) {
+        xs *pdat = xs_fmt(L("Post date and time (timezone: %s):"), xs_dict_get_def(user->config, "tz", "UTC"));
+
         xs_html_add(form,
             xs_html_tag("p",
                 xs_html_tag("details",
                     xs_html_tag("summary",
                         xs_html_text(L("Scheduled post..."))),
                     xs_html_tag("p",
-                        xs_html_text(L("Post date and time:")),
+                        xs_html_text(pdat),
                         xs_html_sctag("br", NULL),
                         xs_html_sctag("input",
                             xs_html_attr("type",  "date"),
