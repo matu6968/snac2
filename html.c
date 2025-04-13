@@ -4369,7 +4369,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 if (t != 0) {
                     const char *tz = xs_dict_get_def(snac.config, "tz", "UTC");
 
-                    t += xs_tz_offset(tz);
+                    t -= xs_tz_offset(tz);
 
                     xs *iso_date = xs_str_iso_date(t);
                     msg = xs_dict_set(msg, "published", iso_date);
