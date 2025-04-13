@@ -4,6 +4,8 @@
 
 Added support for scheduled posts.
 
+The user can now select a working time zone. This will be used to correctly parse the local date and time of a scheduled post.
+
 Fixed incorrect poll vote format, which was causing problems in platforms like GotoSocial.
 
 Mastodon API: added support for `/api/v1/instance/peers`.
