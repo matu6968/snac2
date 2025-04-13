@@ -144,7 +144,7 @@ msgstr "Поиск содержимого"
 msgid "verified link"
 msgstr "проверенная ссылка"
 
-#: html.c:1125 html.c:2514 html.c:2527 html.c:2536
+#: html.c:1125 html.c:2540 html.c:2553 html.c:2562
 msgid "Location: "
 msgstr "Местоположение: "
 
@@ -160,7 +160,7 @@ msgstr "Что у вас на уме?"
 msgid "Operations..."
 msgstr "Действия..."
 
-#: html.c:1187 html.c:1762 html.c:3167 html.c:4554
+#: html.c:1187 html.c:1788 html.c:3193 html.c:4578
 msgid "Follow"
 msgstr "Подписаться"
 
@@ -168,7 +168,7 @@ msgstr "Подписаться"
 msgid "(by URL or user@host)"
 msgstr "(по URL или user@host)"
 
-#: html.c:1204 html.c:1738 html.c:4503
+#: html.c:1204 html.c:1764 html.c:4527
 msgid "Boost"
 msgstr "Продвинуть"
 
@@ -176,512 +176,512 @@ msgstr "Продвинуть"
 msgid "(by URL)"
 msgstr "(по URL)"
 
-#: html.c:1221 html.c:1717 html.c:4494
+#: html.c:1221 html.c:1743 html.c:4518
 msgid "Like"
 msgstr "Лайкнуть"
 
-#: html.c:1326
+#: html.c:1347
 msgid "User Settings..."
 msgstr "Пользовательские настройки..."
 
-#: html.c:1335
+#: html.c:1356
 msgid "Display name:"
 msgstr "Отображаемое имя:"
 
-#: html.c:1341
+#: html.c:1362
 msgid "Your name"
 msgstr "Ваше имя"
 
-#: html.c:1343
+#: html.c:1364
 msgid "Avatar: "
 msgstr "Аватар: "
 
-#: html.c:1351
+#: html.c:1372
 msgid "Delete current avatar"
 msgstr "Удалить текущий аватар"
 
-#: html.c:1353
+#: html.c:1374
 msgid "Header image (banner): "
 msgstr "Заглавное изображение (баннер): "
 
-#: html.c:1361
+#: html.c:1382
 msgid "Delete current header image"
 msgstr "Удалить текущее заглавное изображение"
 
-#: html.c:1363
+#: html.c:1384
 msgid "Bio:"
 msgstr "О себе:"
 
-#: html.c:1369
+#: html.c:1390
 msgid "Write about yourself here..."
 msgstr "Напишите что-нибудь про себя..."
 
-#: html.c:1378
+#: html.c:1399
 msgid "Always show sensitive content"
 msgstr "Всегда показывать чувствительное содержимое"
 
-#: html.c:1380
+#: html.c:1401
 msgid "Email address for notifications:"
 msgstr "Почтовый адрес для уведомлений:"
 
-#: html.c:1388
+#: html.c:1409
 msgid "Telegram notifications (bot key and chat id):"
 msgstr "Уведомления в Telegram (ключ бота и id чата):"
 
-#: html.c:1402
+#: html.c:1423
 msgid "ntfy notifications (ntfy server and token):"
 msgstr "уведомления в ntfy (сервер и токен ntfy):"
 
-#: html.c:1416
+#: html.c:1437
 msgid "Maximum days to keep posts (0: server settings):"
 msgstr "Максимальное время хранения сообщений (0: настройки сервера):"
 
-#: html.c:1430
+#: html.c:1451
 msgid "Drop direct messages from people you don't follow"
 msgstr "Отклонять личные сообщения от незнакомцев"
 
-#: html.c:1439
+#: html.c:1460
 msgid "This account is a bot"
 msgstr "Это аккаунт бота"
 
-#: html.c:1448
+#: html.c:1469
 msgid "Auto-boost all mentions to this account"
 msgstr "Автоматически продвигать все упоминания этого аккаунта"
 
-#: html.c:1457
+#: html.c:1478
 msgid "This account is private (posts are not shown through the web)"
 msgstr "Это закрытый аккаунт (сообщения не показываются в сети)"
 
-#: html.c:1467
+#: html.c:1488
 msgid "Collapse top threads by default"
 msgstr "Сворачивать обсуждения по умолчанию"
 
-#: html.c:1476
+#: html.c:1497
 msgid "Follow requests must be approved"
 msgstr "Запросы подписки требуют подтверждения"
 
-#: html.c:1485
+#: html.c:1506
 msgid "Publish follower and following metrics"
 msgstr "Публиковать статистику подписок и подписчиков"
 
-#: html.c:1487
+#: html.c:1508
 msgid "Current location:"
 msgstr "Текущее метоположение:"
 
-#: html.c:1501
+#: html.c:1522
 msgid "Profile metadata (key=value pairs in each line):"
 msgstr "Метаданные профиля (пары ключ=значение, по одной на строку)"
 
-#: html.c:1512
+#: html.c:1533
 msgid "Web interface language:"
 msgstr "Язык интерфейса:"
 
-#: html.c:1517
+#: html.c:1543
 msgid "New password:"
 msgstr "Новый пароль:"
 
-#: html.c:1524
+#: html.c:1550
 msgid "Repeat new password:"
 msgstr "Повторите новый пароль:"
 
-#: html.c:1534
+#: html.c:1560
 msgid "Update user info"
 msgstr "Обновить данные пользователя"
 
-#: html.c:1545
+#: html.c:1571
 msgid "Followed hashtags..."
 msgstr "Отслеживаемые хештеги..."
 
-#: html.c:1547 html.c:1579
+#: html.c:1573 html.c:1605
 msgid "One hashtag per line"
 msgstr "По одному на строку"
 
-#: html.c:1568 html.c:1600
+#: html.c:1594 html.c:1626
 msgid "Update hashtags"
 msgstr "Обновить хештеги"
 
-#: html.c:1717
+#: html.c:1743
 msgid "Say you like this post"
 msgstr "Отметить сообщение понравившимся"
 
-#: html.c:1722 html.c:4512
+#: html.c:1748 html.c:4536
 msgid "Unlike"
 msgstr "Больше не нравится"
 
-#: html.c:1722
+#: html.c:1748
 msgid "Nah don't like it that much"
 msgstr "Не так уж и понравилось"
 
-#: html.c:1728 html.c:4649
+#: html.c:1754 html.c:4673
 msgid "Unpin"
 msgstr "Открепить"
 
-#: html.c:1728
+#: html.c:1754
 msgid "Unpin this post from your timeline"
 msgstr "Открепить это сообщение из своей ленты"
 
-#: html.c:1731 html.c:4644
+#: html.c:1757 html.c:4668
 msgid "Pin"
 msgstr "Закрепить"
 
-#: html.c:1731
+#: html.c:1757
 msgid "Pin this post to the top of your timeline"
 msgstr "Закрепить это сообщение в своей ленте"
 
-#: html.c:1738
+#: html.c:1764
 msgid "Announce this post to your followers"
 msgstr "Поделиться этим сообщением со своими подписчиками"
 
-#: html.c:1743 html.c:4520
+#: html.c:1769 html.c:4544
 msgid "Unboost"
 msgstr "Отменить продвижение"
 
-#: html.c:1743
+#: html.c:1769
 msgid "I regret I boosted this"
 msgstr "Не буду продвигать, пожалуй"
 
-#: html.c:1749 html.c:4659
+#: html.c:1775 html.c:4683
 msgid "Unbookmark"
 msgstr "Удалить из закладок"
 
-#: html.c:1749
+#: html.c:1775
 msgid "Delete this post from your bookmarks"
 msgstr "Удалить это сообщение из закладок"
 
-#: html.c:1752 html.c:4654
+#: html.c:1778 html.c:4678
 msgid "Bookmark"
 msgstr "Добавить в закладки"
 
-#: html.c:1752
+#: html.c:1778
 msgid "Add this post to your bookmarks"
 msgstr "Добавить сообщение в закладки"
 
-#: html.c:1758 html.c:3153 html.c:3341 html.c:4567
+#: html.c:1784 html.c:3179 html.c:3367 html.c:4591
 msgid "Unfollow"
 msgstr "Отписаться"
 
-#: html.c:1758 html.c:3154
+#: html.c:1784 html.c:3180
 msgid "Stop following this user's activity"
 msgstr "Отменить подписку на этого пользователя"
 
-#: html.c:1762 html.c:3168
+#: html.c:1788 html.c:3194
 msgid "Start following this user's activity"
 msgstr "Начать следовать за этим пользователем"
 
-#: html.c:1768 html.c:4597
+#: html.c:1794 html.c:4621
 msgid "Unfollow Group"
 msgstr "Отписаться от группы"
 
-#: html.c:1769
+#: html.c:1795
 msgid "Stop following this group or channel"
 msgstr "Отписаться от группы или канала"
 
-#: html.c:1773 html.c:4584
+#: html.c:1799 html.c:4608
 msgid "Follow Group"
 msgstr "Подписаться на группу"
 
-#: html.c:1774
+#: html.c:1800
 msgid "Start following this group or channel"
 msgstr "Подписаться на группу или канал"
 
-#: html.c:1779 html.c:3190 html.c:4528
+#: html.c:1805 html.c:3216 html.c:4552
 msgid "MUTE"
 msgstr "Заглушить"
 
-#: html.c:1780
+#: html.c:1806
 msgid "Block any activity from this user forever"
 msgstr "Заглушить всю активность от этого пользователя, навсегда"
 
-#: html.c:1785 html.c:3172 html.c:4614
+#: html.c:1811 html.c:3198 html.c:4638
 msgid "Delete"
 msgstr "Удалить"
 
-#: html.c:1785
+#: html.c:1811
 msgid "Delete this post"
 msgstr "Удалить это сообщение"
 
-#: html.c:1788 html.c:4536
+#: html.c:1814 html.c:4560
 msgid "Hide"
 msgstr "Скрыть"
 
-#: html.c:1788
+#: html.c:1814
 msgid "Hide this post and its children"
 msgstr "Скрыть это сообщение вместе с обсуждением"
 
-#: html.c:1819
+#: html.c:1845
 msgid "Edit..."
 msgstr "Редактировать..."
 
-#: html.c:1839
+#: html.c:1865
 msgid "Reply..."
 msgstr "Ответить..."
 
-#: html.c:1890
+#: html.c:1916
 msgid "Truncated (too deep)"
 msgstr "Обрезано (слишком много)"
 
-#: html.c:1899
+#: html.c:1925
 msgid "follows you"
 msgstr "подписан на вас"
 
-#: html.c:1962
+#: html.c:1988
 msgid "Pinned"
 msgstr "Закреплено"
 
-#: html.c:1970
+#: html.c:1996
 msgid "Bookmarked"
 msgstr "Добавлено в закладки"
 
-#: html.c:1978
+#: html.c:2004
 msgid "Poll"
 msgstr "Опрос"
 
-#: html.c:1985
+#: html.c:2011
 msgid "Voted"
 msgstr "Проголосовано"
 
-#: html.c:1994
+#: html.c:2020
 msgid "Event"
 msgstr "Событие"
 
-#: html.c:2026 html.c:2055
+#: html.c:2052 html.c:2081
 msgid "boosted"
 msgstr "поделился"
 
-#: html.c:2071
+#: html.c:2097
 msgid "in reply to"
 msgstr "в ответ на"
 
-#: html.c:2122
+#: html.c:2148
 msgid " [SENSITIVE CONTENT]"
 msgstr " [ЧУВСТВИТЕЛЬНО СОДЕРЖИМОЕ]"
 
-#: html.c:2299
+#: html.c:2325
 msgid "Vote"
 msgstr "Голос"
 
-#: html.c:2309
+#: html.c:2335
 msgid "Closed"
 msgstr "Закрыт"
 
-#: html.c:2334
+#: html.c:2360
 msgid "Closes in"
 msgstr "Закрывается через"
 
-#: html.c:2415
+#: html.c:2441
 msgid "Video"
 msgstr "Видео"
 
-#: html.c:2430
+#: html.c:2456
 msgid "Audio"
 msgstr "Аудио"
 
-#: html.c:2458
+#: html.c:2484
 msgid "Attachment"
 msgstr "Вложение"
 
-#: html.c:2472
+#: html.c:2498
 msgid "Alt..."
 msgstr "Описание..."
 
-#: html.c:2485
+#: html.c:2511
 msgid "Source channel or community"
 msgstr "Исходный канал или сообщество"
 
-#: html.c:2579
+#: html.c:2605
 msgid "Time: "
 msgstr "Время: "
 
-#: html.c:2660
+#: html.c:2686
 msgid "Older..."
 msgstr "Ранее..."
 
-#: html.c:2762
+#: html.c:2788
 msgid "about this site"
 msgstr "про этот сайт"
 
-#: html.c:2764
+#: html.c:2790
 msgid "powered by "
 msgstr "на основе "
 
-#: html.c:2829
+#: html.c:2855
 msgid "Dismiss"
 msgstr "Скрыть"
 
-#: html.c:2846
+#: html.c:2872
 #, c-format
 msgid "Timeline for list '%s'"
 msgstr "Ленты для списка '%s'"
 
-#: html.c:2865 html.c:3918
+#: html.c:2891 html.c:3944
 msgid "Pinned posts"
 msgstr "Закреплённые сообщения"
 
-#: html.c:2877 html.c:3933
+#: html.c:2903 html.c:3959
 msgid "Bookmarked posts"
 msgstr "Сообщения в закладках"
 
-#: html.c:2889 html.c:3948
+#: html.c:2915 html.c:3974
 msgid "Post drafts"
 msgstr "Черновики сообщений"
 
-#: html.c:2960
+#: html.c:2986
 msgid "No more unseen posts"
 msgstr "Всё просмотрено"
 
-#: html.c:2964 html.c:3064
+#: html.c:2990 html.c:3090
 msgid "Back to top"
 msgstr "Вернуться наверх"
 
-#: html.c:3017
+#: html.c:3043
 msgid "History"
 msgstr "История"
 
-#: html.c:3069 html.c:3489
+#: html.c:3095 html.c:3515
 msgid "More..."
 msgstr "Ещё..."
 
-#: html.c:3158 html.c:4550
+#: html.c:3184 html.c:4574
 msgid "Unlimit"
 msgstr "Без ограничения"
 
-#: html.c:3159
+#: html.c:3185
 msgid "Allow announces (boosts) from this user"
 msgstr "Разрешить продвижения от этого пользователя"
 
-#: html.c:3162 html.c:4546
+#: html.c:3188 html.c:4570
 msgid "Limit"
 msgstr "Лимит"
 
-#: html.c:3163
+#: html.c:3189
 msgid "Block announces (boosts) from this user"
 msgstr "Запретить продвижения от этого пользователя"
 
-#: html.c:3172
+#: html.c:3198
 msgid "Delete this user"
 msgstr "Удалить пользователя"
 
-#: html.c:3177 html.c:4664
+#: html.c:3203 html.c:4688
 msgid "Approve"
 msgstr "Подтвердить"
 
-#: html.c:3178
+#: html.c:3204
 msgid "Approve this follow request"
 msgstr "Подтвердить запрос на подписку"
 
-#: html.c:3181 html.c:4688
+#: html.c:3207 html.c:4712
 msgid "Discard"
 msgstr "Отклонить"
 
-#: html.c:3181
+#: html.c:3207
 msgid "Discard this follow request"
 msgstr "Отклонить этот запрос на подписку"
 
-#: html.c:3186 html.c:4532
+#: html.c:3212 html.c:4556
 msgid "Unmute"
 msgstr "Отменить глушение"
 
-#: html.c:3187
+#: html.c:3213
 msgid "Stop blocking activities from this user"
 msgstr "Прекратить глушение действий этого пользователя"
 
-#: html.c:3191
+#: html.c:3217
 msgid "Block any activity from this user"
 msgstr "Заглушить все действия этого пользователя"
 
-#: html.c:3199
+#: html.c:3225
 msgid "Direct Message..."
 msgstr "Личное сообщение..."
 
-#: html.c:3234
+#: html.c:3260
 msgid "Pending follow confirmations"
 msgstr "Ожидающие запросы на подписку"
 
-#: html.c:3238
+#: html.c:3264
 msgid "People you follow"
 msgstr "Ваши подписки"
 
-#: html.c:3239
+#: html.c:3265
 msgid "People that follow you"
 msgstr "Ваши подписчики"
 
-#: html.c:3278
+#: html.c:3304
 msgid "Clear all"
 msgstr "Очистить всё"
 
-#: html.c:3335
+#: html.c:3361
 msgid "Mention"
 msgstr "Упоминание"
 
-#: html.c:3338
+#: html.c:3364
 msgid "Finished poll"
 msgstr "Завершённый опрос"
 
-#: html.c:3353
+#: html.c:3379
 msgid "Follow Request"
 msgstr "Запрос на подписку"
 
-#: html.c:3436
+#: html.c:3462
 msgid "Context"
 msgstr "Контекст"
 
-#: html.c:3447
+#: html.c:3473
 msgid "New"
 msgstr "Новое"
 
-#: html.c:3462
+#: html.c:3488
 msgid "Already seen"
 msgstr "Уже просмотрено"
 
-#: html.c:3477
+#: html.c:3503
 msgid "None"
 msgstr "Нет"
 
-#: html.c:3743
+#: html.c:3769
 #, c-format
 msgid "Search results for account %s"
 msgstr "Результаты поиска для учётной записи %s"
 
-#: html.c:3750
+#: html.c:3776
 #, c-format
 msgid "Account %s not found"
 msgstr "Учётная запись %s не найдена"
 
-#: html.c:3781
+#: html.c:3807
 #, c-format
 msgid "Search results for tag %s"
 msgstr "Результаты поиска тега %s"
 
-#: html.c:3781
+#: html.c:3807
 #, c-format
 msgid "Nothing found for tag %s"
 msgstr "Ничего не найдено по тегу %s"
 
-#: html.c:3797
+#: html.c:3823
 #, c-format
 msgid "Search results for '%s' (may be more)"
 msgstr "Результаты поиска для '%s' (возможно, есть ещё)"
 
-#: html.c:3800
+#: html.c:3826
 #, c-format
 msgid "Search results for '%s'"
 msgstr "Результаты поиска для '%s'"
 
-#: html.c:3803
+#: html.c:3829
 #, c-format
 msgid "No more matches for '%s'"
 msgstr "Больше нет совпадений для '%s'"
 
-#: html.c:3805
+#: html.c:3831
 #, c-format
 msgid "Nothing found for '%s'"
 msgstr "Ничего не найдено для '%s'"
 
-#: html.c:3903
+#: html.c:3929
 msgid "Showing instance timeline"
 msgstr "Показываем ленту инстанции"
 
-#: html.c:3986
+#: html.c:4012
 #, c-format
 msgid "Showing timeline for list '%s'"
 msgstr "Показываем ленты инстанции для списка '%s'"
@@ -695,7 +695,7 @@ msgstr "Результаты поиска для тега #%s"
 msgid "Recent posts by users in this instance"
 msgstr "Последние сообщения на этой инстанции"
 
-#: html.c:1577
+#: html.c:1603
 msgid "Blocked hashtags..."
 msgstr "Заблокированные теги..."
 
@@ -715,31 +715,31 @@ msgstr ""
 "Вариант 3...\n"
 "..."
 
-#: html.c:1394
+#: html.c:1415
 msgid "Bot API key"
 msgstr "Ключ API для бота"
 
-#: html.c:1400
+#: html.c:1421
 msgid "Chat id"
 msgstr "Id чата"
 
-#: html.c:1408
+#: html.c:1429
 msgid "ntfy server - full URL (example: https://ntfy.sh/YourTopic)"
 msgstr "полный URL сервера ntfy (например https://ntfy.sh/YourTopic)"
 
-#: html.c:1414
+#: html.c:1435
 msgid "ntfy token - if needed"
 msgstr "токен ntfy - если нужен"
 
-#: html.c:2866
+#: html.c:2892
 msgid "pinned"
 msgstr "закреплено"
 
-#: html.c:2878
+#: html.c:2904
 msgid "bookmarks"
 msgstr "закладки"
 
-#: html.c:2890
+#: html.c:2916
 msgid "drafts"
 msgstr "черновики"
 
@@ -750,15 +750,19 @@ msgstr ""
 msgid "Post date and time:"
 msgstr ""
 
-#: html.c:2901 html.c:3963
+#: html.c:2927 html.c:3989
 msgid "Scheduled posts"
 msgstr ""
 
-#: html.c:2902
+#: html.c:2928
 msgid "scheduled posts"
 msgstr ""
 
 #: html.c:458
 #, c-format
 msgid "Post date and time (timezone: %s):"
+msgstr ""
+
+#: html.c:1538
+msgid "Time zone:"
 msgstr ""
