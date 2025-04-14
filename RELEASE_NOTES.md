@@ -14,7 +14,7 @@ Added a new `snac-admin` helper script (contributed by shtrophic).
 
 In the web UI, posts are separated by the `<hr hidden>` tag; it's invisible in graphical browsers, but it separates post clearly in text-based browsers.
 
-Some Spanish, Czech and Russian translation updates and fixes.
+Some Finnish, Spanish, Czech and Russian translation updates and fixes.
 
 ## 2.74 "The Days of Nicole, the Fediverse Chick"
 
