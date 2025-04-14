@@ -738,24 +738,24 @@ msgstr "vedokset"
 
 #: html.c:464
 msgid "Scheduled post..."
-msgstr ""
+msgstr "Ajastettu julkaisu..."
 
 msgid "Post date and time:"
-msgstr ""
+msgstr "Julkaisuajankohta:"
 
 #: html.c:2927 html.c:3989
 msgid "Scheduled posts"
-msgstr ""
+msgstr "Ajastetut julkaisut"
 
 #: html.c:2928
 msgid "scheduled posts"
-msgstr ""
+msgstr "ajastetut julkaisut"
 
 #: html.c:458
 #, c-format
 msgid "Post date and time (timezone: %s):"
-msgstr ""
+msgstr "Julkaisuajankohta (aikavyöhyke: %s):"
 
 #: html.c:1538
 msgid "Time zone:"
-msgstr ""
+msgstr "Aikavyöhyke: "
