@@ -1,8 +1,8 @@
 # Release Notes
 
-## UNRELEASED
+## UNRELEASED "Time Is On My Side"
 
-Added support for scheduled posts.
+Added support for scheduled posts (for this to work correctly, users will have to set their time zone, see below).
 
 The user can now select a working time zone. This will be used to correctly parse the local date and time of a scheduled post.
 
@@ -10,7 +10,11 @@ Fixed incorrect poll vote format, which was causing problems in platforms like G
 
 Mastodon API: added support for `/api/v1/instance/peers`.
 
-Some Czech and Russian translation fixes.
+Added a new `snac-admin` helper script (contributed by shtrophic).
+
+In the web UI, posts are separated by the `<hr hidden>` tag; it's invisible in graphical browsers, but it separates post clearly in text-based browsers.
+
+Some Spanish, Czech and Russian translation updates and fixes.
 
 ## 2.74 "The Days of Nicole, the Fediverse Chick"
 
