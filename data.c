@@ -282,6 +282,8 @@ int user_open(snac *user, const char *uid)
             }
             else
                 srv_log(xs_fmt("error parsing '%s'", cfg_file));
+
+            user->tz = xs_dict_get_def(user->config, "tz", "UTC");
         }
         else
             srv_debug(2, xs_fmt("error opening '%s' %d", cfg_file, errno));
@@ -1929,6 +1931,70 @@ xs_list *draft_list(snac *user)
 }
 
 
+/** scheduled posts **/
+
+int is_scheduled(snac *user, const char *id)
+/* returns true if this note is scheduled for future sending */
+{
+    return object_user_cache_in(user, id, "sched");
+}
+
+
+void schedule_del(snac *user, const char *id)
+/* deletes an scheduled post */
+{
+    object_user_cache_del(user, id, "sched");
+}
+
+
+void schedule_add(snac *user, const char *id, const xs_dict *msg)
+/* schedules this post for later */
+{
+    /* delete from the index, in case it was already there */
+    schedule_del(user, id);
+
+    /* overwrite object */
+    object_add_ow(id, msg);
+
+    /* [re]add to the index */
+    object_user_cache_add(user, id, "sched");
+}
+
+
+xs_list *scheduled_list(snac *user)
+/* return the list of scheduled posts */
+{
+    return object_user_cache_list(user, "sched", XS_ALL, 1);
+}
+
+
+void scheduled_process(snac *user)
+/* processes the scheduled list, sending those ready to be sent */
+{
+    xs *posts = scheduled_list(user);
+    const char *md5;
+    xs *right_now = xs_str_utctime(0, ISO_DATE_SPEC);
+
+    xs_list_foreach(posts, md5) {
+        xs *msg = NULL;
+
+        if (valid_status(object_get_by_md5(md5, &msg))) {
+            if (strcmp(xs_dict_get(msg, "published"), right_now) < 0) {
+                /* due date! */
+                const char *id = xs_dict_get(msg, "id");
+
+                timeline_add(user, id, msg);
+
+                xs *c_msg = msg_create(user, msg);
+                enqueue_message(user, c_msg);
+
+                schedule_del(user, id);
+            }
+        }
+    }
+}
+
+
 /** hiding **/
 
 xs_str *_hidden_fn(snac *snac, const char *id)
@@ -2619,10 +2685,9 @@ xs_list *inbox_list(void)
     xs_list *ibl = xs_list_new();
     xs *spec     = xs_fmt("%s/inbox/" "*", srv_basedir);
     xs *files    = xs_glob(spec, 0, 0);
-    xs_list *p   = files;
     const xs_val *v;
 
-    while (xs_list_iter(&p, &v)) {
+    xs_list_foreach(files, v) {
         FILE *f;
 
         if ((f = fopen(v, "r")) != NULL) {
@@ -2630,7 +2695,9 @@ xs_list *inbox_list(void)
 
             if (line && *line) {
                 line = xs_strip_i(line);
-                ibl  = xs_list_append(ibl, line);
+
+                if (!is_instance_blocked(line))
+                    ibl = xs_list_append(ibl, line);
             }
 
             fclose(f);
@@ -3696,7 +3763,7 @@ void purge_user(snac *snac)
     _purge_user_subdir(snac, "public",  pub_days);
 
     const char *idxs[] = { "followers.idx", "private.idx", "public.idx",
-                           "pinned.idx", "bookmark.idx", "draft.idx", NULL };
+                           "pinned.idx", "bookmark.idx", "draft.idx", "sched.idx", NULL };
 
     for (n = 0; idxs[n]; n++) {
         xs *idx = xs_fmt("%s/%s", snac->basedir, idxs[n]);

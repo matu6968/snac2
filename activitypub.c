@@ -2750,6 +2750,8 @@ int process_user_queue(snac *snac)
         cnt++;
     }
 
+    scheduled_process(snac);
+
     return cnt;
 }
 

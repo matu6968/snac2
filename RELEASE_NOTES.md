@@ -1,6 +1,22 @@
 # Release Notes
 
-## 2.74
+## 2.75 "Time Is On My Side"
+
+Added support for scheduled posts (for this to work correctly, users will have to set their time zone, see below).
+
+The user can now select a working time zone. This will be used to correctly parse the local date and time of a scheduled post.
+
+Fixed incorrect poll vote format, which was causing problems in platforms like GotoSocial.
+
+Mastodon API: added support for `/api/v1/instance/peers`.
+
+Added a new `snac-admin` helper script (contributed by shtrophic).
+
+In the web UI, posts are separated by the `<hr hidden>` tag; it's invisible in graphical browsers, but it separates post clearly in text-based browsers.
+
+Some Finnish, Spanish, Czech and Russian translation updates and fixes.
+
+## 2.74 "The Days of Nicole, the Fediverse Chick"
 
 Added Spanish (default, Argentina and Uruguay) translation (contributed by gnemmi).
 
@@ -22,7 +38,7 @@ Added Greek translation (contributed by uhuru).
 
 Added Italian translation (contributed by anzu).
 
-Mastodon API: added support for /api/v1/custom_emojis (contributed by violette).
+Mastodon API: added support for `/api/v1/custom_emojis` (contributed by violette).
 
 Improved Undo+Follow logic (contributed by rozenglass).
 

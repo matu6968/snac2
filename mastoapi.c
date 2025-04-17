@@ -2256,6 +2256,25 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         status = HTTP_STATUS_OK;
     }
     else
+    if (strcmp(cmd, "/v1/instance/peers") == 0) { /** **/
+        /* get the collected inbox list as the instances "this domain is aware of" */
+        xs *list = inbox_list();
+        xs *peers = xs_list_new();
+        const char *inbox;
+
+        xs_list_foreach(list, inbox) {
+            xs *l = xs_split(inbox, "/");
+            const char *domain = xs_list_get(l, 2);
+
+            if (xs_is_string(domain))
+                peers = xs_list_append(peers, domain);
+        }
+
+        *body  = xs_json_dumps(peers, 4);
+        *ctype = "application/json";
+        status = HTTP_STATUS_OK;
+    }
+    else
     if (xs_startswith(cmd, "/v1/statuses/")) { /** **/
         /* information about a status */
         if (logged_in) {
@@ -2707,14 +2726,24 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 msg = xs_dict_set(msg, "summary",   summary);
             }
 
-            /* store */
-            timeline_add(&snac, xs_dict_get(msg, "id"), msg);
+            /* scheduled? */
+            const char *scheduled_at = xs_dict_get(args, "scheduled_at");
 
-            /* 'Create' message */
-            xs *c_msg = msg_create(&snac, msg);
-            enqueue_message(&snac, c_msg);
+            if (xs_is_string(scheduled_at) && *scheduled_at) {
+                msg = xs_dict_set(msg, "published", scheduled_at);
 
-            timeline_touch(&snac);
+                schedule_add(&snac, xs_dict_get(msg, "id"), msg);
+            }
+            else {
+                /* store */
+                timeline_add(&snac, xs_dict_get(msg, "id"), msg);
+
+                /* 'Create' message */
+                xs *c_msg = msg_create(&snac, msg);
+                enqueue_message(&snac, c_msg);
+
+                timeline_touch(&snac);
+            }
 
             /* convert to a mastodon status as a response code */
             xs *st = mastoapi_status(&snac, msg);

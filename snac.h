@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
-#define VERSION "2.74"
+#define VERSION "2.75"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -61,6 +61,7 @@ typedef struct {
     xs_str *actor;      /* actor url */
     xs_str *md5;        /* actor url md5 */
     const xs_dict *lang;/* string translation dict */
+    const char *tz;     /* configured timezone */
 } snac;
 
 typedef struct {
@@ -204,6 +205,12 @@ int is_draft(snac *user, const char *id);
 void draft_del(snac *user, const char *id);
 void draft_add(snac *user, const char *id, const xs_dict *msg);
 xs_list *draft_list(snac *user);
+
+int is_scheduled(snac *user, const char *id);
+void schedule_del(snac *user, const char *id);
+void schedule_add(snac *user, const char *id, const xs_dict *msg);
+xs_list *scheduled_list(snac *user);
+void scheduled_process(snac *user);
 
 int limited(snac *user, const char *id, int cmd);
 #define is_limited(user, id) limited((user), (id), 0)
