@@ -63,7 +63,8 @@ int usage(void)
     printf("list_members {basedir} {uid} {name}  Returns the list of accounts inside a list\n");
     printf("create_list {basedir} {uid} {name}   Creates a new list\n");
     printf("delete_list {basedir} {uid} {name}   Deletes an existing list\n");
-    printf("add_to_list {basedir} {uid} {name} {acct} Adds an account (@user@host or actor url) to a list\n");
+    printf("list_add {basedir} {uid} {name} {acct} Adds an account (@user@host or actor url) to a list\n");
+    printf("list_del {basedir} {uid} {name} {acct} Deletes an account (@user@host or actor url) from a list\n");
 
     return 1;
 }
@@ -348,7 +349,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (strcmp(cmd, "add_to_list") == 0) { /** **/
+    if (strcmp(cmd, "list_add") == 0) { /** **/
         const char *account = GET_ARGV();
 
         if (account != NULL) {
@@ -362,7 +363,34 @@ int main(int argc, char *argv[])
                     xs *md5 = xs_md5_hex(actor, strlen(actor));
 
                     list_content(&snac, lid, md5, 1);
-                    printf("Actor %s (%s) added to list %s (%s)\n", actor, uid, url, lid);
+                    printf("Actor %s (%s) added to list '%s' (%s)\n", actor, uid, url, lid);
+                }
+                else
+                    fprintf(stderr, "Cannot resolve account '%s'\n", account);
+            }
+            else
+                fprintf(stderr, "Cannot find a list named '%s'\n", url);
+
+        }
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "list_del") == 0) { /** **/
+        const char *account = GET_ARGV();
+
+        if (account != NULL) {
+            xs *lid = list_maint(&snac, url, 4);
+
+            if (lid != NULL) {
+                xs *actor = NULL;
+                xs *uid = NULL;
+
+                if (valid_status(webfinger_request(account, &actor, &uid))) {
+                    xs *md5 = xs_md5_hex(actor, strlen(actor));
+
+                    list_content(&snac, lid, md5, 2);
+                    printf("Actor %s (%s) deleted from list '%s' (%s)\n", actor, uid, url, lid);
                 }
                 else
                     fprintf(stderr, "Cannot resolve account '%s'\n", account);
