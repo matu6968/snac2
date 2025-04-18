@@ -59,6 +59,12 @@ int usage(void)
     printf("import_csv {basedir} {uid}           Imports data from CSV files\n");
     printf("import_list {basedir} {uid} {file}   Imports a Mastodon CSV list file\n");
     printf("import_block_list {basedir} {uid} {file} Imports a Mastodon CSV block list file\n");
+    printf("lists {basedir} {uid}                Returns the names of the lists created by the user\n");
+    printf("list_members {basedir} {uid} {name}  Returns the list of accounts inside a list\n");
+    printf("create_list {basedir} {uid} {name}   Creates a new list\n");
+    printf("delete_list {basedir} {uid} {name}   Deletes an existing list\n");
+    printf("list_add {basedir} {uid} {name} {acct} Adds an account (@user@host or actor url) to a list\n");
+    printf("list_del {basedir} {uid} {name} {actor} Deletes an actor URL from a list\n");
 
     return 1;
 }
@@ -282,8 +288,113 @@ int main(int argc, char *argv[])
         return migrate_account(&snac);
     }
 
+    if (strcmp(cmd, "lists") == 0) { /** **/
+        xs *lol = list_maint(&snac, NULL, 0);
+        const xs_list *l;
+
+        xs_list_foreach(lol, l) {
+            printf("%s (%s)\n", xs_list_get(l, 1), xs_list_get(l, 0));
+        }
+
+        return 0;
+    }
+
     if ((url = GET_ARGV()) == NULL)
         return usage();
+
+    if (strcmp(cmd, "list_members") == 0) { /** **/
+        xs *lid = list_maint(&snac, url, 4);
+
+        if (lid != NULL) {
+            xs *lcont = list_content(&snac, lid, NULL, 0);
+            const char *md5;
+
+            xs_list_foreach(lcont, md5) {
+                xs *actor = NULL;
+
+                if (valid_status(object_get_by_md5(md5, &actor))) {
+                    printf("%s (%s)\n", xs_dict_get(actor, "id"), xs_dict_get_def(actor, "preferredUsername", ""));
+                }
+            }
+        }
+        else
+            fprintf(stderr, "Cannot find a list named '%s'\n", url);
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "create_list") == 0) { /** **/
+        xs *lid = list_maint(&snac, url, 4);
+
+        if (lid == NULL) {
+            xs *n_lid = list_maint(&snac, url, 1);
+            printf("New list named '%s' created (%s)\n", url, n_lid);
+        }
+        else
+            fprintf(stderr, "A list named '%s' already exist\n", url);
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "delete_list") == 0) { /** **/
+        xs *lid = list_maint(&snac, url, 4);
+
+        if (lid != NULL) {
+            list_maint(&snac, lid, 2);
+            printf("List '%s' (%s) deleted\n", url, lid);
+        }
+        else
+            fprintf(stderr, "Cannot find a list named '%s'\n", url);
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "list_add") == 0) { /** **/
+        const char *account = GET_ARGV();
+
+        if (account != NULL) {
+            xs *lid = list_maint(&snac, url, 4);
+
+            if (lid != NULL) {
+                xs *actor = NULL;
+                xs *uid = NULL;
+
+                if (valid_status(webfinger_request(account, &actor, &uid))) {
+                    xs *md5 = xs_md5_hex(actor, strlen(actor));
+
+                    list_content(&snac, lid, md5, 1);
+                    printf("Actor %s (%s) added to list '%s' (%s)\n", actor, uid, url, lid);
+                }
+                else
+                    fprintf(stderr, "Cannot resolve account '%s'\n", account);
+            }
+            else
+                fprintf(stderr, "Cannot find a list named '%s'\n", url);
+
+        }
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "list_del") == 0) { /** **/
+        const char *account = GET_ARGV();
+
+        if (account != NULL) {
+            xs *lid = list_maint(&snac, url, 4);
+
+            if (lid != NULL) {
+                xs *md5 = xs_md5_hex(account, strlen(account));
+
+                list_content(&snac, lid, md5, 2);
+                printf("Actor %s deleted from list '%s' (%s)\n", account, url, lid);
+            }
+            else
+                fprintf(stderr, "Cannot find a list named '%s'\n", url);
+
+        }
+
+        return 0;
+    }
 
     if (strcmp(cmd, "alias") == 0) { /** **/
         xs *actor = NULL;

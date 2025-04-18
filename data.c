@@ -282,6 +282,8 @@ int user_open(snac *user, const char *uid)
             }
             else
                 srv_log(xs_fmt("error parsing '%s'", cfg_file));
+
+            user->tz = xs_dict_get_def(user->config, "tz", "UTC");
         }
         else
             srv_debug(2, xs_fmt("error opening '%s' %d", cfg_file, errno));
@@ -2338,6 +2340,19 @@ xs_val *list_maint(snac *user, const char *list, int op)
         }
 
         break;
+
+    case 4: /** find list id by name **/
+        if (xs_is_string(list)) {
+            xs *lol = list_maint(user, NULL, 0);
+            const xs_list *li;
+
+            xs_list_foreach(lol, li) {
+                if (strcmp(list, xs_list_get(li, 1)) == 0) {
+                    l = xs_dup(xs_list_get(li, 0));
+                    break;
+                }
+            }
+        }
     }
 
     return l;
@@ -2389,7 +2404,7 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
         break;
 
     case 1: /** append actor to list **/
-        if (actor_md5 != NULL) {
+        if (xs_is_string(actor_md5) && xs_is_hex(actor_md5)) {
             if (!index_in_md5(fn, actor_md5))
                 index_add_md5(fn, actor_md5);
         }
@@ -2397,7 +2412,7 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
         break;
 
     case 2: /** delete actor from list **/
-        if (actor_md5 != NULL)
+        if (xs_is_string(actor_md5) && xs_is_hex(actor_md5))
             index_del_md5(fn, actor_md5);
 
         break;

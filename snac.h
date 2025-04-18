@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
-#define VERSION "2.75-dev"
+#define VERSION "2.75"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -61,6 +61,7 @@ typedef struct {
     xs_str *actor;      /* actor url */
     xs_str *md5;        /* actor url md5 */
     const xs_dict *lang;/* string translation dict */
+    const char *tz;     /* configured timezone */
 } snac;
 
 typedef struct {

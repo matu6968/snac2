@@ -455,20 +455,26 @@ xs_html *html_note(snac *user, const char *summary,
     }
 
     if (edit_id == NULL || is_draft || is_scheduled(user, edit_id)) {
+        xs *pdat = xs_fmt(L("Post date and time (timezone: %s):"), user->tz);
+
         xs_html_add(form,
             xs_html_tag("p",
-                xs_html_text(L("Post date and time (empty, right now; in the future, schedule for later):")),
-                xs_html_sctag("br", NULL),
-                xs_html_sctag("input",
-                    xs_html_attr("type",  "date"),
-                    xs_html_attr("value", post_date ? post_date : ""),
-                    xs_html_attr("name",  "post_date")),
-                xs_html_text(" "),
-                xs_html_sctag("input",
-                    xs_html_attr("type",  "time"),
-                    xs_html_attr("value", post_time ? post_time : ""),
-                    xs_html_attr("step",  "1"),
-                    xs_html_attr("name",  "post_time"))));
+                xs_html_tag("details",
+                    xs_html_tag("summary",
+                        xs_html_text(L("Scheduled post..."))),
+                    xs_html_tag("p",
+                        xs_html_text(pdat),
+                        xs_html_sctag("br", NULL),
+                        xs_html_sctag("input",
+                            xs_html_attr("type",  "date"),
+                            xs_html_attr("value", post_date ? post_date : ""),
+                            xs_html_attr("name",  "post_date")),
+                        xs_html_text(" "),
+                        xs_html_sctag("input",
+                            xs_html_attr("type",  "time"),
+                            xs_html_attr("value", post_time ? post_time : ""),
+                            xs_html_attr("step",  "1"),
+                            xs_html_attr("name",  "post_time"))))));
     }
 
     if (edit_id)
@@ -1312,6 +1318,27 @@ xs_html *html_top_controls(snac *user)
                     xs_html_attr("value", lang)));
     }
 
+    /* timezone */
+    xs_html *tz_select = xs_html_tag("select",
+        xs_html_attr("name", "tz"));
+
+    xs *tzs = xs_tz_list();
+    const char *tz;
+
+    xs_list_foreach(tzs, tz) {
+        if (strcmp(tz, user->tz) == 0)
+            xs_html_add(tz_select,
+                xs_html_tag("option",
+                xs_html_text(tz),
+                xs_html_attr("value", tz),
+                xs_html_attr("selected", "selected")));
+        else
+            xs_html_add(tz_select,
+                xs_html_tag("option",
+                xs_html_text(tz),
+                xs_html_attr("value", tz)));
+    }
+
     xs *user_setup_action = xs_fmt("%s/admin/user-setup", user->actor);
 
     xs_html_add(top_controls,
@@ -1506,6 +1533,11 @@ xs_html *html_top_controls(snac *user)
                     xs_html_text(L("Web interface language:")),
                     xs_html_sctag("br", NULL),
                     lang_select),
+
+                xs_html_tag("p",
+                    xs_html_text(L("Time zone:")),
+                    xs_html_sctag("br", NULL),
+                    tz_select),
 
                 xs_html_tag("p",
                     xs_html_text(L("New password:")),
@@ -2439,13 +2471,19 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 name = NULL;
             }
             else {
+                xs *d_href = xs_dup(o_href);
+                if (strlen(d_href) > 64) {
+                    d_href[64] = '\0';
+                    d_href = xs_str_cat(d_href, "...");
+                }
+
                 xs_html_add(content_attachments,
                     xs_html_tag("p",
                         xs_html_tag("a",
                             xs_html_attr("href", o_href),
                             xs_html_text(L("Attachment")),
                             xs_html_text(": "),
-                            xs_html_text(o_href))));
+                            xs_html_text(d_href))));
 
                 /* do not generate an Alt... */
                 name = NULL;
@@ -4349,19 +4387,21 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             }
 
             if (xs_is_string(post_date) && *post_date) {
-                xs *local_pubdate = xs_fmt("%sT%s", post_date,
+                xs *post_pubdate = xs_fmt("%sT%s", post_date,
                     xs_is_string(post_time) && *post_time ? post_time : "00:00:00");
 
-                time_t t = xs_parse_iso_date(local_pubdate, 1);
+                time_t t = xs_parse_iso_date(post_pubdate, 0);
 
                 if (t != 0) {
+                    t -= xs_tz_offset(snac.tz);
+
                     xs *iso_date = xs_str_iso_date(t);
                     msg = xs_dict_set(msg, "published", iso_date);
 
                     snac_debug(&snac, 1, xs_fmt("Published date: [%s]", iso_date));
                 }
                 else
-                    snac_log(&snac, xs_fmt("Invalid post date: [%s]", local_pubdate));
+                    snac_log(&snac, xs_fmt("Invalid post date: [%s]", post_pubdate));
             }
 
             /* is the published date from the future? */
@@ -4741,6 +4781,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "show_contact_metrics", xs_stock(XSTYPE_FALSE));
         if ((v = xs_dict_get(p_vars, "web_ui_lang")) != NULL)
             snac.config = xs_dict_set(snac.config, "lang", v);
+        if ((v = xs_dict_get(p_vars, "tz")) != NULL)
+            snac.config = xs_dict_set(snac.config, "tz", v);
 
         snac.config = xs_dict_set(snac.config, "latitude", xs_dict_get_def(p_vars, "latitude", ""));
         snac.config = xs_dict_set(snac.config, "longitude", xs_dict_get_def(p_vars, "longitude", ""));
