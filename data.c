@@ -2340,6 +2340,19 @@ xs_val *list_maint(snac *user, const char *list, int op)
         }
 
         break;
+
+    case 4: /** find list id by name **/
+        if (xs_is_string(list)) {
+            xs *lol = list_maint(user, NULL, 0);
+            const xs_list *li;
+
+            xs_list_foreach(lol, li) {
+                if (strcmp(list, xs_list_get(li, 1)) == 0) {
+                    l = xs_dup(xs_list_get(li, 0));
+                    break;
+                }
+            }
+        }
     }
 
     return l;
