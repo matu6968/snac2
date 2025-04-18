@@ -1,5 +1,9 @@
 # Release Notes
 
+## UNRELEASED
+
+Added new command-line options for list maintenance.
+
 ## 2.75 "Time Is On My Side"
 
 Added support for scheduled posts (for this to work correctly, users will have to set their time zone, see below).
