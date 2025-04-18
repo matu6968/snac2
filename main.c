@@ -64,7 +64,7 @@ int usage(void)
     printf("create_list {basedir} {uid} {name}   Creates a new list\n");
     printf("delete_list {basedir} {uid} {name}   Deletes an existing list\n");
     printf("list_add {basedir} {uid} {name} {acct} Adds an account (@user@host or actor url) to a list\n");
-    printf("list_del {basedir} {uid} {name} {acct} Deletes an account (@user@host or actor url) from a list\n");
+    printf("list_del {basedir} {uid} {name} {actor} Deletes an actor URL from a list\n");
 
     return 1;
 }
