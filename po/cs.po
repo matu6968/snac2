@@ -738,24 +738,24 @@ msgstr "rozepsané"
 
 #: html.c:464
 msgid "Scheduled post..."
-msgstr ""
+msgstr "Naplánovat příspěvek..."
 
 msgid "Post date and time:"
-msgstr ""
+msgstr "Den a čas:"
 
 #: html.c:2927 html.c:3989
 msgid "Scheduled posts"
-msgstr ""
+msgstr "Naplánované příspěvky"
 
 #: html.c:2928
 msgid "scheduled posts"
-msgstr ""
+msgstr "naplánované příspěvky"
 
 #: html.c:458
 #, c-format
 msgid "Post date and time (timezone: %s):"
-msgstr ""
+msgstr "Den a čas (časové pásmo: %s)"
 
 #: html.c:1538
 msgid "Time zone:"
-msgstr ""
+msgstr "Časové pásmo:"
