@@ -383,17 +383,10 @@ int main(int argc, char *argv[])
             xs *lid = list_maint(&snac, url, 4);
 
             if (lid != NULL) {
-                xs *actor = NULL;
-                xs *uid = NULL;
+                xs *md5 = xs_md5_hex(account, strlen(account));
 
-                if (valid_status(webfinger_request(account, &actor, &uid))) {
-                    xs *md5 = xs_md5_hex(actor, strlen(actor));
-
-                    list_content(&snac, lid, md5, 2);
-                    printf("Actor %s (%s) deleted from list '%s' (%s)\n", actor, uid, url, lid);
-                }
-                else
-                    fprintf(stderr, "Cannot resolve account '%s'\n", account);
+                list_content(&snac, lid, md5, 2);
+                printf("Actor %s deleted from list '%s' (%s)\n", account, url, lid);
             }
             else
                 fprintf(stderr, "Cannot find a list named '%s'\n", url);
