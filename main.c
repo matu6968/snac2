@@ -314,7 +314,33 @@ int main(int argc, char *argv[])
             }
         }
         else
-            fprintf(stderr, "Cannot find list named '%s'\n", url);
+            fprintf(stderr, "Cannot find a list named '%s'\n", url);
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "create_list") == 0) { /** **/
+        xs *lid = list_maint(&snac, url, 4);
+
+        if (lid == NULL) {
+            xs *n_lid = list_maint(&snac, url, 1);
+            printf("New list named '%s' created (%s)\n", url, n_lid);
+        }
+        else
+            fprintf(stderr, "A list named '%s' already exist\n", url);
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "delete_list") == 0) { /** **/
+        xs *lid = list_maint(&snac, url, 4);
+
+        if (lid != NULL) {
+            list_maint(&snac, lid, 2);
+            printf("List '%s' (%s) deleted\n", url, lid);
+        }
+        else
+            fprintf(stderr, "Cannot find a list named '%s'\n", url);
 
         return 0;
     }
