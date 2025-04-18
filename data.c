@@ -2404,7 +2404,7 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
         break;
 
     case 1: /** append actor to list **/
-        if (actor_md5 != NULL) {
+        if (xs_is_string(actor_md5) && xs_is_hex(actor_md5)) {
             if (!index_in_md5(fn, actor_md5))
                 index_add_md5(fn, actor_md5);
         }
@@ -2412,7 +2412,7 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
         break;
 
     case 2: /** delete actor from list **/
-        if (actor_md5 != NULL)
+        if (xs_is_string(actor_md5) && xs_is_hex(actor_md5))
             index_del_md5(fn, actor_md5);
 
         break;

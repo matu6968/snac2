@@ -61,6 +61,9 @@ int usage(void)
     printf("import_block_list {basedir} {uid} {file} Imports a Mastodon CSV block list file\n");
     printf("lists {basedir} {uid}                Returns the names of the lists created by the user\n");
     printf("list_members {basedir} {uid} {name}  Returns the list of accounts inside a list\n");
+    printf("create_list {basedir} {uid} {name}   Creates a new list\n");
+    printf("delete_list {basedir} {uid} {name}   Deletes an existing list\n");
+    printf("add_to_list {basedir} {uid} {name} {acct} Adds an account (@user@host or actor url) to a list\n");
 
     return 1;
 }
@@ -341,6 +344,33 @@ int main(int argc, char *argv[])
         }
         else
             fprintf(stderr, "Cannot find a list named '%s'\n", url);
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "add_to_list") == 0) { /** **/
+        const char *account = GET_ARGV();
+
+        if (account != NULL) {
+            xs *lid = list_maint(&snac, url, 4);
+
+            if (lid != NULL) {
+                xs *actor = NULL;
+                xs *uid = NULL;
+
+                if (valid_status(webfinger_request(account, &actor, &uid))) {
+                    xs *md5 = xs_md5_hex(actor, strlen(actor));
+
+                    list_content(&snac, lid, md5, 1);
+                    printf("Actor %s (%s) added to list %s (%s)\n", actor, uid, url, lid);
+                }
+                else
+                    fprintf(stderr, "Cannot resolve account '%s'\n", account);
+            }
+            else
+                fprintf(stderr, "Cannot find a list named '%s'\n", url);
+
+        }
 
         return 0;
     }
