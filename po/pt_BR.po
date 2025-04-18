@@ -4,10 +4,13 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: snac\n"
-"Last-Translator: Daltux <https://daltux.net>\n"
+"PO-Revision-Date: 2025-04-18\n"
+"Last-Translator: Daltux <@daltux@snac.daltux.net>\n"
 "Language: pt_BR\n"
+"MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"X-Generator: Poedit 3.5\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.6\n"
 
 #: html.c:384
 msgid "Sensitive content: "
@@ -739,24 +742,24 @@ msgstr "rascunhos"
 
 #: html.c:464
 msgid "Scheduled post..."
-msgstr ""
+msgstr "Publicação agendada..."
 
 msgid "Post date and time:"
-msgstr ""
+msgstr "Data e horário da publicação:"
 
 #: html.c:2927 html.c:3989
 msgid "Scheduled posts"
-msgstr ""
+msgstr "Publicações agendadas"
 
 #: html.c:2928
 msgid "scheduled posts"
-msgstr ""
+msgstr "publicações agendadas"
 
 #: html.c:458
 #, c-format
 msgid "Post date and time (timezone: %s):"
-msgstr ""
+msgstr "Data e hora da publicação (fuso horário: %s):"
 
 #: html.c:1538
 msgid "Time zone:"
-msgstr ""
+msgstr "Fuso horário:"
