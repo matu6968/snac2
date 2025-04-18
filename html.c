@@ -91,10 +91,14 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                     const char *u = xs_dict_get(i, "url");
                     const char *mt = xs_dict_get(i, "mediaType");
 
-                    if (xs_is_string(u) && xs_is_string(mt)) {
-                        if (strcmp(mt, "image/svg+xml") == 0 && !xs_is_true(xs_dict_get(srv_config, "enable_svg")))
-                            s = xs_replace_i(s, n, "");
-                        else {
+                    if (xs_is_string(u)) {
+                        if (!xs_is_string(mt))
+                            mt = xs_mime_by_ext(u);
+
+                        if (!xs_startswith(mt, "image/"))
+                            continue;
+
+                        if (strcmp(mt, "image/svg+xml") != 0 || xs_is_true(xs_dict_get(srv_config, "enable_svg"))) {
                             xs *url = make_url(u, proxy, 0);
 
                             xs_html *img = xs_html_sctag("img",
@@ -109,8 +113,6 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                             s = xs_replace_i(s, n, s1);
                         }
                     }
-                    else
-                        s = xs_replace_i(s, n, "");
                 }
             }
         }
