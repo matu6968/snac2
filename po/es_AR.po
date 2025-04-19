@@ -708,6 +708,7 @@ msgstr ""
 "Opción 1...\n"
 "Opción 2...\n"
 "Opción 3...\n"
+"..."
 
 #: html.c:1415
 msgid "Bot API key"
