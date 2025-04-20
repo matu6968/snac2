@@ -42,11 +42,11 @@ msgstr "Fichier :"
 
 #: html.c:521
 msgid "Clear this field to delete the attachment"
-msgstr "Nettoyer ce champs pour supprimer l'attachement"
+msgstr "Nettoyer ce champs pour supprimer la pièce jointe"
 
 #: html.c:530 html.c:555
 msgid "Attachment description"
-msgstr "Description de l'attachement"
+msgstr "Description de la pièce jointe"
 
 #: html.c:566
 msgid "Poll..."
@@ -86,16 +86,16 @@ msgstr "Description du site"
 
 #: html.c:719
 msgid "Admin email"
-msgstr "email de l'admin"
+msgstr "Email de l'admin"
 
 #: html.c:732
 msgid "Admin account"
-msgstr "compte de l'admin"
+msgstr "Compte de l'admin"
 
 #: html.c:800 html.c:1136
 #, c-format
 msgid "%d following, %d followers"
-msgstr "Suit %d, %d suiveurs"
+msgstr "%d abonnements, %d personnes abonnées"
 
 #: html.c:890
 msgid "RSS"
@@ -127,7 +127,7 @@ msgid ""
 "#tag"
 msgstr ""
 "Chercher les messages par URL ou contenu (expression régulière), comptes "
-"@utilisateur@hôte, ou #tag"
+"@pseudo@hôte, ou #tag"
 
 #: html.c:946
 msgid "Content search"
@@ -159,11 +159,11 @@ msgstr "Suivre"
 
 #: html.c:1189
 msgid "(by URL or user@host)"
-msgstr "(par URL ou utilisateur@hôte)"
+msgstr "(par URL ou pseudo@hôte)"
 
 #: html.c:1204 html.c:1764 html.c:4527
 msgid "Boost"
-msgstr "repartager"
+msgstr "Repartager"
 
 #: html.c:1206 html.c:1223
 msgid "(by URL)"
@@ -175,7 +175,7 @@ msgstr "Aime"
 
 #: html.c:1347
 msgid "User Settings..."
-msgstr "Réglages utilisateur…"
+msgstr "Paramètre du compte…"
 
 #: html.c:1356
 msgid "Display name:"
@@ -203,7 +203,7 @@ msgstr "Supprimer l'image d'entête actuelle"
 
 #: html.c:1384
 msgid "Bio:"
-msgstr "CV :"
+msgstr "Description :"
 
 #: html.c:1390
 msgid "Write about yourself here..."
@@ -256,7 +256,7 @@ msgstr "Les demande de suivi doivent être approuvées"
 
 #: html.c:1506
 msgid "Publish follower and following metrics"
-msgstr "Publier les suiveurs et les statistiques de suivis"
+msgstr "Publier les statistiques d'abonnements"
 
 #: html.c:1508
 msgid "Current location:"
@@ -280,7 +280,7 @@ msgstr "Répétez le nouveau mot de passe :"
 
 #: html.c:1560
 msgid "Update user info"
-msgstr "Mettre à jour les infos utilisateur"
+msgstr "Mettre à jour les infos du compte"
 
 #: html.c:1571
 msgid "Followed hashtags..."
@@ -324,7 +324,7 @@ msgstr "Épingler ce message en haut de votre chronologie"
 
 #: html.c:1764
 msgid "Announce this post to your followers"
-msgstr "Annoncer ce message à vos suiveurs"
+msgstr "Annoncer ce message aux personnes abonnées"
 
 #: html.c:1769 html.c:4544
 msgid "Unboost"
@@ -356,11 +356,11 @@ msgstr "Ne plus suivre"
 
 #: html.c:1784 html.c:3180
 msgid "Stop following this user's activity"
-msgstr "Arrêter de suivre les activités de cet utilisateur"
+msgstr "Arrêter de suivre les activités de cette personne"
 
 #: html.c:1788 html.c:3194
 msgid "Start following this user's activity"
-msgstr "Commencer à suivre les activité de cet utilisateur"
+msgstr "Commencer à suivre les activité de cette personne"
 
 #: html.c:1794 html.c:4621
 msgid "Unfollow Group"
@@ -380,11 +380,11 @@ msgstr "Commencer à suivre ce groupe ou canal"
 
 #: html.c:1805 html.c:3216 html.c:4552
 msgid "MUTE"
-msgstr "TAIRE"
+msgstr "SOURDINE"
 
 #: html.c:1806
 msgid "Block any activity from this user forever"
-msgstr "Bloquer toute activité de cet utilisateur à jamais"
+msgstr "Bloquer toute activité de cette personne à jamais"
 
 #: html.c:1811 html.c:3198 html.c:4638
 msgid "Delete"
@@ -404,7 +404,7 @@ msgstr "Cacher ce message et ses réponses"
 
 #: html.c:1845
 msgid "Edit..."
-msgstr "Éditer…"
+msgstr "Modifier…"
 
 #: html.c:1865
 msgid "Reply..."
@@ -424,7 +424,7 @@ msgstr "Épinglé"
 
 #: html.c:1996
 msgid "Bookmarked"
-msgstr "Ajouté au signets"
+msgstr "Ajouté aux signets"
 
 #: html.c:2004
 msgid "Poll"
@@ -472,7 +472,7 @@ msgstr "Audio"
 
 #: html.c:2484
 msgid "Attachment"
-msgstr "Attachement"
+msgstr "Pièce jointe"
 
 #: html.c:2498
 msgid "Alt..."
@@ -541,7 +541,7 @@ msgstr "Illimité"
 
 #: html.c:3185
 msgid "Allow announces (boosts) from this user"
-msgstr "Permettre les annonces (repartages) par cet utilisateur"
+msgstr "Permettre les annonces (repartages) par cette personne"
 
 #: html.c:3188 html.c:4570
 msgid "Limit"
@@ -549,11 +549,11 @@ msgstr "Limite"
 
 #: html.c:3189
 msgid "Block announces (boosts) from this user"
-msgstr "Bloquer les annonces (repartages) par cet utilisateur"
+msgstr "Bloquer les annonces (repartages) par cette personne"
 
 #: html.c:3198
 msgid "Delete this user"
-msgstr "Supprimer cet utilisateur"
+msgstr "Supprimer cette personne"
 
 #: html.c:3203 html.c:4688
 msgid "Approve"
@@ -561,7 +561,7 @@ msgstr "Approuver"
 
 #: html.c:3204
 msgid "Approve this follow request"
-msgstr "Approuver cette demande de suivit"
+msgstr "Approuver cette demande de suivi"
 
 #: html.c:3207 html.c:4712
 msgid "Discard"
@@ -577,11 +577,11 @@ msgstr "Ne plus taire"
 
 #: html.c:3213
 msgid "Stop blocking activities from this user"
-msgstr "Arrêter de bloquer les activités de cet utilisateur"
+msgstr "Arrêter de bloquer les activités de cette personne"
 
 #: html.c:3217
 msgid "Block any activity from this user"
-msgstr "Bloque toutes les activités de cet utilisateur"
+msgstr "Bloque toutes les activités de cette personne"
 
 #: html.c:3225
 msgid "Direct Message..."
@@ -589,7 +589,7 @@ msgstr "Message direct…"
 
 #: html.c:3260
 msgid "Pending follow confirmations"
-msgstr "Confirmation de suivit en attente"
+msgstr "Confirmation de suivi en attente"
 
 #: html.c:3264
 msgid "People you follow"
@@ -613,7 +613,7 @@ msgstr "Sondage terminé"
 
 #: html.c:3379
 msgid "Follow Request"
-msgstr "Requête de suivit"
+msgstr "Requête de suivi"
 
 #: html.c:3462
 msgid "Context"
@@ -634,7 +634,7 @@ msgstr "Aucun"
 #: html.c:3769
 #, c-format
 msgid "Search results for account %s"
-msgstr "Résultats de recher pour le compte %s"
+msgstr "Résultats de recherche pour le compte %s"
 
 #: html.c:3776
 #, c-format
@@ -654,7 +654,7 @@ msgstr "Rien n'a été trouvé pour le tag %s"
 #: html.c:3823
 #, c-format
 msgid "Search results for '%s' (may be more)"
-msgstr "Résultats de recherche pour '%s' (il pourrait y en avoir d'avantage)"
+msgstr "Résultats de recherche pour '%s' (il pourrait y en avoir davantage)"
 
 #: html.c:3826
 #, c-format
@@ -664,7 +664,7 @@ msgstr "Résultats de recherche pour '%s'"
 #: html.c:3829
 #, c-format
 msgid "No more matches for '%s'"
-msgstr "Pas d'avantage de résultats pour '%s'"
+msgstr "Pas davantage de résultats pour '%s'"
 
 #: html.c:3831
 #, c-format
@@ -687,7 +687,7 @@ msgstr "Résultats de recherche pour le tag #%s"
 
 #: httpd.c:259
 msgid "Recent posts by users in this instance"
-msgstr "Messages récents des utilisateurs de cette instance"
+msgstr "Messages récents des internautes de cette instance"
 
 #: html.c:1603
 msgid "Blocked hashtags..."
@@ -695,7 +695,7 @@ msgstr "Hashtags bloqués…"
 
 #: html.c:432
 msgid "Optional URL to reply to"
-msgstr ""
+msgstr "URL optionnelle pour répondre à"
 
 #: html.c:575
 msgid ""
@@ -704,55 +704,59 @@ msgid ""
 "Option 3...\n"
 "..."
 msgstr ""
+"Option 1…\n"
+"Option 2…\n"
+"Option 3…\n"
+"…"
 
 #: html.c:1415
 msgid "Bot API key"
-msgstr ""
+msgstr "Clé API de bot"
 
 #: html.c:1421
 msgid "Chat id"
-msgstr ""
+msgstr "Identifiant du salon"
 
 #: html.c:1429
 msgid "ntfy server - full URL (example: https://ntfy.sh/YourTopic)"
-msgstr ""
+msgstr "serveur ntfy – adresse complète (ex : https://ntfy.sh/VotreSujet)"
 
 #: html.c:1435
 msgid "ntfy token - if needed"
-msgstr ""
+msgstr "jeton ntfy – si nécessaire"
 
 #: html.c:2892
 msgid "pinned"
-msgstr ""
+msgstr "épinglé"
 
 #: html.c:2904
 msgid "bookmarks"
-msgstr ""
+msgstr "signets"
 
 #: html.c:2916
 msgid "drafts"
-msgstr ""
+msgstr "brouillons"
 
 #: html.c:464
 msgid "Scheduled post..."
-msgstr ""
+msgstr "Publication planifiée…"
 
 msgid "Post date and time:"
-msgstr ""
+msgstr "Date et heure de publication :"
 
 #: html.c:2927 html.c:3989
 msgid "Scheduled posts"
-msgstr ""
+msgstr "Publications planifiées"
 
 #: html.c:2928
 msgid "scheduled posts"
-msgstr ""
+msgstr "publications planifiées"
 
 #: html.c:458
 #, c-format
 msgid "Post date and time (timezone: %s):"
-msgstr ""
+msgstr "Date et heure de publication (fuseau horaire : %s) :"
 
 #: html.c:1538
 msgid "Time zone:"
-msgstr ""
+msgstr "Fuseau horaire :"
