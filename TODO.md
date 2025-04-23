@@ -2,6 +2,8 @@
 
 ## Open
 
+It seems that Microsoft is planning to laminate Basic HTTP Auth, so make a plan, see https://codeberg.org/grunfink/snac2/issues/350
+
 Investigate the problem with boosts inside the same instance (see https://codeberg.org/grunfink/snac2/issues/214).
 
 Editing / Updating a post does not index newly added hashtags.
