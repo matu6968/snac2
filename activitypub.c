@@ -2571,7 +2571,7 @@ int send_email(const xs_dict *mailinfo)
 {
     const xs_dict *smtp_cfg = xs_dict_get(srv_config, "email_notifications");
     const char 
-        *url  = xs_dict_get(smtp_cfg, "url"),
+        *url  = xs_dict_get_def(smtp_cfg, "url", "smtp://localhost"),
         *user = xs_dict_get(smtp_cfg, "username"),
         *pass = xs_dict_get(smtp_cfg, "password"),
         *from = xs_dict_get(mailinfo, "from"),
