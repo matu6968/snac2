@@ -1504,8 +1504,15 @@ xs_list *mastoapi_account_lists(snac *user, const char *uid)
 /* returns the list of list an user is in */
 {
     xs_list *out  = xs_list_new();
-    xs *actor_md5 = uid ? xs_md5_hex(uid, strlen(uid)) : NULL;
+    xs *actor_md5 = NULL;
     xs *lol       = list_maint(user, NULL, 0);
+
+    if (uid) {
+        if (!xs_is_hex(uid))
+            actor_md5 = xs_md5_hex(uid, strlen(uid));
+        else
+            actor_md5 = xs_dup(uid);
+    }
 
     const xs_list *li;
     xs_list_foreach(lol, li) {
