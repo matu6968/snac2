@@ -2265,7 +2265,8 @@ xs_val *list_maint(snac *user, const char *list, int op)
                     xs *l2 = xs_split(v2, "/");
 
                     /* return [ list_id, list_title ] */
-                    l = xs_list_append(l, xs_list_append(xs_list_new(), xs_list_get(l2, -1), title));
+                    xs *tmp_list = xs_list_append(xs_list_new(), xs_list_get(l2, -1), title);
+                    l = xs_list_append(l, tmp_list);
                 }
             }
         }

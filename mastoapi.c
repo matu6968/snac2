@@ -1500,6 +1500,44 @@ xs_str *timeline_link_header(const char *endpoint, xs_list *timeline)
 }
 
 
+xs_list *mastoapi_account_lists(snac *user, const char *uid)
+/* returns the list of list an user is in */
+{
+    xs_list *out  = xs_list_new();
+    xs *actor_md5 = NULL;
+    xs *lol       = list_maint(user, NULL, 0);
+
+    if (uid) {
+        if (!xs_is_hex(uid))
+            actor_md5 = xs_md5_hex(uid, strlen(uid));
+        else
+            actor_md5 = xs_dup(uid);
+    }
+
+    const xs_list *li;
+    xs_list_foreach(lol, li) {
+        const char *list_id    = xs_list_get(li, 0);
+        const char *list_title = xs_list_get(li, 1);
+        if (uid) {
+            xs *users = list_content(user, list_id, NULL, 0);
+            if (xs_list_in(users, actor_md5) == -1)
+                continue;
+        }
+
+        xs *d = xs_dict_new();
+
+        d = xs_dict_append(d, "id", list_id);
+        d = xs_dict_append(d, "title", list_title);
+        d = xs_dict_append(d, "replies_policy", "list");
+        d = xs_dict_append(d, "exclusive", xs_stock(XSTYPE_FALSE));
+
+        out = xs_list_append(out, d);
+    }
+
+    return out;
+}
+
+
 int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                          char **body, int *b_size, char **ctype, xs_str **link)
 {
@@ -1723,6 +1761,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 if (strcmp(opt, "followers") == 0) {
                     out = xs_list_new();
                 }
+                else
+                if (strcmp(opt, "lists") == 0) {
+                    out = mastoapi_account_lists(&snac1, uid);
+                }
 
                 user_free(&snac2);
             }
@@ -1743,6 +1785,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         /* snac doesn't have features tags, yet? */
                         /* implement empty response so apps like Tokodon don't show an error */
                         out = xs_list_new();
+                    }
+                    else
+                    if (strcmp(opt, "lists") == 0) {
+                        out = mastoapi_account_lists(&snac1, uid);
                     }
                 }
             }
@@ -1975,21 +2021,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     else
     if (strcmp(cmd, "/v1/lists") == 0) { /** list of lists **/
         if (logged_in) {
-            xs *lol = list_maint(&snac1, NULL, 0);
-            xs *l   = xs_list_new();
-            int c = 0;
-            const xs_list *li;
-
-            while (xs_list_next(lol, &li, &c)) {
-                xs *d = xs_dict_new();
-
-                d = xs_dict_append(d, "id", xs_list_get(li, 0));
-                d = xs_dict_append(d, "title", xs_list_get(li, 1));
-                d = xs_dict_append(d, "replies_policy", "list");
-                d = xs_dict_append(d, "exclusive", xs_stock(XSTYPE_FALSE));
-
-                l = xs_list_append(l, d);
-            }
+            xs *l  = mastoapi_account_lists(&snac1, NULL);
 
             *body  = xs_json_dumps(l, 4);
             *ctype = "application/json";
