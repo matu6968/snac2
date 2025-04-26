@@ -745,24 +745,24 @@ msgstr "черновики"
 
 #: html.c:464
 msgid "Scheduled post..."
-msgstr ""
+msgstr "Запланировать..."
 
 msgid "Post date and time:"
-msgstr ""
+msgstr "Время поста:"
 
 #: html.c:2927 html.c:3989
 msgid "Scheduled posts"
-msgstr ""
+msgstr "Запланированные посты"
 
 #: html.c:2928
 msgid "scheduled posts"
-msgstr ""
+msgstr "запланированные посты"
 
 #: html.c:458
 #, c-format
 msgid "Post date and time (timezone: %s):"
-msgstr ""
+msgstr "Время поста (Часовой пояс: %s):"
 
 #: html.c:1538
 msgid "Time zone:"
-msgstr ""
+msgstr "Часовой пояс:"
