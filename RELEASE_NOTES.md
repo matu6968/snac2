@@ -4,6 +4,8 @@
 
 Added new command-line options for list maintenance.
 
+Mastodon API: added `/api/v1/accounts/.../lists` endpoint (contributed by dandelions).
+
 ## 2.75 "Time Is On My Side"
 
 Added support for scheduled posts (for this to work correctly, users will have to set their time zone, see below).
