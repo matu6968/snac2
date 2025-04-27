@@ -267,6 +267,13 @@ The maximum number of attachments per post (default: 4).
 .It Ic enable_svg
 Since version 2.73, SVG image attachments are hidden by default; you can enable
 them by setting this value to true.
+.It Ic smtp_url
+The SMTP url to be used for sending email notifications. It's smtp://localhost by default,
+expecting a fully configured SMTP server running on the same host. It may include a port
+number, like in smtp://mail.example.com:487.
+.It Ic smtp_user
+.It Ic smtp_password
+To be filled if the SMTP server defined by the previous directive needs credentials.
 .El
 .Pp
 You must restart the server to make effective these changes.
