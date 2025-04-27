@@ -1223,7 +1223,10 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     acct = xs_dict_append(acct, "last_status_at", xs_dict_get(snac.config, "published"));
     acct = xs_dict_append(acct, "note", xs_dict_get(snac.config, "bio"));
     acct = xs_dict_append(acct, "url", snac.actor);
-    acct = xs_dict_append(acct, "locked", xs_stock(XSTYPE_FALSE));
+
+    acct = xs_dict_append(acct, "locked",
+        xs_stock(xs_is_true(xs_dict_get(snac.config, "approve_followers")) ? XSTYPE_TRUE : XSTYPE_FALSE));
+
     acct = xs_dict_append(acct, "bot", xs_stock(xs_is_true(bot) ? XSTYPE_TRUE : XSTYPE_FALSE));
     acct = xs_dict_append(acct, "emojis", xs_stock(XSTYPE_LIST));
 
