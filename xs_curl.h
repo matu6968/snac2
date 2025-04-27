@@ -200,6 +200,7 @@ xs_dict *xs_http_request(const char *method, const char *url,
     return response;
 }
 
+
 int xs_smtp_request(const char *url, const char *user, const char *pass,
                    const char *from, const char *to, const xs_str *body,
                    int use_ssl)
@@ -209,7 +210,7 @@ int xs_smtp_request(const char *url, const char *user, const char *pass,
     struct curl_slist *rcpt = NULL;
     struct _payload_data pd = {
         .data = (char *)body,
-        .size = xs_size(body),
+        .size = strlen(body),
         .offset = 0
     };
 
