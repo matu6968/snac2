@@ -34,7 +34,7 @@ const char *susie_cool =
     "+ZcgN7wF7ZVihXkfSlWIVzIA6dbQzaygllpNuTX"
     "ZmmFNlvxADX1+o0cUPMbAAAAAElFTkSuQmCC";
 
-const char *susie_muertos = 
+const char *susie_muertos =
     "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQAAAAC"
     "CEkxzAAAAV0lEQVQoz4XQsQ0AMQxCUW/A/lv+DT"
     "ic6zGRolekIMyMELNp8PiCEw6Q4w4NoAt53IH5m"
@@ -2570,14 +2570,17 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 int send_email(const xs_dict *mailinfo)
 /* invoke curl */
 {
-    const xs_dict *smtp_cfg = xs_dict_get(srv_config, "email_notifications");
-    const char 
-        *url  = xs_dict_get_def(smtp_cfg, "url", "smtp://localhost"),
-        *user = xs_dict_get(smtp_cfg, "username"),
-        *pass = xs_dict_get(smtp_cfg, "password"),
+    const char
+        *url  = xs_dict_get(srv_config, "smtp_url"),
+        *user = xs_dict_get(srv_config, "smtp_username"),
+        *pass = xs_dict_get(srv_config, "smtp_password"),
         *from = xs_dict_get(mailinfo, "from"),
         *to   = xs_dict_get(mailinfo, "to"),
         *body = xs_dict_get(mailinfo, "body");
+
+    if (url == NULL || *url == '\0')
+        url = "smtp://localhost";
+
     int smtp_port = parse_port(url, NULL);
 
     return xs_smtp_request(url, user, pass, from, to, body, smtp_port == 465 || smtp_port == 587);
