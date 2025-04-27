@@ -270,7 +270,7 @@ them by setting this value to true.
 .It Ic smtp_url
 The SMTP url to be used for sending email notifications. It's smtp://localhost by default,
 expecting a fully configured SMTP server running on the same host. It may include a port
-number, like in smtp://mail.example.com:487.
+number if it's not running on the usual one, like in smtp://mail.example.com:587.
 .It Ic smtp_user
 .It Ic smtp_password
 To be filled if the SMTP server defined by the previous directive needs credentials.
