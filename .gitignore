@@ -1,2 +1,3 @@
-*.o
+**/*.o
+tests/smtp
 snac

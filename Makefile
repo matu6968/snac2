@@ -8,11 +8,16 @@ snac: snac.o main.o sandbox.o data.o http.o httpd.o webfinger.o \
     activitypub.o html.o utils.o format.o upgrade.o mastoapi.o
 	$(CC) $(CFLAGS) -L$(PREFIX)/lib *.o -lcurl -lcrypto $(LDFLAGS) -pthread -o $@
 
+test: tests/smtp
+
+tests/smtp: tests/smtp.o
+	$(CC) $(CFLAGS) -L$(PREFIX)/lib $< -lcurl $(LDFLAGS) -o $@
+
 .c.o:
-	$(CC) $(CFLAGS) $(CPPFLAGS) -I$(PREFIX)/include -c $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -I$(PREFIX)/include -c $< -o $@
 
 clean:
-	rm -rf *.o *.core snac makefile.depend
+	rm -rf *.o tests/*.o tests/smtp *.core snac makefile.depend
 
 dep:
 	$(CC) -I$(PREFIX)/include -MM *.c > makefile.depend
@@ -72,3 +77,4 @@ utils.o: utils.c xs.h xs_io.h xs_json.h xs_time.h xs_openssl.h \
  xs_random.h xs_glob.h xs_curl.h xs_regex.h snac.h http_codes.h
 webfinger.o: webfinger.c xs.h xs_json.h xs_curl.h xs_mime.h snac.h \
  http_codes.h
+tests/smtp.o: tests/smtp.c xs.h xs_curl.h
