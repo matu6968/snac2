@@ -39,7 +39,7 @@ void sbox_enter(const char *basedir)
 
 #elif defined(__linux__)
 
-#if defined(WITH_LINUX_SANDBOX)
+#if !defined(WITHOUT_LINUX_SANDBOX)
 
 #include <unistd.h>
 
@@ -129,7 +129,7 @@ void sbox_enter(const char *basedir)
         srv_debug(0, xs_dup("Linux sandbox failed"));
 }
 
-#else /* defined(WITH_LINUX_SANDBOX) */
+#else /* !defined(WITHOUT_LINUX_SANDBOX) */
 
 void sbox_enter(const char *basedir)
 {
@@ -148,6 +148,5 @@ void sbox_enter(const char *basedir)
 {
     (void)basedir;
 }
-
 
 #endif /* __OpenBSD__ */

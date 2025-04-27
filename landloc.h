@@ -142,7 +142,7 @@ int main(void) {
 #   define LL_NET_ALL (LANDLOCK_ACCESS_NET_BIND_TCP_COMPAT | LANDLOCK_ACCESS_NET_CONNECT_TCP_COMPAT)
 #   define __LL_DECLARE_NET struct landlock_net_port_attr __nattr = {0}
 #   define __LL_INIT_NET __rattr.handled_access_net = LL_NET_ALL
-#   define __LL_SWITCH_NET do { __rattr.handled_access_net &= ~(LANDLOCK_ACCESS_NET_BIND_TCP | LANDLOCK_ACCESS_NET_CONNECT_TCP); } while (0)
+#   define __LL_SWITCH_NET do { __rattr.handled_access_net &= ~LL_NET_ALL; } while (0)
 #else
 #   define LL_HAVE_NET 0
 
@@ -155,6 +155,26 @@ int main(void) {
 #   define __LL_SWITCH_NET (void)0
 #endif
 
+#if defined(LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET) && defined(LANDLOCK_SCOPE_SIGNAL)
+#   define LL_HAVE_SCOPE 1
+
+#   define LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET_COMPAT LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET
+#   define LANDLOCK_SCOPE_SIGNAL_COMPAT LANDLOCK_SCOPE_SIGNAL
+
+#   define LL_SCOPE_ALL (LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET_COMPAT | LANDLOCK_SCOPE_SIGNAL_COMPAT)
+#   define __LL_INIT_SCOPE __rattr.scoped = LL_SCOPE_ALL
+#   define __LL_SWITCH_SCOPE do { __rattr.scoped &= ~LL_SCOPE_ALL; } while (0)
+#else
+#   define LL_HAVE_SCOPE 0
+
+#   define LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET_COMPAT 0
+#   define LANDLOCK_SCOPE_SIGNAL_COMPAT 0
+
+#   define LL_SCOPE_ALL 0
+#   define __LL_INIT_SCOPE (void)0
+#   define __LL_SWITCH_SCOPE (void)0
+#endif
+
 #define LL_BEGIN(function, ...) int function(__VA_ARGS__) {\
     int ll_rule_fd, ll_abi;\
     struct landlock_ruleset_attr      __rattr = {0};\
@@ -163,13 +183,15 @@ int main(void) {
     int __err = 0;\
     __rattr.handled_access_fs  = LL_FS_ALL;\
     __LL_INIT_NET;\
+    __LL_INIT_SCOPE;\
     ll_abi = (int)syscall(SYS_landlock_create_ruleset, NULL, 0, LANDLOCK_CREATE_RULESET_VERSION);\
     switch (ll_abi) {\
     case -1: return -1;\
     case  1: __LL_SWITCH_FS_REFER; __attribute__((fallthrough));\
     case  2: __LL_SWITCH_FS_TRUNCATE; __attribute__((fallthrough));\
     case  3: __LL_SWITCH_NET; __attribute__((fallthrough));\
-    case  4: __LL_SWITCH_FS_IOCTL_DEV;\
+    case  4: __LL_SWITCH_FS_IOCTL_DEV; __attribute__((fallthrough));\
+    case  5: __LL_SWITCH_SCOPE; __attribute__((fallthrough));\
     default: break;\
     }\
     ll_rule_fd = (int)syscall(SYS_landlock_create_ruleset, &__rattr, sizeof(struct landlock_ruleset_attr), 0);\
@@ -234,5 +256,21 @@ int main(void) {
 } while (0)
 
 #endif /* LL_HAVE_NET */
+
+#if LL_HAVE_SCOPE
+
+#define LL_SCOPE(r) do {\
+    __u64 __rules = (r);\
+    __rattr.scoped &= ~__rules;\
+} while (0)
+
+#else
+
+#define LL_SCOPE(r) do {\
+    __u64 __rules = (r);\
+    (void)__rules;\
+} while (0)
+
+#endif /* LL_HAVE_SCOPE */
 
 #endif /* __LANDLOC_H__ */
