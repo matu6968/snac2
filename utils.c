@@ -914,58 +914,58 @@ void import_csv(snac *user)
 }
 
 static const struct {
-	const char *proto;
-	unsigned short default_port;
+    const char *proto;
+    unsigned short default_port;
 } FALLBACK_PORTS[] = {
-	/* caution: https > http, smpts > smtp */
-	{"https", 443},
-	{"http",  80},
+    /* caution: https > http, smpts > smtp */
+    {"https", 443},
+    {"http",  80},
     {"smtps", 465},
-	{"smtp", 25}
+    {"smtp", 25}
 };
 
 int parse_port(const char *url, const char **errstr)
 {
-	const char *col, *rcol;
-	int tmp, ret = -1;
+    const char *col, *rcol;
+    int tmp, ret = -1;
 
     if (errstr)
-	    *errstr = NULL;
+        *errstr = NULL;
 
-	if (!(col = strchr(url, ':'))) {
+    if (!(col = strchr(url, ':'))) {
         if (errstr)
-		    *errstr = "bad url";
+            *errstr = "bad url";
 
-		return -1;
-	}
-	
-	for (size_t i = 0; i < sizeof(FALLBACK_PORTS) / sizeof(*FALLBACK_PORTS); ++i) {
-		if (memcmp(url, FALLBACK_PORTS[i].proto, strlen(FALLBACK_PORTS[i].proto)) == 0) {
-			ret = FALLBACK_PORTS[i].default_port;
-			break;
-		}
-	}
+        return -1;
+    }
 
-	if (!(rcol = strchr(col + 1, ':')))
-		rcol = col;
+    for (size_t i = 0; i < sizeof(FALLBACK_PORTS) / sizeof(*FALLBACK_PORTS); ++i) {
+        if (memcmp(url, FALLBACK_PORTS[i].proto, strlen(FALLBACK_PORTS[i].proto)) == 0) {
+            ret = FALLBACK_PORTS[i].default_port;
+            break;
+        }
+    }
 
-	if (rcol) {
-		tmp = atoi(rcol + 1);
+    if (!(rcol = strchr(col + 1, ':')))
+        rcol = col;
+
+    if (rcol) {
+        tmp = atoi(rcol + 1);
         if (tmp == 0) {
-            if (ret != -1) 
+            if (ret != -1)
                 return ret;
-            
+
             if (errstr)
                 *errstr = strerror(errno);
 
             return -1;
         }
-		
-		return tmp;
-	}
+
+        return tmp;
+    }
 
     if (errstr)
-	    *errstr = "unknown protocol";
+        *errstr = "unknown protocol";
 
-	return -1;
+    return -1;
 }
