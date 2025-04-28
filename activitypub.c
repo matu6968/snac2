@@ -2570,6 +2570,34 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 int send_email(const xs_dict *mailinfo)
 /* invoke curl */
 {
+    if (xs_is_true(xs_dict_get(srv_config, "spawn_sendmail"))) {
+        const char *msg = xs_dict_get(mailinfo, "body");
+        FILE *f;
+        int status;
+        int fds[2];
+        pid_t pid;
+
+        if (pipe(fds) == -1) return -1;
+        pid = vfork();
+        if (pid == -1) return -1;
+        else if (pid == 0) {
+            dup2(fds[0], 0);
+            close(fds[0]);
+            close(fds[1]);
+            execl("/usr/sbin/sendmail", "sendmail", "-t", (char *) NULL);
+            _exit(1);
+        }
+        close(fds[0]);
+        if ((f = fdopen(fds[1], "w")) == NULL) {
+            close(fds[1]);
+            return -1;
+        }
+        fprintf(f, "%s\n", msg);
+        fclose(f);
+        if (waitpid(pid, &status, 0) == -1) return -1;
+        return status;
+    }
+
     const char
         *url  = xs_dict_get(srv_config, "smtp_url"),
         *user = xs_dict_get(srv_config, "smtp_username"),
