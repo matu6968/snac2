@@ -267,6 +267,11 @@ The maximum number of attachments per post (default: 4).
 .It Ic enable_svg
 Since version 2.73, SVG image attachments are hidden by default; you can enable
 them by setting this value to true.
+.It Ic spawn_sendmail
+Since version 2.76, email notifications are sent via direct SMTP connection instead
+of spawning
+.Pa /usr/sbin/sendmail
+on each message. By setting this to true, classic behaviour can be restored.
 .It Ic smtp_url
 The SMTP url to be used for sending email notifications. It's smtp://localhost by default,
 expecting a fully configured SMTP server running on the same host. It may include a port
