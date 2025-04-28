@@ -6,7 +6,7 @@ Added new command-line options for list maintenance.
 
 Mastodon API: added `/api/v1/accounts/.../lists` endpoint (contributed by dandelions).
 
-Email notifications are now sent via `libcurl` SMTP instead of spawning the `/usr/sbin/sendmail` program. Some additional server configuration may be needed, see `snac(8)` (contributed by shtrophic).
+Email notifications are now sent via `libcurl` SMTP instead of spawning the `/usr/sbin/sendmail` program. Some additional server configuration may be needed, see `snac(8)`. Previous behaviour can be enabled back by setting the `spawn_sendmail` server configuration directive to `true` (contributed by shtrophic).
 
 ## 2.75 "Time Is On My Side"
 
