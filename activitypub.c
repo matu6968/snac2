@@ -2570,7 +2570,10 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 int send_email(const xs_dict *mailinfo)
 /* invoke curl */
 {
-    if (xs_is_true(xs_dict_get(srv_config, "spawn_sendmail"))) {
+    const char *url = xs_dict_get(srv_config, "smtp_url");
+
+    if (!xs_is_string(url) || *url == '\0') {
+        /* revert back to old sendmail pipe behaviour */
         const char *msg = xs_dict_get(mailinfo, "body");
         FILE *f;
         int status;
@@ -2599,7 +2602,6 @@ int send_email(const xs_dict *mailinfo)
     }
 
     const char
-        *url  = xs_dict_get(srv_config, "smtp_url"),
         *user = xs_dict_get(srv_config, "smtp_username"),
         *pass = xs_dict_get(srv_config, "smtp_password"),
         *from = xs_dict_get(mailinfo, "from"),
