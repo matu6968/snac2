@@ -736,3 +736,27 @@ msgstr "Lesezeichen"
 #: html.c:2830
 msgid "drafts"
 msgstr "Entwürfe"
+
+#: html.c:464
+msgid "Scheduled post..."
+msgstr "Geplanter Beitrag..."
+
+msgid "Post date and time:"
+msgstr "Datum und Uhrzeit des Beitrags:"
+
+#: html.c:2927 html.c:3989
+msgid "Scheduled posts"
+msgstr "Geplante Beiträge"
+
+#: html.c:2928
+msgid "scheduled posts"
+msgstr "geplante Beiträge"
+
+#: html.c:458
+#, c-format
+msgid "Post date and time (timezone: %s):"
+msgstr "Datum und Uhrzeit des Beitrags (Zeitzone: %s):"
+
+#: html.c:1538
+msgid "Time zone:"
+msgstr "Zeitzone"
