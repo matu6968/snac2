@@ -120,7 +120,8 @@ void sbox_enter(const char *basedir)
         smtp_port = parse_port(smtp_url, &errstr);
         if (errstr)
             srv_debug(0, xs_fmt("Couldn't determine port from '%s': %s", smtp_url, errstr));
-    }
+    } else if (xs_type(xs_dict_get(srv_config, "disable_email_notifications")) != XSTYPE_TRUE)
+        srv_debug(0, xs_fmt("Sending emails while landlocked only works with 'smtp_url' configured!"));
 
     if (sbox_enter_linux_(basedir, address, smtp_port) == 0)
         srv_debug(1, xs_dup("Linux sandbox enabled"));
