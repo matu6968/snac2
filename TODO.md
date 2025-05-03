@@ -14,6 +14,8 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
+Do a [Webmention](https://www.w3.org/TR/webmention/) to every link written in a post.
+
 Add account reporting.
 
 The instance timeline should also show boosts from users.
