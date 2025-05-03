@@ -2392,10 +2392,6 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             if (content && xs_str_in(content, o_href) != -1)
                 continue;
 
-            /* drop silently any attachment that may include JavaScript */
-            if (strcmp(type, "text/html") == 0)
-                continue;
-
             if (strcmp(type, "image/svg+xml") == 0 && !xs_is_true(xs_dict_get(srv_config, "enable_svg")))
                 continue;
 
