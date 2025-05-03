@@ -4488,8 +4488,10 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                     snac_log(&snac, xs_fmt("cannot get object '%s' for editing", edit_id));
             }
 
-            if (c_msg != NULL)
+            if (c_msg != NULL) {
                 enqueue_message(&snac, c_msg);
+                enqueue_webmention(msg);
+            }
 
             history_del(&snac, "timeline.html_");
         }

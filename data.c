@@ -3473,6 +3473,19 @@ void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs)
 }
 
 
+void enqueue_webmention(const xs_dict *msg)
+/* enqueues a webmention for the post */
+{
+    xs *qmsg   = _new_qmsg("webmention", msg, 0);
+    const char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    srv_debug(1, xs_fmt("enqueue_webmention"));
+}
+
+
 int was_question_voted(snac *user, const char *id)
 /* returns true if the user voted in this poll */
 {

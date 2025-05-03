@@ -830,6 +830,7 @@ int main(int argc, char *argv[])
         }
 
         enqueue_message(&snac, c_msg);
+        enqueue_webmention(msg);
 
         timeline_add(&snac, xs_dict_get(msg, "id"), msg);
 
