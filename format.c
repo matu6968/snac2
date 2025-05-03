@@ -154,10 +154,22 @@ static xs_str *format_line(const char *line, xs_list **attach)
                 xs *l = xs_split_n(w, "](", 1);
 
                 if (xs_list_len(l) == 2) {
-                    xs *link = xs_fmt("<a href=\"%s\">%s</a>",
-                            xs_list_get(l, 1), xs_list_get(l, 0));
+                    const char *name = xs_list_get(l, 0);
+                    const char *url  = xs_list_get(l, 1);
+
+                    xs *link = xs_fmt("<a href=\"%s\">%s</a>", url, name);
 
                     s = xs_str_cat(s, link);
+
+                    /* also add the link as an attachment */
+                    xs *d = xs_dict_new();
+
+                    d = xs_dict_append(d, "mediaType", "text/html");
+                    d = xs_dict_append(d, "url",       url);
+                    d = xs_dict_append(d, "name",      name);
+                    d = xs_dict_append(d, "type",      "Link");
+
+                    *attach = xs_list_append(*attach, d);
                 }
                 else
                     s = xs_str_cat(s, v);
@@ -208,6 +220,7 @@ static xs_str *format_line(const char *line, xs_list **attach)
             }
             else
             if (xs_str_in(v, ":/" "/") != -1) {
+                /* direct URLs in the post body */
                 xs *u  = xs_replace_i(xs_replace(v, "#", "&#35;"), "@", "&#64;");
 
                 xs *v2 = xs_strip_chars_i(xs_dup(u), ".,)");
@@ -240,6 +253,16 @@ static xs_str *format_line(const char *line, xs_list **attach)
                 else {
                     xs *s1 = xs_fmt("<a href=\"%s\" target=\"_blank\">%s</a>", v2, u);
                     s = xs_str_cat(s, s1);
+
+                    /* also add the link as an attachment */
+                    xs *d = xs_dict_new();
+
+                    d = xs_dict_append(d, "mediaType", "text/html");
+                    d = xs_dict_append(d, "url",       v2);
+                    d = xs_dict_append(d, "name",      "");
+                    d = xs_dict_append(d, "type",      "Link");
+
+                    *attach = xs_list_append(*attach, d);
                 }
             }
             else
