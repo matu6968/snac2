@@ -225,7 +225,7 @@ int xs_smtp_request(const char *url, const char *user, const char *pass,
 
     if (use_ssl)
         curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
-    
+
     curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from);
 
     rcpt = curl_slist_append(rcpt, to);
@@ -236,7 +236,7 @@ int xs_smtp_request(const char *url, const char *user, const char *pass,
     curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 
     res = curl_easy_perform(curl);
-    
+
     curl_easy_cleanup(curl);
     curl_slist_free_all(rcpt);
 

@@ -25,6 +25,7 @@
 #include "xs_fcgi.h"
 #include "xs_html.h"
 #include "xs_po.h"
+#include "xs_webmention.h"
 
 #include "snac.h"
 
