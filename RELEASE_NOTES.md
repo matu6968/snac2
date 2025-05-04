@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+Added Webmention support for links (Markdown-style or direct) written in a post.
+
 Added new command-line options for list maintenance.
 
 Mastodon API: added `/api/v1/accounts/.../lists` endpoint (contributed by dandelions).
