@@ -11,6 +11,7 @@
 #include "xs_set.h"
 #include "xs_match.h"
 #include "xs_unicode.h"
+#include "xs_webmention.h"
 
 #include "snac.h"
 
@@ -3035,7 +3036,11 @@ void process_queue_item(xs_dict *q_item)
         xs_list_foreach(atts, att) {
             const char *target = xs_dict_get(att, "url");
 
-            srv_debug(1, xs_fmt("webmention source=%s target=%s", source, target));
+            if (xs_is_string(source) && xs_is_string(target)) {
+                int r = xs_webmention_send(source, target, USER_AGENT);
+
+                srv_debug(1, xs_fmt("webmention source=%s target=%s %d", source, target, r));
+            }
         }
     }
     else
