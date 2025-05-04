@@ -105,11 +105,16 @@ int xs_webmention_send(const char *source, const char *target, const char *user_
         xs *body = xs_fmt("source=%s&target=%s", source, target);
 
         xs *rsp = xs_http_request("POST", endpoint, headers, body, strlen(body), &status, NULL, 0, 0);
+
+        if (status < 200 || status > 299)
+            status = -4;
+        else
+            status = 1;
     }
     else
         status = 0;
 
-    return status >= 200 && status <= 299;
+    return status;
 }
 
 
