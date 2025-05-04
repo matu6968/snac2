@@ -14,8 +14,6 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
-Do a [Webmention](https://www.w3.org/TR/webmention/) to every link written in a post.
-
 Add account reporting.
 
 The instance timeline should also show boosts from users.
@@ -375,3 +373,5 @@ Add a list of hashtags to drop (2025-03-23T15:45:30+0100).
 The actual storage system wastes too much disk space (lots of small files that really consume 4k of storage). Consider alternatives (2025-03-23T15:46:02+0100).
 
 Add command-line tools for creating and manipulating lists (2025-04-18T10:04:41+0200).
+
+Do a [Webmention](https://www.w3.org/TR/webmention/) to every link written in a post (2025-05-04T11:16:21+0200).
