@@ -161,15 +161,17 @@ static xs_str *format_line(const char *line, xs_list **attach)
 
                     s = xs_str_cat(s, link);
 
-                    /* also add the link as an attachment */
-                    xs *d = xs_dict_new();
+                    if (attach) {
+                        /* also add the link as an attachment */
+                        xs *d = xs_dict_new();
 
-                    d = xs_dict_append(d, "mediaType", "text/html");
-                    d = xs_dict_append(d, "url",       url);
-                    d = xs_dict_append(d, "name",      name);
-                    d = xs_dict_append(d, "type",      "Link");
+                        d = xs_dict_append(d, "mediaType", "text/html");
+                        d = xs_dict_append(d, "url",       url);
+                        d = xs_dict_append(d, "name",      name);
+                        d = xs_dict_append(d, "type",      "Link");
 
-                    *attach = xs_list_append(*attach, d);
+                        *attach = xs_list_append(*attach, d);
+                    }
                 }
                 else
                     s = xs_str_cat(s, v);
@@ -254,15 +256,17 @@ static xs_str *format_line(const char *line, xs_list **attach)
                     xs *s1 = xs_fmt("<a href=\"%s\" target=\"_blank\">%s</a>", v2, u);
                     s = xs_str_cat(s, s1);
 
-                    /* also add the link as an attachment */
-                    xs *d = xs_dict_new();
+                    if (attach) {
+                        /* also add the link as an attachment */
+                        xs *d = xs_dict_new();
 
-                    d = xs_dict_append(d, "mediaType", "text/html");
-                    d = xs_dict_append(d, "url",       v2);
-                    d = xs_dict_append(d, "name",      "");
-                    d = xs_dict_append(d, "type",      "Link");
+                        d = xs_dict_append(d, "mediaType", "text/html");
+                        d = xs_dict_append(d, "url",       v2);
+                        d = xs_dict_append(d, "name",      "");
+                        d = xs_dict_append(d, "type",      "Link");
 
-                    *attach = xs_list_append(*attach, d);
+                        *attach = xs_list_append(*attach, d);
+                    }
                 }
             }
             else
