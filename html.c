@@ -69,6 +69,7 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
         }
 
         xs *style = xs_fmt("height: %dem; width: %dem; vertical-align: middle;", ems, ems);
+        xs *class = xs_fmt("snac-emoji snac-emoji-%d-em", ems);
 
         const xs_dict *v;
         int c = 0;
@@ -91,7 +92,13 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                     const char *u = xs_dict_get(i, "url");
                     const char *mt = xs_dict_get(i, "mediaType");
 
-                    if (xs_is_string(u) && xs_is_string(mt)) {
+                    if (xs_is_string(u)) {
+                        // on akkoma instances mediaType is not present.
+                        // but we need to to know if the image is an svg or not.
+                        // for now, i just use the file extention, which may not be the most reliable...
+                        if (!xs_is_string(mt))
+                            mt = xs_mime_by_ext(u);
+
                         if (strcmp(mt, "image/svg+xml") == 0 && !xs_is_true(xs_dict_get(srv_config, "enable_svg")))
                             s = xs_replace_i(s, n, "");
                         else {
@@ -102,7 +109,7 @@ xs_str *replace_shortnames(xs_str *s, const xs_list *tag, int ems, const char *p
                                 xs_html_attr("src", url),
                                 xs_html_attr("alt", n),
                                 xs_html_attr("title", n),
-                                xs_html_attr("class", "snac-emoji"),
+                                xs_html_attr("class", class),
                                 xs_html_attr("style", style));
 
                             xs *s1 = xs_html_render(img);
@@ -134,6 +141,26 @@ xs_str *actor_name(xs_dict *actor, const char *proxy)
     }
 
     return replace_shortnames(xs_html_encode(v), xs_dict_get(actor, "tag"), 1, proxy);
+}
+
+
+xs_str *format_text_with_emoji(snac *user, const char *text, int ems, const char *proxy)
+/* needed when we have local text with no tags attached */
+{
+    xs *tags = xs_list_new();
+    xs *name1 = not_really_markdown(text, NULL, &tags);
+
+    xs_str *name3;
+    if (user) {
+        xs *name2 = process_tags(user, name1, &tags);
+        name3 = sanitize(name2);
+    }
+    else {
+        name3 = sanitize(name1);
+        name3 = xs_replace_i(name3, "<br>", "");
+    }
+
+    return replace_shortnames(name3, tags, ems, proxy);
 }
 
 
@@ -970,10 +997,12 @@ static xs_html *html_user_body(snac *user, int read_only)
         xs_dict_get(user->config, "uid"),
         xs_dict_get(srv_config, "host"));
 
+    xs *display_name = format_text_with_emoji(NULL, xs_dict_get(user->config, "name"), 1, proxy);
+
     xs_html_add(top_user,
         xs_html_tag("p",
             xs_html_attr("class", "p-name snac-top-user-name"),
-            xs_html_text(xs_dict_get(user->config, "name"))),
+            xs_html_raw(display_name)),
         xs_html_tag("p",
             xs_html_attr("class", "snac-top-user-id"),
             xs_html_text(handle)));
@@ -1001,16 +1030,11 @@ static xs_html *html_user_body(snac *user, int read_only)
     }
 
     if (read_only) {
-        xs *tags = xs_list_new();
-        xs *bio1 = not_really_markdown(xs_dict_get(user->config, "bio"), NULL, &tags);
-        xs *bio2 = process_tags(user, bio1, &tags);
-        xs *bio3 = sanitize(bio2);
-
-        bio3 = replace_shortnames(bio3, tags, 2, proxy);
+        xs *bio = format_text_with_emoji(user, xs_dict_get(user->config, "bio"), 2, proxy);
 
         xs_html *top_user_bio = xs_html_tag("div",
             xs_html_attr("class", "p-note snac-top-user-bio"),
-            xs_html_raw(bio3)); /* already sanitized */
+            xs_html_raw(bio)); /* already sanitized */
 
         xs_html_add(top_user,
             top_user_bio);
@@ -3134,6 +3158,7 @@ xs_html *html_people_list(snac *user, xs_list *list, const char *header, const c
 
             if (!xs_is_null(c)) {
                 xs *sc = sanitize(c);
+                sc = replace_shortnames(sc, xs_dict_get(actor, "tag"), 2, proxy);
 
                 xs_html *snac_content = xs_html_tag("div",
                     xs_html_attr("class", "snac-content"));
@@ -3351,7 +3376,8 @@ xs_str *html_notifications(snac *user, int skip, int show)
             continue;
 
         xs *a_name = actor_name(actor, proxy);
-        const char *label = type;
+        xs *label_sanatized = sanitize(type);
+        const char *label = label_sanatized;
 
         if (strcmp(type, "Create") == 0)
             label = L("Mention");
@@ -3362,11 +3388,12 @@ xs_str *html_notifications(snac *user, int skip, int show)
         if (strcmp(type, "Undo") == 0 && strcmp(utype, "Follow") == 0)
             label = L("Unfollow");
         else
-        if (strcmp(type, "EmojiReact") == 0) {
+        if (strcmp(type, "EmojiReact") == 0 || strcmp(type, "Like") == 0) {
             const char *content = xs_dict_get_path(noti, "msg.content");
 
             if (xs_type(content) == XSTYPE_STRING) {
-                wrk = xs_fmt("%s (%s)", type, content);
+                xs *emoji = replace_shortnames(xs_dup(content), xs_dict_get_path(noti, "msg.tag"), 1, proxy);
+                wrk = xs_fmt("%s (%s&#xFE0F;)", type, emoji);
                 label = wrk;
             }
         }
@@ -3378,7 +3405,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
         xs_html *this_html_label = xs_html_container(
                 xs_html_tag("b",
-                    xs_html_text(label),
+                    xs_html_raw(label),
                     xs_html_text(" by "),
                     xs_html_tag("a",
                         xs_html_attr("href", actor_id),
@@ -3678,7 +3705,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
             if (xs_is_true(xs_dict_get(srv_config, "strict_public_timelines")))
                 list = timeline_simple_list(&snac, "public", skip, show, &more);
-            else 
+            else
                 list = timeline_list(&snac, "public", skip, show, &more);
 
             xs *pins = pinned_list(&snac);

@@ -1332,6 +1332,10 @@ xs_dict *msg_actor(snac *snac)
     msg = xs_dict_set(msg, "preferredUsername", snac->uid);
     msg = xs_dict_set(msg, "published",         xs_dict_get(snac->config, "published"));
 
+    // this exists so we get the emoji tags from our name too.
+    // and then we just throw away the result, because it's kinda useless to have markdown in the display name.
+    xs *name_dummy = not_really_markdown(xs_dict_get(snac->config, "name"), NULL, &tags);
+
     xs *f_bio_2 = not_really_markdown(xs_dict_get(snac->config, "bio"), NULL, &tags);
     f_bio = process_tags(snac, f_bio_2, &tags);
     msg = xs_dict_set(msg, "summary", f_bio);
