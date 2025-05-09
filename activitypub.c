@@ -3034,13 +3034,15 @@ void process_queue_item(xs_dict *q_item)
     if (strcmp(type, "webmention") == 0) {
         const xs_dict *msg = xs_dict_get(q_item, "message");
         const char *source = xs_dict_get(msg, "id");
-        const xs_list *atts = xs_dict_get(msg, "attachment");
-        const xs_dict *att;
+        const char *content = xs_dict_get(msg, "content");
 
-        xs_list_foreach(atts, att) {
-            const char *target = xs_dict_get(att, "url");
+        if (xs_is_string(source) && xs_is_string(content)) {
+            xs *links = xs_regex_select(content, "\"https?[^\"]+");
+            const char *link;
 
-            if (xs_is_string(source) && xs_is_string(target)) {
+            xs_list_foreach(links, link) {
+                xs *target = xs_strip_chars_i(xs_dup(link), "\"");
+
                 int r = xs_webmention_send(source, target, USER_AGENT);
 
                 srv_debug(1, xs_fmt("webmention source=%s target=%s %d", source, target, r));
