@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.76
 
 Added Webmention support for links (Markdown-style or direct) written in a post.
 
