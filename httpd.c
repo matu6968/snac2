@@ -556,6 +556,7 @@ void httpd_connection(FILE *f)
 
     headers = xs_dict_append(headers, "access-control-allow-origin", "*");
     headers = xs_dict_append(headers, "access-control-allow-headers", "*");
+    headers = xs_dict_append(headers, "access-control-expose-headers", "Link");
 
     /* disable any form of fucking JavaScript */
     headers = xs_dict_append(headers, "Content-Security-Policy", "script-src ;");
