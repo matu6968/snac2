@@ -1,5 +1,9 @@
 # Release Notes
 
+## UNRELEASED
+
+As they look ugly in some platforms, links in content posts are no longer included as attachments.
+
 ## 2.76
 
 Added Webmention support for links (Markdown-style or direct) written in a post.
