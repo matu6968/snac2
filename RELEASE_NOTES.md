@@ -8,7 +8,7 @@ Added new command-line options for list maintenance.
 
 Display custom emoji in more places (contributed by dandelions).
 
-Mastodon API: added `/api/v1/accounts/.../lists` endpoint (contributed by dandelions).
+Mastodon API: fixed infinite scroll in most clients (thanks to cheeaun for giving me the clue), added `/api/v1/accounts/.../lists` endpoint (contributed by dandelions).
 
 Email notifications can now be sent via `libcurl` SMTP instead of spawning the `/usr/sbin/sendmail` program. To use this new feature, some additional server configuration is needed, see `snac(8)` (contributed by shtrophic).
 
