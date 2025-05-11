@@ -3037,7 +3037,7 @@ void process_queue_item(xs_dict *q_item)
         const char *content = xs_dict_get(msg, "content");
 
         if (xs_is_string(source) && xs_is_string(content)) {
-            xs *links = xs_regex_select(content, "\"https?[^\"]+");
+            xs *links = xs_regex_select(content, "\"https?:/" "/[^\"]+");
             const char *link;
 
             xs_list_foreach(links, link) {
