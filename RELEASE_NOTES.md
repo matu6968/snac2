@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-As they look ugly in some platforms, links in content posts are no longer included as attachments.
+As they look confusing in some platforms, links in content posts are no longer included as `Link` attachments.
 
 ## 2.76
 
