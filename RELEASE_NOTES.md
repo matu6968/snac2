@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.77 "Ugly Links Everywhere"
 
 As they look confusing in some platforms, links in content posts are no longer included as `Link` attachments.
 
