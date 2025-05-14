@@ -1874,13 +1874,14 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         if (logged_in) {
             xs *l      = notify_list(&snac1, 0, 64);
             xs *out    = xs_list_new();
-            const xs_dict *v;
+            const char *v;
             const xs_list *excl = xs_dict_get(args, "exclude_types[]");
+            const xs_list *incl = xs_dict_get(args, "types[]");
             const char *min_id = xs_dict_get(args, "min_id");
             const char *max_id = xs_dict_get(args, "max_id");
             const char *limit = xs_dict_get(args, "limit");
             int limit_count = 0;
-            if (!xs_is_null(limit)) {
+            if (xs_is_string(limit)) {
                 limit_count = atoi(limit);
             }
 
@@ -1899,11 +1900,12 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 const char *utype = xs_dict_get(noti, "utype");
                 const char *objid = xs_dict_get(noti, "objid");
                 const char *id    = xs_dict_get(noti, "id");
+                const char *actid = xs_dict_get(noti, "actor");
                 xs *fid = xs_replace(id, ".", "");
                 xs *actor = NULL;
                 xs *entry = NULL;
 
-                if (!valid_status(actor_get(xs_dict_get(noti, "actor"), &actor)))
+                if (!valid_status(actor_get(actid, &actor)))
                     continue;
 
                 if (objid != NULL && !valid_status(object_get(objid, &entry)))
@@ -1944,7 +1946,11 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     continue;
 
                 /* excluded type? */
-                if (!xs_is_null(excl) && xs_list_in(excl, type) != -1)
+                if (xs_is_list(excl) && xs_list_in(excl, type) != -1)
+                    continue;
+
+                /* included type? */
+                if (xs_is_list(incl) && xs_list_in(incl, type) == -1)
                     continue;
 
                 xs *mn = xs_dict_new();
@@ -1970,10 +1976,9 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 }
 
                 out = xs_list_append(out, mn);
-                if (!xs_is_null(limit)) {
-                    if (--limit_count <= 0)
-                        break;
-                }
+
+                if (--limit_count <= 0)
+                    break;
             }
 
             srv_debug(1, xs_fmt("mastoapi_notifications count %d", xs_list_len(out)));
