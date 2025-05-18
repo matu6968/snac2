@@ -40,7 +40,7 @@ static const char *default_srv_config = "{"
     "\"short_description_raw\": false,"
     "\"protocol\":             \"https\","
     "\"fastcgi\":              false,"
-    "\"allow_remote_preload\": true"
+    "\"disable_remote_preload\": false"
     "}";
 
 static const char *default_css =
