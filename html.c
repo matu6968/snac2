@@ -3149,6 +3149,8 @@ xs_html *html_people_list(snac *user, xs_list *list, const char *header, const c
                 xs_html_tag("summary",
                     xs_html_text("..."))));
 
+    xs *redir = xs_fmt("%s/people", user->actor);
+
     const char *actor_id;
 
     xs_list_foreach(list, actor_id) {
@@ -3200,6 +3202,10 @@ xs_html *html_people_list(snac *user, xs_list *list, const char *header, const c
                     xs_html_attr("type",    "hidden"),
                     xs_html_attr("name",    "actor"),
                     xs_html_attr("value",   actor_id)),
+                xs_html_sctag("input",
+                    xs_html_attr("type",    "hidden"),
+                    xs_html_attr("name",    "hard-redir"),
+                    xs_html_attr("value",   redir)),
                 xs_html_sctag("input",
                     xs_html_attr("type",    "hidden"),
                     xs_html_attr("name",    "actor-form"),
@@ -5003,12 +5009,19 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     }
 
     if (status == HTTP_STATUS_SEE_OTHER) {
-        const char *redir = xs_dict_get(p_vars, "redir");
+        const char *hard_redir = xs_dict_get(p_vars, "hard-redir");
 
-        if (xs_is_null(redir))
-            redir = "top";
+        if (xs_is_string(hard_redir))
+            *body = xs_dup(hard_redir);
+        else {
+            const char *redir = xs_dict_get(p_vars, "redir");
 
-        *body   = xs_fmt("%s/admin#%s", snac.actor, redir);
+            if (xs_is_null(redir))
+                redir = "top";
+
+            *body = xs_fmt("%s/admin#%s", snac.actor, redir);
+        }
+
         *b_size = strlen(*body);
     }
 
