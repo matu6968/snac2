@@ -200,8 +200,10 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             avatar = make_url(v, proxy, 0);
     }
 
-    if (avatar == NULL || (xs_is_true(xs_dict_get(srv_config, "disable_remote_preload")) && !is_local_url(avatar)))
+    if (avatar == NULL || (xs_is_true(xs_dict_get(srv_config, "disable_remote_preload")) && !is_local_url(avatar))) {
+        xs_free(avatar);
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
+    }
 
     const char *actor_id = xs_dict_get(actor, "id");
     xs *href = NULL;
@@ -908,7 +910,7 @@ static xs_html *html_user_body(snac *user, int read_only)
 
     xs *avatar = xs_dup(xs_dict_get(user->config, "avatar"));
 
-    if (avatar == NULL || *avatar == '\0') {
+    if (avatar == NULL || *avatar == '\0' || (xs_is_true(xs_dict_get(srv_config, "disable_remote_preload")) && !is_local_url(avatar))) {
         xs_free(avatar);
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
     }
