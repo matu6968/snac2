@@ -40,7 +40,7 @@ static const char *default_srv_config = "{"
     "\"short_description_raw\": false,"
     "\"protocol\":             \"https\","
     "\"fastcgi\":              false,"
-    "\"disable_remote_preload\": false"
+    "\"disable_remote_preload\": false" // wants purge {basedir}
     "}";
 
 static const char *default_css =
