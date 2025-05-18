@@ -30,6 +30,11 @@ int is_local_url(const char *target)
     );
 }
 
+int is_denied_url(const xs_val *srv_config, const char *url)
+{
+    return (xs_is_true(xs_dict_get(srv_config, "disable_remote_preload")) && !is_local_url(url));
+}
+
 int login(snac *user, const xs_dict *headers)
 /* tries a login */
 {
@@ -200,7 +205,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             avatar = make_url(v, proxy, 0);
     }
 
-    if (avatar == NULL || (xs_is_true(xs_dict_get(srv_config, "disable_remote_preload")) && !is_local_url(avatar))) {
+    if (avatar == NULL || is_denied_url(srv_config, avatar)) {
         xs_free(avatar);
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
     }
@@ -910,7 +915,7 @@ static xs_html *html_user_body(snac *user, int read_only)
 
     xs *avatar = xs_dup(xs_dict_get(user->config, "avatar"));
 
-    if (avatar == NULL || *avatar == '\0' || (xs_is_true(xs_dict_get(srv_config, "disable_remote_preload")) && !is_local_url(avatar))) {
+    if (avatar == NULL || *avatar == '\0' || is_denied_url(srv_config, avatar)) {
         xs_free(avatar);
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
     }
@@ -1008,7 +1013,7 @@ static xs_html *html_user_body(snac *user, int read_only)
 
     if (read_only) {
         const char *header = xs_dict_get(user->config, "header");
-        if (header && *header) {
+        if (header && *header && !is_denied_url(srv_config, header)) {
             xs_html_add(top_user,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-top-user-banner"),
