@@ -1335,6 +1335,16 @@ xs_list *pending_list(snac *user)
 }
 
 
+int pending_count(snac *user)
+/* returns the number of pending follow confirmations */
+{
+    xs *spec = xs_fmt("%s/pending/""*.json", user->basedir);
+    xs *l = xs_glob(spec, 0, 0);
+
+    return xs_list_len(l);
+}
+
+
 /** timeline **/
 
 double timeline_mtime(snac *snac)

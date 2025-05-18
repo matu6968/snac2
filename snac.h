@@ -159,6 +159,7 @@ int pending_check(snac *user, const char *actor);
 xs_dict *pending_get(snac *user, const char *actor);
 void pending_del(snac *user, const char *actor);
 xs_list *pending_list(snac *user);
+int pending_count(snac *user);
 
 double timeline_mtime(snac *snac);
 int timeline_touch(snac *snac);

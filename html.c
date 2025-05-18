@@ -923,7 +923,9 @@ static xs_html *html_user_body(snac *user, int read_only)
     }
     else {
         int n_len = notify_new_num(user);
+        int p_len = pending_count(user);
         xs_html *notify_count = NULL;
+        xs_html *pending_follow_count = NULL;
 
         /* show the number of new notifications, if there are any */
         if (n_len) {
@@ -934,6 +936,15 @@ static xs_html *html_user_body(snac *user, int read_only)
         }
         else
             notify_count = xs_html_text("");
+
+        if (p_len) {
+            xs *s = xs_fmt(" %d ", p_len);
+            pending_follow_count = xs_html_tag("sup",
+                xs_html_attr("style", "background-color: red; color: white;"),
+                xs_html_text(s));
+        }
+        else
+            pending_follow_count = xs_html_text("");
 
         xs *admin_url = xs_fmt("%s/admin", user->actor);
         xs *notify_url = xs_fmt("%s/notifications", user->actor);
@@ -957,6 +968,7 @@ static xs_html *html_user_body(snac *user, int read_only)
             xs_html_tag("a",
                 xs_html_attr("href", people_url),
                 xs_html_text(L("people"))),
+            pending_follow_count,
             xs_html_text(" - "),
             xs_html_tag("a",
                 xs_html_attr("href", instance_url),
