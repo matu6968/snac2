@@ -2109,10 +2109,26 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/follow_requests") == 0) { /** **/
-        /* snac does not support optional follow confirmations */
-        *body  = xs_dup("[]");
-        *ctype = "application/json";
-        status = HTTP_STATUS_OK;
+        if (logged_in) {
+            xs *pend = pending_list(&snac1);
+            xs *resp = xs_list_new();
+            const char *id;
+
+            xs_list_foreach(pend, id) {
+                xs *actor = NULL;
+
+                if (valid_status(object_get(id, &actor))) {
+                    xs *acct = mastoapi_account(&snac1, actor);
+
+                    if (acct)
+                        resp = xs_list_append(resp, acct);
+                }
+            }
+
+            *body  = xs_json_dumps(resp, 4);
+            *ctype = "application/json";
+            status = HTTP_STATUS_OK;
+        }
     }
     else
     if (strcmp(cmd, "/v1/announcements") == 0) { /** **/
