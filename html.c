@@ -30,7 +30,7 @@ int is_local_url(const char *target)
     );
 }
 
-int is_denied_url(const xs_val *srv_config, const char *url)
+int is_preload_disabled(const xs_val *srv_config, const char *url)
 {
     return (xs_is_true(xs_dict_get(srv_config, "disable_remote_preload")) && !is_local_url(url));
 }
@@ -205,7 +205,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             avatar = make_url(v, proxy, 0);
     }
 
-    if (avatar == NULL || is_denied_url(srv_config, avatar)) {
+    if (avatar == NULL || is_preload_disabled(srv_config, avatar)) {
         xs_free(avatar);
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
     }
@@ -915,7 +915,7 @@ static xs_html *html_user_body(snac *user, int read_only)
 
     xs *avatar = xs_dup(xs_dict_get(user->config, "avatar"));
 
-    if (avatar == NULL || *avatar == '\0' || is_denied_url(srv_config, avatar)) {
+    if (avatar == NULL || *avatar == '\0' || is_preload_disabled(srv_config, avatar)) {
         xs_free(avatar);
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
     }
@@ -1013,7 +1013,7 @@ static xs_html *html_user_body(snac *user, int read_only)
 
     if (read_only) {
         const char *header = xs_dict_get(user->config, "header");
-        if (header && *header && !is_denied_url(srv_config, header)) {
+        if (header && *header && !is_preload_disabled(srv_config, header)) {
             xs_html_add(top_user,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-top-user-banner"),
@@ -2457,19 +2457,33 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 const char *icon_url   = xs_dict_get(icon, "url");
 
                 if (icon_mtype && icon_url && xs_startswith(icon_mtype, "image/")) {
-                    xs_html_add(content_attachments,
-                        xs_html_tag("a",
-                            xs_html_attr("href", icon_url),
-                            xs_html_attr("target", "_blank"),
-                            xs_html_sctag("img",
-                                xs_html_attr("loading", "lazy"),
-                                xs_html_attr("src", icon_url))));
+                    if (is_preload_disabled(srv_config, icon_url))
+                        xs_html_add(content_attachments,
+                            xs_html_tag("a",
+                                xs_html_attr("href", icon_url),
+                                xs_html_attr("target", "_blank"),
+                                xs_html_text(icon_url)));
+                    else
+                        xs_html_add(content_attachments,
+                            xs_html_tag("a",
+                                xs_html_attr("href", icon_url),
+                                xs_html_attr("target", "_blank"),
+                                xs_html_sctag("img",
+                                    xs_html_attr("loading", "lazy"),
+                                    xs_html_attr("src", icon_url))));
                 }
             }
 
             xs *href = make_url(o_href, proxy, 0);
 
-            if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0) {
+            if (is_preload_disabled(srv_config, href))
+                    xs_html_add(content_attachments,
+                        xs_html_tag("a",
+                            xs_html_attr("href", href),
+                            xs_html_attr("target", "_blank"),
+                            xs_html_text(name)));
+            else
+            if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0)
                 xs_html_add(content_attachments,
                     xs_html_tag("a",
                         xs_html_attr("href", href),
@@ -2479,9 +2493,8 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                             xs_html_attr("src", href),
                             xs_html_attr("alt", name),
                             xs_html_attr("title", name))));
-            }
             else
-            if (xs_startswith(type, "video/")) {
+            if (xs_startswith(type, "video/"))
                 xs_html_add(content_attachments,
                     xs_html_tag("video",
                         xs_html_attr("preload", "none"),
@@ -2494,9 +2507,8 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                         xs_html_tag("a",
                             xs_html_attr("href", href),
                             xs_html_text(name))));
-            }
             else
-            if (xs_startswith(type, "audio/")) {
+            if (xs_startswith(type, "audio/"))
                 xs_html_add(content_attachments,
                     xs_html_tag("audio",
                         xs_html_attr("preload", "none"),
@@ -2509,7 +2521,6 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                         xs_html_tag("a",
                             xs_html_attr("href", href),
                             xs_html_text(name))));
-            }
             else
             if (strcmp(type, "Link") == 0) {
                 xs_html_add(content_attachments,
