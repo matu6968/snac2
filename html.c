@@ -18,7 +18,7 @@
 
 #include "snac.h"
 
-int is_external_url(const char *target)
+int is_local_url(const char *target)
 {
     return xs_startswith(
         target,
@@ -200,7 +200,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             avatar = make_url(v, proxy, 0);
     }
 
-    if (avatar == NULL || (xs_dict_get(srv_config, "allow_remote_preload") && is_external_url(avatar)))
+    if (avatar == NULL || (xs_dict_get(srv_config, "allow_remote_preload") && is_local_url(avatar)))
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
 
     const char *actor_id = xs_dict_get(actor, "id");
