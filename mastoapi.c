@@ -3245,6 +3245,57 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
         status = HTTP_STATUS_OK;
     }
     else
+    if (xs_startswith(cmd, "/v1/follow_requests")) { /** **/
+        if (logged_in) {
+            /* "authorize" or "reject" */
+            xs *rel = NULL;
+            xs *l = xs_split(cmd, "/");
+            const char *md5 = xs_list_get(l, -2);
+            const char *s_cmd = xs_list_get(l, -1);
+
+            if (xs_is_string(md5) && xs_is_string(s_cmd)) {
+                xs *actor = NULL;
+
+                if (valid_status(object_get_by_md5(md5, &actor))) {
+                    const char *actor_id = xs_dict_get(actor, "id");
+
+                    if (strcmp(s_cmd, "authorize") == 0) {
+                        xs *fwreq = pending_get(&snac, actor_id);
+
+                        if (fwreq != NULL) {
+                            xs *reply = msg_accept(&snac, fwreq, actor_id);
+
+                            enqueue_message(&snac, reply);
+
+                            if (xs_is_null(xs_dict_get(fwreq, "published"))) {
+                                xs *date = xs_str_utctime(0, ISO_DATE_SPEC);
+                                fwreq = xs_dict_set(fwreq, "published", date);
+                            }
+
+                            timeline_add(&snac, xs_dict_get(fwreq, "id"), fwreq);
+
+                            follower_add(&snac, actor_id);
+
+                            pending_del(&snac, actor_id);
+                            rel = mastoapi_relationship(&snac, md5);
+                        }
+                    }
+                    else
+                    if (strcmp(s_cmd, "reject") == 0) {
+                        pending_del(&snac, actor_id);
+                        rel = mastoapi_relationship(&snac, md5);
+                    }
+                }
+            }
+
+            if (rel != NULL) {
+                *body = xs_json_dumps(rel, 4);
+                *ctype = "application/json";
+                status = HTTP_STATUS_OK;
+            }
+        }
+    }
+    else
         status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
 
     /* user cleanup */
