@@ -39,7 +39,8 @@ static const char *default_srv_config = "{"
     "\"short_description\":    \"\","
     "\"short_description_raw\": false,"
     "\"protocol\":             \"https\","
-    "\"fastcgi\":              false"
+    "\"fastcgi\":              false,"
+    "\"allow_remote_preload\": true"
     "}";
 
 static const char *default_css =
