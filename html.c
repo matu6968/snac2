@@ -18,7 +18,7 @@
 
 #include "snac.h"
 
-int is_local_url(const char *target)
+int is_local_url(const xs_val *srv_config, const char *target)
 {
     return xs_startswith(
         target,
@@ -32,7 +32,7 @@ int is_local_url(const char *target)
 
 int is_preload_disabled(const xs_val *srv_config, const char *url)
 {
-    return (xs_is_true(xs_dict_get(srv_config, "disable_remote_preload")) && !is_local_url(url));
+    return (xs_is_true(xs_dict_get(srv_config, "disable_remote_preload")) && !is_local_url(srv_config, url));
 }
 
 int login(snac *user, const xs_dict *headers)
