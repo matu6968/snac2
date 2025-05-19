@@ -332,7 +332,8 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
 }
 
 
-xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, const char *proxy, const char *md5)
+xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg,
+                       const char *proxy, const char *md5, const char *lang)
 {
     xs *actor = NULL;
     xs_html *actor_icon = NULL;
@@ -341,7 +342,6 @@ xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, con
         const char *date  = NULL;
         const char *udate = NULL;
         const char *url   = NULL;
-        const char *lang  = NULL;
         int priv    = 0;
         const char *type = xs_dict_get(msg, "type");
 
@@ -352,16 +352,6 @@ xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg, con
 
         date  = xs_dict_get(msg, "published");
         udate = xs_dict_get(msg, "updated");
-
-        lang = xs_dict_get(msg, "contentMap");
-        if (xs_is_dict(lang)) {
-            const char *v;
-            int c = 0;
-
-            xs_dict_next(lang, &lang, &v, &c);
-        }
-        else
-            lang = NULL;
 
         actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0, proxy, lang, md5);
     }
@@ -1951,6 +1941,15 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         return xs_html_tag("mark",
             xs_html_text(L("Truncated (too deep)")));
 
+    const char *lang = NULL;
+    const xs_dict *cmap = xs_dict_get(msg, "contentMap");
+    if (xs_is_dict(cmap)) {
+        const char *dummy;
+        int c = 0;
+
+        xs_dict_next(cmap, &lang, &dummy, &c);
+    }
+
     if (strcmp(type, "Follow") == 0) {
         return xs_html_tag("div",
             xs_html_attr("class", "snac-post"),
@@ -1959,7 +1958,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-origin"),
                     xs_html_text(L("follows you"))),
-                html_msg_icon(read_only ? NULL : user, xs_dict_get(msg, "actor"), msg, proxy, NULL)));
+                html_msg_icon(read_only ? NULL : user, xs_dict_get(msg, "actor"), msg, proxy, NULL, lang)));
     }
     else
     if (!xs_match(type, POSTLIKE_OBJECT_TYPE)) {
@@ -2140,12 +2139,16 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     }
 
     xs_html_add(post_header,
-        html_msg_icon(read_only ? NULL : user, actor, msg, proxy, md5));
+        html_msg_icon(read_only ? NULL : user, actor, msg, proxy, md5, lang));
 
     /** post content **/
 
     xs_html *snac_content_wrap = xs_html_tag("div",
         xs_html_attr("class", "e-content snac-content"));
+
+    if (xs_is_string(lang))
+        xs_html_add(snac_content_wrap,
+            xs_html_attr("lang", lang));
 
     xs_html_add(entry,
         snac_content_wrap);
