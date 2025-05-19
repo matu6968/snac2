@@ -680,10 +680,10 @@ xs_dict *mastoapi_account(snac *logged, const xs_dict *actor)
 
             /* does this user want to publish their contact metrics? */
             if (xs_is_true(xs_dict_get(user.config, "show_contact_metrics"))) {
-                xs *fwing = following_list(&user);
-                xs *fwers = follower_list(&user);
-                xs *ni = xs_number_new(xs_list_len(fwing));
-                xs *ne = xs_number_new(xs_list_len(fwers));
+                int fwing = following_list_len(&user);
+                int fwers = follower_list_len(&user);
+                xs *ni = xs_number_new(fwing);
+                xs *ne = xs_number_new(fwers);
 
                 acct = xs_dict_append(acct, "followers_count", ne);
                 acct = xs_dict_append(acct, "following_count", ni);
@@ -1309,10 +1309,10 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
 
     /* does this user want to publish their contact metrics? */
     if (xs_is_true(xs_dict_get(snac.config, "show_contact_metrics"))) {
-        xs *fwing = following_list(&snac);
-        xs *fwers = follower_list(&snac);
-        xs *ni = xs_number_new(xs_list_len(fwing));
-        xs *ne = xs_number_new(xs_list_len(fwers));
+        int fwing = following_list_len(&snac);
+        int fwers = follower_list_len(&snac);
+        xs *ni = xs_number_new(fwing);
+        xs *ne = xs_number_new(fwers);
 
         acct = xs_dict_append(acct, "followers_count", ne);
         acct = xs_dict_append(acct, "following_count", ni);

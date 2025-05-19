@@ -1216,7 +1216,7 @@ int follower_check(snac *snac, const char *actor)
 
 
 int follower_list_len(snac *snac)
-/* returns the number followers */
+/* returns the number of followers */
 {
     xs *list = object_user_cache_list(snac, "followers", XS_ALL, 0);
     return xs_list_len(list);
