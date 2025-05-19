@@ -2482,8 +2482,8 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                         xs_html_tag("a",
                             xs_html_attr("href", href),
                             xs_html_attr("target", "_blank"),
-                            xs_html_attr("title", name),
-                            xs_html_text(o_href))));
+                            xs_html_attr("title", xs_is_string(name) && strlen(name) > 0 ? name : o_href),
+                            xs_html_text(href))));
             else
             if (xs_startswith(type, "image/") || strcmp(type, "Image") == 0)
                 xs_html_add(content_attachments,
