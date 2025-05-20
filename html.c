@@ -811,11 +811,7 @@ xs_html *html_user_head(snac *user, const char *desc, const char *url)
 
     /* show metrics in og:description? */
     if (xs_is_true(xs_dict_get(user->config, "show_contact_metrics"))) {
-        xs *fwers = follower_list(user);
-        xs *fwing = following_list(user);
-
-        xs *s1 = xs_fmt(L("%d following, %d followers"),
-            xs_list_len(fwing), xs_list_len(fwers));
+        xs *s1 = xs_fmt(L("%d following, %d followers"), following_list_len(user), follower_list_len(user));
 
         s1 = xs_str_cat(s1, " · ");
 
@@ -1156,11 +1152,7 @@ static xs_html *html_user_body(snac *user, int read_only)
         }
 
         if (xs_is_true(xs_dict_get(user->config, "show_contact_metrics"))) {
-            xs *fwers = follower_list(user);
-            xs *fwing = following_list(user);
-
-            xs *s1 = xs_fmt(L("%d following, %d followers"),
-                xs_list_len(fwing), xs_list_len(fwers));
+            xs *s1 = xs_fmt(L("%d following, %d followers"), following_list_len(user), follower_list_len(user));
 
             xs_html_add(top_user,
                 xs_html_tag("p",

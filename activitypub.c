@@ -3204,8 +3204,7 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         int total = 0;
 
         if (show_contact_metrics) {
-            xs *l = follower_list(&snac);
-            total = xs_list_len(l);
+            total = follower_list_len(&snac);
         }
 
         xs *id = xs_fmt("%s/%s", snac.actor, p_path);
@@ -3216,8 +3215,7 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         int total = 0;
 
         if (show_contact_metrics) {
-            xs *l = following_list(&snac);
-            total = xs_list_len(l);
+            total = following_list_len(&snac);
         }
 
         xs *id = xs_fmt("%s/%s", snac.actor, p_path);
