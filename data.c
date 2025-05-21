@@ -282,6 +282,8 @@ int user_open(snac *user, const char *uid)
             }
             else
                 srv_log(xs_fmt("error parsing '%s'", cfg_file));
+
+            user->tz = xs_dict_get_def(user->config, "tz", "UTC");
         }
         else
             srv_debug(2, xs_fmt("error opening '%s' %d", cfg_file, errno));
@@ -1213,6 +1215,14 @@ int follower_check(snac *snac, const char *actor)
 }
 
 
+int follower_list_len(snac *snac)
+/* returns the number of followers */
+{
+    xs *list = object_user_cache_list(snac, "followers", XS_ALL, 0);
+    return xs_list_len(list);
+}
+
+
 xs_list *follower_list(snac *snac)
 /* returns the list of followers */
 {
@@ -1330,6 +1340,16 @@ xs_list *pending_list(snac *user)
     }
 
     return r;
+}
+
+
+int pending_count(snac *user)
+/* returns the number of pending follow confirmations */
+{
+    xs *spec = xs_fmt("%s/pending/""*.json", user->basedir);
+    xs *l = xs_glob(spec, 0, 0);
+
+    return xs_list_len(l);
 }
 
 
@@ -1697,6 +1717,15 @@ int following_get(snac *snac, const char *actor, xs_dict **data)
 }
 
 
+int following_list_len(snac *snac)
+/* returns number of people being followed */
+{
+    xs *spec = xs_fmt("%s/following/" "*_a.json", snac->basedir);
+    xs *glist = xs_glob(spec, 0, 0);
+    return xs_list_len(glist);
+}
+
+
 xs_list *following_list(snac *snac)
 /* returns the list of people being followed */
 {
@@ -1926,6 +1955,70 @@ xs_list *draft_list(snac *user)
 /* return the lists of drafts */
 {
     return object_user_cache_list(user, "draft", XS_ALL, 1);
+}
+
+
+/** scheduled posts **/
+
+int is_scheduled(snac *user, const char *id)
+/* returns true if this note is scheduled for future sending */
+{
+    return object_user_cache_in(user, id, "sched");
+}
+
+
+void schedule_del(snac *user, const char *id)
+/* deletes an scheduled post */
+{
+    object_user_cache_del(user, id, "sched");
+}
+
+
+void schedule_add(snac *user, const char *id, const xs_dict *msg)
+/* schedules this post for later */
+{
+    /* delete from the index, in case it was already there */
+    schedule_del(user, id);
+
+    /* overwrite object */
+    object_add_ow(id, msg);
+
+    /* [re]add to the index */
+    object_user_cache_add(user, id, "sched");
+}
+
+
+xs_list *scheduled_list(snac *user)
+/* return the list of scheduled posts */
+{
+    return object_user_cache_list(user, "sched", XS_ALL, 1);
+}
+
+
+void scheduled_process(snac *user)
+/* processes the scheduled list, sending those ready to be sent */
+{
+    xs *posts = scheduled_list(user);
+    const char *md5;
+    xs *right_now = xs_str_utctime(0, ISO_DATE_SPEC);
+
+    xs_list_foreach(posts, md5) {
+        xs *msg = NULL;
+
+        if (valid_status(object_get_by_md5(md5, &msg))) {
+            if (strcmp(xs_dict_get(msg, "published"), right_now) < 0) {
+                /* due date! */
+                const char *id = xs_dict_get(msg, "id");
+
+                timeline_add(user, id, msg);
+
+                xs *c_msg = msg_create(user, msg);
+                enqueue_message(user, c_msg);
+
+                schedule_del(user, id);
+            }
+        }
+    }
 }
 
 
@@ -2199,7 +2292,8 @@ xs_val *list_maint(snac *user, const char *list, int op)
                     xs *l2 = xs_split(v2, "/");
 
                     /* return [ list_id, list_title ] */
-                    l = xs_list_append(l, xs_list_append(xs_list_new(), xs_list_get(l2, -1), title));
+                    xs *tmp_list = xs_list_append(xs_list_new(), xs_list_get(l2, -1), title);
+                    l = xs_list_append(l, tmp_list);
                 }
             }
         }
@@ -2274,6 +2368,19 @@ xs_val *list_maint(snac *user, const char *list, int op)
         }
 
         break;
+
+    case 4: /** find list id by name **/
+        if (xs_is_string(list)) {
+            xs *lol = list_maint(user, NULL, 0);
+            const xs_list *li;
+
+            xs_list_foreach(lol, li) {
+                if (strcmp(list, xs_list_get(li, 1)) == 0) {
+                    l = xs_dup(xs_list_get(li, 0));
+                    break;
+                }
+            }
+        }
     }
 
     return l;
@@ -2325,7 +2432,7 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
         break;
 
     case 1: /** append actor to list **/
-        if (actor_md5 != NULL) {
+        if (xs_is_string(actor_md5) && xs_is_hex(actor_md5)) {
             if (!index_in_md5(fn, actor_md5))
                 index_add_md5(fn, actor_md5);
         }
@@ -2333,7 +2440,7 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
         break;
 
     case 2: /** delete actor from list **/
-        if (actor_md5 != NULL)
+        if (xs_is_string(actor_md5) && xs_is_hex(actor_md5))
             index_del_md5(fn, actor_md5);
 
         break;
@@ -2619,10 +2726,9 @@ xs_list *inbox_list(void)
     xs_list *ibl = xs_list_new();
     xs *spec     = xs_fmt("%s/inbox/" "*", srv_basedir);
     xs *files    = xs_glob(spec, 0, 0);
-    xs_list *p   = files;
     const xs_val *v;
 
-    while (xs_list_iter(&p, &v)) {
+    xs_list_foreach(files, v) {
         FILE *f;
 
         if ((f = fopen(v, "r")) != NULL) {
@@ -2630,7 +2736,9 @@ xs_list *inbox_list(void)
 
             if (line && *line) {
                 line = xs_strip_i(line);
-                ibl  = xs_list_append(ibl, line);
+
+                if (!is_instance_blocked(line))
+                    ibl = xs_list_append(ibl, line);
             }
 
             fclose(f);
@@ -3276,7 +3384,7 @@ void enqueue_output_by_actor(snac *snac, const xs_dict *msg,
 }
 
 
-void enqueue_email(const xs_str *msg, int retries)
+void enqueue_email(const xs_dict *msg, int retries)
 /* enqueues an email message to be sent */
 {
     xs *qmsg   = _new_qmsg("email", msg, retries);
@@ -3389,6 +3497,19 @@ void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs)
     qmsg = _enqueue_put(fn, qmsg);
 
     snac_debug(user, 1, xs_fmt("enqueue_actor_refresh %s", actor));
+}
+
+
+void enqueue_webmention(const xs_dict *msg)
+/* enqueues a webmention for the post */
+{
+    xs *qmsg   = _new_qmsg("webmention", msg, 0);
+    const char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    srv_debug(1, xs_fmt("enqueue_webmention"));
 }
 
 
@@ -3696,7 +3817,7 @@ void purge_user(snac *snac)
     _purge_user_subdir(snac, "public",  pub_days);
 
     const char *idxs[] = { "followers.idx", "private.idx", "public.idx",
-                           "pinned.idx", "bookmark.idx", "draft.idx", NULL };
+                           "pinned.idx", "bookmark.idx", "draft.idx", "sched.idx", NULL };
 
     for (n = 0; idxs[n]; n++) {
         xs *idx = xs_fmt("%s/%s", snac->basedir, idxs[n]);

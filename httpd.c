@@ -139,6 +139,8 @@ static xs_str *greeting_html(void)
                 snac user;
 
                 if (strcmp(uid, "relay") && user_open(&user, uid)) {
+                    xs *formatted_name = format_text_with_emoji(NULL, xs_dict_get(user.config, "name"), 1, NULL);
+
                     xs_html_add(ul,
                         xs_html_tag("li",
                             xs_html_tag("a",
@@ -148,7 +150,7 @@ static xs_str *greeting_html(void)
                                 xs_html_text("@"),
                                 xs_html_text(host),
                                 xs_html_text(" ("),
-                                xs_html_text(xs_dict_get(user.config, "name")),
+                                xs_html_raw(formatted_name),
                                 xs_html_text(")"))));
 
                     user_free(&user);
@@ -554,6 +556,7 @@ void httpd_connection(FILE *f)
 
     headers = xs_dict_append(headers, "access-control-allow-origin", "*");
     headers = xs_dict_append(headers, "access-control-allow-headers", "*");
+    headers = xs_dict_append(headers, "access-control-expose-headers", "Link");
 
     /* disable any form of fucking JavaScript */
     headers = xs_dict_append(headers, "Content-Security-Policy", "script-src ;");

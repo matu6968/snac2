@@ -8,8 +8,6 @@ void sbox_enter(const char *basedir)
 {
     const char *address = xs_dict_get(srv_config, "address");
 
-    int smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
-
     if (xs_is_true(xs_dict_get(srv_config, "disable_openbsd_security"))) {
         srv_log(xs_dup("OpenBSD security disabled by admin"));
         return;
@@ -24,9 +22,6 @@ void sbox_enter(const char *basedir)
     unveil("/etc/ssl/cert.pem",    "r");
     unveil("/usr/share/zoneinfo",  "r");
 
-    if (smail)
-        unveil("/usr/sbin/sendmail",   "x");
-
     if (*address == '/')
         unveil(address, "rwc");
 
@@ -35,9 +30,6 @@ void sbox_enter(const char *basedir)
     srv_debug(1, xs_fmt("Calling pledge()"));
 
     xs *p = xs_str_new("stdio rpath wpath cpath flock inet proc dns fattr");
-
-    if (smail)
-        p = xs_str_cat(p, " exec");
 
     if (*address == '/')
         p = xs_str_cat(p, " unix");
@@ -55,7 +47,7 @@ void sbox_enter(const char *basedir)
 #include "landloc.h"
 
 static
-LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail) {
+LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smtp_port) {
 
     const unsigned long long
         rd = LANDLOCK_ACCESS_FS_READ_DIR,
@@ -101,9 +93,6 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail)
         LL_PATH(sdir, s);
     }
 
-    if (smail && mtime("/usr/sbin/sendmail") > 0)
-        LL_PATH("/usr/sbin/sendmail", x);
-
     if (*address != '/') {
         unsigned short listen_port = xs_number_get(xs_dict_get(srv_config, "port"));
         LL_PORT(listen_port, LANDLOCK_ACCESS_NET_BIND_TCP_COMPAT);
@@ -111,24 +100,33 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smail)
 
     LL_PORT(80,  LANDLOCK_ACCESS_NET_CONNECT_TCP_COMPAT);
     LL_PORT(443, LANDLOCK_ACCESS_NET_CONNECT_TCP_COMPAT);
+    if (smtp_port > 0)
+        LL_PORT((unsigned short)smtp_port, LANDLOCK_ACCESS_NET_CONNECT_TCP_COMPAT);
 
 } LL_END
 
 void sbox_enter(const char *basedir)
 {
+    const char *errstr;
     const char *address = xs_dict_get(srv_config, "address");
-
-    int smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
+    const char *smtp_url = xs_dict_get(srv_config, "smtp_url");
+    int smtp_port = -1;
 
     if (xs_is_true(xs_dict_get(srv_config, "disable_sandbox"))) {
         srv_debug(1, xs_dup("Linux sandbox disabled by admin"));
         return;
     }
 
-    if (sbox_enter_linux_(basedir, address, smail) == 0)
+    if (xs_is_string(smtp_url) && *smtp_url != '\0') {
+        smtp_port = parse_port(smtp_url, &errstr);
+        if (errstr)
+            srv_debug(0, xs_fmt("Couldn't determine port from '%s': %s", smtp_url, errstr));
+    }
+
+    if (sbox_enter_linux_(basedir, address, smtp_port) == 0)
         srv_debug(1, xs_dup("Linux sandbox enabled"));
     else
-        srv_debug(1, xs_dup("Linux sandbox failed"));
+        srv_debug(0, xs_dup("Linux sandbox failed"));
 }
 
 #else /* defined(WITH_LINUX_SANDBOX) */

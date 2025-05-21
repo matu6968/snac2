@@ -1,6 +1,46 @@
 # Release Notes
 
-## 2.74
+## UNRELEASED
+
+The number of pending follow confirmations is shown next to the "people" link.
+
+Faster performance metrics (contributed by dandelions).
+
+Mastodon API: added follow confirmation endpoints.
+
+## 2.77 "Ugly Links Everywhere"
+
+As they look confusing in some platforms, links in content posts are no longer included as `Link` attachments.
+
+## 2.76
+
+Added Webmention support for links (Markdown-style or direct) written in a post.
+
+Added new command-line options for list maintenance.
+
+Display custom emoji in more places (contributed by dandelions).
+
+Mastodon API: fixed infinite scroll in many clients (thanks to cheeaun for giving me the clue), added `/api/v1/accounts/.../lists` endpoint (contributed by dandelions).
+
+Email notifications can now be sent via `libcurl` SMTP instead of spawning the `/usr/sbin/sendmail` program. To use this new feature, some additional server configuration is needed, see `snac(8)` (contributed by shtrophic).
+
+## 2.75 "Time Is On My Side"
+
+Added support for scheduled posts (for this to work correctly, users will have to set their time zone, see below).
+
+The user can now select a working time zone. This will be used to correctly parse the local date and time of a scheduled post.
+
+Fixed incorrect poll vote format, which was causing problems in platforms like GotoSocial.
+
+Mastodon API: added support for `/api/v1/instance/peers`.
+
+Added a new `snac-admin` helper script (contributed by shtrophic).
+
+In the web UI, posts are separated by the `<hr hidden>` tag; it's invisible in graphical browsers, but it separates post clearly in text-based browsers.
+
+Some Finnish, Spanish, Czech and Russian translation updates and fixes.
+
+## 2.74 "The Days of Nicole, the Fediverse Chick"
 
 Added Spanish (default, Argentina and Uruguay) translation (contributed by gnemmi).
 
@@ -22,7 +62,7 @@ Added Greek translation (contributed by uhuru).
 
 Added Italian translation (contributed by anzu).
 
-Mastodon API: added support for /api/v1/custom_emojis (contributed by violette).
+Mastodon API: added support for `/api/v1/custom_emojis` (contributed by violette).
 
 Improved Undo+Follow logic (contributed by rozenglass).
 

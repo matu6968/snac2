@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
-#define VERSION "2.74"
+#define VERSION "2.77"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -61,6 +61,7 @@ typedef struct {
     xs_str *actor;      /* actor url */
     xs_str *md5;        /* actor url md5 */
     const xs_dict *lang;/* string translation dict */
+    const char *tz;     /* configured timezone */
 } snac;
 
 typedef struct {
@@ -152,12 +153,14 @@ int follower_add(snac *snac, const char *actor);
 int follower_del(snac *snac, const char *actor);
 int follower_check(snac *snac, const char *actor);
 xs_list *follower_list(snac *snac);
+int follower_list_len(snac *snac);
 
 int pending_add(snac *user, const char *actor, const xs_dict *msg);
 int pending_check(snac *user, const char *actor);
 xs_dict *pending_get(snac *user, const char *actor);
 void pending_del(snac *user, const char *actor);
 xs_list *pending_list(snac *user);
+int pending_count(snac *user);
 
 double timeline_mtime(snac *snac);
 int timeline_touch(snac *snac);
@@ -182,6 +185,7 @@ int following_del(snac *snac, const char *actor);
 int following_check(snac *snac, const char *actor);
 int following_get(snac *snac, const char *actor, xs_dict **data);
 xs_list *following_list(snac *snac);
+int following_list_len(snac *snac);
 
 void mute(snac *snac, const char *actor);
 void unmute(snac *snac, const char *actor);
@@ -204,6 +208,12 @@ int is_draft(snac *user, const char *id);
 void draft_del(snac *user, const char *id);
 void draft_add(snac *user, const char *id, const xs_dict *msg);
 xs_list *draft_list(snac *user);
+
+int is_scheduled(snac *user, const char *id);
+void schedule_del(snac *user, const char *id);
+void schedule_add(snac *user, const char *id, const xs_dict *msg);
+xs_list *scheduled_list(snac *user);
+void scheduled_process(snac *user);
 
 int limited(snac *user, const char *id, int cmd);
 #define is_limited(user, id) limited((user), (id), 0)
@@ -282,6 +292,7 @@ void enqueue_close_question(snac *user, const char *id, int end_secs);
 void enqueue_object_request(snac *user, const char *id, int forward_secs);
 void enqueue_verify_links(snac *user);
 void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs);
+void enqueue_webmention(const xs_dict *msg);
 int was_question_voted(snac *user, const char *id);
 
 xs_list *user_queue(snac *snac);
@@ -367,6 +378,7 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
                              char **body, int *b_size, char **ctype);
 
 xs_dict *emojis(void);
+xs_str *format_text_with_emoji(snac *user, const char *text, int ems, const char *proxy);
 xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag);
 xs_str *sanitize(const char *content);
 xs_str *encode_html(const char *str);
@@ -427,6 +439,7 @@ void import_blocked_accounts_csv(snac *user, const char *fn);
 void import_following_accounts_csv(snac *user, const char *fn);
 void import_list_csv(snac *user, const char *fn);
 void import_csv(snac *user);
+int parse_port(const char *url, const char **errstr);
 
 typedef enum {
 #define HTTP_STATUS(code, name, text) HTTP_STATUS_ ## name = code,

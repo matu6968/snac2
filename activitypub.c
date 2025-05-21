@@ -11,6 +11,7 @@
 #include "xs_set.h"
 #include "xs_match.h"
 #include "xs_unicode.h"
+#include "xs_webmention.h"
 
 #include "snac.h"
 
@@ -34,7 +35,7 @@ const char *susie_cool =
     "+ZcgN7wF7ZVihXkfSlWIVzIA6dbQzaygllpNuTX"
     "ZmmFNlvxADX1+o0cUPMbAAAAAElFTkSuQmCC";
 
-const char *susie_muertos = 
+const char *susie_muertos =
     "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQAAAAC"
     "CEkxzAAAAV0lEQVQoz4XQsQ0AMQxCUW/A/lv+DT"
     "ic6zGRolekIMyMELNp8PiCEw6Q4w4NoAt53IH5m"
@@ -1044,17 +1045,21 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
 
         xs *subject = xs_fmt("snac notify for @%s@%s",
                     xs_dict_get(snac->config, "uid"), xs_dict_get(srv_config, "host"));
-        xs *from    = xs_fmt("snac-daemon <snac-daemon@%s>", xs_dict_get(srv_config, "host"));
+        xs *from    = xs_fmt("<snac-daemon@%s>", xs_dict_get(srv_config, "host"));
         xs *header  = xs_fmt(
-                    "From: %s\n"
+                    "From: snac-daemon %s\n"
                     "To: %s\n"
                     "Subject: %s\n"
                     "\n",
                     from, email, subject);
 
-        xs *email_body = xs_fmt("%s%s", header, body);
+        xs *mailinfo = xs_dict_new();
+        xs *bd = xs_fmt("%s%s", header, body);
+        mailinfo = xs_dict_append(mailinfo, "from", from);
+        mailinfo = xs_dict_append(mailinfo, "to", email);
+        mailinfo = xs_dict_append(mailinfo, "body", bd);
 
-        enqueue_email(email_body, 0);
+        enqueue_email(mailinfo, 0);
     }
 
     /* telegram */
@@ -1326,6 +1331,10 @@ xs_dict *msg_actor(snac *snac)
     msg = xs_dict_set(msg, "name",              xs_dict_get(snac->config, "name"));
     msg = xs_dict_set(msg, "preferredUsername", snac->uid);
     msg = xs_dict_set(msg, "published",         xs_dict_get(snac->config, "published"));
+
+    // this exists so we get the emoji tags from our name too.
+    // and then we just throw away the result, because it's kinda useless to have markdown in the display name.
+    xs *name_dummy = not_really_markdown(xs_dict_get(snac->config, "name"), NULL, &tags);
 
     xs *f_bio_2 = not_really_markdown(xs_dict_get(snac->config, "bio"), NULL, &tags);
     f_bio = process_tags(snac, f_bio_2, &tags);
@@ -2563,32 +2572,53 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
 }
 
 
-int send_email(const char *msg)
-/* invoke sendmail with email headers and body in msg */
+int send_email(const xs_dict *mailinfo)
+/* invoke curl */
 {
-    FILE *f;
-    int status;
-    int fds[2];
-    pid_t pid;
-    if (pipe(fds) == -1) return -1;
-    pid = vfork();
-    if (pid == -1) return -1;
-    else if (pid == 0) {
-        dup2(fds[0], 0);
+    const char *url = xs_dict_get(srv_config, "smtp_url");
+
+    if (!xs_is_string(url) || *url == '\0') {
+        /* revert back to old sendmail pipe behaviour */
+        const char *msg = xs_dict_get(mailinfo, "body");
+        FILE *f;
+        int status;
+        int fds[2];
+        pid_t pid;
+
+        if (pipe(fds) == -1) return -1;
+        pid = vfork();
+        if (pid == -1) return -1;
+        else if (pid == 0) {
+            dup2(fds[0], 0);
+            close(fds[0]);
+            close(fds[1]);
+            execl("/usr/sbin/sendmail", "sendmail", "-t", (char *) NULL);
+            _exit(1);
+        }
         close(fds[0]);
-        close(fds[1]);
-        execl("/usr/sbin/sendmail", "sendmail", "-t", (char *) NULL);
-        _exit(1);
+        if ((f = fdopen(fds[1], "w")) == NULL) {
+            close(fds[1]);
+            return -1;
+        }
+        fprintf(f, "%s\n", msg);
+        fclose(f);
+        if (waitpid(pid, &status, 0) == -1) return -1;
+        return status;
     }
-    close(fds[0]);
-    if ((f = fdopen(fds[1], "w")) == NULL) {
-        close(fds[1]);
-        return -1;
-    }
-    fprintf(f, "%s\n", msg);
-    fclose(f);
-    if (waitpid(pid, &status, 0) == -1) return -1;
-    return status;
+
+    const char
+        *user = xs_dict_get(srv_config, "smtp_username"),
+        *pass = xs_dict_get(srv_config, "smtp_password"),
+        *from = xs_dict_get(mailinfo, "from"),
+        *to   = xs_dict_get(mailinfo, "to"),
+        *body = xs_dict_get(mailinfo, "body");
+
+    if (url == NULL || *url == '\0')
+        url = "smtp://localhost";
+
+    int smtp_port = parse_port(url, NULL);
+
+    return xs_smtp_request(url, user, pass, from, to, body, smtp_port == 465 || smtp_port == 587);
 }
 
 
@@ -2759,6 +2789,8 @@ int process_user_queue(snac *snac)
         cnt++;
     }
 
+    scheduled_process(snac);
+
     return cnt;
 }
 
@@ -2859,7 +2891,7 @@ void process_queue_item(xs_dict *q_item)
     else
     if (strcmp(type, "email") == 0) {
         /* send this email */
-        const xs_str *msg = xs_dict_get(q_item, "message");
+        const xs_dict *msg = xs_dict_get(q_item, "message");
         int retries = xs_number_get(xs_dict_get(q_item, "retries"));
 
         if (!send_email(msg))
@@ -2995,6 +3027,25 @@ void process_queue_item(xs_dict *q_item)
 
             if (cnt == 0) {
                 srv_debug(1, xs_fmt("no valid recipients for %s", xs_dict_get(msg, "id")));
+            }
+        }
+    }
+    else
+    if (strcmp(type, "webmention") == 0) {
+        const xs_dict *msg = xs_dict_get(q_item, "message");
+        const char *source = xs_dict_get(msg, "id");
+        const char *content = xs_dict_get(msg, "content");
+
+        if (xs_is_string(source) && xs_is_string(content)) {
+            xs *links = xs_regex_select(content, "\"https?:/" "/[^\"]+");
+            const char *link;
+
+            xs_list_foreach(links, link) {
+                xs *target = xs_strip_chars_i(xs_dup(link), "\"");
+
+                int r = xs_webmention_send(source, target, USER_AGENT);
+
+                srv_debug(1, xs_fmt("webmention source=%s target=%s %d", source, target, r));
             }
         }
     }
@@ -3153,8 +3204,7 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         int total = 0;
 
         if (show_contact_metrics) {
-            xs *l = follower_list(&snac);
-            total = xs_list_len(l);
+            total = follower_list_len(&snac);
         }
 
         xs *id = xs_fmt("%s/%s", snac.actor, p_path);
@@ -3165,8 +3215,7 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         int total = 0;
 
         if (show_contact_metrics) {
-            xs *l = following_list(&snac);
-            total = xs_list_len(l);
+            total = following_list_len(&snac);
         }
 
         xs *id = xs_fmt("%s/%s", snac.actor, p_path);

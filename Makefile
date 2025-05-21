@@ -8,11 +8,16 @@ snac: snac.o main.o sandbox.o data.o http.o httpd.o webfinger.o \
     activitypub.o html.o utils.o format.o upgrade.o mastoapi.o
 	$(CC) $(CFLAGS) -L$(PREFIX)/lib *.o -lcurl -lcrypto $(LDFLAGS) -pthread -o $@
 
+test: tests/smtp
+
+tests/smtp: tests/smtp.o
+	$(CC) $(CFLAGS) -L$(PREFIX)/lib $< -lcurl $(LDFLAGS) -o $@
+
 .c.o:
-	$(CC) $(CFLAGS) $(CPPFLAGS) -I$(PREFIX)/include -c $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) -I$(PREFIX)/include -c $< -o $@
 
 clean:
-	rm -rf *.o *.core snac makefile.depend
+	rm -rf *.o tests/*.o tests/smtp *.core snac makefile.depend
 
 dep:
 	$(CC) -I$(PREFIX)/include -MM *.c > makefile.depend
@@ -51,7 +56,7 @@ format.o: format.c xs.h xs_regex.h xs_mime.h xs_html.h xs_json.h \
  xs_time.h xs_match.h snac.h http_codes.h
 html.o: html.c xs.h xs_io.h xs_json.h xs_regex.h xs_set.h xs_openssl.h \
  xs_time.h xs_mime.h xs_match.h xs_html.h xs_curl.h xs_unicode.h xs_url.h \
- snac.h http_codes.h
+ xs_random.h snac.h http_codes.h
 http.o: http.c xs.h xs_io.h xs_openssl.h xs_curl.h xs_time.h xs_json.h \
  snac.h http_codes.h
 httpd.o: httpd.c xs.h xs_io.h xs_json.h xs_socket.h xs_unix_socket.h \
@@ -66,7 +71,8 @@ sandbox.o: sandbox.c xs.h snac.h http_codes.h
 snac.o: snac.c xs.h xs_hex.h xs_io.h xs_unicode_tbl.h xs_unicode.h \
  xs_json.h xs_curl.h xs_openssl.h xs_socket.h xs_unix_socket.h xs_url.h \
  xs_httpd.h xs_mime.h xs_regex.h xs_set.h xs_time.h xs_glob.h xs_random.h \
- xs_match.h xs_fcgi.h xs_html.h xs_po.h snac.h http_codes.h
+ xs_match.h xs_fcgi.h xs_html.h xs_po.h xs_webmention.h snac.h \
+ http_codes.h
 upgrade.o: upgrade.c xs.h xs_io.h xs_json.h xs_glob.h snac.h http_codes.h
 utils.o: utils.c xs.h xs_io.h xs_json.h xs_time.h xs_openssl.h \
  xs_random.h xs_glob.h xs_curl.h xs_regex.h snac.h http_codes.h

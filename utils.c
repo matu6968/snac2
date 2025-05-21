@@ -101,8 +101,9 @@ static const char *greeting_html =
     "<html><head>\n"
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n"
     "<link rel=\"icon\" type=\"image/x-icon\" href=\"https://%host%/favicon.ico\"/>\n"
+    "<style>*{color-scheme:light dark}body{margin:auto;max-width:50em}</style>\n"
     "<title>Welcome to %host%</title>\n</head>\n"
-    "<body style=\"margin: auto; max-width: 50em\">\n"
+    "<body>\n"
     "%blurb%"
     "<p>The following users are part of this community:</p>\n"
     "\n"
@@ -911,4 +912,61 @@ void import_csv(snac *user)
     }
     else
         snac_log(user, xs_fmt("Cannot open file %s", fn));
+}
+
+static const struct {
+    const char *proto;
+    unsigned short default_port;
+} FALLBACK_PORTS[] = {
+    /* caution: https > http, smpts > smtp */
+    {"https", 443},
+    {"http",  80},
+    {"smtps", 465},
+    {"smtp", 25}
+};
+
+int parse_port(const char *url, const char **errstr)
+{
+    const char *col, *rcol;
+    int tmp, ret = -1;
+
+    if (errstr)
+        *errstr = NULL;
+
+    if (!(col = strchr(url, ':'))) {
+        if (errstr)
+            *errstr = "bad url";
+
+        return -1;
+    }
+
+    for (size_t i = 0; i < sizeof(FALLBACK_PORTS) / sizeof(*FALLBACK_PORTS); ++i) {
+        if (memcmp(url, FALLBACK_PORTS[i].proto, strlen(FALLBACK_PORTS[i].proto)) == 0) {
+            ret = FALLBACK_PORTS[i].default_port;
+            break;
+        }
+    }
+
+    if (!(rcol = strchr(col + 1, ':')))
+        rcol = col;
+
+    if (rcol) {
+        tmp = atoi(rcol + 1);
+        if (tmp == 0) {
+            if (ret != -1)
+                return ret;
+
+            if (errstr)
+                *errstr = strerror(errno);
+
+            return -1;
+        }
+
+        return tmp;
+    }
+
+    if (errstr)
+        *errstr = "unknown protocol";
+
+    return -1;
 }

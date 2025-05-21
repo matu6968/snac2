@@ -154,8 +154,10 @@ static xs_str *format_line(const char *line, xs_list **attach)
                 xs *l = xs_split_n(w, "](", 1);
 
                 if (xs_list_len(l) == 2) {
-                    xs *link = xs_fmt("<a href=\"%s\">%s</a>",
-                            xs_list_get(l, 1), xs_list_get(l, 0));
+                    const char *name = xs_list_get(l, 0);
+                    const char *url  = xs_list_get(l, 1);
+
+                    xs *link = xs_fmt("<a href=\"%s\">%s</a>", url, name);
 
                     s = xs_str_cat(s, link);
                 }
@@ -208,6 +210,7 @@ static xs_str *format_line(const char *line, xs_list **attach)
             }
             else
             if (xs_str_in(v, ":/" "/") != -1) {
+                /* direct URLs in the post body */
                 xs *u  = xs_replace_i(xs_replace(v, "#", "&#35;"), "@", "&#64;");
 
                 xs *v2 = xs_strip_chars_i(xs_dup(u), ".,)");
@@ -382,10 +385,11 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
         const char *k, *v;
 
         while (xs_dict_next(d, &k, &v, &c)) {
-            const char *t = NULL;
+            const char *t = xs_mime_by_ext(v);
 
             /* is it an URL to an image? */
-            if (xs_startswith(v, "https:/" "/") && xs_startswith((t = xs_mime_by_ext(v)), "image/")) {
+            if (xs_startswith(v, "https:/" "/") &&
+                (xs_startswith(t, "image/") || strcmp(t, "application/octet-stream") == 0)) {
                 if (tag && xs_str_in(s, k) != -1) {
                     /* add the emoji to the tag list */
                     xs *e = xs_dict_new();

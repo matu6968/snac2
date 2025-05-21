@@ -680,10 +680,10 @@ xs_dict *mastoapi_account(snac *logged, const xs_dict *actor)
 
             /* does this user want to publish their contact metrics? */
             if (xs_is_true(xs_dict_get(user.config, "show_contact_metrics"))) {
-                xs *fwing = following_list(&user);
-                xs *fwers = follower_list(&user);
-                xs *ni = xs_number_new(xs_list_len(fwing));
-                xs *ne = xs_number_new(xs_list_len(fwers));
+                int fwing = following_list_len(&user);
+                int fwers = follower_list_len(&user);
+                xs *ni = xs_number_new(fwing);
+                xs *ne = xs_number_new(fwers);
 
                 acct = xs_dict_append(acct, "followers_count", ne);
                 acct = xs_dict_append(acct, "following_count", ni);
@@ -1223,7 +1223,10 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     acct = xs_dict_append(acct, "last_status_at", xs_dict_get(snac.config, "published"));
     acct = xs_dict_append(acct, "note", xs_dict_get(snac.config, "bio"));
     acct = xs_dict_append(acct, "url", snac.actor);
-    acct = xs_dict_append(acct, "locked", xs_stock(XSTYPE_FALSE));
+
+    acct = xs_dict_append(acct, "locked",
+        xs_stock(xs_is_true(xs_dict_get(snac.config, "approve_followers")) ? XSTYPE_TRUE : XSTYPE_FALSE));
+
     acct = xs_dict_append(acct, "bot", xs_stock(xs_is_true(bot) ? XSTYPE_TRUE : XSTYPE_FALSE));
     acct = xs_dict_append(acct, "emojis", xs_stock(XSTYPE_LIST));
 
@@ -1306,10 +1309,10 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
 
     /* does this user want to publish their contact metrics? */
     if (xs_is_true(xs_dict_get(snac.config, "show_contact_metrics"))) {
-        xs *fwing = following_list(&snac);
-        xs *fwers = follower_list(&snac);
-        xs *ni = xs_number_new(xs_list_len(fwing));
-        xs *ne = xs_number_new(xs_list_len(fwers));
+        int fwing = following_list_len(&snac);
+        int fwers = follower_list_len(&snac);
+        xs *ni = xs_number_new(fwing);
+        xs *ne = xs_number_new(fwers);
 
         acct = xs_dict_append(acct, "followers_count", ne);
         acct = xs_dict_append(acct, "following_count", ni);
@@ -1497,6 +1500,44 @@ xs_str *timeline_link_header(const char *endpoint, xs_list *timeline)
     srv_debug(1, xs_fmt("timeline_link_header %s", s));
 
     return s;
+}
+
+
+xs_list *mastoapi_account_lists(snac *user, const char *uid)
+/* returns the list of list an user is in */
+{
+    xs_list *out  = xs_list_new();
+    xs *actor_md5 = NULL;
+    xs *lol       = list_maint(user, NULL, 0);
+
+    if (uid) {
+        if (!xs_is_hex(uid))
+            actor_md5 = xs_md5_hex(uid, strlen(uid));
+        else
+            actor_md5 = xs_dup(uid);
+    }
+
+    const xs_list *li;
+    xs_list_foreach(lol, li) {
+        const char *list_id    = xs_list_get(li, 0);
+        const char *list_title = xs_list_get(li, 1);
+        if (uid) {
+            xs *users = list_content(user, list_id, NULL, 0);
+            if (xs_list_in(users, actor_md5) == -1)
+                continue;
+        }
+
+        xs *d = xs_dict_new();
+
+        d = xs_dict_append(d, "id", list_id);
+        d = xs_dict_append(d, "title", list_title);
+        d = xs_dict_append(d, "replies_policy", "list");
+        d = xs_dict_append(d, "exclusive", xs_stock(XSTYPE_FALSE));
+
+        out = xs_list_append(out, d);
+    }
+
+    return out;
 }
 
 
@@ -1723,6 +1764,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 if (strcmp(opt, "followers") == 0) {
                     out = xs_list_new();
                 }
+                else
+                if (strcmp(opt, "lists") == 0) {
+                    out = mastoapi_account_lists(&snac1, uid);
+                }
 
                 user_free(&snac2);
             }
@@ -1743,6 +1788,10 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         /* snac doesn't have features tags, yet? */
                         /* implement empty response so apps like Tokodon don't show an error */
                         out = xs_list_new();
+                    }
+                    else
+                    if (strcmp(opt, "lists") == 0) {
+                        out = mastoapi_account_lists(&snac1, uid);
                     }
                 }
             }
@@ -1825,13 +1874,14 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         if (logged_in) {
             xs *l      = notify_list(&snac1, 0, 64);
             xs *out    = xs_list_new();
-            const xs_dict *v;
+            const char *v;
             const xs_list *excl = xs_dict_get(args, "exclude_types[]");
+            const xs_list *incl = xs_dict_get(args, "types[]");
             const char *min_id = xs_dict_get(args, "min_id");
             const char *max_id = xs_dict_get(args, "max_id");
             const char *limit = xs_dict_get(args, "limit");
             int limit_count = 0;
-            if (!xs_is_null(limit)) {
+            if (xs_is_string(limit)) {
                 limit_count = atoi(limit);
             }
 
@@ -1850,11 +1900,12 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 const char *utype = xs_dict_get(noti, "utype");
                 const char *objid = xs_dict_get(noti, "objid");
                 const char *id    = xs_dict_get(noti, "id");
+                const char *actid = xs_dict_get(noti, "actor");
                 xs *fid = xs_replace(id, ".", "");
                 xs *actor = NULL;
                 xs *entry = NULL;
 
-                if (!valid_status(actor_get(xs_dict_get(noti, "actor"), &actor)))
+                if (!valid_status(actor_get(actid, &actor)))
                     continue;
 
                 if (objid != NULL && !valid_status(object_get(objid, &entry)))
@@ -1895,7 +1946,11 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     continue;
 
                 /* excluded type? */
-                if (!xs_is_null(excl) && xs_list_in(excl, type) != -1)
+                if (xs_is_list(excl) && xs_list_in(excl, type) != -1)
+                    continue;
+
+                /* included type? */
+                if (xs_is_list(incl) && xs_list_in(incl, type) == -1)
                     continue;
 
                 xs *mn = xs_dict_new();
@@ -1921,10 +1976,9 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 }
 
                 out = xs_list_append(out, mn);
-                if (!xs_is_null(limit)) {
-                    if (--limit_count <= 0)
-                        break;
-                }
+
+                if (--limit_count <= 0)
+                    break;
             }
 
             srv_debug(1, xs_fmt("mastoapi_notifications count %d", xs_list_len(out)));
@@ -1975,21 +2029,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     else
     if (strcmp(cmd, "/v1/lists") == 0) { /** list of lists **/
         if (logged_in) {
-            xs *lol = list_maint(&snac1, NULL, 0);
-            xs *l   = xs_list_new();
-            int c = 0;
-            const xs_list *li;
-
-            while (xs_list_next(lol, &li, &c)) {
-                xs *d = xs_dict_new();
-
-                d = xs_dict_append(d, "id", xs_list_get(li, 0));
-                d = xs_dict_append(d, "title", xs_list_get(li, 1));
-                d = xs_dict_append(d, "replies_policy", "list");
-                d = xs_dict_append(d, "exclusive", xs_stock(XSTYPE_FALSE));
-
-                l = xs_list_append(l, d);
-            }
+            xs *l  = mastoapi_account_lists(&snac1, NULL);
 
             *body  = xs_json_dumps(l, 4);
             *ctype = "application/json";
@@ -2069,10 +2109,26 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/follow_requests") == 0) { /** **/
-        /* snac does not support optional follow confirmations */
-        *body  = xs_dup("[]");
-        *ctype = "application/json";
-        status = HTTP_STATUS_OK;
+        if (logged_in) {
+            xs *pend = pending_list(&snac1);
+            xs *resp = xs_list_new();
+            const char *id;
+
+            xs_list_foreach(pend, id) {
+                xs *actor = NULL;
+
+                if (valid_status(object_get(id, &actor))) {
+                    xs *acct = mastoapi_account(&snac1, actor);
+
+                    if (acct)
+                        resp = xs_list_append(resp, acct);
+                }
+            }
+
+            *body  = xs_json_dumps(resp, 4);
+            *ctype = "application/json";
+            status = HTTP_STATUS_OK;
+        }
     }
     else
     if (strcmp(cmd, "/v1/announcements") == 0) { /** **/
@@ -2252,6 +2308,25 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         }
 
         *body  = xs_json_dumps(ins, 4);
+        *ctype = "application/json";
+        status = HTTP_STATUS_OK;
+    }
+    else
+    if (strcmp(cmd, "/v1/instance/peers") == 0) { /** **/
+        /* get the collected inbox list as the instances "this domain is aware of" */
+        xs *list = inbox_list();
+        xs *peers = xs_list_new();
+        const char *inbox;
+
+        xs_list_foreach(list, inbox) {
+            xs *l = xs_split(inbox, "/");
+            const char *domain = xs_list_get(l, 2);
+
+            if (xs_is_string(domain))
+                peers = xs_list_append(peers, domain);
+        }
+
+        *body  = xs_json_dumps(peers, 4);
         *ctype = "application/json";
         status = HTTP_STATUS_OK;
     }
@@ -2707,14 +2782,24 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 msg = xs_dict_set(msg, "summary",   summary);
             }
 
-            /* store */
-            timeline_add(&snac, xs_dict_get(msg, "id"), msg);
+            /* scheduled? */
+            const char *scheduled_at = xs_dict_get(args, "scheduled_at");
 
-            /* 'Create' message */
-            xs *c_msg = msg_create(&snac, msg);
-            enqueue_message(&snac, c_msg);
+            if (xs_is_string(scheduled_at) && *scheduled_at) {
+                msg = xs_dict_set(msg, "published", scheduled_at);
 
-            timeline_touch(&snac);
+                schedule_add(&snac, xs_dict_get(msg, "id"), msg);
+            }
+            else {
+                /* store */
+                timeline_add(&snac, xs_dict_get(msg, "id"), msg);
+
+                /* 'Create' message */
+                xs *c_msg = msg_create(&snac, msg);
+                enqueue_message(&snac, c_msg);
+
+                timeline_touch(&snac);
+            }
 
             /* convert to a mastodon status as a response code */
             xs *st = mastoapi_status(&snac, msg);
@@ -3158,6 +3243,57 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
         *ctype = "application/json";
         status = HTTP_STATUS_OK;
+    }
+    else
+    if (xs_startswith(cmd, "/v1/follow_requests")) { /** **/
+        if (logged_in) {
+            /* "authorize" or "reject" */
+            xs *rel = NULL;
+            xs *l = xs_split(cmd, "/");
+            const char *md5 = xs_list_get(l, -2);
+            const char *s_cmd = xs_list_get(l, -1);
+
+            if (xs_is_string(md5) && xs_is_string(s_cmd)) {
+                xs *actor = NULL;
+
+                if (valid_status(object_get_by_md5(md5, &actor))) {
+                    const char *actor_id = xs_dict_get(actor, "id");
+
+                    if (strcmp(s_cmd, "authorize") == 0) {
+                        xs *fwreq = pending_get(&snac, actor_id);
+
+                        if (fwreq != NULL) {
+                            xs *reply = msg_accept(&snac, fwreq, actor_id);
+
+                            enqueue_message(&snac, reply);
+
+                            if (xs_is_null(xs_dict_get(fwreq, "published"))) {
+                                xs *date = xs_str_utctime(0, ISO_DATE_SPEC);
+                                fwreq = xs_dict_set(fwreq, "published", date);
+                            }
+
+                            timeline_add(&snac, xs_dict_get(fwreq, "id"), fwreq);
+
+                            follower_add(&snac, actor_id);
+
+                            pending_del(&snac, actor_id);
+                            rel = mastoapi_relationship(&snac, md5);
+                        }
+                    }
+                    else
+                    if (strcmp(s_cmd, "reject") == 0) {
+                        pending_del(&snac, actor_id);
+                        rel = mastoapi_relationship(&snac, md5);
+                    }
+                }
+            }
+
+            if (rel != NULL) {
+                *body = xs_json_dumps(rel, 4);
+                *ctype = "application/json";
+                status = HTTP_STATUS_OK;
+            }
+        }
     }
     else
         status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
