@@ -750,7 +750,7 @@ msgstr "Geplante Beiträge"
 
 #: html.c:2928
 msgid "scheduled posts"
-msgstr "geplante Beiträge"
+msgstr "Geplante Beiträge"
 
 #: html.c:458
 #, c-format
