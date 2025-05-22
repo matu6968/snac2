@@ -2817,7 +2817,7 @@ int content_match(const char *file, const xs_dict *msg)
             /* massage content (strip HTML tags, etc.) */
             xs *c = xs_regex_replace(v, "<[^>]+>", " ");
             c = xs_regex_replace_i(c, " {2,}", " ");
-            c = xs_tolower_i(c);
+            c = xs_utf8_to_lower(c);
 
             while (!r && !feof(f)) {
                 xs *rx = xs_strip_i(xs_readline(f));
