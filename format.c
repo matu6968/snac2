@@ -444,7 +444,7 @@ xs_str *sanitize(const char *content)
         if (n & 0x1) {
             xs *s1  = xs_strip_i(xs_crop_i(xs_dup(v), v[1] == '/' ? 2 : 1, -1));
             xs *l1  = xs_split_n(s1, " ", 1);
-            xs *tag = xs_utf8_to_lower(xs_dup(xs_list_get(l1, 0)));
+            xs *tag = xs_utf8_to_lower(xs_list_get(l1, 0));
             xs *s2  = NULL;
             int i;
 

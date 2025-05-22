@@ -2247,7 +2247,7 @@ xs_str *tag_fn(const char *tag)
     if (*tag == '#')
         tag++;
 
-    xs *lw_tag = xs_utf8_to_lower(xs_dup(tag));
+    xs *lw_tag = xs_utf8_to_lower(tag);
     xs *md5    = xs_md5_hex(lw_tag, strlen(lw_tag));
 
     return xs_fmt("%s/tag/%c%c/%s.idx", srv_basedir, md5[0], md5[1], md5);
@@ -2832,9 +2832,9 @@ int content_match(const char *file, const xs_dict *msg)
             srv_debug(1, xs_fmt("content_match: loading regexes from %s", fn));
 
             /* massage content (strip HTML tags, etc.) */
-            xs *c = xs_regex_replace(v, "<[^>]+>", " ");
-            c = xs_regex_replace_i(c, " {2,}", " ");
-            c = xs_utf8_to_lower(c);
+            xs *c1 = xs_regex_replace(v, "<[^>]+>", " ");
+            c1 = xs_regex_replace_i(c1, " {2,}", " ");
+            xs *c = xs_utf8_to_lower(c1);
 
             while (!r && !feof(f)) {
                 xs *rx = xs_strip_i(xs_readline(f));
