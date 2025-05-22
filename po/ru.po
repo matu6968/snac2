@@ -126,7 +126,7 @@ msgstr "люди"
 
 #: html.c:936
 msgid "instance"
-msgstr "экземпляр"
+msgstr "сервер"
 
 #: html.c:945
 msgid ""
