@@ -1215,6 +1215,14 @@ int follower_check(snac *snac, const char *actor)
 }
 
 
+int follower_list_len(snac *snac)
+/* returns the number of followers */
+{
+    xs *list = object_user_cache_list(snac, "followers", XS_ALL, 0);
+    return xs_list_len(list);
+}
+
+
 xs_list *follower_list(snac *snac)
 /* returns the list of followers */
 {
@@ -1709,6 +1717,15 @@ int following_get(snac *snac, const char *actor, xs_dict **data)
 }
 
 
+int following_list_len(snac *snac)
+/* returns number of people being followed */
+{
+    xs *spec = xs_fmt("%s/following/" "*_a.json", snac->basedir);
+    xs *glist = xs_glob(spec, 0, 0);
+    return xs_list_len(glist);
+}
+
+
 xs_list *following_list(snac *snac)
 /* returns the list of people being followed */
 {
@@ -2200,7 +2217,7 @@ void tag_index(const char *id, const xs_dict *obj)
                 if (*name == '\0')
                     continue;
 
-                name = xs_tolower_i((xs_str *)name);
+                name = xs_utf8_to_lower((xs_str *)name);
 
                 xs *md5_tag   = xs_md5_hex(name, strlen(name));
                 xs *tag_dir   = xs_fmt("%s/%c%c", g_tag_dir, md5_tag[0], md5_tag[1]);
@@ -2230,7 +2247,7 @@ xs_str *tag_fn(const char *tag)
     if (*tag == '#')
         tag++;
 
-    xs *lw_tag = xs_tolower_i(xs_dup(tag));
+    xs *lw_tag = xs_utf8_to_lower(tag);
     xs *md5    = xs_md5_hex(lw_tag, strlen(lw_tag));
 
     return xs_fmt("%s/tag/%c%c/%s.idx", srv_basedir, md5[0], md5[1], md5);
@@ -2815,9 +2832,9 @@ int content_match(const char *file, const xs_dict *msg)
             srv_debug(1, xs_fmt("content_match: loading regexes from %s", fn));
 
             /* massage content (strip HTML tags, etc.) */
-            xs *c = xs_regex_replace(v, "<[^>]+>", " ");
-            c = xs_regex_replace_i(c, " {2,}", " ");
-            c = xs_tolower_i(c);
+            xs *c1 = xs_regex_replace(v, "<[^>]+>", " ");
+            c1 = xs_regex_replace_i(c1, " {2,}", " ");
+            xs *c = xs_utf8_to_lower(c1);
 
             while (!r && !feof(f)) {
                 xs *rx = xs_strip_i(xs_readline(f));

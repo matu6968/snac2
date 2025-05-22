@@ -126,7 +126,7 @@ msgstr "люди"
 
 #: html.c:936
 msgid "instance"
-msgstr "экземпляр"
+msgstr "сервер"
 
 #: html.c:945
 msgid ""
@@ -679,12 +679,12 @@ msgstr "Ничего не найдено для '%s'"
 
 #: html.c:3929
 msgid "Showing instance timeline"
-msgstr "Показываем ленту инстанции"
+msgstr "Показываем ленту сервера"
 
 #: html.c:4012
 #, c-format
 msgid "Showing timeline for list '%s'"
-msgstr "Показываем ленты инстанции для списка '%s'"
+msgstr "Показываем ленту для списка '%s'"
 
 #: httpd.c:250
 #, c-format
@@ -693,7 +693,7 @@ msgstr "Результаты поиска для тега #%s"
 
 #: httpd.c:259
 msgid "Recent posts by users in this instance"
-msgstr "Последние сообщения на этой инстанции"
+msgstr "Последние сообщения на этом сервере"
 
 #: html.c:1603
 msgid "Blocked hashtags..."

@@ -15,6 +15,7 @@
 #include "xs_url.h"
 #include "xs_mime.h"
 #include "xs_match.h"
+#include "xs_unicode.h"
 
 #include "snac.h"
 
@@ -381,7 +382,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
             }
         }
 
-        /* no code? 
+        /* no code?
            I'm not sure of the impacts of this right now, but Subway Tooter does not
            provide a code so one must be generated */
         if (xs_is_null(code)){
@@ -680,10 +681,10 @@ xs_dict *mastoapi_account(snac *logged, const xs_dict *actor)
 
             /* does this user want to publish their contact metrics? */
             if (xs_is_true(xs_dict_get(user.config, "show_contact_metrics"))) {
-                xs *fwing = following_list(&user);
-                xs *fwers = follower_list(&user);
-                xs *ni = xs_number_new(xs_list_len(fwing));
-                xs *ne = xs_number_new(xs_list_len(fwers));
+                int fwing = following_list_len(&user);
+                int fwers = follower_list_len(&user);
+                xs *ni = xs_number_new(fwing);
+                xs *ne = xs_number_new(fwers);
 
                 acct = xs_dict_append(acct, "followers_count", ne);
                 acct = xs_dict_append(acct, "following_count", ni);
@@ -1309,10 +1310,10 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
 
     /* does this user want to publish their contact metrics? */
     if (xs_is_true(xs_dict_get(snac.config, "show_contact_metrics"))) {
-        xs *fwing = following_list(&snac);
-        xs *fwers = follower_list(&snac);
-        xs *ni = xs_number_new(xs_list_len(fwing));
-        xs *ne = xs_number_new(xs_list_len(fwers));
+        int fwing = following_list_len(&snac);
+        int fwers = follower_list_len(&snac);
+        xs *ni = xs_number_new(fwing);
+        xs *ne = xs_number_new(fwers);
 
         acct = xs_dict_append(acct, "followers_count", ne);
         acct = xs_dict_append(acct, "following_count", ni);
@@ -1637,7 +1638,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 const char *aq = xs_dict_get(args, "q");
 
                 if (!xs_is_null(aq)) {
-                    xs *q    = xs_tolower_i(xs_dup(aq));
+                    xs *q    = xs_utf8_to_lower(aq);
                     out      = xs_list_new();
                     xs *wing = following_list(&snac1);
                     xs *wers = follower_list(&snac1);
@@ -1780,7 +1781,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     }
                     else
                     if (strcmp(opt, "statuses") == 0) {
-                        /* we don't serve statuses of others; return the empty list */ 
+                        /* we don't serve statuses of others; return the empty list */
                         out = xs_list_new();
                     }
                     else
@@ -1999,7 +2000,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v2/filters") == 0) { /** **/
-        /* snac will never have filters 
+        /* snac will never have filters
          * but still, without a v2 endpoint a short delay is introduced
          * in some apps */
         *body  = xs_dup("[]");
@@ -2459,7 +2460,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         if (logged_in) {
             const xs_list *timeline = xs_dict_get(args, "timeline[]");
             xs_str *json = NULL;
-            if (!xs_is_null(timeline)) 
+            if (!xs_is_null(timeline))
                 json = xs_json_dumps(markers_get(&snac1, timeline), 4);
 
             if (!xs_is_null(json))
@@ -3227,7 +3228,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 if (!xs_is_null(home))
                     home_marker = xs_dict_get(home, "last_read_id");
             }
-            
+
             const xs_str *notify_marker = xs_dict_get(args, "notifications[last_read_id]");
             if (xs_is_null(notify_marker)) {
                 const xs_dict *notify = xs_dict_get(args, "notifications");

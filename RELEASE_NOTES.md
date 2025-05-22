@@ -4,6 +4,8 @@
 
 The number of pending follow confirmations is shown next to the "people" link.
 
+Faster performance metrics (contributed by dandelions).
+
 Mastodon API: added follow confirmation endpoints.
 
 ## 2.77 "Ugly Links Everywhere"
