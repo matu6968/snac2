@@ -903,7 +903,7 @@ xs_str *process_tags(snac *snac, const char *content, xs_list **tag)
             if (*v == '#') {
                 /* hashtag */
                 xs *d = xs_dict_new();
-                xs *n = xs_tolower_i(xs_dup(v));
+                xs *n = xs_utf8_to_lower(xs_dup(v));
                 xs *h = xs_fmt("%s?t=%s", srv_baseurl, n + 1);
                 xs *l = xs_fmt("<a href=\"%s\" class=\"mention hashtag\" rel=\"tag\">%s</a>", h, v);
 
