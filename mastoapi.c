@@ -15,6 +15,7 @@
 #include "xs_url.h"
 #include "xs_mime.h"
 #include "xs_match.h"
+#include "xs_unicode.h"
 
 #include "snac.h"
 
@@ -1637,7 +1638,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 const char *aq = xs_dict_get(args, "q");
 
                 if (!xs_is_null(aq)) {
-                    xs *q    = xs_tolower_i(xs_dup(aq));
+                    xs *q    = xs_utf8_to_lower(xs_dup(aq));
                     out      = xs_list_new();
                     xs *wing = following_list(&snac1);
                     xs *wers = follower_list(&snac1);
