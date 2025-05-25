@@ -489,8 +489,10 @@ void verify_links(snac *user)
     int c = 0;
     while (metadata && xs_dict_next(metadata, &k, &v, &c)) {
         /* not an https link? skip */
-        if (!xs_startswith(v, "https:/" "/"))
+        if (!xs_startswith(v, "https:/" "/")) {
+            snac_log(user, xs_fmt("skipped non-https link %s", v));
             continue;
+        }
 
         int status;
         xs *req = NULL;
