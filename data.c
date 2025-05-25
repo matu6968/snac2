@@ -3674,6 +3674,10 @@ static void _purge_user_subdir(snac *snac, const char *subdir, int days)
 void purge_server(void)
 /* purge global server data */
 {
+    int purge_days = 0;
+        purge_days = xs_number_get(xs_dict_get(srv_config, "timeline_purge_days"));
+    if (purge_days == 0) return; // do not purge, see #406 for details
+
     xs *spec = xs_fmt("%s/object/??", srv_basedir);
     xs *dirs = xs_glob(spec, 0, 0);
     xs_list *p;
@@ -3681,7 +3685,7 @@ void purge_server(void)
     int cnt = 0;
     int icnt = 0;
 
-    time_t mt = time(NULL) - 7 * 24 * 3600;
+    time_t mt = time(NULL) - purge_days * 24 * 3600;
 
     p = dirs;
     while (xs_list_iter(&p, &v)) {
@@ -3749,7 +3753,7 @@ void purge_server(void)
 
     /* purge collected inboxes */
     xs *ib_dir = xs_fmt("%s/inbox", srv_basedir);
-    _purge_dir(ib_dir, 7);
+    _purge_dir(ib_dir, purge_days); // @TODO separated config option?
 
     /* purge the instance timeline */
     xs *itl_fn = xs_fmt("%s/public.idx", srv_basedir);
