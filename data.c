@@ -2235,7 +2235,7 @@ void tag_index(const char *id, const xs_dict *obj)
                     fclose(f);
                 }
 
-                srv_debug(0, xs_fmt("tagged %s #%s (#%s)", id, name, md5_tag));
+                srv_debug(1, xs_fmt("tagged %s #%s (#%s)", id, name, md5_tag));
             }
         }
     }
