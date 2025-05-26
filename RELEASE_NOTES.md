@@ -8,6 +8,8 @@ Faster performance metrics (contributed by dandelions).
 
 Improved lowercasing in tags (contributed by postscriptum).
 
+A search-by-url tweak for implementations that return 200 for invalid webfinger queries (e.g. piefed).
+
 Mastodon API: added follow confirmation endpoints.
 
 ## 2.77 "Ugly Links Everywhere"
