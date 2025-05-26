@@ -3748,7 +3748,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 /* may by an actor; try a webfinger */
                 xs *actor_obj = NULL;
 
-                if (valid_status(webfinger_request(q, &actor_obj, &url_acct))) {
+                if (valid_status(webfinger_request(q, &actor_obj, &url_acct)) && xs_is_string(url_acct)) {
                     /* it's an actor; do the dirty trick of changing q to the account name */
                     q = url_acct;
                 }
