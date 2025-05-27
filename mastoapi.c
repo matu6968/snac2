@@ -2508,9 +2508,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 /* reply something only for offset 0; otherwise,
                    apps like Tusky keep asking again and again */
                 if (xs_startswith(q, "https://")) {
-                    xs *md5 = xs_md5_hex(q, strlen(q));
-
-                    if (!timeline_here_by_md5(&snac1, md5)) {
+                    if (!timeline_here(&snac1, q)) {
                         xs *object = NULL;
                         int status;
 

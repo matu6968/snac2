@@ -1400,6 +1400,14 @@ int timeline_here_by_md5(snac *snac, const char *md5)
 }
 
 
+int timeline_here(snac *user, const char *id)
+{
+    xs *md5 = xs_md5_hex(id, strlen(id));
+
+    return timeline_here_by_md5(user, md5);
+}
+
+
 int timeline_get_by_md5(snac *snac, const char *md5, xs_dict **msg)
 /* gets a message from the timeline */
 {

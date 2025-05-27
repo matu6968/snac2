@@ -695,7 +695,7 @@ int main(int argc, char *argv[])
             xs_json_dump(data, 4, stdout);
             enqueue_actor_refresh(&snac, xs_dict_get(data, "attributedTo"), 0);
 
-            if (!timeline_here_by_md5(&snac, url))
+            if (!timeline_here(&snac, url))
                 timeline_add(&snac, url, data);
             else
                 printf("Post %s already here\n", url);
