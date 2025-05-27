@@ -2117,7 +2117,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         if (!xs_is_null(parent) && *parent) {
             xs *md5 = xs_md5_hex(parent, strlen(parent));
 
-            if (!timeline_here(user, md5)) {
+            if (!timeline_here_by_md5(user, md5)) {
                 xs_html_add(post_header,
                     xs_html_tag("div",
                         xs_html_attr("class", "snac-origin"),
@@ -3775,7 +3775,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                                 /* add the post to the timeline */
                                 xs *md5 = xs_md5_hex(q, strlen(q));
 
-                                if (!timeline_here(&snac, md5))
+                                if (!timeline_here_by_md5(&snac, md5))
                                     timeline_add(&snac, q, object);
                             }
                         }
@@ -3917,7 +3917,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *l = xs_split(p_path, "/");
             const char *md5 = xs_list_get(l, -1);
 
-            if (md5 && *md5 && timeline_here(&snac, md5)) {
+            if (md5 && *md5 && timeline_here_by_md5(&snac, md5)) {
                 xs *list0 = xs_list_append(xs_list_new(), md5);
                 xs *list  = timeline_top_level(&snac, list0);
 

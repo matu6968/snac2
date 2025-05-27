@@ -164,7 +164,7 @@ int pending_count(snac *user);
 
 double timeline_mtime(snac *snac);
 int timeline_touch(snac *snac);
-int timeline_here(snac *snac, const char *md5);
+int timeline_here_by_md5(snac *snac, const char *md5);
 int timeline_get_by_md5(snac *snac, const char *md5, xs_dict **msg);
 int timeline_del(snac *snac, const char *id);
 xs_str *user_index_fn(snac *user, const char *idx_name);
