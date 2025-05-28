@@ -207,6 +207,7 @@ void rss_to_timeline(snac *user, const char *url)
 void rss_process(void)
 /* parses all RSS from all users */
 {
+#if 0
     xs *list = user_list();
     const char *uid;
 
@@ -226,4 +227,5 @@ void rss_process(void)
             user_free(&user);
         }
     }
+#endif
 }
