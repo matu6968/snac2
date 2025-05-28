@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+Hashtag following also allow URLs to RSS feeds of ActivityPub objects (like e.g. https://mastodon.social/tags/ThankYouTuesday).
+
 The number of pending follow confirmations is shown next to the "people" link.
 
 Faster performance metrics (contributed by dandelions).
