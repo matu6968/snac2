@@ -3050,6 +3050,10 @@ void process_queue_item(xs_dict *q_item)
         }
     }
     else
+    if (strcmp(type, "rss_poll") == 0) {
+        rss_poll_hashtags();
+    }
+    else
         srv_log(xs_fmt("unexpected q_item type '%s'", type));
 }
 

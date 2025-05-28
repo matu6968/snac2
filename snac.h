@@ -464,4 +464,4 @@ const char *lang_str(const char *str, const snac *user);
 xs_str *rss_from_timeline(snac *user, const xs_list *timeline,
                         const char *title, const char *link, const char *desc);
 void rss_to_timeline(snac *user, const char *url);
-void rss_process(void);
+void rss_poll_hashtags(void);

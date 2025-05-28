@@ -705,34 +705,36 @@ static pthread_cond_t  sleep_cond;
 static void *background_thread(void *arg)
 /* background thread (queue management and other things) */
 {
-    time_t purge_time;
+    time_t t, purge_time, rss_time;
 
     (void)arg;
 
+    t = time(NULL);
+
     /* first purge time */
-    purge_time = time(NULL) + 10 * 60;
+    purge_time = t + 10 * 60;
+
+    /* first RSS polling time */
+    rss_time = t + 15 * 60;
 
     srv_log(xs_fmt("background thread started"));
 
     while (p_state->srv_running) {
-        time_t t;
         int cnt = 0;
 
         p_state->th_state[0] = THST_QUEUE;
 
         {
             xs *list = user_list();
-            char *p;
             const char *uid;
 
             /* process queues for all users */
-            p = list;
-            while (xs_list_iter(&p, &uid)) {
-                snac snac;
+            xs_list_foreach(list, uid) {
+                snac user;
 
-                if (user_open(&snac, uid)) {
-                    cnt += process_user_queue(&snac);
-                    user_free(&snac);
+                if (user_open(&user, uid)) {
+                    cnt += process_user_queue(&user);
+                    user_free(&user);
                 }
             }
         }
@@ -740,13 +742,31 @@ static void *background_thread(void *arg)
         /* global queue */
         cnt += process_queue();
 
+        t = time(NULL);
+
         /* time to purge? */
-        if ((t = time(NULL)) > purge_time) {
+        if (t > purge_time) {
             /* next purge time is tomorrow */
             purge_time = t + 24 * 60 * 60;
 
             xs *q_item = xs_dict_new();
             q_item = xs_dict_append(q_item, "type", "purge");
+            job_post(q_item, 0);
+        }
+
+        /* time to poll the RSS? */
+        if (t > rss_time) {
+            /* next RSS poll time */
+            int hours = xs_number_get(xs_dict_get_def(srv_config, "rss_poll_hours", "4"));
+
+            /* don't hammer servers too much */
+            if (hours < 1)
+                hours = 1;
+
+            rss_time = t + 60 * 60 * hours;
+
+            xs *q_item = xs_dict_new();
+            q_item = xs_dict_append(q_item, "type", "rss_poll");
             job_post(q_item, 0);
         }
 

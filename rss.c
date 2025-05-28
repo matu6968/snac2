@@ -110,6 +110,9 @@ xs_str *rss_from_timeline(snac *user, const xs_list *timeline,
 void rss_to_timeline(snac *user, const char *url)
 /* reads an RSS and inserts all ActivityPub posts into the user's timeline */
 {
+    if (!xs_startswith(url, "https:/") && !xs_startswith(url, "http:/"))
+        return;
+
     xs *hdrs = xs_dict_new();
     hdrs = xs_dict_set(hdrs, "accept",     "application/rss+xml");
     hdrs = xs_dict_set(hdrs, "user-agent", USER_AGENT);
@@ -204,10 +207,9 @@ void rss_to_timeline(snac *user, const char *url)
 }
 
 
-void rss_process(void)
+void rss_poll_hashtags(void)
 /* parses all RSS from all users */
 {
-#if 0
     xs *list = user_list();
     const char *uid;
 
@@ -215,7 +217,7 @@ void rss_process(void)
         snac user;
 
         if (user_open(&user, uid)) {
-            const xs_list *rss = xs_dict_get(user.config, "rss");
+            const xs_list *rss = xs_dict_get(user.config, "followed_hashtags");
 
             if (xs_is_list(rss)) {
                 const char *url;
@@ -227,5 +229,4 @@ void rss_process(void)
             user_free(&user);
         }
     }
-#endif
 }

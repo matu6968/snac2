@@ -1601,7 +1601,8 @@ xs_html *html_top_controls(snac *user)
                     xs_html_attr("name", "followed_hashtags"),
                     xs_html_attr("cols", "40"),
                     xs_html_attr("rows", "4"),
-                    xs_html_attr("placeholder", "#cats\n#windowfriday\n#classicalmusic"),
+                    xs_html_attr("placeholder", "#cats\n#windowfriday\n#classicalmusic\nhttps:/"
+                        "/mastodon.social/tags/dogs"),
                     xs_html_text(followed_hashtags)),
 
                 xs_html_tag("br", NULL),
