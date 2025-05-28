@@ -5,6 +5,8 @@
 #include "xs_html.h"
 #include "xs_regex.h"
 #include "xs_time.h"
+#include "xs_match.h"
+#include "xs_curl.h"
 
 #include "snac.h"
 
@@ -102,4 +104,126 @@ xs_str *rss_from_timeline(snac *user, const xs_list *timeline,
     }
 
     return xs_html_render_s(rss, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+}
+
+
+void rss_to_timeline(snac *user, const char *url)
+/* reads an RSS and inserts all ActivityPub posts into the user's timeline */
+{
+    xs *hdrs = xs_dict_new();
+    hdrs = xs_dict_set(hdrs, "accept",     "application/rss+xml");
+    hdrs = xs_dict_set(hdrs, "user-agent", USER_AGENT);
+
+    xs *payload = NULL;
+    int status;
+    int p_size;
+
+    xs *rsp = xs_http_request("GET", url, hdrs, NULL, 0, &status, &payload, &p_size, 0);
+
+    if (!valid_status(status) || !xs_is_string(payload))
+        return;
+
+    /* not an RSS? done */
+    const char *ctype = xs_dict_get(rsp, "content-type");
+    if (!xs_is_string(ctype) || xs_str_in(ctype, "application/rss+xml") == -1)
+        return;
+
+    snac_log(user, xs_fmt("parsing RSS %s", url));
+
+    /* yes, parsing is done with regexes (now I have two problems blah blah blah) */
+    xs *links = xs_regex_select(payload, "<link>[^<]+</link>");
+    const char *link;
+
+    xs_list_foreach(links, link) {
+        xs *l = xs_replace(link, "<link>", "");
+        char *p = strchr(l, '<');
+
+        if (p == NULL)
+            continue;
+        *p = '\0';
+
+        /* skip this same URL */
+        if (strcmp(l, url) == 0)
+            continue;
+
+        snac_debug(user, 1, xs_fmt("RSS link: %s", l));
+
+        if (timeline_here(user, l)) {
+            snac_debug(user, 1, xs_fmt("RSS entry already in timeline %s", l));
+            continue;
+        }
+
+        /* special trick for Mastodon: convert from the alternate format */
+        if (strchr(l, '@') != NULL) {
+            xs *l2 = xs_split(l, "/");
+
+            if (xs_list_len(l2) == 5) {
+                const char *uid = xs_list_get(l2, 3);
+                if (*uid == '@') {
+                    xs *guessed_id = xs_fmt("https:/" "/%s/users/%s/statuses/%s",
+                        xs_list_get(l2, 2), uid + 1, xs_list_get(l2, -1));
+
+                    if (timeline_here(user, guessed_id)) {
+                        snac_debug(user, 1, xs_fmt("RSS entry already in timeline (alt) %s", guessed_id));
+                        continue;
+                    }
+                }
+            }
+        }
+
+        xs *obj = NULL;
+
+        if (!valid_status(object_get(l, &obj))) {
+            /* object is not here: bring it */
+            if (!valid_status(activitypub_request(user, l, &obj)))
+                continue;
+        }
+
+        if (xs_is_dict(obj)) {
+            const char *id      = xs_dict_get(obj, "id");
+            const char *type    = xs_dict_get(obj, "type");
+            const char *attr_to = get_atto(obj);
+
+            if (!xs_is_string(id) || !xs_is_string(type) || !xs_is_string(attr_to))
+                continue;
+
+            if (!xs_match(type, POSTLIKE_OBJECT_TYPE))
+                continue;
+
+            if (timeline_here(user, id)) {
+                snac_debug(user, 1, xs_fmt("RSS entry already in timeline (id) %s", id));
+                continue;
+            }
+
+            if (!valid_status(actor_request(user, attr_to, NULL)))
+                continue;
+
+            timeline_add(user, id, obj);
+        }
+    }
+}
+
+
+void rss_process(void)
+/* parses all RSS from all users */
+{
+    xs *list = user_list();
+    const char *uid;
+
+    xs_list_foreach(list, uid) {
+        snac user;
+
+        if (user_open(&user, uid)) {
+            const xs_list *rss = xs_dict_get(user.config, "rss");
+
+            if (xs_is_list(rss)) {
+                const char *url;
+
+                xs_list_foreach(rss, url)
+                    rss_to_timeline(&user, url);
+            }
+
+            user_free(&user);
+        }
+    }
 }
