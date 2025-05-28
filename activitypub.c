@@ -3050,7 +3050,7 @@ void process_queue_item(xs_dict *q_item)
         }
     }
     else
-    if (strcmp(type, "rss_poll") == 0) {
+    if (strcmp(type, "rss_hashtag_poll") == 0) {
         rss_poll_hashtags();
     }
     else

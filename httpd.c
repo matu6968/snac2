@@ -757,7 +757,7 @@ static void *background_thread(void *arg)
         /* time to poll the RSS? */
         if (t > rss_time) {
             /* next RSS poll time */
-            int hours = xs_number_get(xs_dict_get_def(srv_config, "rss_poll_hours", "4"));
+            int hours = xs_number_get(xs_dict_get_def(srv_config, "rss_hashtag_poll_hours", "4"));
 
             /* don't hammer servers too much */
             if (hours < 1)
@@ -766,7 +766,7 @@ static void *background_thread(void *arg)
             rss_time = t + 60 * 60 * hours;
 
             xs *q_item = xs_dict_new();
-            q_item = xs_dict_append(q_item, "type", "rss_poll");
+            q_item = xs_dict_append(q_item, "type", "rss_hashtag_poll");
             job_post(q_item, 0);
         }
 
