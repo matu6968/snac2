@@ -4956,9 +4956,16 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 if (*s1 == '\0')
                     continue;
 
-                xs *s2 = xs_utf8_to_lower(s1);
-                if (*s2 != '#')
-                    s2 = xs_str_prepend_i(s2, "#");
+                xs *s2 = NULL;
+
+                if (xs_startswith(s1, "https:/"))
+                    s2 = xs_dup(s1);
+                else {
+                    s2 = xs_utf8_to_lower(s1);
+
+                    if (*s2 != '#')
+                        s2 = xs_str_prepend_i(s2, "#");
+                }
 
                 new_hashtags = xs_list_append(new_hashtags, s2);
             }
