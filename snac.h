@@ -395,7 +395,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 int html_post_handler(const xs_dict *req, const char *q_path,
                       char *payload, int p_size,
                       char **body, int *b_size, char **ctype);
-xs_str *timeline_to_rss(snac *user, const xs_list *timeline,
+xs_str *rss_from_timeline(snac *user, const xs_list *timeline,
                         const char *title, const char *link, const char *desc);
 
 int write_default_css(void);

@@ -244,7 +244,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
             if (!xs_is_null(accept) && strcmp(accept, "application/rss+xml") == 0) {
                 xs *link = xs_fmt("%s/?t=%s", srv_baseurl, t);
 
-                *body = timeline_to_rss(NULL, tl, link, link, link);
+                *body = rss_from_timeline(NULL, tl, link, link, link);
                 *ctype = "application/rss+xml; charset=utf-8";
             }
             else {

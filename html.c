@@ -4123,7 +4123,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs_dict_get(srv_config, "host"));
         xs *rss_link = xs_fmt("%s.rss", snac.actor);
 
-        *body   = timeline_to_rss(&snac, elems, rss_title, rss_link, bio);
+        *body   = rss_from_timeline(&snac, elems, rss_title, rss_link, bio);
         *b_size = strlen(*body);
         *ctype  = "application/rss+xml; charset=utf-8";
         status  = HTTP_STATUS_OK;
@@ -5022,7 +5022,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 }
 
 
-xs_str *timeline_to_rss(snac *user, const xs_list *timeline,
+xs_str *rss_from_timeline(snac *user, const xs_list *timeline,
                         const char *title, const char *link, const char *desc)
 /* converts a timeline to rss */
 {
