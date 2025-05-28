@@ -67,7 +67,8 @@ main.o: main.c xs.h xs_io.h xs_json.h xs_time.h xs_openssl.h xs_match.h \
 mastoapi.o: mastoapi.c xs.h xs_hex.h xs_openssl.h xs_json.h xs_io.h \
  xs_time.h xs_glob.h xs_set.h xs_random.h xs_url.h xs_mime.h xs_match.h \
  xs_unicode.h snac.h http_codes.h
-rss.o: rss.c xs.h xs_html.h xs_regex.h xs_time.h snac.h http_codes.h
+rss.o: rss.c xs.h xs_html.h xs_regex.h xs_time.h xs_match.h xs_curl.h \
+ snac.h http_codes.h
 sandbox.o: sandbox.c xs.h snac.h http_codes.h
 snac.o: snac.c xs.h xs_hex.h xs_io.h xs_unicode_tbl.h xs_unicode.h \
  xs_json.h xs_curl.h xs_openssl.h xs_socket.h xs_unix_socket.h xs_url.h \
