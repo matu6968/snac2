@@ -149,6 +149,10 @@ void rss_to_timeline(snac *user, const char *url)
         if (strcmp(l, url) == 0)
             continue;
 
+        /* skip crap */
+        if (!xs_startswith(l, "https:/") && !xs_startswith(l, "http:/"))
+            return;
+
         snac_debug(user, 1, xs_fmt("RSS link: %s", l));
 
         if (timeline_here(user, l)) {
