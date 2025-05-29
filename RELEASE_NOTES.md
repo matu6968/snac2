@@ -8,11 +8,13 @@ The number of pending follow confirmations is shown next to the "people" link.
 
 Faster performance metrics (contributed by dandelions).
 
-Improved lowercasing in tags (contributed by postscriptum).
+Improved lowercasing in hashtags (contributed by postscriptum).
 
 A search-by-url tweak for implementations that return 200 for invalid webfinger queries (e.g. piefed).
 
-Mastodon API: added follow confirmation endpoints.
+Mastodon API: added follow confirmation endpoints, fixed collisions in attachment file names.
+
+Fixed potential crashes in attachment uploads.
 
 ## 2.77 "Ugly Links Everywhere"
 
