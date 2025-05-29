@@ -143,6 +143,11 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "poll_hashtag_rss") == 0) { /** **/
+        rss_poll_hashtags();
+        return 0;
+    }
+
     if (strcmp(cmd, "state") == 0) { /** **/
         xs *shm_name = NULL;
         srv_state *p_state = srv_state_op(&shm_name, 1);
