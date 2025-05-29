@@ -7,6 +7,8 @@
 #include "xs_time.h"
 #include "xs_match.h"
 #include "xs_curl.h"
+#include "xs_openssl.h"
+#include "xs_json.h"
 
 #include "snac.h"
 
@@ -117,11 +119,36 @@ void rss_to_timeline(snac *user, const char *url)
     hdrs = xs_dict_set(hdrs, "accept",     "application/rss+xml");
     hdrs = xs_dict_set(hdrs, "user-agent", USER_AGENT);
 
+    /* get the RSS metadata */
+    xs *md5 = xs_md5_hex(url, strlen(url));
+    xs *rss_md_fn = xs_fmt("%s/rss", user->basedir);
+    mkdirx(rss_md_fn);
+    rss_md_fn = xs_str_cat(rss_md_fn, "/", md5, ".json");
+
+    xs *rss_md = NULL;
+    const char *etag = NULL;
+
+    FILE *f;
+    if ((f = fopen(rss_md_fn, "r")) != NULL) {
+        rss_md = xs_json_load(f);
+        fclose(f);
+
+        etag = xs_dict_get(rss_md, "etag");
+
+        if (xs_is_string(etag))
+            hdrs = xs_dict_set(hdrs, "if-none-match", etag);
+    }
+
+    if (rss_md == NULL)
+        rss_md = xs_dict_new();
+
     xs *payload = NULL;
     int status;
     int p_size;
 
     xs *rsp = xs_http_request("GET", url, hdrs, NULL, 0, &status, &payload, &p_size, 0);
+
+    snac_log(user, xs_fmt("parsing RSS %s %d", url, status));
 
     if (!valid_status(status) || !xs_is_string(payload))
         return;
@@ -130,8 +157,6 @@ void rss_to_timeline(snac *user, const char *url)
     const char *ctype = xs_dict_get(rsp, "content-type");
     if (!xs_is_string(ctype) || xs_str_in(ctype, "application/rss+xml") == -1)
         return;
-
-    snac_log(user, xs_fmt("parsing RSS %s", url));
 
     /* yes, parsing is done with regexes (now I have two problems blah blah blah) */
     xs *links = xs_regex_select(payload, "<link>[^<]+</link>");
@@ -206,6 +231,17 @@ void rss_to_timeline(snac *user, const char *url)
                 continue;
 
             timeline_add(user, id, obj);
+        }
+    }
+
+    /* update the RSS metadata */
+    etag = xs_dict_get(rsp, "etag");
+
+    if (xs_is_string(etag)) {
+        rss_md = xs_dict_set(rss_md, "etag", etag);
+        if ((f = fopen(rss_md_fn, "w")) != NULL) {
+            xs_json_dump(rss_md, 4, f);
+            fclose(f);
         }
     }
 }
