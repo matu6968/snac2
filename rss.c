@@ -239,6 +239,7 @@ void rss_to_timeline(snac *user, const char *url)
 
     if (xs_is_string(etag)) {
         rss_md = xs_dict_set(rss_md, "etag", etag);
+        rss_md = xs_dict_set(rss_md, "url", url);
         if ((f = fopen(rss_md_fn, "w")) != NULL) {
             xs_json_dump(rss_md, 4, f);
             fclose(f);
