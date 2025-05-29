@@ -4362,7 +4362,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                     xs_rnd_buf(rnd, sizeof(rnd));
 
                     const char *ext = strrchr(fn, '.');
-                    xs *hash  = xs_md5_hex(rnd, strlen(rnd));
+                    xs *hash  = xs_md5_hex(rnd, sizeof(rnd));
                     xs *id    = xs_fmt("post-%s%s", hash, ext ? ext : "");
                     xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
                     int fo    = xs_number_get(xs_list_get(attach_file, 1));

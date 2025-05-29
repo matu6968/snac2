@@ -2978,8 +2978,10 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
                 if (*fn != '\0') {
                     char *ext = strrchr(fn, '.');
-                    xs *hash  = xs_md5_hex(fn, strlen(fn));
-                    xs *id    = xs_fmt("%s%s", hash, ext);
+                    char rnd[32];
+                    xs_rnd_buf(rnd, sizeof(rnd));
+                    xs *hash  = xs_md5_hex(rnd, sizeof(rnd));
+                    xs *id    = xs_fmt("post-%s%s", hash, ext ? ext : "");
                     xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
                     int fo    = xs_number_get(xs_list_get(file, 1));
                     int fs    = xs_number_get(xs_list_get(file, 2));
