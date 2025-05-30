@@ -410,6 +410,14 @@ You can obtain an API Token by connecting to the following URL:
 https://$SNAC_HOST/oauth/x-snac-get-token
 .Ed
 .Pp
+.Ss Webhook for notifications
+Since version 2.78, users can set the URL to a webhook that will receive
+an HTTP POST with every notification (in JSON format). This can be used to
+implement some automation whenever a new activity happens. The
+.Pa examples/
+subdirectory contains a tiny Python program that implements an auto-follower
+for every new follow.
+.Pp
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It SNAC_BASEDIR
