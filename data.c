@@ -3529,7 +3529,16 @@ void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries)
     const char *webhook = xs_dict_get(user->config, "notify_webhook");
 
     if (xs_is_string(webhook)) {
-        xs *qmsg = _new_qmsg("notify_webhook", noti, retries);
+        xs *msg = xs_dup(noti);
+
+        /* add more data */
+        msg = xs_dict_set(msg, "target", user->actor);
+        xs *actor_obj = NULL;
+
+        if (valid_status(object_get(xs_dict_get(noti, "actor"), &actor_obj)) && actor_obj)
+            msg = xs_dict_set(msg, "account", actor_obj);
+
+        xs *qmsg = _new_qmsg("notify_webhook", msg, retries);
         const char *ntid = xs_dict_get(qmsg, "ntid");
         xs *fn   = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
 

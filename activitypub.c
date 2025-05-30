@@ -2766,6 +2766,39 @@ void process_user_queue_item(snac *user, xs_dict *q_item)
         }
     }
     else
+    if (strcmp(type, "notify_webhook") == 0) {
+        const char *webhook = xs_dict_get(user->config, "notify_webhook");
+
+        if (xs_is_string(webhook)) {
+            const xs_dict *msg = xs_dict_get(q_item, "message");
+            int retries = xs_number_get(xs_dict_get(q_item, "retries"));
+
+            xs *hdrs = xs_dict_new();
+
+            hdrs = xs_dict_set(hdrs, "content-type", "application/json");
+            hdrs = xs_dict_set(hdrs, "user-agent",   USER_AGENT);
+
+            xs *body = xs_json_dumps(msg, 4);
+
+            int status;
+            xs *rsp = xs_http_request("POST", webhook, hdrs, body, strlen(body), &status, NULL, NULL, 0);
+
+            snac_debug(user, 0, xs_fmt("webhook post %s %d", webhook, status));
+
+            if (!valid_status(status)) {
+                retries++;
+
+                if (retries > queue_retry_max)
+                    snac_debug(user, 0, xs_fmt("webhook post giving up %s", webhook));
+                else {
+                    snac_debug(user, 0, xs_fmt("webhook post requeue %s %d", webhook, retries));
+
+                    enqueue_notify_webhook(user, msg, retries);
+                }
+            }
+        }
+    }
+    else
         snac_log(user, xs_fmt("unexpected user q_item type '%s'", type));
 }
 
