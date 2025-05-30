@@ -1290,6 +1290,7 @@ xs_html *html_top_controls(snac *user)
     const xs_val *show_foll  = xs_dict_get(user->config, "show_contact_metrics");
     const char *latitude     = xs_dict_get_def(user->config, "latitude", "");
     const char *longitude    = xs_dict_get_def(user->config, "longitude", "");
+    const char *webhook      = xs_dict_get_def(user->config, "notify_webhook", "");
 
     xs *metadata = NULL;
     const xs_dict *md = xs_dict_get(user->config, "metadata");
@@ -1451,6 +1452,14 @@ xs_html *html_top_controls(snac *user)
                         xs_html_attr("name", "ntfy_token"),
                         xs_html_attr("value", ntfy_token),
                         xs_html_attr("placeholder", L("ntfy token - if needed")))),
+                xs_html_tag("p",
+                    xs_html_text(L("Notify webhook:")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "url"),
+                        xs_html_attr("name", "notify_webhook"),
+                        xs_html_attr("value", webhook),
+                        xs_html_attr("placeholder", L("http://example.com/webhook")))),
                 xs_html_tag("p",
                     xs_html_text(L("Maximum days to keep posts (0: server settings):")),
                     xs_html_sctag("br", NULL),
@@ -4821,6 +4830,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
         snac.config = xs_dict_set(snac.config, "latitude", xs_dict_get_def(p_vars, "latitude", ""));
         snac.config = xs_dict_set(snac.config, "longitude", xs_dict_get_def(p_vars, "longitude", ""));
+
+        snac.config = xs_dict_set(snac.config, "notify_webhook", xs_dict_get_def(p_vars, "notify_webhook", ""));
 
         if ((v = xs_dict_get(p_vars, "metadata")) != NULL)
             snac.config = xs_dict_set(snac.config, "metadata", v);
