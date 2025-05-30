@@ -127,6 +127,10 @@ standard ntfy.sh server), fill the two provided
 fields (ntfy server/topic and, if protected, the token).
 You need to refer to the https://ntfy.sh web site for
 more information on this process.
+.It Notify webhook
+If this is set to an URL, an HTTP POST will be sent to it
+whenever a new notification happens (see the 'Webhook for
+notifications' section below for more information).
 .It Maximum days to keep posts
 This numeric value specifies the number of days to pass before
 posts (yours and others') will be purged. This value overrides
