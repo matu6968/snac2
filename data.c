@@ -3534,6 +3534,10 @@ void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries)
 
         /* add more data */
         msg = xs_dict_set(msg, "target", user->actor);
+        msg = xs_dict_set(msg, "uid", user->uid);
+        msg = xs_dict_set(msg, "basedir", srv_basedir);
+        msg = xs_dict_set(msg, "baseurl", srv_baseurl);
+
         xs *actor_obj = NULL;
 
         if (valid_status(object_get(xs_dict_get(noti, "actor"), &actor_obj)) && actor_obj)

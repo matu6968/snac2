@@ -2,8 +2,7 @@
 
 # This is an example of a snac webhook that automatically follows all new followers.
 
-# To use it, set the variables snac_basedir and snac_user to something reasonable,
-# configure the user webhook to be http://localhost:12345, and run this program.
+# To use it, configure the user webhook to be http://localhost:12345, and run this program.
 
 # copyright (C) 2025 grunfink et al. / MIT license
 
@@ -14,8 +13,6 @@ import os
 
 host_name = "localhost"
 server_port = 12345
-snac_basedir = "/var/snac/example_instance"
-snac_user = "example_user"
 
 class SnacAutoResponderServer(BaseHTTPRequestHandler):
 
@@ -35,7 +32,10 @@ class SnacAutoResponderServer(BaseHTTPRequestHandler):
 
                 if type == "Follow":
                     actor = noti["actor"]
-                    cmd = "snac follow %s %s %s" % (snac_basedir, snac_user, actor)
+                    uid = noti["uid"]
+                    basedir = noti["basedir"]
+
+                    cmd = "snac follow %s %s %s" % (basedir, uid, actor)
 
                     os.system(cmd)
 
