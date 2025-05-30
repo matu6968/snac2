@@ -227,10 +227,11 @@ void rss_to_timeline(snac *user, const char *url)
                 continue;
             }
 
-            if (!valid_status(actor_request(user, attr_to, NULL)))
-                continue;
+            enqueue_actor_refresh(user, attr_to, 0);
 
             timeline_add(user, id, obj);
+
+            snac_log(user, xs_fmt("new '%s' (RSS) %s %s", type, attr_to, id));
         }
     }
 
