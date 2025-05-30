@@ -3167,7 +3167,8 @@ void notify_add(snac *snac, const char *type, const char *utype,
         pthread_mutex_unlock(&data_mutex);
     }
 
-    enqueue_notify_webhook(snac, noti, 0);
+    if (!xs_is_true(xs_dict_get(srv_config, "disable_notify_webhook")))
+        enqueue_notify_webhook(snac, noti, 0);
 }
 
 
@@ -3528,7 +3529,7 @@ void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries)
 {
     const char *webhook = xs_dict_get(user->config, "notify_webhook");
 
-    if (xs_is_string(webhook)) {
+    if (xs_is_string(webhook) && *webhook) {
         xs *msg = xs_dup(noti);
 
         /* add more data */

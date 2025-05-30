@@ -2769,7 +2769,7 @@ void process_user_queue_item(snac *user, xs_dict *q_item)
     if (strcmp(type, "notify_webhook") == 0) {
         const char *webhook = xs_dict_get(user->config, "notify_webhook");
 
-        if (xs_is_string(webhook)) {
+        if (xs_is_string(webhook) && *webhook) {
             const xs_dict *msg = xs_dict_get(q_item, "message");
             int retries = xs_number_get(xs_dict_get(q_item, "retries"));
 
