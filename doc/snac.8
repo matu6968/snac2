@@ -280,6 +280,9 @@ To be filled if the SMTP server defined by the previous directive needs credenti
 .It Ic rss_hashtag_poll_hours
 The periodic number of hours hashtag RSS are polled (default: 4). It has a minimum
 value of 1 to avoid hammering servers.
+.It Ic disable_notify_webhook
+Since version 2.78, users can set a webhook URL to receive notifications. Set this
+to true if you don't want your users to have this privilege.
 .El
 .Pp
 You must restart the server to make effective these changes.
