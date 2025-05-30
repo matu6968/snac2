@@ -3529,7 +3529,7 @@ void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries)
 {
     const char *webhook = xs_dict_get(user->config, "notify_webhook");
 
-    if (xs_is_string(webhook) && *webhook) {
+    if (xs_is_string(webhook) && xs_match(webhook, "https://*|http://*")) { /** **/
         xs *msg = xs_dup(noti);
 
         /* add more data */
