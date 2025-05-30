@@ -3166,6 +3166,8 @@ void notify_add(snac *snac, const char *type, const char *utype,
 
         pthread_mutex_unlock(&data_mutex);
     }
+
+    enqueue_notify_webhook(snac, noti, 0);
 }
 
 
@@ -3518,6 +3520,23 @@ void enqueue_webmention(const xs_dict *msg)
     qmsg = _enqueue_put(fn, qmsg);
 
     srv_debug(1, xs_fmt("enqueue_webmention"));
+}
+
+
+void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries)
+/* enqueues a notification webhook */
+{
+    const char *webhook = xs_dict_get(user->config, "notify_webhook");
+
+    if (xs_is_string(webhook)) {
+        xs *qmsg = _new_qmsg("notify_webhook", noti, retries);
+        const char *ntid = xs_dict_get(qmsg, "ntid");
+        xs *fn   = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+
+        qmsg = _enqueue_put(fn, qmsg);
+
+        snac_debug(user, 1, xs_fmt("notify_webhook"));
+    }
 }
 
 

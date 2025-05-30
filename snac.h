@@ -294,6 +294,8 @@ void enqueue_object_request(snac *user, const char *id, int forward_secs);
 void enqueue_verify_links(snac *user);
 void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs);
 void enqueue_webmention(const xs_dict *msg);
+void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries);
+
 int was_question_voted(snac *user, const char *id);
 
 xs_list *user_queue(snac *snac);
