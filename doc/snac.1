@@ -417,11 +417,24 @@ https://$SNAC_HOST/oauth/x-snac-get-token
 .Ss Webhook for notifications
 Since version 2.78, users can set the URL to a webhook that will receive
 an HTTP POST with every notification (in JSON format). This can be used to
-implement some automation whenever a new activity happens, like autorepliers
-or chatbots or whatever. The
+implement some automation whenever a new activity happens, like autorepliers,
+chatbots, interactive textual games or whatever. The
 .Pa examples/
 subdirectory contains a tiny Python program that implements an auto-follower
-for every new follow.
+for every new follow. The JSON notification object includes the following data:
+.Bd -literal -offset indent
+id: a unique notification identifier
+actor: the origin actor id
+target: the target actor id
+date: the notification date
+message: the full ActivityPub action JSON object
+objid: the object identifier (extracted from message, may be null)
+type: the action type (extracted from message)
+utype: the action subtype (extracted from message, may be null)
+uid: the user identifier (account name)
+basedir: the server base directory
+baseurl: the server base URL
+.Ed
 .Pp
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
