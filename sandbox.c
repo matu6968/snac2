@@ -61,7 +61,8 @@ LL_BEGIN(sbox_enter_linux_, const char* basedir, const char *address, int smtp_p
              LANDLOCK_ACCESS_FS_REMOVE_DIR      |
              LANDLOCK_ACCESS_FS_REMOVE_FILE     |
              LANDLOCK_ACCESS_FS_REFER_COMPAT,
-        s  = LANDLOCK_ACCESS_FS_MAKE_SOCK;
+        s  = LANDLOCK_ACCESS_FS_MAKE_SOCK	|
+             LANDLOCK_ACCESS_FS_REMOVE_FILE;
     char *resolved_path = NULL;
 
     LL_PATH(basedir,                rf|rd|w|c);
