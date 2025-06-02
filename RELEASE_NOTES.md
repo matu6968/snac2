@@ -4,7 +4,7 @@
 
 Hashtag following also allow URLs to RSS feeds of ActivityPub objects (like e.g. https://mastodon.social/tags/ThankYouTuesday).
 
-Users can now configure a webhook to receive an HTTP POST for every notification. This can be useful for implementing bots that react to activities (see `snac(1)` for more information).
+Users can now configure a webhook to receive an HTTP POST for every notification. This can be useful for implementing bots that react to activities, like autorepliers, chatbots or interactive textual games (see `snac(1)` for more information).
 
 The number of pending follow confirmations is shown next to the "people" link.
 
