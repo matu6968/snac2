@@ -13,12 +13,13 @@ void sbox_enter(const char *basedir)
         return;
     }
 
-    int smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
-
+    int smail;
     const char *url = xs_dict_get(srv_config, "smtp_url");
 
     if (xs_is_string(url) && *url)
         smail = 0;
+    else
+        smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
 
     srv_debug(1, xs_fmt("Calling unveil()"));
     unveil(basedir,                "rwc");
