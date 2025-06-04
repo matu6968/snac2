@@ -15,6 +15,11 @@ void sbox_enter(const char *basedir)
 
     int smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
 
+    const char *url = xs_dict_get(srv_config, "smtp_url");
+
+    if (xs_is_string(url) && *url)
+        smail = 0;
+
     srv_debug(1, xs_fmt("Calling unveil()"));
     unveil(basedir,                "rwc");
     unveil("/tmp",                 "rwc");
