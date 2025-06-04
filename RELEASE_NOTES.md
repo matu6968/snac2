@@ -4,6 +4,8 @@
 
 Fixed regression while sending email via pipe on OpenBSD.
 
+Fixed Markdown parsing when the URL has parenthesis.
+
 ## 2.78
 
 Hashtag following also allow URLs to RSS feeds of ActivityPub objects (like e.g. https://mastodon.social/tags/ThankYouTuesday).
