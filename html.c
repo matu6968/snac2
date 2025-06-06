@@ -2427,6 +2427,9 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             const char *o_href = xs_dict_get(a, "href");
             const char *name = xs_dict_get(a, "name");
 
+            if (!xs_is_string(type) || !xs_is_string(o_href))
+                continue;
+
             /* if this URL is already in the post content, skip */
             if (content && xs_str_in(content, o_href) != -1)
                 continue;
