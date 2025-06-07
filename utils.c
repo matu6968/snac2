@@ -488,6 +488,18 @@ void verify_links(snac *user)
 
     int c = 0;
     while (metadata && xs_dict_next(metadata, &k, &v, &c)) {
+        xs *wfinger = NULL;
+        const char *ov = NULL;
+
+        /* is it an account handle? */
+        if (*v == '@' && strchr(v + 1, '@')) {
+            /* resolve it via webfinger */
+            if (valid_status(webfinger_request(v, &wfinger, NULL)) && xs_is_string(wfinger)) {
+                ov = v;
+                v = wfinger;
+            }
+        }
+
         /* not an https link? skip */
         if (!xs_startswith(v, "https:/" "/"))
             continue;
@@ -562,6 +574,10 @@ void verify_links(snac *user)
                         user->links = xs_dict_new();
 
                     user->links = xs_dict_set(user->links, v, verified_time);
+
+                    /* also add the original value if it was 'resolved' */
+                    if (xs_is_string(ov))
+                        user->links = xs_dict_set(user->links, ov, v);
 
                     vfied = 1;
                 }

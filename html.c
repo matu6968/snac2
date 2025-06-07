@@ -1077,10 +1077,17 @@ static xs_html *html_user_body(snac *user, int read_only)
             while (xs_dict_next(metadata, &k, &v, &c)) {
                 xs_html *value;
 
-                if (xs_startswith(v, "https:/") || xs_startswith(v, "http:/")) {
+                if (xs_startswith(v, "https:/") || xs_startswith(v, "http:/") || *v == '@') {
                     /* is this link validated? */
                     xs *verified_link = NULL;
                     const xs_number *val_time = xs_dict_get(val_links, v);
+                    const char *url = NULL;
+
+                    if (xs_is_string(val_time)) {
+                        /* resolve again, as it may be an account handle */
+                        url = val_time;
+                        val_time = xs_dict_get(val_links, val_time);
+                    }
 
                     if (xs_type(val_time) == XSTYPE_NUMBER) {
                         time_t t = xs_number_get(val_time);
@@ -1098,13 +1105,13 @@ static xs_html *html_user_body(snac *user, int read_only)
                             xs_html_tag("a",
                                 xs_html_attr("rel", "me"),
                                 xs_html_attr("target", "_blank"),
-                                xs_html_attr("href", v),
+                                xs_html_attr("href", url ? url : v),
                                 xs_html_text(v)));
                     }
                     else {
                         value = xs_html_tag("a",
                             xs_html_attr("rel", "me"),
-                            xs_html_attr("href", v),
+                            xs_html_attr("href", url ? url : v),
                             xs_html_text(v));
                     }
                 }
