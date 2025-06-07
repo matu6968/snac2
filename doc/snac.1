@@ -291,9 +291,9 @@ blocked without further inspection.
 .It Cm unblock Ar basedir Ar instance_url
 Unblocks a previously blocked instance.
 .It Cm verify_links Ar basedir Ar uid
-Verifies all links stored as metadata for the given user. This verification
-is done by downloading the link content and searching for a link back to
-the
+Verifies all links or account handles stored as metadata for the given user.
+This verification is done by downloading the link content and searching for
+a link back to the
 .Nm
 user url that also contains a rel="me" attribute. These links are specially
 marked as verified in the user's public timeline and also via the Mastodon API.
