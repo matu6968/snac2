@@ -3295,12 +3295,12 @@ xs_str *html_people(snac *user)
 
     xs *wing = following_list(user);
     xs *wers = follower_list(user);
+    xs *pending = pending_list(user);
 
     xs_html *lists = xs_html_tag("div",
         xs_html_attr("class", "snac-posts"));
 
-    if (xs_is_true(xs_dict_get(user->config, "approve_followers"))) {
-        xs *pending = pending_list(user);
+    if (xs_list_len(pending) || xs_is_true(xs_dict_get(user->config, "approve_followers"))) {
         xs_html_add(lists,
             html_people_list(user, pending, L("Pending follow confirmations"), "p", proxy));
     }
