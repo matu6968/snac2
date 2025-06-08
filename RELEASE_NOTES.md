@@ -6,6 +6,12 @@ Fixed regression while sending email via pipe on OpenBSD.
 
 Fixed Markdown parsing when the URL has parenthesis.
 
+Always show the 'pending follow confirmations' section if there are any (even if the toggle is off).
+
+If a metadata value is an account handler, it's also tried to be validated (rel="me" links).
+
+Another search by URL tweak (this time for Pixelfed links).
+
 ## 2.78
 
 Hashtag following also allow URLs to RSS feeds of ActivityPub objects (like e.g. https://mastodon.social/tags/ThankYouTuesday).
