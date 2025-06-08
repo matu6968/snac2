@@ -22,6 +22,8 @@ The instance timeline should also show boosts from users.
 
 Mastoapi: implement /v1/conversations.
 
+Track "BadgeFed - ActivityPub Badges" https://github.com/tryvocalcat/badgefed
+
 Track 'Event' data types standardization; how to add plan-to-attend and similar activities (more info: https://event-federation.eu/). Friendica interacts with events via activities `Accept` (will go), `TentativeAccept` (will try to go) or `Reject` (cannot go) (`object` field as id, not object). `Undo` for any of these activities cancel (`object` as an object, not id).
 
 Implement "FEP-3b86: Activity Intents" https://codeberg.org/fediverse/fep/src/branch/main/fep/3b86/fep-3b86.md
