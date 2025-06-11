@@ -114,7 +114,7 @@ void srv_log_(int level, xs_str *str)
     }
 
     if (use_syslog) {
-        syslog(level > 0 ? LOG_DEBUG : LOG_INFO, "%s", str);
+        syslog(level < 0 ? LOG_ERR : level > 0 ? LOG_DEBUG : LOG_INFO, "%s", str);
     } else {
         xs *tm = xs_str_localtime(0, "%H:%M:%S");
         fprintf(stderr, "%s %s\n", tm, str);

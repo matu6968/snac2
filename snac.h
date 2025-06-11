@@ -50,6 +50,7 @@ double ftime(void);
 
 void srv_log_(int pri, xs_str *str);
 #define srv_log(str) srv_log_(0, (str))
+#define srv_error(str) srv_log_(-1, (str))
 #define srv_debug(level, str) do { \
     int __level = (level); \
     if (dbglevel >= __level) \

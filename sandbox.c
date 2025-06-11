@@ -113,20 +113,20 @@ void sbox_enter(const char *basedir)
     int smtp_port = -1;
 
     if (xs_is_true(xs_dict_get(srv_config, "disable_sandbox"))) {
-        srv_debug(1, xs_dup("Linux sandbox disabled by admin"));
+        srv_log(xs_dup("Linux sandbox disabled by admin"));
         return;
     }
 
     if (xs_is_string(smtp_url) && *smtp_url != '\0') {
         smtp_port = parse_port(smtp_url, &errstr);
         if (errstr)
-            srv_debug(0, xs_fmt("Couldn't determine port from '%s': %s", smtp_url, errstr));
+            srv_error(xs_fmt("Couldn't determine port from '%s': %s", smtp_url, errstr));
     }
 
     if (sbox_enter_linux_(basedir, address, smtp_port) == 0)
-        srv_debug(1, xs_dup("Linux sandbox enabled"));
+        srv_log(xs_dup("Linux sandbox enabled"));
     else
-        srv_debug(0, xs_dup("Linux sandbox failed"));
+        srv_error(xs_dup("Linux sandbox failed"));
 }
 
 #else /* defined(WITH_LINUX_SANDBOX) */

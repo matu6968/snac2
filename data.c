@@ -105,7 +105,7 @@ int srv_open(const char *basedir, int auto_upgrade)
     }
 
     if (error != NULL)
-        srv_log(error);
+        srv_error(error);
 
     if (!ret)
         return ret;
@@ -276,20 +276,20 @@ int user_open(snac *user, const char *uid)
                             fclose(f);
 
                             if (user->config_o == NULL)
-                                srv_log(xs_fmt("error parsing '%s'", cfg_file_o));
+                                srv_error(xs_fmt("error parsing '%s'", cfg_file_o));
                         }
 
                         if (user->config_o == NULL)
                             user->config_o = xs_dict_new();
                     }
                     else
-                        srv_log(xs_fmt("error parsing '%s'", key_file));
+                        srv_error(xs_fmt("error parsing '%s'", key_file));
                 }
                 else
-                    srv_log(xs_fmt("error opening '%s' %d", key_file, errno));
+                    srv_error(xs_fmt("error opening '%s' %d", key_file, errno));
             }
             else
-                srv_log(xs_fmt("error parsing '%s'", cfg_file));
+                srv_error(xs_fmt("error parsing '%s'", cfg_file));
 
             user->tz = xs_dict_get_def(user->config, "tz", "UTC");
         }
@@ -462,7 +462,7 @@ int index_add_md5(const char *fn, const char *md5)
     FILE *f;
 
     if (!is_md5_hex(md5)) {
-        srv_log(xs_fmt("index_add_md5: bad md5 %s %s", fn, md5));
+        srv_error(xs_fmt("index_add_md5: bad md5 %s %s", fn, md5));
         return HTTP_STATUS_BAD_REQUEST;
     }
 
@@ -785,7 +785,7 @@ static xs_str *_object_fn_by_md5(const char *md5, const char *func)
         ok = 0;
     else
     if (!is_md5_hex(md5)) {
-        srv_log(xs_fmt("_object_fn_by_md5() [from %s()]: bad md5 '%s'", func, md5));
+        srv_error(xs_fmt("_object_fn_by_md5() [from %s()]: bad md5 '%s'", func, md5));
         ok = 0;
     }
 
@@ -901,7 +901,7 @@ int _object_add(const char *id, const xs_dict *obj, int ow)
         }
     }
     else {
-        srv_log(xs_fmt("object_add error writing %s (errno: %d)", fn, errno));
+        srv_error(xs_fmt("object_add error writing %s (errno: %d)", fn, errno));
         status = HTTP_STATUS_INTERNAL_SERVER_ERROR;
     }
 
@@ -2462,7 +2462,7 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
         break;
 
     default:
-        srv_log(xs_fmt("ERROR: list_content: bad op %d", op));
+        srv_error(xs_fmt("ERROR: list_content: bad op %d", op));
         break;
     }
 
@@ -4112,7 +4112,7 @@ t_announcement *announcement(const double after)
                 a.timestamp = ts;
             }
             else {
-                srv_log("Error allocating memory for announcement");
+                srv_error("Error allocating memory for announcement");
             }
         }
         else {
@@ -4255,7 +4255,7 @@ void badlogin_inc(const char *user, const char *addr)
             fprintf(f, "%d %s %s\n", failures, addr, user);
             fclose(f);
 
-            srv_log(xs_fmt("Registered %d login failure(s) from %s for %s", failures, addr, user));
+            srv_error(xs_fmt("Registered %d login failure(s) from %s for %s", failures, addr, user));
         }
 
         pthread_mutex_unlock(&data_mutex);

@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
     }
 
     if (!srv_open(basedir, 0)) {
-        srv_log(xs_fmt("error opening data storage at %s", basedir));
+        srv_error(xs_fmt("error opening data storage at %s", basedir));
         return 1;
     }
 
@@ -590,7 +590,7 @@ int main(int argc, char *argv[])
         if (!xs_startswith(url, "https:/")) {
             /* try to resolve via webfinger */
             if (!valid_status(webfinger_request(url, &url, NULL))) {
-                srv_log(xs_fmt("cannot resolve %s via webfinger", url));
+                srv_error(xs_fmt("cannot resolve %s via webfinger", url));
                 return 1;
             }
         }
@@ -607,7 +607,7 @@ int main(int argc, char *argv[])
             srv_log(xs_fmt("Ping sent to %s -- see log for Pong reply", url));
         }
         else {
-            srv_log(xs_fmt("Error getting actor %s", url));
+            srv_error(xs_fmt("Error getting actor %s", url));
             return 1;
         }
 
