@@ -1134,9 +1134,15 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
             bst = xs_dict_set(bst, "content", "");
             bst = xs_dict_set(bst, "reblog", st);
 
+            /* reblogs must have their own id */
+            xs *b_id = xs_fmt("%s%s", xs_dict_get(st, "id"), boosted_by_md5);
+            bst = xs_dict_set(bst, "id", b_id);
+
             xs_free(st);
             st = bst;
         }
+        else
+            xs_free(bst);
     }
 
     return st;
