@@ -144,7 +144,11 @@ void snac_log(snac *snac, xs_str *str)
         msg = xs_replace_i(msg, snac->basedir, "~");
     }
 
-    srv_log(msg);
+    if (strcmp(snac->uid, "relay") == 0) {
+        srv_debug(1, msg);
+    } else {
+        srv_log(msg);
+    }
 }
 
 
