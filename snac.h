@@ -36,6 +36,7 @@ extern xs_str *srv_proxy_token_seed;
 extern xs_dict *srv_langs;
 
 extern int dbglevel;
+extern int use_syslog;
 
 #define L(s) lang_str((s), user)
 
@@ -47,9 +48,13 @@ int valid_status(int status);
 xs_str *tid(int offset);
 double ftime(void);
 
-void srv_log(xs_str *str);
-#define srv_debug(level, str) do { if (dbglevel >= (level)) \
-    { srv_log((str)); } } while (0)
+void srv_log_(int pri, xs_str *str);
+#define srv_log(str) srv_log_(0, (str))
+#define srv_debug(level, str) do { \
+    int __level = (level); \
+    if (dbglevel >= __level) \
+        srv_log_(__level, (str)); \
+} while (0)
 
 typedef struct {
     xs_str *uid;        /* uid */

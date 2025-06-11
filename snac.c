@@ -29,6 +29,8 @@
 
 #include "snac.h"
 
+#include <syslog.h>
+
 #include <sys/time.h>
 #include <sys/stat.h>
 
@@ -39,6 +41,7 @@ xs_str *srv_proxy_token_seed = NULL;
 xs_dict *srv_langs = NULL;
 
 int dbglevel = 0;
+int use_syslog = 0;
 
 
 int mkdirx(const char *pathname)
@@ -102,7 +105,7 @@ int validate_uid(const char *uid)
 }
 
 
-void srv_log(xs_str *str)
+void srv_log_(int level, xs_str *str)
 /* logs a debug message */
 {
     if (xs_str_in(str, srv_basedir) != -1) {
@@ -110,16 +113,20 @@ void srv_log(xs_str *str)
         str = xs_replace_i(str, srv_basedir, "~");
     }
 
-    xs *tm = xs_str_localtime(0, "%H:%M:%S");
-    fprintf(stderr, "%s %s\n", tm, str);
+    if (use_syslog) {
+        syslog(level > 0 ? LOG_DEBUG : LOG_INFO, "%s", str);
+    } else {
+        xs *tm = xs_str_localtime(0, "%H:%M:%S");
+        fprintf(stderr, "%s %s\n", tm, str);
 
-    /* if the ~/log/ folder exists, also write to a file there */
-    xs *dt = xs_str_localtime(0, "%Y-%m-%d");
-    xs *lf = xs_fmt("%s/log/%s.log", srv_basedir, dt);
-    FILE *f;
-    if ((f = fopen(lf, "a")) != NULL) {
-        fprintf(f, "%s %s\n", tm, str);
-        fclose(f);
+        /* if the ~/log/ folder exists, also write to a file there */
+        xs *dt = xs_str_localtime(0, "%Y-%m-%d");
+        xs *lf = xs_fmt("%s/log/%s.log", srv_basedir, dt);
+        FILE *f;
+        if ((f = fopen(lf, "a")) != NULL) {
+            fprintf(f, "%s %s\n", tm, str);
+            fclose(f);
+        }
     }
 
     xs_free(str);

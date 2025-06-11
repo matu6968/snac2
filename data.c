@@ -23,6 +23,7 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <syslog.h>
 
 double disk_layout = 2.7;
 
@@ -64,11 +65,13 @@ int srv_open(const char *basedir, int auto_upgrade)
             const char *host;
             const char *prefix;
             const char *dbglvl;
+            const char *syslog;
             const char *proto;
 
             host   = xs_dict_get(srv_config, "host");
             prefix = xs_dict_get(srv_config, "prefix");
             dbglvl = xs_dict_get(srv_config, "dbglevel");
+            syslog = xs_dict_get(srv_config, "syslog");
             proto  = xs_dict_get_def(srv_config, "protocol", "https");
 
             if (host == NULL || prefix == NULL)
@@ -77,6 +80,11 @@ int srv_open(const char *basedir, int auto_upgrade)
                 srv_baseurl = xs_fmt("%s:/" "/%s%s", proto, host, prefix);
 
                 dbglevel = (int) xs_number_get(dbglvl);
+                use_syslog = xs_type(syslog) == XSTYPE_TRUE;
+
+                if (use_syslog) {
+                    openlog("snac", LOG_NDELAY | (isatty(STDERR_FILENO) ? LOG_PERROR : 0), LOG_DAEMON);
+                }
 
                 if ((dbglvl = getenv("DEBUG")) != NULL) {
                     dbglevel = atoi(dbglvl);
