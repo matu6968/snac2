@@ -1134,6 +1134,9 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
             bst = xs_dict_set(bst, "content", "");
             bst = xs_dict_set(bst, "reblog", st);
 
+            xs *b_id = xs_toupper_i(xs_dup(xs_dict_get(st, "id")));
+            bst = xs_dict_set(bst, "id", b_id);
+
             xs_free(st);
             st = bst;
         }
@@ -2338,15 +2341,17 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         /* information about a status */
         if (logged_in) {
             xs *l = xs_split(cmd, "/");
-            const char *id = xs_list_get(l, 3);
+            const char *oid = xs_list_get(l, 3);
             const char *op = xs_list_get(l, 4);
 
-            if (!xs_is_null(id)) {
+            if (!xs_is_null(oid)) {
                 xs *msg = NULL;
                 xs *out = NULL;
 
                 /* skip the 'fake' part of the id */
-                id = MID_TO_MD5(id);
+                oid = MID_TO_MD5(oid);
+
+                xs *id = xs_tolower_i(xs_dup(oid));
 
                 if (valid_status(object_get_by_md5(id, &msg))) {
                     if (op == NULL) {

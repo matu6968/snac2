@@ -90,6 +90,7 @@ xs_str *xs_rstrip_chars_i(xs_str *str, const char *chars);
 xs_str *xs_strip_chars_i(xs_str *str, const char *chars);
 #define xs_strip_i(str) xs_strip_chars_i(str, " \r\n\t\v\f")
 xs_str *xs_tolower_i(xs_str *str);
+xs_str *xs_toupper_i(xs_str *str);
 
 xs_list *xs_list_new(void);
 xs_list *xs_list_append_m(xs_list *list, const char *mem, int dsz);
@@ -687,6 +688,20 @@ xs_str *xs_tolower_i(xs_str *str)
 
     for (n = 0; str[n]; n++)
         str[n] = tolower(str[n]);
+
+    return str;
+}
+
+
+xs_str *xs_toupper_i(xs_str *str)
+/* convert to lowercase */
+{
+    XS_ASSERT_TYPE(str, XSTYPE_STRING);
+
+    int n;
+
+    for (n = 0; str[n]; n++)
+        str[n] = toupper(str[n]);
 
     return str;
 }
