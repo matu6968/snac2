@@ -13,58 +13,82 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-int usage(void)
+int usage(const char *cmd)
 {
     printf("snac " VERSION " - A simple, minimalistic ActivityPub instance\n");
     printf("Copyright (c) 2022 - 2025 grunfink et al. / MIT license\n");
     printf("\n");
-    printf("Commands:\n");
-    printf("\n");
-    printf("init [{basedir}]                     Initializes the data storage\n");
-    printf("upgrade {basedir}                    Upgrade to a new version\n");
-    printf("adduser {basedir} [{uid}]            Adds a new user\n");
-    printf("deluser {basedir} {uid}              Deletes a user\n");
-    printf("httpd {basedir}                      Starts the HTTPD daemon\n");
-    printf("purge {basedir}                      Purges old data\n");
-    printf("state {basedir}                      Prints server state\n");
-    printf("webfinger {basedir} {account}        Queries about an account (@user@host or actor url)\n");
-    printf("queue {basedir} {uid}                Processes a user queue\n");
-    printf("follow {basedir} {uid} {actor}       Follows an actor\n");
-    printf("unfollow {basedir} {uid} {actor}     Unfollows an actor\n");
-    printf("request {basedir} {uid} {url}        Requests an object\n");
-    printf("insert {basedir} {uid} {url}         Requests an object and inserts it into the timeline\n");
-    printf("actor {basedir} [{uid}] {url}        Requests an actor\n");
-    printf("note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n");
-    printf("note_unlisted {basedir} {uid} {text} [files...] Sends an unlisted note with optional attachments\n");
-    printf("note_mention {basedir} {uid} {text} [files...] Sends a note only to mentioned accounts\n");
-    printf("boost|announce {basedir} {uid} {url} Boosts (announces) a post\n");
-    printf("unboost {basedir} {uid} {url}        Unboosts a post\n");
-    printf("resetpwd {basedir} {uid}             Resets the password of a user\n");
-    printf("ping {basedir} {uid} {actor}         Pings an actor\n");
-    printf("webfinger_s {basedir} {uid} {account} Queries about an account (@user@host or actor url)\n");
-    printf("pin {basedir} {uid} {msg_url}        Pins a message\n");
-    printf("unpin {basedir} {uid} {msg_url}      Unpins a message\n");
-    printf("bookmark {basedir} {uid} {msg_url}   Bookmarks a message\n");
-    printf("unbookmark {basedir} {uid} {msg_url} Unbookmarks a message\n");
-    printf("block {basedir} {instance_url}       Blocks a full instance\n");
-    printf("unblock {basedir} {instance_url}     Unblocks a full instance\n");
-    printf("limit {basedir} {uid} {actor}        Limits an actor (drops their announces)\n");
-    printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
-    printf("unmute {basedir} {uid} {actor}       Unmutes a previously muted actor\n");
-    printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
-    printf("search {basedir} {uid} {regex}       Searches posts by content\n");
-    printf("export_csv {basedir} {uid}           Exports data as CSV files\n");
-    printf("alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n");
-    printf("migrate {basedir} {uid}              Migrates to the account defined as the alias\n");
-    printf("import_csv {basedir} {uid}           Imports data from CSV files\n");
-    printf("import_list {basedir} {uid} {file}   Imports a Mastodon CSV list file\n");
-    printf("import_block_list {basedir} {uid} {file} Imports a Mastodon CSV block list file\n");
-    printf("lists {basedir} {uid}                Returns the names of the lists created by the user\n");
-    printf("list_members {basedir} {uid} {name}  Returns the list of accounts inside a list\n");
-    printf("create_list {basedir} {uid} {name}   Creates a new list\n");
-    printf("delete_list {basedir} {uid} {name}   Deletes an existing list\n");
-    printf("list_add {basedir} {uid} {name} {acct} Adds an account (@user@host or actor url) to a list\n");
-    printf("list_del {basedir} {uid} {name} {actor} Deletes an actor URL from a list\n");
+
+    if (cmd == NULL) {
+        printf("Commands:\n");
+        printf("\n");
+    }
+
+    const char *cmds =
+        "init [{basedir}]                     Initializes the data storage\n"
+        "upgrade {basedir}                    Upgrade to a new version\n"
+        "adduser {basedir} [{uid}]            Adds a new user\n"
+        "deluser {basedir} {uid}              Deletes a user\n"
+        "httpd {basedir}                      Starts the HTTPD daemon\n"
+        "purge {basedir}                      Purges old data\n"
+        "state {basedir}                      Prints server state\n"
+        "webfinger {basedir} {account}        Queries about an account (@user@host or actor url)\n"
+        "queue {basedir} {uid}                Processes a user queue\n"
+        "follow {basedir} {uid} {actor}       Follows an actor\n"
+        "unfollow {basedir} {uid} {actor}     Unfollows an actor\n"
+        "request {basedir} {uid} {url}        Requests an object\n"
+        "insert {basedir} {uid} {url}         Requests an object and inserts it into the timeline\n"
+        "actor {basedir} [{uid}] {url}        Requests an actor\n"
+        "note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n"
+        "note_unlisted {basedir} {uid} {text} [files...] Sends an unlisted note with optional attachments\n"
+        "note_mention {basedir} {uid} {text} [files...] Sends a note only to mentioned accounts\n"
+        "boost|announce {basedir} {uid} {url} Boosts (announces) a post\n"
+        "unboost {basedir} {uid} {url}        Unboosts a post\n"
+        "resetpwd {basedir} {uid}             Resets the password of a user\n"
+        "ping {basedir} {uid} {actor}         Pings an actor\n"
+        "webfinger_s {basedir} {uid} {account} Queries about an account (@user@host or actor url)\n"
+        "pin {basedir} {uid} {msg_url}        Pins a message\n"
+        "unpin {basedir} {uid} {msg_url}      Unpins a message\n"
+        "bookmark {basedir} {uid} {msg_url}   Bookmarks a message\n"
+        "unbookmark {basedir} {uid} {msg_url} Unbookmarks a message\n"
+        "block {basedir} {instance_url}       Blocks a full instance\n"
+        "unblock {basedir} {instance_url}     Unblocks a full instance\n"
+        "limit {basedir} {uid} {actor}        Limits an actor (drops their announces)\n"
+        "unlimit {basedir} {uid} {actor}      Unlimits an actor\n"
+        "unmute {basedir} {uid} {actor}       Unmutes a previously muted actor\n"
+        "verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n"
+        "search {basedir} {uid} {regex}       Searches posts by content\n"
+        "export_csv {basedir} {uid}           Exports data as CSV files\n"
+        "alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n"
+        "migrate {basedir} {uid}              Migrates to the account defined as the alias\n"
+        "import_csv {basedir} {uid}           Imports data from CSV files\n"
+        "import_list {basedir} {uid} {file}   Imports a Mastodon CSV list file\n"
+        "import_block_list {basedir} {uid} {file} Imports a Mastodon CSV block list file\n"
+        "lists {basedir} {uid}                Returns the names of the lists created by the user\n"
+        "list_members {basedir} {uid} {name}  Returns the list of accounts inside a list\n"
+        "create_list {basedir} {uid} {name}   Creates a new list\n"
+        "delete_list {basedir} {uid} {name}   Deletes an existing list\n"
+        "list_add {basedir} {uid} {name} {acct} Adds an account (@user@host or actor url) to a list\n"
+        "list_del {basedir} {uid} {name} {actor} Deletes an actor URL from a list\n";
+
+    if (cmd == NULL)
+        printf("%s", cmds);
+    else {
+        /* only show help for the entered command */
+        xs *l = xs_split(cmds, "\n");
+        const char *v;
+        int cnt = 0;
+
+        xs_list_foreach(l, v) {
+            if (xs_startswith(v, cmd)) {
+                printf("%s\n", v);
+                cnt++;
+            }
+        }
+
+        if (cnt == 0)
+            printf("%s", cmds);
+    }
 
     return 1;
 }
@@ -94,7 +118,7 @@ int main(int argc, char *argv[])
     umask(0007);
 
     if ((cmd = GET_ARGV()) == NULL)
-        return usage();
+        return usage(cmd);
 
     if (strcmp(cmd, "init") == 0) { /** **/
         /* initialize the data storage */
@@ -106,7 +130,7 @@ int main(int argc, char *argv[])
 
     if ((basedir = getenv("SNAC_BASEDIR")) == NULL) {
         if ((basedir = GET_ARGV()) == NULL)
-            return usage();
+            return usage(cmd);
     }
 
     if (strcmp(cmd, "upgrade") == 0) { /** **/
@@ -172,7 +196,7 @@ int main(int argc, char *argv[])
     }
 
     if ((user = GET_ARGV()) == NULL)
-        return usage();
+        return usage(cmd);
 
     if (strcmp(cmd, "block") == 0) { /** **/
         int ret = instance_block(user);
@@ -305,7 +329,7 @@ int main(int argc, char *argv[])
     }
 
     if ((url = GET_ARGV()) == NULL)
-        return usage();
+        return usage(cmd);
 
     if (strcmp(cmd, "list_members") == 0) { /** **/
         xs *lid = list_maint(&snac, url, 4);
