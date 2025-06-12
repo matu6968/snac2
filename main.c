@@ -80,7 +80,7 @@ int usage(const char *cmd)
         int cnt = 0;
 
         xs_list_foreach(l, v) {
-            if (xs_startswith(v, cmd)) {
+            if (xs_str_in(v, cmd) != -1) {
                 printf("%s\n", v);
                 cnt++;
             }
