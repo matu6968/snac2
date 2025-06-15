@@ -66,8 +66,8 @@ int usage(const char *cmd)
         "import_block_list {basedir} {uid} {file} Imports a Mastodon CSV block list file\n"
         "lists {basedir} {uid}                Returns the names of the lists created by the user\n"
         "list_members {basedir} {uid} {name}  Returns the list of accounts inside a list\n"
-        "create_list {basedir} {uid} {name}   Creates a new list\n"
-        "delete_list {basedir} {uid} {name}   Deletes an existing list\n"
+        "list_create {basedir} {uid} {name}   Creates a new list\n"
+        "list_delete {basedir} {uid} {name}   Deletes an existing list\n"
         "list_add {basedir} {uid} {name} {acct} Adds an account (@user@host or actor url) to a list\n"
         "list_del {basedir} {uid} {name} {actor} Deletes an actor URL from a list\n";
 
@@ -352,7 +352,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (strcmp(cmd, "create_list") == 0) { /** **/
+    if (strcmp(cmd, "list_create") == 0) { /** **/
         xs *lid = list_maint(&snac, url, 4);
 
         if (lid == NULL) {
@@ -365,7 +365,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (strcmp(cmd, "delete_list") == 0) { /** **/
+    if (strcmp(cmd, "list_delete") == 0) { /** **/
         xs *lid = list_maint(&snac, url, 4);
 
         if (lid != NULL) {
