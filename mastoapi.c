@@ -3338,6 +3338,54 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
         }
     }
     else
+    if (xs_startswith(cmd, "/v1/tags/")) { /** **/
+        if (logged_in) {
+            xs *l = xs_split(cmd, "/");
+            const char *i_tag = xs_list_get(l, 3);
+            const char *cmd = xs_list_get(l, 4);
+
+            status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
+
+            if (xs_is_string(i_tag) && xs_is_string(cmd)) {
+                int ok = 0;
+
+                xs *tag = xs_fmt("#%s", i_tag);
+                xs *followed_hashtags = xs_dup(xs_dict_get_def(snac.config,
+                                "followed_hashtags", xs_stock(XSTYPE_LIST)));
+
+                if (strcmp(cmd, "follow") == 0) {
+                    followed_hashtags = xs_list_append(followed_hashtags, tag);
+                    ok = 1;
+                }
+                else
+                if (strcmp(cmd, "unfollow") == 0) {
+                    int off = xs_list_in(followed_hashtags, tag);
+
+                    if (off != -1)
+                        followed_hashtags = xs_list_del(followed_hashtags, off);
+
+                    ok = 1;
+                }
+
+                if (ok) {
+                    /* update */
+                    xs_dict_set(snac.config, "followed_hashtags", followed_hashtags);
+                    user_persist(&snac, 0);
+
+                    xs *d = xs_dict_new();
+                    xs *s = xs_fmt("%s?t=%s", srv_baseurl, i_tag);
+                    d = xs_dict_set(d, "name", i_tag);
+                    d = xs_dict_set(d, "url", s);
+                    d = xs_dict_set(d, "history", xs_stock(XSTYPE_LIST));
+
+                    *body = xs_json_dumps(d, 4);
+                    *ctype = "application/json";
+                    status = HTTP_STATUS_OK;
+                }
+            }
+        }
+    }
+    else
         status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
 
     /* user cleanup */
