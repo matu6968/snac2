@@ -2483,6 +2483,40 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/followed_tags") == 0) { /** **/
+        if (logged_in) {
+            xs *r = xs_list_new();
+            const xs_list *followed_hashtags = xs_dict_get_def(snac1.config,
+                        "followed_hashtags", xs_stock(XSTYPE_LIST));
+            const char *hashtag;
+
+            xs_list_foreach(followed_hashtags, hashtag) {
+                if (*hashtag == '#') {
+                    xs *d = xs_dict_new();
+                    xs *s = xs_fmt("%s?t=%s", srv_baseurl, hashtag + 1);
+
+                    d = xs_dict_set(d, "name", hashtag + 1);
+                    d = xs_dict_set(d, "url", s);
+                    d = xs_dict_set(d, "history", xs_stock(XSTYPE_LIST));
+
+                    r = xs_list_append(r, d);
+                }
+            }
+
+            *body  = xs_json_dumps(r, 4);
+            *ctype = "application/json";
+            status = HTTP_STATUS_OK;
+        }
+        else
+            status = HTTP_STATUS_UNAUTHORIZED;
+    }
+    else
+    if (strcmp(cmd, "/v1/blocks") == 0) { /** **/
+        *body  = xs_dup("[]");
+        *ctype = "application/json";
+        status = HTTP_STATUS_OK;
+    }
+    else
+    if (strcmp(cmd, "/v1/mutes") == 0) { /** **/
         *body  = xs_dup("[]");
         *ctype = "application/json";
         status = HTTP_STATUS_OK;
