@@ -3550,7 +3550,7 @@ void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries)
             xs *irt_obj = NULL;
 
             if (valid_status(object_get(in_reply_to, &irt_obj)))
-                msg = xs_dict_set(msg, "inReplyTo", irt_obj);
+                msg = xs_dict_set(msg, "reply", irt_obj);
         }
 
         xs *qmsg = _new_qmsg("notify_webhook", msg, retries);
