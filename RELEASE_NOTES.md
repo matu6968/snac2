@@ -12,7 +12,7 @@ If a metadata value is an account handler, it's also tried to be validated (rel=
 
 Another search by URL tweak (this time for Pixelfed links).
 
-Mastodon API: fixed a bug that made some boosts disappear after being shown in apps like Tusky.
+Mastodon API: fixed a bug that made some boosts disappear after being shown in apps like Tusky, added followed hashtags maintenance.
 
 Renamed command-line actions `create_list` to `list_create` and `delete_list` to `list_remove`.
 
