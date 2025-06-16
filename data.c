@@ -3543,6 +3543,16 @@ void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries)
         if (valid_status(object_get(xs_dict_get(noti, "actor"), &actor_obj)) && actor_obj)
             msg = xs_dict_set(msg, "account", actor_obj);
 
+        /* if this post is a reply, also add the inReplyTo object */
+        const char *in_reply_to = xs_dict_get_path(msg, "msg.object.inReplyTo");
+
+        if (xs_is_string(in_reply_to)) {
+            xs *irt_obj = NULL;
+
+            if (valid_status(object_get(in_reply_to, &irt_obj)))
+                msg = xs_dict_set(msg, "inReplyTo", irt_obj);
+        }
+
         xs *qmsg = _new_qmsg("notify_webhook", msg, retries);
         const char *ntid = xs_dict_get(qmsg, "ntid");
         xs *fn   = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
