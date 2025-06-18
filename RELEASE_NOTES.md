@@ -16,6 +16,8 @@ Mastodon API: fixed a bug that made some boosts disappear after being shown in a
 
 Renamed command-line actions `create_list` to `list_create` and `delete_list` to `list_remove`.
 
+The default favicon URL can be changed from the server configuration.
+
 ## 2.78
 
 Hashtag following also allow URLs to RSS feeds of ActivityPub objects (like e.g. https://mastodon.social/tags/ThankYouTuesday).
