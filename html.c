@@ -636,13 +636,18 @@ static xs_html *html_base_head(void)
             xs_html_attr("content", USER_AGENT)));
 
     /* add server CSS and favicon */
-    xs *f;
-    f = xs_fmt("%s/favicon.ico", srv_baseurl);
+    xs *f = NULL;
+    const char *favicon = xs_dict_get(srv_config, "favicon_url");
+
+    if (xs_is_string(favicon))
+        f = xs_dup(favicon);
+    else
+        f = xs_fmt("%s/favicon.ico", srv_baseurl);
+
     const xs_list *p = xs_dict_get(srv_config, "cssurls");
     const char *v;
-    int c = 0;
 
-    while (xs_list_next(p, &v, &c)) {
+    xs_list_foreach(p, v) {
         xs_html_add(head,
             xs_html_sctag("link",
                 xs_html_attr("rel",  "stylesheet"),
