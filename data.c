@@ -333,6 +333,7 @@ int user_open_by_md5(snac *snac, const char *md5)
     return 0;
 }
 
+
 int user_persist(snac *snac, int publish)
 /* store user */
 {
@@ -348,7 +349,7 @@ int user_persist(snac *snac, int publish)
 
             if (old != NULL) {
                 int nw = 0;
-                const char *fields[] = { "header", "avatar", "name", "bio",
+                const char *fields[] = { "header", "avatar", "name", "bio", "alias", "alias_raw",
                                          "metadata", "latitude", "longitude", NULL };
 
                 for (int n = 0; fields[n]; n++) {
