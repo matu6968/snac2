@@ -59,6 +59,7 @@ int usage(const char *cmd)
         "verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n"
         "search {basedir} {uid} {regex}       Searches posts by content\n"
         "export_csv {basedir} {uid}           Exports followers, lists, MUTEd and bookmarks to CSV\n"
+        "export_posts {basedir} {iod}         Exports all posts to outbox.json\n"
         "alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n"
         "migrate {basedir} {uid}              Migrates to the account defined as the alias\n"
         "import_csv {basedir} {uid}           Imports data from CSV files\n"
@@ -305,6 +306,11 @@ int main(int argc, char *argv[])
 
     if (strcmp(cmd, "export_csv") == 0) { /** **/
         export_csv(&snac);
+        return 0;
+    }
+
+    if (strcmp(cmd, "export_posts") == 0) { /** **/
+        export_posts(&snac);
         return 0;
     }
 

@@ -434,6 +434,8 @@ void mastoapi_purge(void);
 void verify_links(snac *user);
 
 void export_csv(snac *user);
+void export_posts(snac *user);
+
 int migrate_account(snac *user);
 
 void import_blocked_accounts_csv(snac *user, const char *fn);

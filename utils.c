@@ -725,6 +725,58 @@ void export_csv(snac *user)
 }
 
 
+void export_posts(snac *user)
+/* exports all posts to an OrderedCollection */
+{
+    xs *ifn = xs_fmt("%s/public.idx", user->basedir);
+    xs *index = index_list(ifn, XS_ALL);
+    xs *ofn = xs_fmt("%s/export/outbox.json", user->basedir);
+    FILE *f;
+
+    if ((f = fopen(ofn, "w")) == NULL) {
+        snac_log(user, xs_fmt("Cannot create file %s", ofn));
+        return;
+    }
+
+    int cnt = 0;
+
+    /* raw output */
+    fprintf(f, "{\"@context\": \"https:/" "/www.w3.org/ns/activitystreams\",");
+    fprintf(f, "\"id\": \"outbox.json\",");
+    fprintf(f, "\"type\": \"OrderedCollection\",");
+    fprintf(f, "\"orderedItems\": [");
+
+    const char *md5;
+
+    snac_log(user, xs_fmt("Creating %s...", ofn));
+
+    xs_list_foreach(index, md5) {
+        xs *obj = NULL;
+
+        if (!valid_status(object_get_by_md5(md5, &obj)))
+            continue;
+
+        const char *type = xs_dict_get(obj, "type");
+
+        if (!xs_is_string(type) || strcmp(type, "Note"))
+            continue;
+
+        const char *atto = get_atto(obj);
+
+        if (!xs_is_string(atto) || strcmp(atto, user->actor))
+            continue;
+
+        xs *c_msg = msg_create(user, obj);
+        xs_json_dump(c_msg, 0, f);
+        cnt++;
+    }
+
+    fprintf(f, "], \"totalItems\": %d}", cnt);
+
+    fclose(f);
+}
+
+
 void import_blocked_accounts_csv(snac *user, const char *ifn)
 /* imports a Mastodon CSV file of blocked accounts */
 {
