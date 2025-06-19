@@ -766,6 +766,9 @@ void export_posts(snac *user)
         if (!xs_is_string(atto) || strcmp(atto, user->actor))
             continue;
 
+        if (cnt)
+            fprintf(f, ",");
+
         xs *c_msg = msg_create(user, obj);
         xs_json_dump(c_msg, 0, f);
         cnt++;
