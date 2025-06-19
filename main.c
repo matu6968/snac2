@@ -58,7 +58,7 @@ int usage(const char *cmd)
         "unmute {basedir} {uid} {actor}       Unmutes a previously muted actor\n"
         "verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n"
         "search {basedir} {uid} {regex}       Searches posts by content\n"
-        "export_csv {basedir} {uid}           Exports data as CSV files\n"
+        "export_csv {basedir} {uid}           Exports followers, lists, MUTEd and bookmarks to CSV\n"
         "alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n"
         "migrate {basedir} {uid}              Migrates to the account defined as the alias\n"
         "import_csv {basedir} {uid}           Imports data from CSV files\n"
