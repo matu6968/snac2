@@ -2337,6 +2337,21 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         status = HTTP_STATUS_OK;
     }
     else
+    if (strcmp(cmd, "/v1/instance/extended_description") == 0) { /** **/
+        xs *d = xs_dict_new();
+        xs *greeting = xs_fmt("%s/greeting.html", srv_basedir);
+        time_t t = mtime(greeting);
+        xs *updated_at = xs_str_iso_date(t);
+        xs *content = xs_replace(snac_blurb, "%host%", xs_dict_get(srv_config, "host"));
+
+        d = xs_dict_set(d, "updated_at", updated_at);
+        d = xs_dict_set(d, "content", content);
+
+        *body  = xs_json_dumps(d, 4);
+        *ctype = "application/json";
+        status = HTTP_STATUS_OK;
+    }
+    else
     if (xs_startswith(cmd, "/v1/statuses/")) { /** **/
         /* information about a status */
         if (logged_in) {
