@@ -8,6 +8,7 @@
 #define MAX_JSON_DEPTH 32
 #endif
 
+void xs_json_dump_value(const xs_val *data, int level, int indent, FILE *f);
 int xs_json_dump(const xs_val *data, int indent, FILE *f);
 xs_str *xs_json_dumps(const xs_val *data, int indent);
 
@@ -77,7 +78,7 @@ static void _xs_json_indent(int level, int indent, FILE *f)
 }
 
 
-static void _xs_json_dump(const xs_val *data, int level, int indent, FILE *f)
+void xs_json_dump_value(const xs_val *data, int level, int indent, FILE *f)
 /* dumps partial data as JSON */
 {
     int c = 0;
@@ -108,7 +109,7 @@ static void _xs_json_dump(const xs_val *data, int level, int indent, FILE *f)
                 fputc(',', f);
 
             _xs_json_indent(level + 1, indent, f);
-            _xs_json_dump(v, level + 1, indent, f);
+            xs_json_dump_value(v, level + 1, indent, f);
 
             c++;
         }
@@ -135,7 +136,7 @@ static void _xs_json_dump(const xs_val *data, int level, int indent, FILE *f)
             if (indent)
                 fputc(' ', f);
 
-            _xs_json_dump(v, level + 1, indent, f);
+            xs_json_dump_value(v, level + 1, indent, f);
 
             c++;
         }
@@ -151,6 +152,20 @@ static void _xs_json_dump(const xs_val *data, int level, int indent, FILE *f)
     default:
         break;
     }
+}
+
+
+int xs_json_dump(const xs_val *data, int indent, FILE *f)
+/* dumps data into a file as JSON */
+{
+    xstype t = xs_type(data);
+
+    if (t == XSTYPE_LIST || t == XSTYPE_DICT) {
+        xs_json_dump_value(data, 0, indent, f);
+        return 1;
+    }
+
+    return 0;
 }
 
 
@@ -170,20 +185,6 @@ xs_str *xs_json_dumps(const xs_val *data, int indent)
     }
 
     return s;
-}
-
-
-int xs_json_dump(const xs_val *data, int indent, FILE *f)
-/* dumps data into a file as JSON */
-{
-    xstype t = xs_type(data);
-
-    if (t == XSTYPE_LIST || t == XSTYPE_DICT) {
-        _xs_json_dump(data, 0, indent, f);
-        return 1;
-    }
-
-    return 0;
 }
 
 
@@ -370,6 +371,8 @@ int xs_json_load_array_iter(FILE *f, xs_val **value, xstype *pt, int *c)
         else
             return -1;
     }
+    else
+        *pt = xs_type(*value);
 
     *c = *c + 1;
 
@@ -466,6 +469,8 @@ int xs_json_load_object_iter(FILE *f, xs_str **key, xs_val **value, xstype *pt, 
         else
             return -1;
     }
+    else
+        *pt = xs_type(*value);
 
     *c = *c + 1;
 
