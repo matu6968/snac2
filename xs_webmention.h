@@ -5,6 +5,7 @@
 #define _XS_WEBMENTION_H
 
 int xs_webmention_send(const char *source, const char *target, const char *user_agent);
+int xs_webmention_hook(const char *source, const char *target, const char *user_agent);
 
 
 #ifdef XS_IMPLEMENTATION
@@ -113,6 +114,47 @@ int xs_webmention_send(const char *source, const char *target, const char *user_
     }
     else
         status = 0;
+
+    return status;
+}
+
+
+int xs_webmention_hook(const char *source, const char *target, const char *user_agent)
+/* a Webmention has been received for a target that is ours; check if the source
+   really contains a link to our target */
+{
+    int status = 0;
+
+    xs *ua = xs_fmt("%s (Webmention)", user_agent ? user_agent : "xs_webmention");
+    xs *headers = xs_dict_new();
+    headers = xs_dict_set(headers, "accept", "text/html");
+    headers = xs_dict_set(headers, "user-agent", ua);
+
+    xs *g_req = NULL;
+    xs *payload = NULL;
+    int p_size = 0;
+
+    g_req = xs_http_request("GET", source, headers, NULL, 0, &status, &payload, &p_size, 0);
+
+    if (status < 200 || status > 299)
+        return -1;
+
+    if (!xs_is_string(payload))
+        return -2;
+
+    /* note: a "rogue" webmention can include a link to our target in commented-out HTML code */
+
+    xs *links = xs_regex_select(payload, "<(a +|link +)[^>]+>");
+    const char *link;
+
+    status = 0;
+    xs_list_foreach(links, link) {
+        /* if the link contains our target, it's valid */
+        if (xs_str_in(link, target) != -1) {
+            status = 1;
+            break;
+        }
+    }
 
     return status;
 }

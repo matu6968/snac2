@@ -868,6 +868,14 @@ xs_html *html_user_head(snac *user, const char *desc, const char *url)
             xs_html_attr("type", "application/activity+json"),
             xs_html_attr("href", url ? url : user->actor)));
 
+    /* webmention hook */
+    xs *wbh = xs_fmt("%s/webmention-hook", srv_baseurl);
+
+    xs_html_add(head,
+        xs_html_sctag("link",
+            xs_html_attr("rel", "webmention"),
+            xs_html_attr("href", wbh)));
+
     return head;
 }
 
@@ -3407,13 +3415,15 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
         const char *actor_id = xs_dict_get(noti, "actor");
         xs *actor = NULL;
+        xs *a_name = NULL;
 
-        if (!valid_status(actor_get(actor_id, &actor)))
-            continue;
+        if (valid_status(actor_get(actor_id, &actor)))
+            a_name = actor_name(actor, proxy);
+        else
+            a_name = xs_dup(actor_id);
 
-        xs *a_name = actor_name(actor, proxy);
-        xs *label_sanatized = sanitize(type);
-        const char *label = label_sanatized;
+        xs *label_sanitized = sanitize(type);
+        const char *label = label_sanitized;
 
         if (strcmp(type, "Create") == 0)
             label = L("Mention");

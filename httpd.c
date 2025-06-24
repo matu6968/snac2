@@ -12,6 +12,7 @@
 #include "xs_openssl.h"
 #include "xs_fcgi.h"
 #include "xs_html.h"
+#include "xs_webmention.h"
 
 #include "snac.h"
 
@@ -373,6 +374,63 @@ int server_get_handler(xs_dict *req, const char *q_path,
 }
 
 
+int server_post_handler(const xs_dict *req, const char *q_path,
+                      char *payload, int p_size,
+                      char **body, int *b_size, char **ctype)
+{
+    int status = 0;
+
+    if (strcmp(q_path, "/webmention-hook") == 0) {
+        status = HTTP_STATUS_BAD_REQUEST;
+
+        const xs_dict *p_vars = xs_dict_get(req, "p_vars");
+
+        if (!xs_is_dict(p_vars))
+            return status;
+
+        const char *source = xs_dict_get(p_vars, "source");
+        const char *target = xs_dict_get(p_vars, "target");
+
+        if (!xs_is_string(source) || !xs_is_string(target)) {
+            srv_debug(1, xs_fmt("webmention-hook bad source or target"));
+            return status;
+        }
+
+        if (!xs_startswith(target, srv_baseurl)) {
+            srv_debug(1, xs_fmt("webmention-hook unknown target %s", target));
+            return status;
+        }
+
+        if (!object_here(target)) {
+            srv_debug(0, xs_fmt("webmention-hook target %s not / no longer here", target));
+            return status;
+        }
+
+        /* get the user */
+        xs *s1 = xs_replace(target, srv_baseurl, "");
+
+        xs *l1 = xs_split(s1, "/");
+        const char *uid = xs_list_get(l1, 1);
+        snac user;
+
+        if (!xs_is_string(uid) || !user_open(&user, uid))
+            return status;
+
+        int r = xs_webmention_hook(source, target, USER_AGENT);
+
+        if (r > 0)
+            notify_add(&user, "Webmention", NULL, source, target, xs_stock(XSTYPE_DICT));
+
+        srv_log(xs_fmt("webmention-hook source=%s target=%s %d", source, target, r));
+
+        user_free(&user);
+        status = HTTP_STATUS_OK;
+    }
+
+    return status;
+}
+
+
 void httpd_connection(FILE *f)
 /* the connection processor */
 {
@@ -443,6 +501,10 @@ void httpd_connection(FILE *f)
     }
     else
     if (strcmp(method, "POST") == 0) {
+
+        if (status == 0)
+            status = server_post_handler(req, q_path,
+                        payload, p_size, &body, &b_size, &ctype);
 
 #ifndef NO_MASTODON_API
         if (status == 0)
