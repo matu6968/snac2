@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+Added a server-wide Webmention hook; this way, if somebody out there (that supports Webmention) links to a user or post in this instance, a notification is sent (this is the complementary of what was implemented in version 2.76).
+
 Fixed regression while sending email via pipe on OpenBSD.
 
 Fixed Markdown parsing when the URL has parenthesis.
