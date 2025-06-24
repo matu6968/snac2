@@ -380,6 +380,12 @@ int server_post_handler(const xs_dict *req, const char *q_path,
 {
     int status = 0;
 
+    (void)payload;
+    (void)p_size;
+    (void)body;
+    (void)b_size;
+    (void)ctype;
+
     if (strcmp(q_path, "/webmention-hook") == 0) {
         status = HTTP_STATUS_BAD_REQUEST;
 
