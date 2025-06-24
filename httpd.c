@@ -407,11 +407,6 @@ int server_post_handler(const xs_dict *req, const char *q_path,
             return status;
         }
 
-        if (!object_here(target)) {
-            srv_debug(0, xs_fmt("webmention-hook target %s not / no longer here", target));
-            return status;
-        }
-
         /* get the user */
         xs *s1 = xs_replace(target, srv_baseurl, "");
 
@@ -419,13 +414,17 @@ int server_post_handler(const xs_dict *req, const char *q_path,
         const char *uid = xs_list_get(l1, 1);
         snac user;
 
-        if (!xs_is_string(uid) || !user_open(&user, uid))
+        if (!xs_is_string(uid) || !user_open(&user, uid)) {
+            srv_debug(1, xs_fmt("webmention-hook cannot find user for %s", target));
             return status;
+        }
 
         int r = xs_webmention_hook(source, target, USER_AGENT);
 
-        if (r > 0)
+        if (r > 0) {
             notify_add(&user, "Webmention", NULL, source, target, xs_stock(XSTYPE_DICT));
+            timeline_touch(&user);
+        }
 
         srv_log(xs_fmt("webmention-hook source=%s target=%s %d", source, target, r));
 

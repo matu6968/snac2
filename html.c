@@ -3531,6 +3531,13 @@ xs_str *html_notifications(snac *user, int skip, int show)
                             xs_html_text(L("Context")))),
                     h);
             }
+            else
+                xs_html_add(entry,
+                    xs_html_tag("p",
+                        xs_html_text(L("Location: ")),
+                        xs_html_tag("a",
+                            xs_html_attr("href", id),
+                            xs_html_text(id))));
         }
 
         if (strcmp(v, n_time) > 0) {
