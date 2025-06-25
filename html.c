@@ -3495,10 +3495,11 @@ xs_str *html_notifications(snac *user, int skip, int show)
             html_label);
 
         if (strcmp(type, "Follow") == 0 || strcmp(utype, "Follow") == 0 || strcmp(type, "Block") == 0) {
-            xs_html_add(entry,
-                xs_html_tag("div",
-                    xs_html_attr("class", "snac-post"),
-                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy, NULL, NULL)));
+            if (actor)
+                xs_html_add(entry,
+                    xs_html_tag("div",
+                        xs_html_attr("class", "snac-post"),
+                        html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy, NULL, NULL)));
         }
         else
         if (strcmp(type, "Move") == 0) {
