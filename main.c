@@ -7,6 +7,7 @@
 #include "xs_time.h"
 #include "xs_openssl.h"
 #include "xs_match.h"
+#include "xs_random.h"
 
 #include "snac.h"
 
@@ -779,12 +780,24 @@ int main(int argc, char *argv[])
         xs *msg = NULL;
         xs *c_msg = NULL;
         xs *attl = xs_list_new();
-        char *fn = NULL;
+        const char *fn = NULL;
+        const char *in_reply_to = NULL;
+        const char **next = NULL;
 
         /* iterate possible attachments */
         while ((fn = GET_ARGV())) {
             FILE *f;
 
+            if (next) {
+                *next = fn;
+                next = NULL;
+            }
+            else
+            if (strcmp(fn, "-r") == 0) {
+                /* next argument is an inReplyTo */
+                next = &in_reply_to;
+            }
+            else
             if ((f = fopen(fn, "rb")) != NULL) {
                 /* get the file size and content */
                 fseek(f, 0, SEEK_END);
@@ -794,8 +807,10 @@ int main(int argc, char *argv[])
                 fclose(f);
 
                 char *ext = strrchr(fn, '.');
-                xs *hash  = xs_md5_hex(fn, strlen(fn));
-                xs *id    = xs_fmt("%s%s", hash, ext);
+                char rnd[32];
+                xs_rnd_buf(rnd, sizeof(rnd));
+                xs *hash  = xs_md5_hex(rnd, sizeof(rnd));
+                xs *id    = xs_fmt("post-%s%s", hash, ext ? ext : "");
                 xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
 
                 /* store */
@@ -856,7 +871,7 @@ int main(int argc, char *argv[])
         if (strcmp(cmd, "note_unlisted") == 0)
             scope = 2;
 
-        msg = msg_note(&snac, content, NULL, NULL, attl, scope, getenv("LANG"), NULL);
+        msg = msg_note(&snac, content, NULL, in_reply_to, attl, scope, getenv("LANG"), NULL);
 
         c_msg = msg_create(&snac, msg);
 
