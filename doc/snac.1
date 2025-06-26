@@ -284,7 +284,7 @@ Requests an object and dumps it to stdout. This is a very low
 level command that is not very useful to you.
 .It Cm announce Ar basedir Ar uid Ar url
 Announces (boosts) a post via its URL.
-.It Cm note Ar basedir Ar uid Ar text Op file file ...
+.It Cm note Ar basedir Ar uid Ar text Op file file ... Op -r inReplyTo
 Enqueues a Create + Note message to all followers. If the
 .Ar text
 argument is -e, the external editor defined by the EDITOR
@@ -292,10 +292,11 @@ environment variable will be invoked to prepare a message; if
 it's - (a lonely hyphen), the post content will be read from stdin.
 The rest of command line arguments are treated as media files to be
 attached to the post. The LANG environment variable (if defined) is used
-as the post language.
-.It Cm note_unlisted Ar basedir Ar uid Ar text Op file file ...
+as the post language. An optional URL to a Fediverse post can be specified
+for this note to be a reply to.
+.It Cm note_unlisted Ar basedir Ar uid Ar text Op file file ... Op -r inReplyTo
 Like the previous one, but creates an "unlisted" (or "quiet public") post.
-.It Cm note_mention Ar basedir Ar uid Ar text Op file file ...
+.It Cm note_mention Ar basedir Ar uid Ar text Op file file ... Op -r inReplyTo
 Like the previous one, but creates a post only for accounts mentioned
 in the post body.
 .It Cm block Ar basedir Ar instance_url
