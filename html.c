@@ -2008,8 +2008,13 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     }
 
     if ((user == NULL || strcmp(actor, user->actor) != 0)
-        && !valid_status(actor_get(actor, NULL)))
+        && !valid_status(actor_get(actor, NULL))) {
+
+        if (user)
+            enqueue_actor_refresh(user, actor, 0);
+
         return NULL;
+    }
 
     /** html_entry top tag **/
     xs_html *entry_top = xs_html_tag("div", NULL);
