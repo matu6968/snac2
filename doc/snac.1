@@ -292,8 +292,8 @@ environment variable will be invoked to prepare a message; if
 it's - (a lonely hyphen), the post content will be read from stdin.
 The rest of command line arguments are treated as media files to be
 attached to the post. The LANG environment variable (if defined) is used
-as the post language. An optional URL to a Fediverse post can be specified
-for this note to be a reply to.
+as the post language. An optional URL to a Fediverse post, prefixed by -r,
+can be specified for this note to be a reply to.
 .It Cm note_unlisted Ar basedir Ar uid Ar text Op file file ... Op -r inReplyTo
 Like the previous one, but creates an "unlisted" (or "quiet public") post.
 .It Cm note_mention Ar basedir Ar uid Ar text Op file file ... Op -r inReplyTo
