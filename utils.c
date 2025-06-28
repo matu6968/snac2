@@ -45,6 +45,7 @@ static const char *default_srv_config = "{"
 static const char *default_css =
     "body { max-width: 48em; margin: auto; line-height: 1.5; padding: 0.8em; word-wrap: break-word; }\n"
     "pre { overflow-x: scroll; }\n"
+    "blockquote { font-style: italic; }\n"
     ".snac-embedded-video, img { max-width: 100% }\n"
     ".snac-origin { font-size: 85% }\n"
     ".snac-score { float: right; font-size: 85% }\n"
