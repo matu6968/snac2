@@ -1344,15 +1344,19 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
     if ((f = fopen(index_fn, "r")) == NULL)
         return out;
 
-    const char *max_id   = xs_dict_get(args, "max_id");
-    const char *since_id = xs_dict_get(args, "since_id");
-    const char *min_id   = xs_dict_get(args, "min_id"); /* unsupported old-to-new navigation */
+    const char *o_max_id   = xs_dict_get(args, "max_id");
+    const char *o_since_id = xs_dict_get(args, "since_id");
+    const char *o_min_id   = xs_dict_get(args, "min_id"); /* unsupported old-to-new navigation */
     const char *limit_s  = xs_dict_get(args, "limit");
     int (*iterator)(FILE *, char *);
     int initial_status = 0;
     int ascending = 0;
     int limit = 0;
     int cnt   = 0;
+
+    xs *max_id   = o_max_id ? xs_tolower_i(xs_dup(o_max_id)) : NULL;
+    xs *since_id = o_since_id ? xs_tolower_i(xs_dup(o_since_id)) : NULL;
+    xs *min_id   = o_min_id ? xs_tolower_i(xs_dup(o_min_id)) : NULL;
 
     if (!xs_is_null(limit_s))
         limit = atoi(limit_s);
