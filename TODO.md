@@ -14,6 +14,8 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
+The local purge should generate `Delete` activities for local posts.
+
 Add account reporting.
 
 Add a list option to hide member posts from the main timeline, see https://codeberg.org/grunfink/snac2/issues/383
