@@ -1381,7 +1381,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
             /* only return entries older that max_id */
             if (max_id) {
                 if (strcmp(md5, MID_TO_MD5(max_id)) == 0) {
-                    max_id = NULL;
+                    max_id = xs_free(max_id);
                     if (ascending)
                         break;
                 }
@@ -1394,7 +1394,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
                 if (strcmp(md5, MID_TO_MD5(since_id)) == 0) {
                     if (!ascending)
                         break;
-                    since_id = NULL;
+                    since_id = xs_free(since_id);
                 }
                 if (ascending)
                     continue;
