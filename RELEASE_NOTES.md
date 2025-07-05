@@ -1,5 +1,9 @@
 # Release Notes
 
+## UNRELEASED
+
+Mastodon API: fixed a bug (introduced in previous version in the "boosts disappear" fix) that made timelines shorter than it should.
+
 ## 2.79
 
 Added a server-wide Webmention hook; this way, if somebody out there (that supports Webmention) links to a user or post in this instance, a notification is sent (this is the complementary of what was implemented in version 2.76).
