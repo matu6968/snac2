@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-Mastodon API: fixed a bug (introduced in previous version in the "boosts disappear" fix) that made timelines shorter than it should.
+Mastodon API: fixed a regression (introduced in previous version in the "boosts disappear in Tusky" fix) that interrupted timelines.
 
 ## 2.79
 
