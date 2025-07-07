@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.80
 
 Mastodon API: fixed a regression (introduced in previous version in the "boosts disappear in Tusky" fix) that interrupted timelines.
 
