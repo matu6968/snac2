@@ -93,7 +93,7 @@ int webfinger_request_signed(snac *snac, const char *qs, xs_str **actor, xs_str 
         if (user != NULL) {
             const char *subject = xs_dict_get(obj, "subject");
 
-            if (subject)
+            if (subject && xs_startswith(subject, "acct:"))
                 *user = xs_replace_n(subject, "acct:", "", 1);
         }
 
