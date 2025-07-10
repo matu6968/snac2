@@ -66,7 +66,9 @@ const char *nodeinfo_2_0_template = ""
     "\"services\":{\"outbound\":[],\"inbound\":[]},"
     "\"usage\":{\"users\":{\"total\":%d,\"activeMonth\":%d,\"activeHalfyear\":%d},"
     "\"localPosts\":%d},"
-    "\"openRegistrations\":false,\"metadata\":{}}";
+    "\"openRegistrations\":false,\"metadata\":{"
+    "\"nodeDescription\":\"%s\",\"nodeName\":\"%s\""
+    "}}";
 
 xs_str *nodeinfo_2_0(void)
 /* builds a nodeinfo json object */
@@ -99,7 +101,10 @@ xs_str *nodeinfo_2_0(void)
         n_posts += index_len(pidxfn);
     }
 
-    return xs_fmt(nodeinfo_2_0_template, n_utotal, n_umonth, n_uhyear, n_posts);
+    const char *name = xs_dict_get_def(srv_config, "title", "");
+    const char *desc = xs_dict_get_def(srv_config, "short_description", "");
+
+    return xs_fmt(nodeinfo_2_0_template, n_utotal, n_umonth, n_uhyear, n_posts, desc, name);
 }
 
 
