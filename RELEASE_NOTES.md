@@ -1,5 +1,11 @@
 # Release Notes
 
+## UNRELEASED
+
+Included a small tweak to avoid being confused by implementations that return valid webfinger queries for non-account URLs (like i.e. the Wordpress ActivityPub plugin in some configurations).
+
+Added Ukrainian translation (contributed by wincentbalin).
+
 ## 2.80
 
 Mastodon API: fixed a regression (introduced in previous version in the "boosts disappear in Tusky" fix) that interrupted timelines.
