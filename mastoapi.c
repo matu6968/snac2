@@ -15,6 +15,7 @@
 #include "xs_url.h"
 #include "xs_mime.h"
 #include "xs_match.h"
+#include "xs_unicode.h"
 
 #include "snac.h"
 
@@ -381,7 +382,7 @@ int oauth_post_handler(const xs_dict *req, const char *q_path,
             }
         }
 
-        /* no code? 
+        /* no code?
            I'm not sure of the impacts of this right now, but Subway Tooter does not
            provide a code so one must be generated */
         if (xs_is_null(code)){
@@ -1133,9 +1134,14 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
             bst = xs_dict_set(bst, "content", "");
             bst = xs_dict_set(bst, "reblog", st);
 
+            xs *b_id = xs_toupper_i(xs_dup(xs_dict_get(st, "id")));
+            bst = xs_dict_set(bst, "id", b_id);
+
             xs_free(st);
             st = bst;
         }
+        else
+            xs_free(bst);
     }
 
     return st;
@@ -1338,15 +1344,19 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
     if ((f = fopen(index_fn, "r")) == NULL)
         return out;
 
-    const char *max_id   = xs_dict_get(args, "max_id");
-    const char *since_id = xs_dict_get(args, "since_id");
-    const char *min_id   = xs_dict_get(args, "min_id"); /* unsupported old-to-new navigation */
+    const char *o_max_id   = xs_dict_get(args, "max_id");
+    const char *o_since_id = xs_dict_get(args, "since_id");
+    const char *o_min_id   = xs_dict_get(args, "min_id"); /* unsupported old-to-new navigation */
     const char *limit_s  = xs_dict_get(args, "limit");
     int (*iterator)(FILE *, char *);
     int initial_status = 0;
     int ascending = 0;
     int limit = 0;
     int cnt   = 0;
+
+    xs *max_id   = o_max_id ? xs_tolower_i(xs_dup(o_max_id)) : NULL;
+    xs *since_id = o_since_id ? xs_tolower_i(xs_dup(o_since_id)) : NULL;
+    xs *min_id   = o_min_id ? xs_tolower_i(xs_dup(o_min_id)) : NULL;
 
     if (!xs_is_null(limit_s))
         limit = atoi(limit_s);
@@ -1371,7 +1381,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
             /* only return entries older that max_id */
             if (max_id) {
                 if (strcmp(md5, MID_TO_MD5(max_id)) == 0) {
-                    max_id = NULL;
+                    max_id = xs_free(max_id);
                     if (ascending)
                         break;
                 }
@@ -1384,7 +1394,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
                 if (strcmp(md5, MID_TO_MD5(since_id)) == 0) {
                     if (!ascending)
                         break;
-                    since_id = NULL;
+                    since_id = xs_free(since_id);
                 }
                 if (ascending)
                     continue;
@@ -1637,7 +1647,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 const char *aq = xs_dict_get(args, "q");
 
                 if (!xs_is_null(aq)) {
-                    xs *q    = xs_tolower_i(xs_dup(aq));
+                    xs *q    = xs_utf8_to_lower(aq);
                     out      = xs_list_new();
                     xs *wing = following_list(&snac1);
                     xs *wers = follower_list(&snac1);
@@ -1780,7 +1790,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                     }
                     else
                     if (strcmp(opt, "statuses") == 0) {
-                        /* we don't serve statuses of others; return the empty list */ 
+                        /* we don't serve statuses of others; return the empty list */
                         out = xs_list_new();
                     }
                     else
@@ -1999,7 +2009,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v2/filters") == 0) { /** **/
-        /* snac will never have filters 
+        /* snac will never have filters
          * but still, without a v2 endpoint a short delay is introduced
          * in some apps */
         *body  = xs_dup("[]");
@@ -2331,19 +2341,36 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         status = HTTP_STATUS_OK;
     }
     else
+    if (strcmp(cmd, "/v1/instance/extended_description") == 0) { /** **/
+        xs *d = xs_dict_new();
+        xs *greeting = xs_fmt("%s/greeting.html", srv_basedir);
+        time_t t = mtime(greeting);
+        xs *updated_at = xs_str_iso_date(t);
+        xs *content = xs_replace(snac_blurb, "%host%", xs_dict_get(srv_config, "host"));
+
+        d = xs_dict_set(d, "updated_at", updated_at);
+        d = xs_dict_set(d, "content", content);
+
+        *body  = xs_json_dumps(d, 4);
+        *ctype = "application/json";
+        status = HTTP_STATUS_OK;
+    }
+    else
     if (xs_startswith(cmd, "/v1/statuses/")) { /** **/
         /* information about a status */
         if (logged_in) {
             xs *l = xs_split(cmd, "/");
-            const char *id = xs_list_get(l, 3);
+            const char *oid = xs_list_get(l, 3);
             const char *op = xs_list_get(l, 4);
 
-            if (!xs_is_null(id)) {
+            if (!xs_is_null(oid)) {
                 xs *msg = NULL;
                 xs *out = NULL;
 
                 /* skip the 'fake' part of the id */
-                id = MID_TO_MD5(id);
+                oid = MID_TO_MD5(oid);
+
+                xs *id = xs_tolower_i(xs_dup(oid));
 
                 if (valid_status(object_get_by_md5(id, &msg))) {
                     if (op == NULL) {
@@ -2459,7 +2486,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
         if (logged_in) {
             const xs_list *timeline = xs_dict_get(args, "timeline[]");
             xs_str *json = NULL;
-            if (!xs_is_null(timeline)) 
+            if (!xs_is_null(timeline))
                 json = xs_json_dumps(markers_get(&snac1, timeline), 4);
 
             if (!xs_is_null(json))
@@ -2475,6 +2502,40 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/followed_tags") == 0) { /** **/
+        if (logged_in) {
+            xs *r = xs_list_new();
+            const xs_list *followed_hashtags = xs_dict_get_def(snac1.config,
+                        "followed_hashtags", xs_stock(XSTYPE_LIST));
+            const char *hashtag;
+
+            xs_list_foreach(followed_hashtags, hashtag) {
+                if (*hashtag == '#') {
+                    xs *d = xs_dict_new();
+                    xs *s = xs_fmt("%s?t=%s", srv_baseurl, hashtag + 1);
+
+                    d = xs_dict_set(d, "name", hashtag + 1);
+                    d = xs_dict_set(d, "url", s);
+                    d = xs_dict_set(d, "history", xs_stock(XSTYPE_LIST));
+
+                    r = xs_list_append(r, d);
+                }
+            }
+
+            *body  = xs_json_dumps(r, 4);
+            *ctype = "application/json";
+            status = HTTP_STATUS_OK;
+        }
+        else
+            status = HTTP_STATUS_UNAUTHORIZED;
+    }
+    else
+    if (strcmp(cmd, "/v1/blocks") == 0) { /** **/
+        *body  = xs_dup("[]");
+        *ctype = "application/json";
+        status = HTTP_STATUS_OK;
+    }
+    else
+    if (strcmp(cmd, "/v1/mutes") == 0) { /** **/
         *body  = xs_dup("[]");
         *ctype = "application/json";
         status = HTTP_STATUS_OK;
@@ -2507,9 +2568,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                 /* reply something only for offset 0; otherwise,
                    apps like Tusky keep asking again and again */
                 if (xs_startswith(q, "https://")) {
-                    xs *md5 = xs_md5_hex(q, strlen(q));
-
-                    if (!timeline_here(&snac1, md5)) {
+                    if (!timeline_here(&snac1, q)) {
                         xs *object = NULL;
                         int status;
 
@@ -2979,8 +3038,10 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
 
                 if (*fn != '\0') {
                     char *ext = strrchr(fn, '.');
-                    xs *hash  = xs_md5_hex(fn, strlen(fn));
-                    xs *id    = xs_fmt("%s%s", hash, ext);
+                    char rnd[32];
+                    xs_rnd_buf(rnd, sizeof(rnd));
+                    xs *hash  = xs_md5_hex(rnd, sizeof(rnd));
+                    xs *id    = xs_fmt("post-%s%s", hash, ext ? ext : "");
                     xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
                     int fo    = xs_number_get(xs_list_get(file, 1));
                     int fs    = xs_number_get(xs_list_get(file, 2));
@@ -3227,7 +3288,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 if (!xs_is_null(home))
                     home_marker = xs_dict_get(home, "last_read_id");
             }
-            
+
             const xs_str *notify_marker = xs_dict_get(args, "notifications[last_read_id]");
             if (xs_is_null(notify_marker)) {
                 const xs_dict *notify = xs_dict_get(args, "notifications");
@@ -3292,6 +3353,54 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 *body = xs_json_dumps(rel, 4);
                 *ctype = "application/json";
                 status = HTTP_STATUS_OK;
+            }
+        }
+    }
+    else
+    if (xs_startswith(cmd, "/v1/tags/")) { /** **/
+        if (logged_in) {
+            xs *l = xs_split(cmd, "/");
+            const char *i_tag = xs_list_get(l, 3);
+            const char *cmd = xs_list_get(l, 4);
+
+            status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
+
+            if (xs_is_string(i_tag) && xs_is_string(cmd)) {
+                int ok = 0;
+
+                xs *tag = xs_fmt("#%s", i_tag);
+                xs *followed_hashtags = xs_dup(xs_dict_get_def(snac.config,
+                                "followed_hashtags", xs_stock(XSTYPE_LIST)));
+
+                if (strcmp(cmd, "follow") == 0) {
+                    followed_hashtags = xs_list_append(followed_hashtags, tag);
+                    ok = 1;
+                }
+                else
+                if (strcmp(cmd, "unfollow") == 0) {
+                    int off = xs_list_in(followed_hashtags, tag);
+
+                    if (off != -1)
+                        followed_hashtags = xs_list_del(followed_hashtags, off);
+
+                    ok = 1;
+                }
+
+                if (ok) {
+                    /* update */
+                    xs_dict_set(snac.config, "followed_hashtags", followed_hashtags);
+                    user_persist(&snac, 0);
+
+                    xs *d = xs_dict_new();
+                    xs *s = xs_fmt("%s?t=%s", srv_baseurl, i_tag);
+                    d = xs_dict_set(d, "name", i_tag);
+                    d = xs_dict_set(d, "url", s);
+                    d = xs_dict_set(d, "history", xs_stock(XSTYPE_LIST));
+
+                    *body = xs_json_dumps(d, 4);
+                    *ctype = "application/json";
+                    status = HTTP_STATUS_OK;
+                }
             }
         }
     }

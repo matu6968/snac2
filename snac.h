@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
-#define VERSION "2.77"
+#define VERSION "2.81-dev"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -164,7 +164,8 @@ int pending_count(snac *user);
 
 double timeline_mtime(snac *snac);
 int timeline_touch(snac *snac);
-int timeline_here(snac *snac, const char *md5);
+int timeline_here_by_md5(snac *snac, const char *md5);
+int timeline_here(snac *snac, const char *id);
 int timeline_get_by_md5(snac *snac, const char *md5, xs_dict **msg);
 int timeline_del(snac *snac, const char *id);
 xs_str *user_index_fn(snac *user, const char *idx_name);
@@ -293,6 +294,8 @@ void enqueue_object_request(snac *user, const char *id, int forward_secs);
 void enqueue_verify_links(snac *user);
 void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs);
 void enqueue_webmention(const xs_dict *msg);
+void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries);
+
 int was_question_voted(snac *user, const char *id);
 
 xs_list *user_queue(snac *snac);
@@ -322,7 +325,7 @@ void httpd(void);
 int webfinger_request_signed(snac *snac, const char *qs, xs_str **actor, xs_str **user);
 int webfinger_request(const char *qs, xs_str **actor, xs_str **user);
 int webfinger_request_fake(const char *qs, xs_str **actor, xs_str **user);
-int webfinger_get_handler(xs_dict *req, const char *q_path,
+int webfinger_get_handler(const xs_dict *req, const char *q_path,
                           xs_val **body, int *b_size, char **ctype);
 
 const char *default_avatar_base64(void);
@@ -394,8 +397,6 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 int html_post_handler(const xs_dict *req, const char *q_path,
                       char *payload, int p_size,
                       char **body, int *b_size, char **ctype);
-xs_str *timeline_to_rss(snac *user, const xs_list *timeline,
-                        const char *title, const char *link, const char *desc);
 
 int write_default_css(void);
 int snac_init(const char *_basedir);
@@ -433,6 +434,8 @@ void mastoapi_purge(void);
 void verify_links(snac *user);
 
 void export_csv(snac *user);
+void export_posts(snac *user);
+
 int migrate_account(snac *user);
 
 void import_blocked_accounts_csv(snac *user, const char *fn);
@@ -461,3 +464,8 @@ int badlogin_check(const char *user, const char *addr);
 void badlogin_inc(const char *user, const char *addr);
 
 const char *lang_str(const char *str, const snac *user);
+
+xs_str *rss_from_timeline(snac *user, const xs_list *timeline,
+                        const char *title, const char *link, const char *desc);
+void rss_to_timeline(snac *user, const char *url);
+void rss_poll_hashtags(void);

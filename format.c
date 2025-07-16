@@ -8,6 +8,7 @@
 #include "xs_json.h"
 #include "xs_time.h"
 #include "xs_match.h"
+#include "xs_unicode.h"
 
 #include "snac.h"
 
@@ -95,8 +96,8 @@ static xs_str *format_line(const char *line, xs_list **attach)
             "~~[^~]+~~"                         "|"
             "\\*\\*?\\*?[^\\*]+\\*?\\*?\\*"     "|"
             "__[^_]+__"                         "|" //anzu
-            "!\\[[^]]+\\]\\([^\\)]+\\)"         "|"
-            "\\[[^]]+\\]\\([^\\)]+\\)"          "|"
+            "!\\[[^]]+\\]\\([^\\)]+\\)\\)?"     "|"
+            "\\[[^]]+\\]\\([^\\)]+\\)\\)?"      "|"
             "[a-z]+:/" "/" NOSPACE              "|"
             "(mailto|xmpp):[^@[:space:]]+@" NOSPACE
         ")");
@@ -148,14 +149,15 @@ static xs_str *format_line(const char *line, xs_list **attach)
             else
             if (*v == '[') {
                 /* markdown-like links [label](url) */
-                xs *w = xs_strip_chars_i(
-                    xs_replace_i(xs_replace(v, "#", "&#35;"), "@", "&#64;"),
-                "![)");
+                xs *w = xs_replace_i(xs_replace(v, "#", "&#35;"), "@", "&#64;");
                 xs *l = xs_split_n(w, "](", 1);
 
                 if (xs_list_len(l) == 2) {
-                    const char *name = xs_list_get(l, 0);
-                    const char *url  = xs_list_get(l, 1);
+                    xs *name = xs_dup(xs_list_get(l, 0));
+                    xs *url  = xs_dup(xs_list_get(l, 1));
+
+                    name = xs_crop_i(name, 1, 0);
+                    url  = xs_crop_i(url, 0, -1);
 
                     xs *link = xs_fmt("<a href=\"%s\">%s</a>", url, name);
 
@@ -167,15 +169,17 @@ static xs_str *format_line(const char *line, xs_list **attach)
             else
             if (*v == '!') {
                 /* markdown-like images ![alt text](url to image) */
-                xs *w = xs_strip_chars_i(
-                    xs_replace_i(xs_replace(v, "#", "&#35;"), "@", "&#64;"),
-                "![)");
+                xs *w = xs_replace_i(xs_replace(v, "#", "&#35;"), "@", "&#64;");
                 xs *l = xs_split_n(w, "](", 1);
 
                 if (xs_list_len(l) == 2) {
-                    const char *alt_text = xs_list_get(l, 0);
-                    const char *img_url  = xs_list_get(l, 1);
-                    const char *mime     = xs_mime_by_ext(img_url);
+                    xs *alt_text = xs_dup(xs_list_get(l, 0));
+                    xs *img_url  = xs_dup(xs_list_get(l, 1));
+
+                    alt_text = xs_crop_i(alt_text, 2, 0);
+                    img_url  = xs_crop_i(img_url, 0, -1);
+
+                    const char *mime = xs_mime_by_ext(img_url);
 
                     if (attach != NULL && xs_startswith(mime, "image/")) {
                         const xs_dict *ad;
@@ -443,7 +447,7 @@ xs_str *sanitize(const char *content)
         if (n & 0x1) {
             xs *s1  = xs_strip_i(xs_crop_i(xs_dup(v), v[1] == '/' ? 2 : 1, -1));
             xs *l1  = xs_split_n(s1, " ", 1);
-            xs *tag = xs_tolower_i(xs_dup(xs_list_get(l1, 0)));
+            xs *tag = xs_utf8_to_lower(xs_list_get(l1, 0));
             xs *s2  = NULL;
             int i;
 

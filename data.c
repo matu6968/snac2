@@ -333,6 +333,7 @@ int user_open_by_md5(snac *snac, const char *md5)
     return 0;
 }
 
+
 int user_persist(snac *snac, int publish)
 /* store user */
 {
@@ -348,7 +349,7 @@ int user_persist(snac *snac, int publish)
 
             if (old != NULL) {
                 int nw = 0;
-                const char *fields[] = { "header", "avatar", "name", "bio",
+                const char *fields[] = { "header", "avatar", "name", "bio", "alias", "alias_raw",
                                          "metadata", "latitude", "longitude", NULL };
 
                 for (int n = 0; fields[n]; n++) {
@@ -1391,12 +1392,20 @@ xs_str *timeline_fn_by_md5(snac *snac, const char *md5)
 }
 
 
-int timeline_here(snac *snac, const char *md5)
+int timeline_here_by_md5(snac *snac, const char *md5)
 /* checks if an object is in the user cache */
 {
     xs *fn = timeline_fn_by_md5(snac, md5);
 
     return !(fn == NULL);
+}
+
+
+int timeline_here(snac *user, const char *id)
+{
+    xs *md5 = xs_md5_hex(id, strlen(id));
+
+    return timeline_here_by_md5(user, md5);
 }
 
 
@@ -1515,7 +1524,7 @@ xs_list *timeline_top_level(snac *snac, const xs_list *list)
                 break;
 
             /* well, there is a parent... but is it here? */
-            if (!timeline_here(snac, line2))
+            if (!timeline_here_by_md5(snac, line2))
                 break;
 
             /* it's here! try again with its own parent */
@@ -2217,7 +2226,7 @@ void tag_index(const char *id, const xs_dict *obj)
                 if (*name == '\0')
                     continue;
 
-                name = xs_tolower_i((xs_str *)name);
+                name = xs_utf8_to_lower((xs_str *)name);
 
                 xs *md5_tag   = xs_md5_hex(name, strlen(name));
                 xs *tag_dir   = xs_fmt("%s/%c%c", g_tag_dir, md5_tag[0], md5_tag[1]);
@@ -2235,7 +2244,7 @@ void tag_index(const char *id, const xs_dict *obj)
                     fclose(f);
                 }
 
-                srv_debug(0, xs_fmt("tagged %s #%s (#%s)", id, name, md5_tag));
+                srv_debug(1, xs_fmt("tagged %s #%s (#%s)", id, name, md5_tag));
             }
         }
     }
@@ -2247,7 +2256,7 @@ xs_str *tag_fn(const char *tag)
     if (*tag == '#')
         tag++;
 
-    xs *lw_tag = xs_tolower_i(xs_dup(tag));
+    xs *lw_tag = xs_utf8_to_lower(tag);
     xs *md5    = xs_md5_hex(lw_tag, strlen(lw_tag));
 
     return xs_fmt("%s/tag/%c%c/%s.idx", srv_basedir, md5[0], md5[1], md5);
@@ -2832,9 +2841,9 @@ int content_match(const char *file, const xs_dict *msg)
             srv_debug(1, xs_fmt("content_match: loading regexes from %s", fn));
 
             /* massage content (strip HTML tags, etc.) */
-            xs *c = xs_regex_replace(v, "<[^>]+>", " ");
-            c = xs_regex_replace_i(c, " {2,}", " ");
-            c = xs_tolower_i(c);
+            xs *c1 = xs_regex_replace(v, "<[^>]+>", " ");
+            c1 = xs_regex_replace_i(c1, " {2,}", " ");
+            xs *c = xs_utf8_to_lower(c1);
 
             while (!r && !feof(f)) {
                 xs *rx = xs_strip_i(xs_readline(f));
@@ -3158,6 +3167,9 @@ void notify_add(snac *snac, const char *type, const char *utype,
 
         pthread_mutex_unlock(&data_mutex);
     }
+
+    if (!xs_is_true(xs_dict_get(srv_config, "disable_notify_webhook")))
+        enqueue_notify_webhook(snac, noti, 0);
 }
 
 
@@ -3510,6 +3522,46 @@ void enqueue_webmention(const xs_dict *msg)
     qmsg = _enqueue_put(fn, qmsg);
 
     srv_debug(1, xs_fmt("enqueue_webmention"));
+}
+
+
+void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries)
+/* enqueues a notification webhook */
+{
+    const char *webhook = xs_dict_get(user->config, "notify_webhook");
+
+    if (xs_is_string(webhook) && xs_match(webhook, "https://*|http://*")) { /** **/
+        xs *msg = xs_dup(noti);
+
+        /* add more data */
+        msg = xs_dict_set(msg, "target", user->actor);
+        msg = xs_dict_set(msg, "uid", user->uid);
+        msg = xs_dict_set(msg, "basedir", srv_basedir);
+        msg = xs_dict_set(msg, "baseurl", srv_baseurl);
+
+        xs *actor_obj = NULL;
+
+        if (valid_status(object_get(xs_dict_get(noti, "actor"), &actor_obj)) && actor_obj)
+            msg = xs_dict_set(msg, "account", actor_obj);
+
+        /* if this post is a reply, also add the inReplyTo object */
+        const char *in_reply_to = xs_dict_get_path(msg, "msg.object.inReplyTo");
+
+        if (xs_is_string(in_reply_to)) {
+            xs *irt_obj = NULL;
+
+            if (valid_status(object_get(in_reply_to, &irt_obj)))
+                msg = xs_dict_set(msg, "reply", irt_obj);
+        }
+
+        xs *qmsg = _new_qmsg("notify_webhook", msg, retries);
+        const char *ntid = xs_dict_get(qmsg, "ntid");
+        xs *fn   = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+
+        qmsg = _enqueue_put(fn, qmsg);
+
+        snac_debug(user, 1, xs_fmt("notify_webhook"));
+    }
 }
 
 

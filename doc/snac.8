@@ -207,6 +207,8 @@ fields are set (see below), they are also shown.
 The email address of the instance administrator (optional).
 .It Ic admin_account
 The user name of the instance administrator (optional).
+.It Ic title
+The name of the instance (optional).
 .It Ic short_description
 A textual short description about the instance (optional).
 .It Ic short_description_raw
@@ -277,6 +279,14 @@ the usual one, like in smtp://mail.example.com:587.
 .It Ic smtp_user
 .It Ic smtp_password
 To be filled if the SMTP server defined by the previous directive needs credentials.
+.It Ic rss_hashtag_poll_hours
+The periodic number of hours hashtag RSS are polled (default: 4). It has a minimum
+value of 1 to avoid hammering servers.
+.It Ic disable_notify_webhook
+Since version 2.78, users can set a webhook URL to receive notifications. Set this
+to true if you don't want your users to have this privilege.
+.It Ic favicon_url
+The URL to a favicon. If it's not set, the default one is used instead.
 .El
 .Pp
 You must restart the server to make effective these changes.

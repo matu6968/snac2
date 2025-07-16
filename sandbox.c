@@ -13,6 +13,14 @@ void sbox_enter(const char *basedir)
         return;
     }
 
+    int smail;
+    const char *url = xs_dict_get(srv_config, "smtp_url");
+
+    if (xs_is_string(url) && *url)
+        smail = 0;
+    else
+        smail = !xs_is_true(xs_dict_get(srv_config, "disable_email_notifications"));
+
     srv_debug(1, xs_fmt("Calling unveil()"));
     unveil(basedir,                "rwc");
     unveil("/tmp",                 "rwc");
@@ -25,6 +33,9 @@ void sbox_enter(const char *basedir)
     if (*address == '/')
         unveil(address, "rwc");
 
+    if (smail)
+        unveil("/usr/sbin/sendmail",   "x");
+
     unveil(NULL,                   NULL);
 
     srv_debug(1, xs_fmt("Calling pledge()"));
@@ -33,6 +44,9 @@ void sbox_enter(const char *basedir)
 
     if (*address == '/')
         p = xs_str_cat(p, " unix");
+
+    if (smail)
+        p = xs_str_cat(p, " exec");
 
     pledge(p, NULL);
 }

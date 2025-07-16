@@ -45,6 +45,7 @@ static const char *default_srv_config = "{"
 static const char *default_css =
     "body { max-width: 48em; margin: auto; line-height: 1.5; padding: 0.8em; word-wrap: break-word; }\n"
     "pre { overflow-x: scroll; }\n"
+    "blockquote { font-style: italic; }\n"
     ".snac-embedded-video, img { max-width: 100% }\n"
     ".snac-origin { font-size: 85% }\n"
     ".snac-score { float: right; font-size: 85% }\n"
@@ -488,6 +489,26 @@ void verify_links(snac *user)
 
     int c = 0;
     while (metadata && xs_dict_next(metadata, &k, &v, &c)) {
+        xs *wfinger = NULL;
+        const char *ov = NULL;
+
+        /* is it an account handle? */
+        if (*v == '@' && strchr(v + 1, '@')) {
+            /* resolve it via webfinger */
+            if (valid_status(webfinger_request(v, &wfinger, NULL)) && xs_is_string(wfinger)) {
+                ov = v;
+                v = wfinger;
+
+                /* store the alias */
+                if (user->links == NULL)
+                    user->links = xs_dict_new();
+
+                user->links = xs_dict_set(user->links, ov, v);
+
+                changed++;
+            }
+        }
+
         /* not an https link? skip */
         if (!xs_startswith(v, "https:/" "/"))
             continue;
@@ -702,6 +723,61 @@ void export_csv(snac *user)
     }
     else
         snac_log(user, xs_fmt("Cannot create file %s", fn));
+}
+
+
+void export_posts(snac *user)
+/* exports all posts to an OrderedCollection */
+{
+    xs *ifn = xs_fmt("%s/public.idx", user->basedir);
+    xs *index = index_list(ifn, XS_ALL);
+    xs *ofn = xs_fmt("%s/export/outbox.json", user->basedir);
+    FILE *f;
+
+    if ((f = fopen(ofn, "w")) == NULL) {
+        snac_log(user, xs_fmt("Cannot create file %s", ofn));
+        return;
+    }
+
+    int cnt = 0;
+
+    /* raw output */
+    fprintf(f, "{\"@context\": \"https:/" "/www.w3.org/ns/activitystreams\",");
+    fprintf(f, "\"id\": \"outbox.json\",");
+    fprintf(f, "\"type\": \"OrderedCollection\",");
+    fprintf(f, "\"orderedItems\": [");
+
+    const char *md5;
+
+    snac_log(user, xs_fmt("Creating %s...", ofn));
+
+    xs_list_foreach(index, md5) {
+        xs *obj = NULL;
+
+        if (!valid_status(object_get_by_md5(md5, &obj)))
+            continue;
+
+        const char *type = xs_dict_get(obj, "type");
+
+        if (!xs_is_string(type) || strcmp(type, "Note"))
+            continue;
+
+        const char *atto = get_atto(obj);
+
+        if (!xs_is_string(atto) || strcmp(atto, user->actor))
+            continue;
+
+        if (cnt)
+            fprintf(f, ",");
+
+        xs *c_msg = msg_create(user, obj);
+        xs_json_dump(c_msg, 0, f);
+        cnt++;
+    }
+
+    fprintf(f, "], \"totalItems\": %d}", cnt);
+
+    fclose(f);
 }
 
 

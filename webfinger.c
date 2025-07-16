@@ -93,7 +93,7 @@ int webfinger_request_signed(snac *snac, const char *qs, xs_str **actor, xs_str 
         if (user != NULL) {
             const char *subject = xs_dict_get(obj, "subject");
 
-            if (subject)
+            if (subject && xs_startswith(subject, "acct:"))
                 *user = xs_replace_n(subject, "acct:", "", 1);
         }
 
@@ -152,7 +152,7 @@ int webfinger_request_fake(const char *qs, xs_str **actor, xs_str **user)
 }
 
 
-int webfinger_get_handler(xs_dict *req, const char *q_path,
+int webfinger_get_handler(const xs_dict *req, const char *q_path,
                            xs_val **body, int *b_size, char **ctype)
 /* serves webfinger queries */
 {

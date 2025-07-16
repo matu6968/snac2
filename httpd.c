@@ -12,6 +12,7 @@
 #include "xs_openssl.h"
 #include "xs_fcgi.h"
 #include "xs_html.h"
+#include "xs_webmention.h"
 
 #include "snac.h"
 
@@ -65,7 +66,9 @@ const char *nodeinfo_2_0_template = ""
     "\"services\":{\"outbound\":[],\"inbound\":[]},"
     "\"usage\":{\"users\":{\"total\":%d,\"activeMonth\":%d,\"activeHalfyear\":%d},"
     "\"localPosts\":%d},"
-    "\"openRegistrations\":false,\"metadata\":{}}";
+    "\"openRegistrations\":false,\"metadata\":{"
+    "\"nodeDescription\":\"%s\",\"nodeName\":\"%s\""
+    "}}";
 
 xs_str *nodeinfo_2_0(void)
 /* builds a nodeinfo json object */
@@ -98,7 +101,10 @@ xs_str *nodeinfo_2_0(void)
         n_posts += index_len(pidxfn);
     }
 
-    return xs_fmt(nodeinfo_2_0_template, n_utotal, n_umonth, n_uhyear, n_posts);
+    const char *name = xs_dict_get_def(srv_config, "title", "");
+    const char *desc = xs_dict_get_def(srv_config, "short_description", "");
+
+    return xs_fmt(nodeinfo_2_0_template, n_utotal, n_umonth, n_uhyear, n_posts, desc, name);
 }
 
 
@@ -244,7 +250,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
             if (!xs_is_null(accept) && strcmp(accept, "application/rss+xml") == 0) {
                 xs *link = xs_fmt("%s/?t=%s", srv_baseurl, t);
 
-                *body = timeline_to_rss(NULL, tl, link, link, link);
+                *body = rss_from_timeline(NULL, tl, link, link, link);
                 *ctype = "application/rss+xml; charset=utf-8";
             }
             else {
@@ -373,6 +379,68 @@ int server_get_handler(xs_dict *req, const char *q_path,
 }
 
 
+int server_post_handler(const xs_dict *req, const char *q_path,
+                      char *payload, int p_size,
+                      char **body, int *b_size, char **ctype)
+{
+    int status = 0;
+
+    (void)payload;
+    (void)p_size;
+    (void)body;
+    (void)b_size;
+    (void)ctype;
+
+    if (strcmp(q_path, "/webmention-hook") == 0) {
+        status = HTTP_STATUS_BAD_REQUEST;
+
+        const xs_dict *p_vars = xs_dict_get(req, "p_vars");
+
+        if (!xs_is_dict(p_vars))
+            return status;
+
+        const char *source = xs_dict_get(p_vars, "source");
+        const char *target = xs_dict_get(p_vars, "target");
+
+        if (!xs_is_string(source) || !xs_is_string(target)) {
+            srv_debug(1, xs_fmt("webmention-hook bad source or target"));
+            return status;
+        }
+
+        if (!xs_startswith(target, srv_baseurl)) {
+            srv_debug(1, xs_fmt("webmention-hook unknown target %s", target));
+            return status;
+        }
+
+        /* get the user */
+        xs *s1 = xs_replace(target, srv_baseurl, "");
+
+        xs *l1 = xs_split(s1, "/");
+        const char *uid = xs_list_get(l1, 1);
+        snac user;
+
+        if (!xs_is_string(uid) || !user_open(&user, uid)) {
+            srv_debug(1, xs_fmt("webmention-hook cannot find user for %s", target));
+            return status;
+        }
+
+        int r = xs_webmention_hook(source, target, USER_AGENT);
+
+        if (r > 0) {
+            notify_add(&user, "Webmention", NULL, source, target, xs_stock(XSTYPE_DICT));
+            timeline_touch(&user);
+        }
+
+        srv_log(xs_fmt("webmention-hook source=%s target=%s %d", source, target, r));
+
+        user_free(&user);
+        status = HTTP_STATUS_OK;
+    }
+
+    return status;
+}
+
+
 void httpd_connection(FILE *f)
 /* the connection processor */
 {
@@ -443,6 +511,10 @@ void httpd_connection(FILE *f)
     }
     else
     if (strcmp(method, "POST") == 0) {
+
+        if (status == 0)
+            status = server_post_handler(req, q_path,
+                        payload, p_size, &body, &b_size, &ctype);
 
 #ifndef NO_MASTODON_API
         if (status == 0)
@@ -705,34 +777,36 @@ static pthread_cond_t  sleep_cond;
 static void *background_thread(void *arg)
 /* background thread (queue management and other things) */
 {
-    time_t purge_time;
+    time_t t, purge_time, rss_time;
 
     (void)arg;
 
+    t = time(NULL);
+
     /* first purge time */
-    purge_time = time(NULL) + 10 * 60;
+    purge_time = t + 10 * 60;
+
+    /* first RSS polling time */
+    rss_time = t + 15 * 60;
 
     srv_log(xs_fmt("background thread started"));
 
     while (p_state->srv_running) {
-        time_t t;
         int cnt = 0;
 
         p_state->th_state[0] = THST_QUEUE;
 
         {
             xs *list = user_list();
-            char *p;
             const char *uid;
 
             /* process queues for all users */
-            p = list;
-            while (xs_list_iter(&p, &uid)) {
-                snac snac;
+            xs_list_foreach(list, uid) {
+                snac user;
 
-                if (user_open(&snac, uid)) {
-                    cnt += process_user_queue(&snac);
-                    user_free(&snac);
+                if (user_open(&user, uid)) {
+                    cnt += process_user_queue(&user);
+                    user_free(&user);
                 }
             }
         }
@@ -740,13 +814,31 @@ static void *background_thread(void *arg)
         /* global queue */
         cnt += process_queue();
 
+        t = time(NULL);
+
         /* time to purge? */
-        if ((t = time(NULL)) > purge_time) {
+        if (t > purge_time) {
             /* next purge time is tomorrow */
             purge_time = t + 24 * 60 * 60;
 
             xs *q_item = xs_dict_new();
             q_item = xs_dict_append(q_item, "type", "purge");
+            job_post(q_item, 0);
+        }
+
+        /* time to poll the RSS? */
+        if (t > rss_time) {
+            /* next RSS poll time */
+            int hours = xs_number_get(xs_dict_get_def(srv_config, "rss_hashtag_poll_hours", "4"));
+
+            /* don't hammer servers too much */
+            if (hours < 1)
+                hours = 1;
+
+            rss_time = t + 60 * 60 * hours;
+
+            xs *q_item = xs_dict_new();
+            q_item = xs_dict_append(q_item, "type", "rss_hashtag_poll");
             job_post(q_item, 0);
         }
 

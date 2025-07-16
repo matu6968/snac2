@@ -24,9 +24,9 @@ For file and data formats, see
 .Ss Web Interface
 The web interface provided by
 .Nm
-is split in two data streams: the public timeline and the
-private timeline. There are no other feeds like the server-scoped
-or the federated firehoses provided by other similar ActivityPub
+is split in three data streams: the public timeline, the private
+timeline and the instance timeline. There are no other feeds like
+the federated firehoses provided by other similar ActivityPub
 implementations like Mastodon or Pleroma.
 .Pp
 The public timeline, also called the local timeline, is what an
@@ -67,9 +67,23 @@ sent to those people you mention in the post body.
 If you fill this optional text field with the URL of another one's
 post, your text will be considered as a reply to it, not a
 standalone one.
+.It Draft
+If you set this checkbox, your text will not be sent when you
+push the Post button, but stored for later modification in
+the "Drafts" section.
+.It Scheduled post...
+This dropdown menu allows setting a date and time for the
+post publication.
+.It Attachments...
+This dropdown menu allows uploading media attachments (images,
+audio, video, etc.) to your post.
+.It Poll...
+this dropdown menu gives access to the voting options, that
+will make your post a poll. You can set the options to be
+voted, if it's a multiple choice poll and the due date.
 .El
 .Pp
-More options are hidden under a toggle control. They are the
+More options are hidden under dropdown menus. They are the
 following:
 .Bl -tag -offset indent
 .It Follow (by URL or user@host)
@@ -85,7 +99,9 @@ liked.
 This option opens the user setup dialog.
 .It Followed hashtags...
 Enter here the list of hashtags you want to follow, one
-per line, with or without the # symbol.
+per line, with or without the # symbol. Since version 2.78,
+URLs to RSS feeds of ActivityPub objects are also allowed
+(like e.g. https://mastodon.social/tags/bloomscrolling).
 .It Blocked hashtags...
 Enter here the list of hashtags you want to block, one
 per line, with or without the # symbol.
@@ -125,6 +141,10 @@ standard ntfy.sh server), fill the two provided
 fields (ntfy server/topic and, if protected, the token).
 You need to refer to the https://ntfy.sh web site for
 more information on this process.
+.It Notify webhook
+If this is set to an URL, an HTTP POST will be sent to it
+whenever a new notification happens (see the 'Webhook for
+notifications' section below for more information).
 .It Maximum days to keep posts
 This numeric value specifies the number of days to pass before
 posts (yours and others') will be purged. This value overrides
@@ -264,7 +284,7 @@ Requests an object and dumps it to stdout. This is a very low
 level command that is not very useful to you.
 .It Cm announce Ar basedir Ar uid Ar url
 Announces (boosts) a post via its URL.
-.It Cm note Ar basedir Ar uid Ar text Op file file ...
+.It Cm note Ar basedir Ar uid Ar text Op file file ... Op -r inReplyTo
 Enqueues a Create + Note message to all followers. If the
 .Ar text
 argument is -e, the external editor defined by the EDITOR
@@ -272,10 +292,11 @@ environment variable will be invoked to prepare a message; if
 it's - (a lonely hyphen), the post content will be read from stdin.
 The rest of command line arguments are treated as media files to be
 attached to the post. The LANG environment variable (if defined) is used
-as the post language.
-.It Cm note_unlisted Ar basedir Ar uid Ar text Op file file ...
+as the post language. An optional URL to a Fediverse post, prefixed by -r,
+can be specified for this note to be a reply to.
+.It Cm note_unlisted Ar basedir Ar uid Ar text Op file file ... Op -r inReplyTo
 Like the previous one, but creates an "unlisted" (or "quiet public") post.
-.It Cm note_mention Ar basedir Ar uid Ar text Op file file ...
+.It Cm note_mention Ar basedir Ar uid Ar text Op file file ... Op -r inReplyTo
 Like the previous one, but creates a post only for accounts mentioned
 in the post body.
 .It Cm block Ar basedir Ar instance_url
@@ -285,9 +306,9 @@ blocked without further inspection.
 .It Cm unblock Ar basedir Ar instance_url
 Unblocks a previously blocked instance.
 .It Cm verify_links Ar basedir Ar uid
-Verifies all links stored as metadata for the given user. This verification
-is done by downloading the link content and searching for a link back to
-the
+Verifies all links or account handles stored as metadata for the given user.
+This verification is done by downloading the link content and searching for
+a link back to the
 .Nm
 user url that also contains a rel="me" attribute. These links are specially
 marked as verified in the user's public timeline and also via the Mastodon API.
@@ -300,6 +321,13 @@ subdirectory inside the user directory:
 .Pa blocked_accounts.csv ,
 .Pa lists.csv , and
 .Pa following_accounts.csv .
+.It Cm export_posts Ar basedir Ar uid
+Exports all posts written by the user to the file
+.Pa outbox.json
+inside the
+.Pa export/
+subdirectory inside the user directory. The format is compatible with the
+one generated by the equivalent option in Mastodon.
 .It Cm alias Ar basedir Ar uid Ar "@account@remotehost"
 Sets an account as an alias of this one. This is a necessary step to migrate
 an account to a remote Mastodon instance (see
@@ -354,10 +382,10 @@ subdirectory of a user's directory inside the server base directory.
 Prints the name of the user created lists.
 .It Cm list_members Ar basedir Ar uid Ar name
 Prints the list of actors in the named list.
-.It Cm create_list Ar basedir Ar uid Ar name
+.It Cm list_create Ar basedir Ar uid Ar name
 Creates a new list.
-.It Cm delete_list Ar basedir Ar uid Ar name
-Deletes an existing list.
+.It Cm list_remove Ar basedir Ar uid Ar name
+Removes an existing list.
 .It Cm list_add Ar basedir Ar uid Ar name Ar account
 Adds an account (by its @name@host handle or actor URL) to a list.
 .It Cm list_del Ar basedir Ar uid Ar name Ar actor_url
@@ -408,6 +436,43 @@ You can obtain an API Token by connecting to the following URL:
 https://$SNAC_HOST/oauth/x-snac-get-token
 .Ed
 .Pp
+.Ss Webhook for notifications
+Since version 2.78, users can set the URL to a webhook that will receive
+an HTTP POST with every notification (in JSON format). This can be used to
+implement some automation whenever a new activity happens, like autorepliers,
+chatbots, interactive textual games or whatever. The
+.Pa examples/
+subdirectory contains a tiny Python program that implements an auto-follower
+for every new follow. The JSON notification object includes the following data:
+.Bl -tag -offset indent
+.It id
+a unique notification identifier
+.It actor
+the origin actor id
+.It target
+the target actor id
+.It date
+the notification date
+.It msg
+the full ActivityPub action JSON object
+.It objid
+the object identifier (extracted from msg, may be null)
+.It type
+the action type (extracted from msg)
+.It utype
+the action subtype (extracted from msg, may be null)
+.It uid
+the user identifier (account name)
+.It basedir
+the server base directory
+.It baseurl
+the server base URL
+.It account
+the origin actor object
+.It reply
+the activity this post is a reply to (may not exist)
+.El
+.Pp
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It SNAC_BASEDIR
@@ -422,9 +487,9 @@ Overrides the debugging level from the server 'dbglevel' configuration
 variable. Set it to an integer value. The higher, the deeper in meaningless
 verbiage you'll find yourself into.
 .It Ev EDITOR
-The user-preferred interactive text editor to prepare messages.
+The user-preferred interactive text editor to prepare notes.
 .It Ev LANG
-The language of the post when sending messages.
+The language of the post when sending notes from the command line.
 .El
 .Sh SEE ALSO
 .Xr snac 5 ,

@@ -903,7 +903,7 @@ xs_str *process_tags(snac *snac, const char *content, xs_list **tag)
             if (*v == '#') {
                 /* hashtag */
                 xs *d = xs_dict_new();
-                xs *n = xs_tolower_i(xs_dup(v));
+                xs *n = xs_utf8_to_lower(v);
                 xs *h = xs_fmt("%s?t=%s", srv_baseurl, n + 1);
                 xs *l = xs_fmt("<a href=\"%s\" class=\"mention hashtag\" rel=\"tag\">%s</a>", h, v);
 
@@ -2766,6 +2766,39 @@ void process_user_queue_item(snac *user, xs_dict *q_item)
         }
     }
     else
+    if (strcmp(type, "notify_webhook") == 0) {
+        const char *webhook = xs_dict_get(user->config, "notify_webhook");
+
+        if (xs_is_string(webhook) && xs_match(webhook, "https://*|http://*")) { /** **/
+            const xs_dict *msg = xs_dict_get(q_item, "message");
+            int retries = xs_number_get(xs_dict_get(q_item, "retries"));
+
+            xs *hdrs = xs_dict_new();
+
+            hdrs = xs_dict_set(hdrs, "content-type", "application/json");
+            hdrs = xs_dict_set(hdrs, "user-agent",   USER_AGENT);
+
+            xs *body = xs_json_dumps(msg, 4);
+
+            int status;
+            xs *rsp = xs_http_request("POST", webhook, hdrs, body, strlen(body), &status, NULL, NULL, 0);
+
+            snac_debug(user, 0, xs_fmt("webhook post %s %d", webhook, status));
+
+            if (!valid_status(status)) {
+                retries++;
+
+                if (retries > queue_retry_max)
+                    snac_debug(user, 0, xs_fmt("webhook post giving up %s", webhook));
+                else {
+                    snac_debug(user, 0, xs_fmt("webhook post requeue %s %d", webhook, retries));
+
+                    enqueue_notify_webhook(user, msg, retries);
+                }
+            }
+        }
+    }
+    else
         snac_log(user, xs_fmt("unexpected user q_item type '%s'", type));
 }
 
@@ -3048,6 +3081,10 @@ void process_queue_item(xs_dict *q_item)
                 srv_debug(1, xs_fmt("webmention source=%s target=%s %d", source, target, r));
             }
         }
+    }
+    else
+    if (strcmp(type, "rss_hashtag_poll") == 0) {
+        rss_poll_hashtags();
     }
     else
         srv_log(xs_fmt("unexpected q_item type '%s'", type));

@@ -636,13 +636,18 @@ static xs_html *html_base_head(void)
             xs_html_attr("content", USER_AGENT)));
 
     /* add server CSS and favicon */
-    xs *f;
-    f = xs_fmt("%s/favicon.ico", srv_baseurl);
+    xs *f = NULL;
+    const char *favicon = xs_dict_get(srv_config, "favicon_url");
+
+    if (xs_is_string(favicon))
+        f = xs_dup(favicon);
+    else
+        f = xs_fmt("%s/favicon.ico", srv_baseurl);
+
     const xs_list *p = xs_dict_get(srv_config, "cssurls");
     const char *v;
-    int c = 0;
 
-    while (xs_list_next(p, &v, &c)) {
+    xs_list_foreach(p, v) {
         xs_html_add(head,
             xs_html_sctag("link",
                 xs_html_attr("rel",  "stylesheet"),
@@ -863,6 +868,14 @@ xs_html *html_user_head(snac *user, const char *desc, const char *url)
             xs_html_attr("type", "application/activity+json"),
             xs_html_attr("href", url ? url : user->actor)));
 
+    /* webmention hook */
+    xs *wbh = xs_fmt("%s/webmention-hook", srv_baseurl);
+
+    xs_html_add(head,
+        xs_html_sctag("link",
+            xs_html_attr("rel", "webmention"),
+            xs_html_attr("href", wbh)));
+
     return head;
 }
 
@@ -1077,10 +1090,17 @@ static xs_html *html_user_body(snac *user, int read_only)
             while (xs_dict_next(metadata, &k, &v, &c)) {
                 xs_html *value;
 
-                if (xs_startswith(v, "https:/") || xs_startswith(v, "http:/")) {
+                if (xs_startswith(v, "https:/") || xs_startswith(v, "http:/") || *v == '@') {
                     /* is this link validated? */
                     xs *verified_link = NULL;
                     const xs_number *val_time = xs_dict_get(val_links, v);
+                    const char *url = NULL;
+
+                    if (xs_is_string(val_time)) {
+                        /* resolve again, as it may be an account handle */
+                        url = val_time;
+                        val_time = xs_dict_get(val_links, val_time);
+                    }
 
                     if (xs_type(val_time) == XSTYPE_NUMBER) {
                         time_t t = xs_number_get(val_time);
@@ -1098,13 +1118,13 @@ static xs_html *html_user_body(snac *user, int read_only)
                             xs_html_tag("a",
                                 xs_html_attr("rel", "me"),
                                 xs_html_attr("target", "_blank"),
-                                xs_html_attr("href", v),
+                                xs_html_attr("href", url ? url : v),
                                 xs_html_text(v)));
                     }
                     else {
                         value = xs_html_tag("a",
                             xs_html_attr("rel", "me"),
-                            xs_html_attr("href", v),
+                            xs_html_attr("href", url ? url : v),
                             xs_html_text(v));
                     }
                 }
@@ -1290,6 +1310,7 @@ xs_html *html_top_controls(snac *user)
     const xs_val *show_foll  = xs_dict_get(user->config, "show_contact_metrics");
     const char *latitude     = xs_dict_get_def(user->config, "latitude", "");
     const char *longitude    = xs_dict_get_def(user->config, "longitude", "");
+    const char *webhook      = xs_dict_get_def(user->config, "notify_webhook", "");
 
     xs *metadata = NULL;
     const xs_dict *md = xs_dict_get(user->config, "metadata");
@@ -1452,6 +1473,14 @@ xs_html *html_top_controls(snac *user)
                         xs_html_attr("value", ntfy_token),
                         xs_html_attr("placeholder", L("ntfy token - if needed")))),
                 xs_html_tag("p",
+                    xs_html_text(L("Notify webhook:")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "url"),
+                        xs_html_attr("name", "notify_webhook"),
+                        xs_html_attr("value", webhook),
+                        xs_html_attr("placeholder", L("http://example.com/webhook")))),
+                xs_html_tag("p",
                     xs_html_text(L("Maximum days to keep posts (0: server settings):")),
                     xs_html_sctag("br", NULL),
                     xs_html_sctag("input",
@@ -1601,7 +1630,8 @@ xs_html *html_top_controls(snac *user)
                     xs_html_attr("name", "followed_hashtags"),
                     xs_html_attr("cols", "40"),
                     xs_html_attr("rows", "4"),
-                    xs_html_attr("placeholder", "#cats\n#windowfriday\n#classicalmusic"),
+                    xs_html_attr("placeholder", "#cats\n#windowfriday\n#classicalmusic\nhttps:/"
+                        "/mastodon.social/tags/dogs"),
                     xs_html_text(followed_hashtags)),
 
                 xs_html_tag("br", NULL),
@@ -1978,8 +2008,13 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     }
 
     if ((user == NULL || strcmp(actor, user->actor) != 0)
-        && !valid_status(actor_get(actor, NULL)))
+        && !valid_status(actor_get(actor, NULL))) {
+
+        if (user)
+            enqueue_actor_refresh(user, actor, 0);
+
         return NULL;
+    }
 
     /** html_entry top tag **/
     xs_html *entry_top = xs_html_tag("div", NULL);
@@ -2115,9 +2150,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         const char *parent = get_in_reply_to(msg);
 
         if (!xs_is_null(parent) && *parent) {
-            xs *md5 = xs_md5_hex(parent, strlen(parent));
-
-            if (!timeline_here(user, md5)) {
+            if (!timeline_here(user, parent)) {
                 xs_html_add(post_header,
                     xs_html_tag("div",
                         xs_html_attr("class", "snac-origin"),
@@ -2418,6 +2451,9 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
             const char *type = xs_dict_get(a, "type");
             const char *o_href = xs_dict_get(a, "href");
             const char *name = xs_dict_get(a, "name");
+
+            if (!xs_is_string(type) || !xs_is_string(o_href))
+                continue;
 
             /* if this URL is already in the post content, skip */
             if (content && xs_str_in(content, o_href) != -1)
@@ -3284,12 +3320,12 @@ xs_str *html_people(snac *user)
 
     xs *wing = following_list(user);
     xs *wers = follower_list(user);
+    xs *pending = pending_list(user);
 
     xs_html *lists = xs_html_tag("div",
         xs_html_attr("class", "snac-posts"));
 
-    if (xs_is_true(xs_dict_get(user->config, "approve_followers"))) {
-        xs *pending = pending_list(user);
+    if (xs_list_len(pending) || xs_is_true(xs_dict_get(user->config, "approve_followers"))) {
         xs_html_add(lists,
             html_people_list(user, pending, L("Pending follow confirmations"), "p", proxy));
     }
@@ -3384,13 +3420,15 @@ xs_str *html_notifications(snac *user, int skip, int show)
 
         const char *actor_id = xs_dict_get(noti, "actor");
         xs *actor = NULL;
+        xs *a_name = NULL;
 
-        if (!valid_status(actor_get(actor_id, &actor)))
-            continue;
+        if (valid_status(actor_get(actor_id, &actor)))
+            a_name = actor_name(actor, proxy);
+        else
+            a_name = xs_dup(actor_id);
 
-        xs *a_name = actor_name(actor, proxy);
-        xs *label_sanatized = sanitize(type);
-        const char *label = label_sanatized;
+        xs *label_sanitized = sanitize(type);
+        const char *label = label_sanitized;
 
         if (strcmp(type, "Create") == 0)
             label = L("Mention");
@@ -3462,10 +3500,11 @@ xs_str *html_notifications(snac *user, int skip, int show)
             html_label);
 
         if (strcmp(type, "Follow") == 0 || strcmp(utype, "Follow") == 0 || strcmp(type, "Block") == 0) {
-            xs_html_add(entry,
-                xs_html_tag("div",
-                    xs_html_attr("class", "snac-post"),
-                    html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy, NULL, NULL)));
+            if (actor)
+                xs_html_add(entry,
+                    xs_html_tag("div",
+                        xs_html_attr("class", "snac-post"),
+                        html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy, NULL, NULL)));
         }
         else
         if (strcmp(type, "Move") == 0) {
@@ -3498,6 +3537,13 @@ xs_str *html_notifications(snac *user, int skip, int show)
                             xs_html_text(L("Context")))),
                     h);
             }
+            else
+                xs_html_add(entry,
+                    xs_html_tag("p",
+                        xs_html_text(L("Location: ")),
+                        xs_html_tag("a",
+                            xs_html_attr("href", id),
+                            xs_html_text(id))));
         }
 
         if (strcmp(v, n_time) > 0) {
@@ -3748,7 +3794,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                 /* may by an actor; try a webfinger */
                 xs *actor_obj = NULL;
 
-                if (valid_status(webfinger_request(q, &actor_obj, &url_acct))) {
+                if (valid_status(webfinger_request(q, &actor_obj, &url_acct)) && xs_is_string(url_acct)) {
                     /* it's an actor; do the dirty trick of changing q to the account name */
                     q = url_acct;
                 }
@@ -3773,11 +3819,17 @@ int html_get_handler(const xs_dict *req, const char *q_path,
                                 q = url_acct;
 
                                 /* add the post to the timeline */
-                                xs *md5 = xs_md5_hex(q, strlen(q));
-
-                                if (!timeline_here(&snac, md5))
+                                if (!timeline_here(&snac, q))
                                     timeline_add(&snac, q, object);
                             }
+                        }
+                        else {
+                            /* retry webfinger, this time with the 'official' id */
+                            const char *id = xs_dict_get(object, "id");
+
+                            if (xs_is_string(id) && valid_status(webfinger_request(id, &actor_obj, &url_acct)) &&
+                                xs_is_string(url_acct))
+                                q = url_acct;
                         }
                     }
                 }
@@ -3917,7 +3969,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs *l = xs_split(p_path, "/");
             const char *md5 = xs_list_get(l, -1);
 
-            if (md5 && *md5 && timeline_here(&snac, md5)) {
+            if (md5 && *md5 && timeline_here_by_md5(&snac, md5)) {
                 xs *list0 = xs_list_append(xs_list_new(), md5);
                 xs *list  = timeline_top_level(&snac, list0);
 
@@ -4127,7 +4179,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
             xs_dict_get(srv_config, "host"));
         xs *rss_link = xs_fmt("%s.rss", snac.actor);
 
-        *body   = timeline_to_rss(&snac, elems, rss_title, rss_link, bio);
+        *body   = rss_from_timeline(&snac, elems, rss_title, rss_link, bio);
         *b_size = strlen(*body);
         *ctype  = "application/rss+xml; charset=utf-8";
         status  = HTTP_STATUS_OK;
@@ -4365,7 +4417,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                     xs_rnd_buf(rnd, sizeof(rnd));
 
                     const char *ext = strrchr(fn, '.');
-                    xs *hash  = xs_md5_hex(rnd, strlen(rnd));
+                    xs *hash  = xs_md5_hex(rnd, sizeof(rnd));
                     xs *id    = xs_fmt("post-%s%s", hash, ext ? ext : "");
                     xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
                     int fo    = xs_number_get(xs_list_get(attach_file, 1));
@@ -4825,6 +4877,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         snac.config = xs_dict_set(snac.config, "latitude", xs_dict_get_def(p_vars, "latitude", ""));
         snac.config = xs_dict_set(snac.config, "longitude", xs_dict_get_def(p_vars, "longitude", ""));
 
+        snac.config = xs_dict_set(snac.config, "notify_webhook", xs_dict_get_def(p_vars, "notify_webhook", ""));
+
         if ((v = xs_dict_get(p_vars, "metadata")) != NULL)
             snac.config = xs_dict_set(snac.config, "metadata", v);
 
@@ -4960,9 +5014,16 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 if (*s1 == '\0')
                     continue;
 
-                xs *s2 = xs_utf8_to_lower(s1);
-                if (*s2 != '#')
-                    s2 = xs_str_prepend_i(s2, "#");
+                xs *s2 = NULL;
+
+                if (xs_startswith(s1, "https:/"))
+                    s2 = xs_dup(s1);
+                else {
+                    s2 = xs_utf8_to_lower(s1);
+
+                    if (*s2 != '#')
+                        s2 = xs_str_prepend_i(s2, "#");
+                }
 
                 new_hashtags = xs_list_append(new_hashtags, s2);
             }
@@ -5023,101 +5084,4 @@ int html_post_handler(const xs_dict *req, const char *q_path,
     user_free(&snac);
 
     return status;
-}
-
-
-xs_str *timeline_to_rss(snac *user, const xs_list *timeline,
-                        const char *title, const char *link, const char *desc)
-/* converts a timeline to rss */
-{
-    xs_html *rss = xs_html_tag("rss",
-        xs_html_attr("xmlns:content", "http:/" "/purl.org/rss/1.0/modules/content/"),
-        xs_html_attr("version",       "2.0"),
-        xs_html_attr("xmlns:atom",    "http:/" "/www.w3.org/2005/Atom"));
-
-    xs_html *channel = xs_html_tag("channel",
-        xs_html_tag("title",
-            xs_html_text(title)),
-        xs_html_tag("language",
-            xs_html_text("en")),
-        xs_html_tag("link",
-            xs_html_text(link)),
-        xs_html_sctag("atom:link",
-            xs_html_attr("href", link),
-            xs_html_attr("rel", "self"),
-            xs_html_attr("type", "application/rss+xml")),
-        xs_html_tag("generator",
-            xs_html_text(USER_AGENT)),
-        xs_html_tag("description",
-            xs_html_text(desc)));
-
-    xs_html_add(rss, channel);
-
-    int cnt = 0;
-    const char *v;
-
-    xs_list_foreach(timeline, v) {
-        xs *msg = NULL;
-
-        if (user) {
-            if (!valid_status(timeline_get_by_md5(user, v, &msg)))
-                continue;
-        }
-        else {
-            if (!valid_status(object_get_by_md5(v, &msg)))
-                continue;
-        }
-
-        const char *id = xs_dict_get(msg, "id");
-        const char *content = xs_dict_get(msg, "content");
-        const char *published = xs_dict_get(msg, "published");
-
-        if (user && !xs_startswith(id, user->actor))
-            continue;
-
-        if (!id || !content || !published)
-            continue;
-
-        /* create a title with the first line of the content */
-        xs *title = xs_replace(content, "<br>", "\n");
-        title = xs_regex_replace_i(title, "<[^>]+>", " ");
-        title = xs_regex_replace_i(title, "&[^;]+;", " ");
-        int i;
-
-        for (i = 0; title[i] && title[i] != '\n' && i < 50; i++);
-
-        if (title[i] != '\0') {
-            title[i] = '\0';
-            title = xs_str_cat(title, "...");
-        }
-
-        title = xs_strip_i(title);
-
-        /* convert the date */
-        time_t t = xs_parse_iso_date(published, 0);
-        xs *rss_date = xs_str_utctime(t, "%a, %d %b %Y %T +0000");
-
-        /* if it's the first one, add it to the header */
-        if (cnt == 0)
-            xs_html_add(channel,
-                xs_html_tag("lastBuildDate",
-                    xs_html_text(rss_date)));
-
-        xs_html_add(channel,
-            xs_html_tag("item",
-                xs_html_tag("title",
-                    xs_html_text(title)),
-                xs_html_tag("link",
-                    xs_html_text(id)),
-                xs_html_tag("guid",
-                    xs_html_text(id)),
-                xs_html_tag("pubDate",
-                    xs_html_text(rss_date)),
-                xs_html_tag("description",
-                    xs_html_text(content))));
-
-        cnt++;
-    }
-
-    return xs_html_render_s(rss, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 }
