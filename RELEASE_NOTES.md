@@ -6,6 +6,8 @@ Included a small tweak to avoid being confused by implementations that return va
 
 Added Ukrainian translation (contributed by wincentbalin).
 
+New command-line option `muted`, to list all muted actors.
+
 ## 2.80
 
 Mastodon API: fixed a regression (introduced in previous version in the "boosts disappear in Tusky" fix) that interrupted timelines.
