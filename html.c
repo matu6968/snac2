@@ -3002,7 +3002,13 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
             const char *ht;
 
             xs_list_foreach(followed_hashtags, ht) {
-                xs *url = xs_fmt("%s/admin?q=%s", user->actor, ht);
+                xs *url = NULL;
+
+                if (!xs_startswith(ht, "https:/""/"))
+                    url = xs_fmt("%s/admin?q=%s", user->actor, ht);
+                else
+                    url = xs_dup(ht);
+
                 url = xs_replace_i(url, "#", "%23");
 
                 xs_html_add(loht,
