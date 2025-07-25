@@ -14,8 +14,6 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
-The local purge should generate `Delete` activities for local posts.
-
 Add account reporting.
 
 Add a list option to hide member posts from the main timeline, see https://codeberg.org/grunfink/snac2/issues/383
@@ -381,3 +379,5 @@ The actual storage system wastes too much disk space (lots of small files that r
 Add command-line tools for creating and manipulating lists (2025-04-18T10:04:41+0200).
 
 Do a [Webmention](https://www.w3.org/TR/webmention/) to every link written in a post (2025-05-04T11:16:21+0200).
+
+The local purge should generate `Delete` activities for local posts (2025-07-25T18:55:16+0200).
