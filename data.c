@@ -3840,6 +3840,43 @@ void purge_server(void)
 }
 
 
+void delete_purged_posts(snac *user, int days)
+/* enqueues Delete activities for local purged messages */
+{
+    if (days == 0)
+        return;
+
+    time_t mt = time(NULL) - days * 24 * 3600;
+    xs *spec  = xs_fmt("%s/public/" "*.json", user->basedir);
+    xs *list  = xs_glob(spec, 0, 0);
+    const char *v;
+
+    xs_list_foreach(list, v) {
+        if (mtime(v) < mt) {
+            /* to be purged; is it a Note by us? */
+            FILE *f;
+
+            if ((f = fopen(v, "r")) != NULL) {
+                xs *msg = xs_json_load(f);
+                fclose(f);
+
+                if (xs_is_dict(msg)) {
+                    const char *id = xs_dict_get(msg, "id");
+
+                    if (xs_is_string(id) && xs_startswith(id, user->actor)) {
+                        xs *d_msg = msg_delete(user, id);
+
+                        enqueue_message(user, d_msg);
+
+                        snac_log(user, xs_fmt("enqueued Delete for purged message %s", id));
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 void purge_user(snac *snac)
 /* do the purge for this user */
 {
@@ -3862,6 +3899,8 @@ void purge_user(snac *snac)
         if (pub_days == 0 || user_days < pub_days)
             pub_days = user_days;
     }
+
+    delete_purged_posts(snac, pub_days);
 
     _purge_user_subdir(snac, "hidden",  priv_days);
     _purge_user_subdir(snac, "private", priv_days);
