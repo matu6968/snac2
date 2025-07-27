@@ -10,6 +10,8 @@ Added Ukrainian translation (contributed by wincentbalin).
 
 New command-line option `muted`, to list all muted actors.
 
+Mastodon API: Fixed metadata and follower approval flag when editing the account.
+
 ## 2.80
 
 Mastodon API: fixed a regression (introduced in previous version in the "boosts disappear in Tusky" fix) that interrupted timelines.
