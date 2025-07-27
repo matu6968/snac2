@@ -1271,8 +1271,31 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     acct = xs_dict_append(acct, "header", header);
     acct = xs_dict_append(acct, "header_static", header);
 
-    const xs_dict *metadata = xs_dict_get(snac.config, "metadata");
-    if (xs_type(metadata) == XSTYPE_DICT) {
+    xs *metadata = NULL;
+    const xs_dict *md = xs_dict_get(snac.config, "metadata");
+
+    if (xs_is_dict(md))
+        metadata = xs_dup(md);
+    else
+    if (xs_is_string(md)) {
+        metadata = xs_dict_new();
+        xs *l = xs_split(md, "\n");
+        const char *ll;
+
+        xs_list_foreach(l, ll) {
+            xs *kv = xs_split_n(ll, "=", 1);
+            const char *k = xs_list_get(kv, 0);
+            const char *v = xs_list_get(kv, 1);
+
+            if (k && v) {
+                xs *kk = xs_strip_i(xs_dup(k));
+                xs *vv = xs_strip_i(xs_dup(v));
+                metadata = xs_dict_set(metadata, kk, vv);
+            }
+        }
+    }
+
+    if (xs_is_dict(metadata)) {
         xs *fields = xs_list_new();
         const xs_str *k;
         const xs_str *v;
