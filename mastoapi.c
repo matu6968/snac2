@@ -3712,7 +3712,7 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
     snac snac = {0};
     int logged_in = process_auth_token(&snac, req);
 
-    if (xs_startswith(cmd, "/v1/accounts/update_credentials")) {
+    if (xs_startswith(cmd, "/v1/accounts/update_credentials")) { /** **/
         /* Update user profile fields */
         if (logged_in) {
             int c = 0;
@@ -3768,9 +3768,13 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
                         snac.config = xs_dict_set(snac.config, "metadata", new_fields);
                     }
                 }
+                else
+                if (strcmp(k, "locked") == 0) {
+                    snac.config = xs_dict_set(snac.config, "approve_followers",
+                        xs_stock(strcmp(v, "true") == 0 ? XSTYPE_TRUE : XSTYPE_FALSE));
+                }
                 /* we don't have support for the following options, yet
                    - discoverable (0/1)
-                   - locked (0/1)
                  */
             }
 
