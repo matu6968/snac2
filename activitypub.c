@@ -1519,20 +1519,30 @@ xs_dict *msg_delete(snac *snac, const char *id)
     msg = msg_base(snac, "Delete", "@object", snac->actor, "@now", tomb);
 
     xs *to = xs_list_new();
-    xs *likes = object_likes(id);
+    xs *admirers = object_likes(id);
     xs *boosts = object_announces(id);
-    const char *v;
+    admirers = xs_list_cat(admirers, boosts);
+    const char *md5;
 
     /* add everybody */
     to = xs_list_append(to, public_address);
 
     /* add actors that liked or boosted this */
-    xs_list_foreach(likes, v)
-        to = xs_list_append(to, v);
-    xs_list_foreach(boosts, v)
-        to = xs_list_append(to, v);
+    xs_list_foreach(admirers, md5) {
+        xs *actor = NULL;
+
+        if (valid_status(object_get_by_md5(md5, &actor))) {
+            const char *id = xs_dict_get(actor, "id");
+
+            if (xs_is_string(id))
+                to = xs_list_append(to, id);
+        }
+    }
 
     msg = xs_dict_append(msg, "to", to);
+
+xs_json_dump(msg, 4, stdout);
+printf("\n");
 
     return msg;
 }
