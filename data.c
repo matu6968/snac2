@@ -3900,7 +3900,8 @@ void purge_user(snac *snac)
             pub_days = user_days;
     }
 
-    delete_purged_posts(snac, pub_days);
+    if (xs_is_true(xs_dict_get(srv_config, "propagate_local_purge")))
+        delete_purged_posts(snac, pub_days);
 
     _purge_user_subdir(snac, "hidden",  priv_days);
     _purge_user_subdir(snac, "private", priv_days);
