@@ -2,7 +2,7 @@
 
 ## UNRELEASED
 
-Purged local posts now generate a `Delete` activity that is sent everywhere, instead of only deleted from the filesystem.
+If the `propagate_local_purge` configuration variable is set to `true` in `server.json`, purged local post generate a `Delete` activity that is sent everywhere, instead of only deleted from the filesystem.
 
 Included a small tweak to avoid being confused by implementations that return valid webfinger queries for non-account URLs (like i.e. the Wordpress ActivityPub plugin in some configurations).
 
