@@ -2,13 +2,13 @@
 
 ## UNRELEASED
 
-If the `propagate_local_purge` configuration variable is set to `true` in `server.json`, purged local post generate a `Delete` activity that is sent everywhere, instead of only deleted from the filesystem.
+If the `propagate_local_purge` configuration variable is set to `true` in `server.json`, purged local posts generate a `Delete` activity that is sent everywhere, instead of only deleted from the filesystem.
 
 Included a small tweak to avoid being confused by implementations that return valid webfinger queries for non-account URLs (like i.e. the Wordpress ActivityPub plugin in some configurations).
 
 Added Ukrainian translation (contributed by wincentbalin).
 
-New command-line option `muted`, to list all muted actors.
+New command-line option `muted`, to list all MUTEd actors.
 
 Mastodon API: Fixed metadata and follower approval flag when editing the account.
 
