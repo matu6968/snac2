@@ -2135,7 +2135,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/scheduled_statuses") == 0) { /** **/
-        /* snac does not schedule notes */
+        /* TBD */
         *body  = xs_dup("[]");
         *ctype = "application/json";
         status = HTTP_STATUS_OK;
@@ -2500,6 +2500,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/preferences") == 0) { /** **/
+        /* TBD */
         *body  = xs_dup("{}");
         *ctype = "application/json";
         status = HTTP_STATUS_OK;
