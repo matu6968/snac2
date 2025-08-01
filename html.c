@@ -2855,7 +2855,7 @@ xs_html *html_footer(const snac *user)
             xs_html_attr("href", WHAT_IS_SNAC_URL),
             xs_html_tag("abbr",
                 xs_html_attr("title", "Social Networks Are Crap"),
-                xs_html_text("snac"))));
+                xs_html_text(USER_AGENT))));
 }
 
 
