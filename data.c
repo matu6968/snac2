@@ -2041,7 +2041,7 @@ xs_str *_hidden_fn(snac *snac, const char *id)
 
 
 void hide(snac *snac, const char *id)
-/* hides a message tree */
+/* hides an object and its children (if it's a post) */
 {
     xs *fn = _hidden_fn(snac, id);
     FILE *f;
@@ -2078,6 +2078,14 @@ int is_hidden(snac *snac, const char *id)
     xs *fn = _hidden_fn(snac, id);
 
     return !!(mtime(fn) != 0.0);
+}
+
+
+int unhide(snac *user, const char *id)
+/* unhides an object */
+{
+    xs *fn = _hidden_fn(user, id);
+    return unlink(fn);
 }
 
 
