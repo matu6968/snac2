@@ -4415,6 +4415,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         const char *edit_id      = xs_dict_get(p_vars, "edit_id");
         const char *post_date    = xs_dict_get_def(p_vars, "post_date", "");
         const char *post_time    = xs_dict_get_def(p_vars, "post_time", "");
+        const char *post_lang    = xs_dict_get(p_vars, "post_lang");
         int priv             = !xs_is_null(xs_dict_get(p_vars, "mentioned_only"));
         int store_as_draft   = !xs_is_null(xs_dict_get(p_vars, "is_draft"));
         xs *attach_list      = xs_list_new();
@@ -4498,7 +4499,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 enqueue_close_question(&snac, xs_dict_get(msg, "id"), end_secs);
             }
             else
-                msg = msg_note(&snac, content_2, to, in_reply_to, attach_list, priv, NULL, NULL);
+                msg = msg_note(&snac, content_2, to, in_reply_to, attach_list, priv, post_lang, NULL);
 
             if (sensitive != NULL) {
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));
