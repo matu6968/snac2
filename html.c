@@ -458,6 +458,31 @@ xs_html *html_note(snac *user, const char *summary,
                 xs_html_attr("name", "is_draft"),
                 xs_html_attr(is_draft ? "checked" : "", NULL))));
 
+    const char *post_langs = xs_dict_get(user->config, "post_langs");
+
+    if (xs_is_string(post_langs) && *post_langs) {
+        xs *ll = xs_split(post_langs, " ");
+        const char *lang;
+
+        xs_html *post_lang = xs_html_tag("select",
+            xs_html_attr("name", "post_lang"));
+
+        xs_list_foreach(ll, lang) {
+            if (*lang) {
+                xs_html_add(post_lang,
+                    xs_html_tag("option",
+                        xs_html_text(lang),
+                        xs_html_attr("value", lang)));
+            }
+        }
+
+        xs_html_add(form,
+            xs_html_tag("p", NULL),
+            xs_html_text(L("Language:")),
+            xs_html_text(" "),
+            post_lang);
+    }
+
     /* post date and time */
     xs *post_date = NULL;
     xs *post_time = NULL;
