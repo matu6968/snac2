@@ -2984,11 +2984,14 @@ xs_list *content_search(snac *user, const char *regex,
         xs *c = xs_str_new(NULL);
         const char *content = xs_dict_get(post, "content");
         const char *name    = xs_dict_get(post, "name");
+        const char *atto    = get_atto(post);
 
         if (!xs_is_null(content))
             c = xs_str_cat(c, content);
         if (!xs_is_null(name))
             c = xs_str_cat(c, " ", name);
+        if (!xs_is_null(atto))
+            c = xs_str_cat(c, " ", atto);
 
         /* add alt-texts from attachments */
         const xs_list *atts = xs_dict_get(post, "attachment");
