@@ -2,6 +2,8 @@
 
 ## UNRELEASED
 
+The language in which a post is written can now be set from the UI; you must configure the list of languages you usually post in in the User Settings.
+
 Added Dutch (nl_NL) translation (contributed by martijndeb).
 
 Added Western Frisian (fy_NL) translation (contributed by martijndeb).
