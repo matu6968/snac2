@@ -368,7 +368,8 @@ xs_html *html_note(snac *user, const char *summary,
                    const xs_val *mnt_only, const char *redir,
                    const char *in_reply_to, int poll,
                    const xs_list *att_files, const xs_list *att_alt_texts,
-                   int is_draft, const char *published)
+                   int is_draft, const char *published,
+                   const char *note_lang)
 /* Yes, this is a FUCKTON of arguments and I'm a bit embarrased */
 {
     xs *action = xs_fmt("%s/admin/note", user->actor);
@@ -469,10 +470,19 @@ xs_html *html_note(snac *user, const char *summary,
 
         xs_list_foreach(ll, lang) {
             if (*lang) {
-                xs_html_add(post_lang,
-                    xs_html_tag("option",
-                        xs_html_text(lang),
-                        xs_html_attr("value", lang)));
+                if (xs_is_string(note_lang) && strcmp(lang, note_lang) == 0) {
+                    xs_html_add(post_lang,
+                        xs_html_tag("option",
+                            xs_html_text(lang),
+                            xs_html_attr("selected", NULL),
+                            xs_html_attr("value", lang)));
+                }
+                else {
+                    xs_html_add(post_lang,
+                        xs_html_tag("option",
+                            xs_html_text(lang),
+                            xs_html_attr("value", lang)));
+                }
             }
         }
 
@@ -1227,7 +1237,7 @@ xs_html *html_top_controls(snac *user)
             NULL, NULL,
             xs_stock(XSTYPE_FALSE), "",
             xs_stock(XSTYPE_FALSE), NULL,
-            NULL, 1, NULL, NULL, 0, NULL),
+            NULL, 1, NULL, NULL, 0, NULL, NULL),
 
         /** operations **/
         xs_html_tag("details",
@@ -1913,6 +1923,15 @@ xs_html *html_entry_controls(snac *user, const char *actor,
             }
         }
 
+        const char *note_lang = NULL;
+        const xs_dict *cmap = xs_dict_get(msg, "contentMap");
+        if (xs_is_dict(cmap)) {
+            const char *dummy;
+            int c = 0;
+
+            xs_dict_next(cmap, &note_lang, &dummy, &c);
+        }
+
         xs_html_add(controls, xs_html_tag("div",
             xs_html_tag("p", NULL),
             html_note(user, L("Edit..."),
@@ -1922,7 +1941,7 @@ xs_html *html_entry_controls(snac *user, const char *actor,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
                 NULL, 0, att_files, att_alt_texts, is_draft(user, id),
-                xs_dict_get(msg, "published"))),
+                xs_dict_get(msg, "published"), note_lang)),
             xs_html_tag("p", NULL));
     }
 
@@ -1941,7 +1960,7 @@ xs_html *html_entry_controls(snac *user, const char *actor,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                id, 0, NULL, NULL, 0, NULL)),
+                id, 0, NULL, NULL, 0, NULL, NULL)),
             xs_html_tag("p", NULL));
     }
 
@@ -3329,7 +3348,7 @@ xs_html *html_people_list(snac *user, xs_list *list, const char *header, const c
                     NULL, actor_id,
                     xs_stock(XSTYPE_FALSE), "",
                     xs_stock(XSTYPE_FALSE), NULL,
-                    NULL, 0, NULL, NULL, 0, NULL),
+                    NULL, 0, NULL, NULL, 0, NULL, NULL),
                 xs_html_tag("p", NULL));
 
             xs_html_add(snac_post, snac_controls);
