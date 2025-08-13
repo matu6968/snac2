@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: snac\n"
-"PO-Revision-Date: 2025-04-18\n"
+"PO-Revision-Date: 2025-08-13 10:08-0300\n"
 "Last-Translator: Daltux <@daltux@snac.daltux.net>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -30,7 +30,7 @@ msgstr "Resposta para (URL): "
 
 #: html.c:455
 msgid "Don't send, but store as a draft"
-msgstr "Não enviar, mas armazenar como rascunho"
+msgstr "Não enviar, mas guardar como rascunho"
 
 #: html.c:456
 msgid "Draft:"
@@ -179,7 +179,7 @@ msgstr "Curtir"
 
 #: html.c:1422
 msgid "User Settings..."
-msgstr "Definições de uso..."
+msgstr "Definições da conta..."
 
 #: html.c:1431
 msgid "Display name:"
@@ -227,7 +227,7 @@ msgstr "Notificações Telegram (chave do robô e ID da conversa):"
 
 #: html.c:1498
 msgid "ntfy notifications (ntfy server and token):"
-msgstr "Notificações ntfy (servidor ntfy e token):"
+msgstr "ntfy - notificações (servidor ntfy e token):"
 
 #: html.c:1520
 msgid "Maximum days to keep posts (0: server settings):"
@@ -235,11 +235,11 @@ msgstr "Máximo de dias a preservar publicações (0: definições do servidor):
 
 #: html.c:1534
 msgid "Drop direct messages from people you don't follow"
-msgstr "Descartar mensagens diretas de pessoas que você não segue"
+msgstr "Descartar mensagens diretas de quem você não segue"
 
 #: html.c:1543
 msgid "This account is a bot"
-msgstr "Esta conta é robô"
+msgstr "Esta conta é robotizada"
 
 #: html.c:1552
 msgid "Auto-boost all mentions to this account"
@@ -722,11 +722,11 @@ msgstr "ID da conversa"
 
 #: html.c:1504
 msgid "ntfy server - full URL (example: https://ntfy.sh/YourTopic)"
-msgstr "Servidor ntfy - URL completa (exemplo: https://ntfy.sh/SeuTópico)"
+msgstr "ntfy - servidor - URL completa (exemplo: https://ntfy.sh/SeuTópico)"
 
 #: html.c:1510
 msgid "ntfy token - if needed"
-msgstr "Token ntfy - se necessário"
+msgstr "ntfy - token (se necessário)"
 
 #: html.c:3009
 msgid "pinned"
@@ -766,20 +766,21 @@ msgstr "Fuso horário:"
 
 #: html.c:491
 msgid "Language:"
-msgstr ""
+msgstr "Idioma:"
 
 #: html.c:1512
 msgid "Notify webhook:"
-msgstr ""
+msgstr "Webhook para notificar:"
 
 #: html.c:1518
 msgid "http://example.com/webhook"
-msgstr ""
+msgstr "http://exemplo.com.br/webhook"
 
 #: html.c:1626
 msgid "Languages you usually post in:"
-msgstr ""
+msgstr "Idiomas em que costuma postar:"
 
 #: html.c:1632
 msgid "en fr es de_AT"
-msgstr ""
+msgstr "pt en fr es de_AT"
+
