@@ -1397,6 +1397,9 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
         initial_status = index_desc_first(f, md5, 0);
     }
 
+    xs_set entries;
+    xs_set_init(&entries);
+
     if (initial_status) {
         do {
             xs *msg = NULL;
@@ -1488,7 +1491,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
             /* convert the Note into a Mastodon status */
             xs *st = mastoapi_status(user, msg);
 
-            if (st != NULL) {
+            if (st != NULL && xs_set_add(&entries, md5) == 1) {
                 if (ascending)
                     out = xs_list_insert(out, 0, st);
                 else
@@ -1498,6 +1501,8 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
 
         } while ((cnt < limit) && (*iterator)(f, md5));
     }
+
+    xs_set_free(&entries);
 
     int more = index_desc_next(f, md5);
 
