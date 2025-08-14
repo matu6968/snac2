@@ -6,6 +6,7 @@
 #define USER_AGENT "snac/" VERSION
 
 #define WHAT_IS_SNAC_URL "https:/" "/comam.es/what-is-snac"
+#define SNAC_DOC_URL "https:/" "/comam.es/snac-doc"
 
 #define DIR_PERM 00770
 #define DIR_PERM_ADD 02770

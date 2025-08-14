@@ -283,9 +283,10 @@ int server_get_handler(xs_dict *req, const char *q_path,
         status = HTTP_STATUS_OK;
         *ctype = "application/json; charset=utf-8";
         *body  = xs_fmt("{\"links\":["
-            "{\"rel\":\"http:/" "/nodeinfo.diaspora.software/ns/schema/2.0\","
-            "\"href\":\"%s/nodeinfo_2_0\"}]}",
-            srv_baseurl);
+            "{\"rel\":\"http:/" "/nodeinfo.diaspora.software/ns/schema/2.0\",\"href\":\"%s/nodeinfo_2_0\"},"
+            "{\"rel\":\"http:/" "/nodeinfo.diaspora.software/ns/schema/2.1\",\"href\":\"%s/nodeinfo_2_1\"}"
+            "]}",
+            srv_baseurl, srv_baseurl);
     }
     else
     if (strcmp(q_path, "/.well-known/host-meta") == 0) {
@@ -301,6 +302,19 @@ int server_get_handler(xs_dict *req, const char *q_path,
         status = HTTP_STATUS_OK;
         *ctype = "application/json; charset=utf-8";
         *body  = nodeinfo_2_0();
+    }
+    else
+    if (strcmp(q_path, "/nodeinfo_2_1") == 0) {
+        xs *s = nodeinfo_2_0();
+        xs *j = xs_json_loads(s);
+
+        j = xs_dict_set(j, "version", "2.1");
+        j = xs_dict_set_path(j, "software.repository", WHAT_IS_SNAC_URL);
+        j = xs_dict_set_path(j, "software.homepage", SNAC_DOC_URL);
+
+        status = HTTP_STATUS_OK;
+        *ctype = "application/json; charset=utf-8";
+        *body  = xs_json_dumps(j, 4);
     }
     else
     if (strcmp(q_path, "/robots.txt") == 0) {
