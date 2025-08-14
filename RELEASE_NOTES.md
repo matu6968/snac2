@@ -10,6 +10,8 @@ Added Western Frisian (fy_NL) translation (contributed by martijndeb).
 
 Mastodon API: Fixed repeated entries in timelines.
 
+Added nodeinfo 2.1 support.
+
 ## 2.81
 
 If the `propagate_local_purge` configuration variable is set to `true` in `server.json`, purged local posts generate a `Delete` activity that is sent everywhere, instead of only deleted from the filesystem.
