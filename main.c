@@ -730,6 +730,12 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "collect_replies") == 0) { /** **/
+        collect_replies(&snac, url);
+
+        return 0;
+    }
+
     if (strcmp(cmd, "insert") == 0) { /** **/
         int status;
         xs *data = NULL;

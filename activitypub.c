@@ -936,6 +936,94 @@ xs_str *process_tags(snac *snac, const char *content, xs_list **tag)
 }
 
 
+void collect_replies(snac *user, const char *id)
+/* collects all replies for a post */
+{
+    xs *obj = NULL;
+
+    if (!valid_status(object_get(id, &obj))) {
+        snac_debug(user, 1, xs_fmt("collect_replies: object '%s' is not here", id));
+        return;
+    }
+
+    const char *next = xs_dict_get_path(obj, "replies.first.next");
+    if (!xs_is_string(next)) {
+        snac_debug(user, 1, xs_fmt("collect_replies: object '%s' does not have a replies.first.next URL", id));
+        return;
+    }
+
+    /* pick the first level replies (may be empty) */
+    const xs_list *level0_replies = xs_dict_get_path(obj, "replies.first.items");
+
+    xs *reply_obj = NULL;
+
+    if (!valid_status(object_get(next, &reply_obj))) {
+        if (!valid_status(activitypub_request(user, next, &reply_obj))) {
+            snac_debug(user, 1, xs_fmt("collect_replies: cannot get replies object '%s'", next));
+            return;
+        }
+    }
+
+    const xs_list *level1_replies = xs_dict_get(reply_obj, "items");
+    if (!xs_is_list(level1_replies)) {
+        snac_debug(user, 1, xs_fmt("collect_replies: cannot get reply items from object '%s'", next));
+        return;
+    }
+
+    xs *items = NULL;
+
+    if (xs_is_list(level0_replies))
+        items = xs_list_cat(xs_dup(level0_replies), level1_replies);
+    else
+        items = xs_dup(level1_replies);
+
+    const xs_val *v;
+
+    xs_list_foreach(items, v) {
+        xs *reply = NULL;
+
+        if (xs_is_string(v)) {
+            /* request the object */
+            if (!valid_status(object_get(v, &reply))) {
+                if (!valid_status(activitypub_request(user, v, &reply))) {
+                    snac_debug(user, 1, xs_fmt("collect_replies: error requesting object '%s'", v));
+                    continue;
+                }
+            }
+        }
+        else
+        if (xs_is_dict(v)) {
+            /* actually the post object */
+            reply = xs_dup(v);
+        }
+
+        if (!xs_is_dict(reply))
+            continue;
+
+        const char *id      = xs_dict_get(reply, "id");
+        const char *type    = xs_dict_get(reply, "type");
+        const char *attr_to = get_atto(reply);
+
+        if (!xs_is_string(id) || !xs_is_string(type) || !xs_is_string(attr_to))
+            continue;
+
+        if (!xs_match(type, POSTLIKE_OBJECT_TYPE))
+            continue;
+
+        if (timeline_here(user, id)) {
+            snac_debug(user, 1, xs_fmt("collect_replies: item already in timeline %s", id));
+            continue;
+        }
+
+        enqueue_actor_refresh(user, attr_to, 0);
+
+        timeline_add(user, id, reply);
+
+        snac_log(user, xs_fmt("new '%s' (collect_replies) %s %s", type, attr_to, id));
+    }
+}
+
+
 void notify(snac *snac, const char *type, const char *utype, const char *actor, const xs_dict *msg)
 /* notifies the user of relevant events */
 {
