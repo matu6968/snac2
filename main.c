@@ -731,7 +731,7 @@ int main(int argc, char *argv[])
     }
 
     if (strcmp(cmd, "collect_replies") == 0) { /** **/
-        collect_replies(&snac, url);
+        enqueue_collect_replies(&snac, url);
 
         return 0;
     }

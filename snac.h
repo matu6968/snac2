@@ -297,6 +297,7 @@ void enqueue_verify_links(snac *user);
 void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs);
 void enqueue_webmention(const xs_dict *msg);
 void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries);
+void enqueue_collect_replies(snac *user, const char *post);
 
 int was_question_voted(snac *user, const char *id);
 

@@ -2915,6 +2915,12 @@ void process_user_queue_item(snac *user, xs_dict *q_item)
         }
     }
     else
+    if (strcmp(type, "collect_replies") == 0) {
+        const char *post = xs_dict_get(q_item, "message");
+
+        collect_replies(user, post);
+    }
+    else
         snac_log(user, xs_fmt("unexpected user q_item type '%s'", type));
 }
 

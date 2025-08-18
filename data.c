@@ -3576,6 +3576,19 @@ void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries)
 }
 
 
+void enqueue_collect_replies(snac *user, const char *post)
+/* enqueues a collect replies request */
+{
+    xs *qmsg = _new_qmsg("collect_replies", post, 0);
+    const char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    snac_debug(user, 1, xs_fmt("enqueue_collect_replies %s", post));
+}
+
+
 int was_question_voted(snac *user, const char *id)
 /* returns true if the user voted in this poll */
 {
