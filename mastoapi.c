@@ -1271,8 +1271,31 @@ void credentials_get(char **body, char **ctype, int *status, snac snac)
     acct = xs_dict_append(acct, "header", header);
     acct = xs_dict_append(acct, "header_static", header);
 
-    const xs_dict *metadata = xs_dict_get(snac.config, "metadata");
-    if (xs_type(metadata) == XSTYPE_DICT) {
+    xs *metadata = NULL;
+    const xs_dict *md = xs_dict_get(snac.config, "metadata");
+
+    if (xs_is_dict(md))
+        metadata = xs_dup(md);
+    else
+    if (xs_is_string(md)) {
+        metadata = xs_dict_new();
+        xs *l = xs_split(md, "\n");
+        const char *ll;
+
+        xs_list_foreach(l, ll) {
+            xs *kv = xs_split_n(ll, "=", 1);
+            const char *k = xs_list_get(kv, 0);
+            const char *v = xs_list_get(kv, 1);
+
+            if (k && v) {
+                xs *kk = xs_strip_i(xs_dup(k));
+                xs *vv = xs_strip_i(xs_dup(v));
+                metadata = xs_dict_set(metadata, kk, vv);
+            }
+        }
+    }
+
+    if (xs_is_dict(metadata)) {
         xs *fields = xs_list_new();
         const xs_str *k;
         const xs_str *v;
@@ -1374,6 +1397,9 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
         initial_status = index_desc_first(f, md5, 0);
     }
 
+    xs_set entries;
+    xs_set_init(&entries);
+
     if (initial_status) {
         do {
             xs *msg = NULL;
@@ -1465,7 +1491,7 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
             /* convert the Note into a Mastodon status */
             xs *st = mastoapi_status(user, msg);
 
-            if (st != NULL) {
+            if (st != NULL && xs_set_add(&entries, md5) == 1) {
                 if (ascending)
                     out = xs_list_insert(out, 0, st);
                 else
@@ -1475,6 +1501,8 @@ xs_list *mastoapi_timeline(snac *user, const xs_dict *args, const char *index_fn
 
         } while ((cnt < limit) && (*iterator)(f, md5));
     }
+
+    xs_set_free(&entries);
 
     int more = index_desc_next(f, md5);
 
@@ -2112,7 +2140,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/scheduled_statuses") == 0) { /** **/
-        /* snac does not schedule notes */
+        /* TBD */
         *body  = xs_dup("[]");
         *ctype = "application/json";
         status = HTTP_STATUS_OK;
@@ -2477,6 +2505,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
     }
     else
     if (strcmp(cmd, "/v1/preferences") == 0) { /** **/
+        /* TBD */
         *body  = xs_dup("{}");
         *ctype = "application/json";
         status = HTTP_STATUS_OK;
@@ -3689,7 +3718,7 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
     snac snac = {0};
     int logged_in = process_auth_token(&snac, req);
 
-    if (xs_startswith(cmd, "/v1/accounts/update_credentials")) {
+    if (xs_startswith(cmd, "/v1/accounts/update_credentials")) { /** **/
         /* Update user profile fields */
         if (logged_in) {
             int c = 0;
@@ -3745,9 +3774,13 @@ int mastoapi_patch_handler(const xs_dict *req, const char *q_path,
                         snac.config = xs_dict_set(snac.config, "metadata", new_fields);
                     }
                 }
+                else
+                if (strcmp(k, "locked") == 0) {
+                    snac.config = xs_dict_set(snac.config, "approve_followers",
+                        xs_stock(strcmp(v, "true") == 0 ? XSTYPE_TRUE : XSTYPE_FALSE));
+                }
                 /* we don't have support for the following options, yet
                    - discoverable (0/1)
-                   - locked (0/1)
                  */
             }
 

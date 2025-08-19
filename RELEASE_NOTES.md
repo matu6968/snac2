@@ -2,9 +2,27 @@
 
 ## UNRELEASED
 
-Included a small tweak to avoid being confused by implementations that return valid webfinger queries for non-account URLs (like i.e. the Wordpress ActivityPub plugin in some configurations).
+The language in which a post is written can now be set from the UI; you must configure the list of languages you usually post in in the User Settings.
+
+Added Dutch (nl_NL) translation (contributed by martijndeb).
+
+Added Western Frisian (fy_NL) translation (contributed by martijndeb).
+
+Mastodon API: Fixed repeated entries in timelines.
+
+Added nodeinfo 2.1 support.
+
+## 2.81
+
+If the `propagate_local_purge` configuration variable is set to `true` in `server.json`, purged local posts generate a `Delete` activity that is sent everywhere, instead of only deleted from the filesystem.
+
+Included a small tweak to avoid being confused by implementations that return valid webfinger queries for non-account URLs (like i.e. the Wordpress ActivityPub plugin in some configurations). This helps in searching by URL.
 
 Added Ukrainian translation (contributed by wincentbalin).
+
+New command-line option `muted`, to list all MUTEd actors.
+
+Mastodon API: Fixed metadata and follower approval flag when editing the account.
 
 ## 2.80
 

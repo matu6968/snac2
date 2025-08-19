@@ -1,11 +1,12 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
-#define VERSION "2.81-dev"
+#define VERSION "2.82-dev"
 
 #define USER_AGENT "snac/" VERSION
 
 #define WHAT_IS_SNAC_URL "https:/" "/comam.es/what-is-snac"
+#define SNAC_DOC_URL "https:/" "/comam.es/snac-doc"
 
 #define DIR_PERM 00770
 #define DIR_PERM_ADD 02770
@@ -223,6 +224,7 @@ int limited(snac *user, const char *id, int cmd);
 
 void hide(snac *snac, const char *id);
 int is_hidden(snac *snac, const char *id);
+int unhide(snac *user, const char *id);
 
 void tag_index(const char *id, const xs_dict *obj);
 xs_str *tag_fn(const char *tag);

@@ -368,7 +368,8 @@ xs_html *html_note(snac *user, const char *summary,
                    const xs_val *mnt_only, const char *redir,
                    const char *in_reply_to, int poll,
                    const xs_list *att_files, const xs_list *att_alt_texts,
-                   int is_draft, const char *published)
+                   int is_draft, const char *published,
+                   const char *note_lang)
 /* Yes, this is a FUCKTON of arguments and I'm a bit embarrased */
 {
     xs *action = xs_fmt("%s/admin/note", user->actor);
@@ -457,6 +458,40 @@ xs_html *html_note(snac *user, const char *summary,
                 xs_html_attr("type", "checkbox"),
                 xs_html_attr("name", "is_draft"),
                 xs_html_attr(is_draft ? "checked" : "", NULL))));
+
+    const char *post_langs = xs_dict_get(user->config, "post_langs");
+
+    if (xs_is_string(post_langs) && *post_langs) {
+        xs *ll = xs_split(post_langs, " ");
+        const char *lang;
+
+        xs_html *post_lang = xs_html_tag("select",
+            xs_html_attr("name", "post_lang"));
+
+        xs_list_foreach(ll, lang) {
+            if (*lang) {
+                if (xs_is_string(note_lang) && strcmp(lang, note_lang) == 0) {
+                    xs_html_add(post_lang,
+                        xs_html_tag("option",
+                            xs_html_text(lang),
+                            xs_html_attr("selected", NULL),
+                            xs_html_attr("value", lang)));
+                }
+                else {
+                    xs_html_add(post_lang,
+                        xs_html_tag("option",
+                            xs_html_text(lang),
+                            xs_html_attr("value", lang)));
+                }
+            }
+        }
+
+        xs_html_add(form,
+            xs_html_tag("p", NULL),
+            xs_html_text(L("Language:")),
+            xs_html_text(" "),
+            post_lang);
+    }
 
     /* post date and time */
     xs *post_date = NULL;
@@ -1202,7 +1237,7 @@ xs_html *html_top_controls(snac *user)
             NULL, NULL,
             xs_stock(XSTYPE_FALSE), "",
             xs_stock(XSTYPE_FALSE), NULL,
-            NULL, 1, NULL, NULL, 0, NULL),
+            NULL, 1, NULL, NULL, 0, NULL, NULL),
 
         /** operations **/
         xs_html_tag("details",
@@ -1311,6 +1346,7 @@ xs_html *html_top_controls(snac *user)
     const char *latitude     = xs_dict_get_def(user->config, "latitude", "");
     const char *longitude    = xs_dict_get_def(user->config, "longitude", "");
     const char *webhook      = xs_dict_get_def(user->config, "notify_webhook", "");
+    const char *post_langs   = xs_dict_get_def(user->config, "post_langs", "");
 
     xs *metadata = NULL;
     const xs_dict *md = xs_dict_get(user->config, "metadata");
@@ -1585,6 +1621,15 @@ xs_html *html_top_controls(snac *user)
                     xs_html_text(L("Time zone:")),
                     xs_html_sctag("br", NULL),
                     tz_select),
+
+                xs_html_tag("p",
+                    xs_html_text(L("Languages you usually post in:")),
+                    xs_html_sctag("br", NULL),
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "next"),
+                        xs_html_attr("name", "post_langs"),
+                        xs_html_attr("value", post_langs),
+                        xs_html_attr("placeholder", L("en fr es de_AT")))),
 
                 xs_html_tag("p",
                     xs_html_text(L("New password:")),
@@ -1888,6 +1933,15 @@ xs_html *html_entry_controls(snac *user, const char *actor,
             }
         }
 
+        const char *note_lang = NULL;
+        const xs_dict *cmap = xs_dict_get(msg, "contentMap");
+        if (xs_is_dict(cmap)) {
+            const char *dummy;
+            int c = 0;
+
+            xs_dict_next(cmap, &note_lang, &dummy, &c);
+        }
+
         xs_html_add(controls, xs_html_tag("div",
             xs_html_tag("p", NULL),
             html_note(user, L("Edit..."),
@@ -1897,7 +1951,7 @@ xs_html *html_entry_controls(snac *user, const char *actor,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
                 NULL, 0, att_files, att_alt_texts, is_draft(user, id),
-                xs_dict_get(msg, "published"))),
+                xs_dict_get(msg, "published"), note_lang)),
             xs_html_tag("p", NULL));
     }
 
@@ -1916,7 +1970,7 @@ xs_html *html_entry_controls(snac *user, const char *actor,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
                 xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
-                id, 0, NULL, NULL, 0, NULL)),
+                id, 0, NULL, NULL, 0, NULL, NULL)),
             xs_html_tag("p", NULL));
     }
 
@@ -2855,7 +2909,7 @@ xs_html *html_footer(const snac *user)
             xs_html_attr("href", WHAT_IS_SNAC_URL),
             xs_html_tag("abbr",
                 xs_html_attr("title", "Social Networks Are Crap"),
-                xs_html_text("snac"))));
+                xs_html_text(USER_AGENT))));
 }
 
 
@@ -3002,7 +3056,13 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
             const char *ht;
 
             xs_list_foreach(followed_hashtags, ht) {
-                xs *url = xs_fmt("%s/admin?q=%s", user->actor, ht);
+                xs *url = NULL;
+
+                if (!xs_startswith(ht, "https:/""/"))
+                    url = xs_fmt("%s/admin?q=%s", user->actor, ht);
+                else
+                    url = xs_dup(ht);
+
                 url = xs_replace_i(url, "#", "%23");
 
                 xs_html_add(loht,
@@ -3298,7 +3358,7 @@ xs_html *html_people_list(snac *user, xs_list *list, const char *header, const c
                     NULL, actor_id,
                     xs_stock(XSTYPE_FALSE), "",
                     xs_stock(XSTYPE_FALSE), NULL,
-                    NULL, 0, NULL, NULL, 0, NULL),
+                    NULL, 0, NULL, NULL, 0, NULL, NULL),
                 xs_html_tag("p", NULL));
 
             xs_html_add(snac_post, snac_controls);
@@ -4384,6 +4444,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         const char *edit_id      = xs_dict_get(p_vars, "edit_id");
         const char *post_date    = xs_dict_get_def(p_vars, "post_date", "");
         const char *post_time    = xs_dict_get_def(p_vars, "post_time", "");
+        const char *post_lang    = xs_dict_get(p_vars, "post_lang");
         int priv             = !xs_is_null(xs_dict_get(p_vars, "mentioned_only"));
         int store_as_draft   = !xs_is_null(xs_dict_get(p_vars, "is_draft"));
         xs *attach_list      = xs_list_new();
@@ -4467,7 +4528,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 enqueue_close_question(&snac, xs_dict_get(msg, "id"), end_secs);
             }
             else
-                msg = msg_note(&snac, content_2, to, in_reply_to, attach_list, priv, NULL, NULL);
+                msg = msg_note(&snac, content_2, to, in_reply_to, attach_list, priv, post_lang, NULL);
 
             if (sensitive != NULL) {
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));
@@ -4873,6 +4934,8 @@ int html_post_handler(const xs_dict *req, const char *q_path,
             snac.config = xs_dict_set(snac.config, "lang", v);
         if ((v = xs_dict_get(p_vars, "tz")) != NULL)
             snac.config = xs_dict_set(snac.config, "tz", v);
+        if ((v = xs_dict_get(p_vars, "post_langs")) != NULL)
+            snac.config = xs_dict_set(snac.config, "post_langs", v);
 
         snac.config = xs_dict_set(snac.config, "latitude", xs_dict_get_def(p_vars, "latitude", ""));
         snac.config = xs_dict_set(snac.config, "longitude", xs_dict_get_def(p_vars, "longitude", ""));

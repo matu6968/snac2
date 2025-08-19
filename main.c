@@ -56,6 +56,7 @@ int usage(const char *cmd)
         "unblock {basedir} {instance_url}     Unblocks a full instance\n"
         "limit {basedir} {uid} {actor}        Limits an actor (drops their announces)\n"
         "unlimit {basedir} {uid} {actor}      Unlimits an actor\n"
+        "muted {basedir} {uid}                Lists the muted actors\n"
         "unmute {basedir} {uid} {actor}       Unmutes a previously muted actor\n"
         "verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n"
         "search {basedir} {uid} {regex}       Searches posts by content\n"
@@ -331,6 +332,16 @@ int main(int argc, char *argv[])
         xs_list_foreach(lol, l) {
             printf("%s (%s)\n", xs_list_get(l, 1), xs_list_get(l, 0));
         }
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "muted") == 0) { /** **/
+        xs *l = muted_list(&snac);
+        const char *v;
+
+        xs_list_foreach(l, v)
+            printf("%s\n", v);
 
         return 0;
     }
