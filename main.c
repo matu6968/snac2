@@ -494,6 +494,7 @@ int main(int argc, char *argv[])
 
         if (msg != NULL) {
             enqueue_message(&snac, msg);
+            timeline_admire(&snac, xs_dict_get(msg, "object"), snac.actor, 0);
 
             if (dbglevel) {
                 xs_json_dump(msg, 4, stdout);
