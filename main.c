@@ -39,6 +39,7 @@ int usage(const char *cmd)
         "unfollow {basedir} {uid} {actor}     Unfollows an actor\n"
         "request {basedir} {uid} {url}        Requests an object\n"
         "insert {basedir} {uid} {url}         Requests an object and inserts it into the timeline\n"
+        "collect_replies {basedir} {uid} {url} Collects all replies from a post\n"
         "actor {basedir} [{uid}] {url}        Requests an actor\n"
         "note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n"
         "note_unlisted {basedir} {uid} {text} [files...] Sends an unlisted note with optional attachments\n"
