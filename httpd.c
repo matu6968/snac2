@@ -226,7 +226,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
         const xs_dict *q_vars = xs_dict_get(req, "q_vars");
         const char *t = NULL;
 
-        if (xs_type(q_vars) == XSTYPE_DICT && (t = xs_dict_get(q_vars, "t"))) {
+        if (xs_type(q_vars) == XSTYPE_DICT && xs_is_string(t = xs_dict_get(q_vars, "t"))) {
             /** search by tag **/
             int skip = 0;
             int show = xs_number_get(xs_dict_get_def(srv_config, "def_timeline_entries",
