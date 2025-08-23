@@ -39,6 +39,7 @@ int usage(const char *cmd)
         "unfollow {basedir} {uid} {actor}     Unfollows an actor\n"
         "request {basedir} {uid} {url}        Requests an object\n"
         "insert {basedir} {uid} {url}         Requests an object and inserts it into the timeline\n"
+        "collect_replies {basedir} {uid} {url} Collects all replies from a post\n"
         "actor {basedir} [{uid}] {url}        Requests an actor\n"
         "note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n"
         "note_unlisted {basedir} {uid} {text} [files...] Sends an unlisted note with optional attachments\n"
@@ -61,7 +62,7 @@ int usage(const char *cmd)
         "verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n"
         "search {basedir} {uid} {regex}       Searches posts by content\n"
         "export_csv {basedir} {uid}           Exports followers, lists, MUTEd and bookmarks to CSV\n"
-        "export_posts {basedir} {iod}         Exports all posts to outbox.json\n"
+        "export_posts {basedir} {uid}         Exports all posts to outbox.json\n"
         "alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n"
         "migrate {basedir} {uid}              Migrates to the account defined as the alias\n"
         "import_csv {basedir} {uid}           Imports data from CSV files\n"
@@ -494,6 +495,7 @@ int main(int argc, char *argv[])
 
         if (msg != NULL) {
             enqueue_message(&snac, msg);
+            timeline_admire(&snac, xs_dict_get(msg, "object"), snac.actor, 0);
 
             if (dbglevel) {
                 xs_json_dump(msg, 4, stdout);
@@ -726,6 +728,12 @@ int main(int argc, char *argv[])
         if (data != NULL) {
             xs_json_dump(data, 4, stdout);
         }
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "collect_replies") == 0) { /** **/
+        enqueue_collect_replies(&snac, url);
 
         return 0;
     }

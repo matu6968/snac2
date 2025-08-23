@@ -297,6 +297,7 @@ void enqueue_verify_links(snac *user);
 void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs);
 void enqueue_webmention(const xs_dict *msg);
 void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries);
+void enqueue_collect_replies(snac *user, const char *post);
 
 int was_question_voted(snac *user, const char *id);
 
@@ -333,6 +334,8 @@ int webfinger_get_handler(const xs_dict *req, const char *q_path,
 const char *default_avatar_base64(void);
 
 xs_str *process_tags(snac *snac, const char *content, xs_list **tag);
+
+void collect_replies(snac *user, const char *id);
 
 const char *get_atto(const xs_dict *msg);
 const char *get_in_reply_to(const xs_dict *msg);
