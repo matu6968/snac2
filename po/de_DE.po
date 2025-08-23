@@ -759,24 +759,24 @@ msgstr "Datum und Uhrzeit des Beitrags (Zeitzone: %s):"
 
 #: html.c:1621
 msgid "Time zone:"
-msgstr "Zeitzone"
+msgstr "Zeitzone:"
 
 #: html.c:491
 msgid "Language:"
-msgstr ""
+msgstr "Sprache:"
 
 #: html.c:1512
 msgid "Notify webhook:"
-msgstr ""
+msgstr "Notify webhook:"
 
 #: html.c:1518
 msgid "http://example.com/webhook"
-msgstr ""
+msgstr "http://example.com/webhook"
 
 #: html.c:1626
 msgid "Languages you usually post in:"
-msgstr ""
+msgstr "Sprache, in der du normalerweise schreibst:"
 
 #: html.c:1632
 msgid "en fr es de_AT"
-msgstr ""
+msgstr "en fr es de_DE"
