@@ -79,6 +79,10 @@ unsigned int xs_utf8_dec(const char **str)
 /* decodes an utf-8 char inside str and updates the pointer */
 {
     const char *p = *str;
+
+    if (!xs_is_string(p))
+        return 0;
+
     unsigned int cpoint = 0;
     unsigned char c = *p++;
     int cb = 0;

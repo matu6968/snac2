@@ -14,6 +14,7 @@ typedef struct _xs_set {
 void xs_set_init(xs_set *s);
 xs_list *xs_set_result(xs_set *s);
 void xs_set_free(xs_set *s);
+int xs_set_in(const xs_set *s, const xs_val *data);
 int xs_set_add(xs_set *s, const xs_val *data);
 
 
@@ -60,7 +61,7 @@ static int _store_hash(xs_set *s, const char *data, int value)
 
     while (s->hash[(i = hash % s->elems)]) {
         /* get the pointer to the stored data */
-        char *p = &s->list[s->hash[i]];
+        const char *p = &s->list[s->hash[i]];
 
         /* already here? */
         if (memcmp(p, data, sz) == 0)
@@ -76,6 +77,30 @@ static int _store_hash(xs_set *s, const char *data, int value)
     s->used++;
 
     return 1;
+}
+
+
+int xs_set_in(const xs_set *s, const xs_val *data)
+/* returns 1 if the data is already in the set */
+{
+    unsigned int hash, i;
+    int sz = xs_size(data);
+
+    hash = xs_hash_func(data, sz);
+
+    while (s->hash[(i = hash % s->elems)]) {
+        /* get the pointer to the stored data */
+        const char *p = &s->list[s->hash[i]];
+
+        /* already here? */
+        if (memcmp(p, data, sz) == 0)
+            return 1;
+
+        /* try next value */
+        hash++;
+    }
+
+    return 0;
 }
 
 

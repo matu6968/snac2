@@ -134,7 +134,9 @@ xs_dict *xs_dict_set_path_sep(xs_dict *dict, const char *path, const xs_val *val
 
 xs_val *xs_val_new(xstype t);
 xs_number *xs_number_new(double f);
+xs_number *xs_number_new_l(long l);
 double xs_number_get(const xs_number *v);
+long xs_number_get_l(const xs_number *v);
 const char *xs_number_str(const xs_number *v);
 
 xs_data *xs_data_new(const void *data, int size);
@@ -163,6 +165,7 @@ uint64_t xs_hash64_func(const char *data, int size);
 #define xs_is_string(v) (xs_type((v)) == XSTYPE_STRING)
 #define xs_is_list(v) (xs_type((v)) == XSTYPE_LIST)
 #define xs_is_dict(v) (xs_type((v)) == XSTYPE_DICT)
+#define xs_is_number(v) (xs_type((v)) == XSTYPE_NUMBER)
 
 #define xs_list_foreach(l, v) for (int ct_##__LINE__ = 0; xs_list_next(l, &v, &ct_##__LINE__); )
 #define xs_dict_foreach(l, k, v) for (int ct_##__LINE__ = 0; xs_dict_next(l, &k, &v, &ct_##__LINE__); )
@@ -362,8 +365,21 @@ int xs_is_null(const xs_val *data)
 int xs_cmp(const xs_val *v1, const xs_val *v2)
 /* compares two values */
 {
-    if (xs_type(v1) == XSTYPE_STRING && xs_type(v2) == XSTYPE_STRING)
+    xstype t1 = xs_type(v1);
+    xstype t2 = xs_type(v2);
+
+    if (t1 == XSTYPE_NULL || t2 == XSTYPE_NULL)
+        return 0;
+
+    if (t1 == XSTYPE_STRING && t2 == XSTYPE_STRING)
         return strcmp(v1, v2);
+
+    if (t1 == XSTYPE_NUMBER && t2 == XSTYPE_NUMBER) {
+        double d1 = xs_number_get(v1);
+        double d2 = xs_number_get(v2);
+
+        return d1 == d2 ? 0 : d1 < d2 ? -1 : 1;
+    }
 
     int s1 = xs_size(v1);
     int s2 = xs_size(v2);
@@ -975,6 +991,9 @@ xs_str *xs_join(const xs_list *list, const char *sep)
 
     xs_list_foreach(list, v) {
         /* refuse to join non-string values */
+        if (xs_type(v) == XSTYPE_NUMBER)
+            v = xs_number_str(v);
+
         if (xs_type(v) == XSTYPE_STRING) {
             int sz;
 
@@ -1396,10 +1415,20 @@ xs_val *xs_val_new(xstype t)
 
 /** numbers */
 
-xs_number *xs_number_new(double f)
-/* adds a new number value */
+xs_number *_xs_number_new(const char *str)
 {
-    xs_number *v;
+    xs_number *v = xs_realloc(NULL, 1 + xs_size(str));
+
+    v[0] = XSTYPE_NUMBER;
+    memcpy(&v[1], str, xs_size(str));
+
+    return v;
+}
+
+
+xs_number *xs_number_new(double f)
+/* creates a new number value from a double */
+{
     char tmp[64];
 
     snprintf(tmp, sizeof(tmp), "%.15lf", f);
@@ -1416,40 +1445,54 @@ xs_number *xs_number_new(double f)
         *ptr = '\0';
     }
 
-    /* alloc for the marker and the full string */
-    v = xs_realloc(NULL, _xs_blk_size(1 + xs_size(tmp)));
+    return _xs_number_new(tmp);
+}
 
-    v[0] = XSTYPE_NUMBER;
-    memcpy(&v[1], tmp, xs_size(tmp));
 
-    return v;
+xs_number *xs_number_new_l(long l)
+/* creates a new number value from a long */
+{
+    char tmp[64];
+
+    snprintf(tmp, sizeof(tmp), "%ld", l);
+
+    return _xs_number_new(tmp);
 }
 
 
 double xs_number_get(const xs_number *v)
 /* gets the number as a double */
 {
-    double f = 0.0;
-
     if (xs_type(v) == XSTYPE_NUMBER)
-        f = atof(&v[1]);
-    else
-    if (xs_type(v) == XSTYPE_STRING)
-        f = atof(v);
+        v++;
 
-    return f;
+    if (xs_type(v) == XSTYPE_STRING)
+        return atof(v);
+
+    return 0.0;
+}
+
+
+long xs_number_get_l(const xs_number *v)
+/* gets the number as a long */
+{
+    if (xs_type(v) == XSTYPE_NUMBER)
+        v++;
+
+    if (xs_type(v) == XSTYPE_STRING)
+        return atol(v);
+
+    return 0;
 }
 
 
 const char *xs_number_str(const xs_number *v)
 /* gets the number as a string */
 {
-    const char *p = NULL;
-
     if (xs_type(v) == XSTYPE_NUMBER)
-        p = &v[1];
+        return v + 1;
 
-    return p;
+    return NULL;
 }
 
 
