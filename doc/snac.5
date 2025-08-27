@@ -26,14 +26,14 @@ A special subset of Markdown is allowed, including:
 .It italic
 *text between a pair of asterisks*
 .It strikethrough text
-~~text between a pair of tildes~~
+~~text between two pairs of tildes~~
 .It underlined text
 __text between two pairs of underscores__
 .It code
 Text `between backticks` is formatted as code.
 .Bd -literal
 ```
-/* text between lines with only three backticks is preformatted */
+/* text between lines starting with three backticks is preformatted */
 int main(int argc, char *argv[])
 {
     return 0;
@@ -54,7 +54,9 @@ in the form of ![alt text](image url) are also supported.
 Horizonal rules can be inserted by typing three minus symbols
 alone in a line.
 .It quoted text
-Lines starting with >.
+Lines starting with > (blockquotes).
+.It bullet points
+Lines starting with an asterisk or hyphen plus a space (unsorted lists).
 .It headers
 One, two or three # at the beginning of a line plus a space plus
 some text are converted to HTML headers.
