@@ -278,6 +278,7 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
     xs_str *s  = xs_str_new(NULL);
     int in_pre = 0;
     int in_blq = 0;
+    int in_ul = 0;
     xs *list;
     char *p;
     const char *v;
@@ -361,9 +362,28 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
             continue;
         }
 
+        if (xs_startswith(ss, "* ") || xs_startswith(ss, "- ")) {
+            /* unsorted list */
+            ss = xs_strip_i(xs_crop_i(ss, 1, 0));
+
+            if (!in_ul) {
+                s = xs_str_cat(s, "<ul>");
+                in_ul = 1;
+            }
+
+            s = xs_str_cat(s, "<li>", ss);
+
+            continue;
+        }
+
         if (in_blq) {
             s = xs_str_cat(s, "</blockquote>");
             in_blq = 0;
+        }
+
+        if (in_ul) {
+            s = xs_str_cat(s, "</ul>");
+            in_ul = 0;
         }
 
         s = xs_str_cat(s, ss);
@@ -379,6 +399,7 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
     s = xs_replace_i(s, "<br><br><blockquote>", "<br><blockquote>");
     s = xs_replace_i(s, "</blockquote><br>", "</blockquote>");
     s = xs_replace_i(s, "</pre><br>", "</pre>");
+    s = xs_replace_i(s, "</ul><br>", "</ul>");
     s = xs_replace_i(s, "</h2><br>", "</h2>"); //anzu ???
     s = xs_replace_i(s, "</h3><br>", "</h3>"); //anzu ???
 
