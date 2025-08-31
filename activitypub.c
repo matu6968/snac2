@@ -946,36 +946,33 @@ void collect_replies(snac *user, const char *id)
         return;
     }
 
-    const char *next = xs_dict_get_path(obj, "replies.first.next");
-    if (!xs_is_string(next)) {
-        snac_debug(user, 1, xs_fmt("collect_replies: object '%s' does not have a replies.first.next URL", id));
+    const xs_dict *replies_first = xs_dict_get_path(obj, "replies.first");
+    if (!xs_is_dict(replies_first)) {
+        snac_debug(user, 1, xs_fmt("collect_replies: object '%s' does not have replies.first", id));
         return;
     }
 
-    /* pick the first level replies (may be empty) */
-    const xs_list *level0_replies = xs_dict_get_path(obj, "replies.first.items");
+    const xs_list *level0_replies = xs_dict_get(replies_first, "items");
+    const xs_list *level1_replies = NULL;
 
+    const char *next = xs_dict_get(replies_first, "next");
     xs *reply_obj = NULL;
 
-    if (!valid_status(object_get(next, &reply_obj))) {
-        if (!valid_status(activitypub_request(user, next, &reply_obj))) {
-            snac_debug(user, 1, xs_fmt("collect_replies: cannot get replies object '%s'", next));
-            return;
-        }
-    }
-
-    const xs_list *level1_replies = xs_dict_get(reply_obj, "items");
-    if (!xs_is_list(level1_replies)) {
-        snac_debug(user, 1, xs_fmt("collect_replies: cannot get reply items from object '%s'", next));
+    if (xs_is_string(next) && !valid_status(activitypub_request(user, next, &reply_obj))) {
+        snac_debug(user, 1, xs_fmt("collect_replies: error getting next replies object '%s'", next));
         return;
     }
 
-    xs *items = NULL;
+    if (xs_is_dict(reply_obj))
+        level1_replies = xs_dict_get(reply_obj, "items");
+
+    xs *items = xs_list_new();
 
     if (xs_is_list(level0_replies))
-        items = xs_list_cat(xs_dup(level0_replies), level1_replies);
-    else
-        items = xs_dup(level1_replies);
+        items = xs_list_cat(items, level0_replies);
+
+    if (xs_is_list(level1_replies))
+        items = xs_list_cat(items, level1_replies);
 
     const xs_val *v;
 
@@ -2538,10 +2535,14 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                 snac_log(snac, xs_fmt("malformed message: no 'id' field"));
             else
             if (object_here(id)) {
-                object_add_ow(id, object);
-                timeline_touch(snac);
+                if (xs_startswith(id, srv_baseurl) && !xs_startswith(id, actor))
+                    snac_log(snac, xs_fmt("ignored incorrect 'Update' %s %s", actor, id));
+                else {
+                    object_add_ow(id, object);
+                    timeline_touch(snac);
 
-                snac_log(snac, xs_fmt("updated '%s' %s", utype, id));
+                    snac_log(snac, xs_fmt("updated '%s' %s", utype, id));
+                }
             }
             else
                 snac_log(snac, xs_fmt("dropped update for unknown '%s' %s", utype, id));
@@ -2578,8 +2579,12 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             snac_log(snac, xs_fmt("malformed message: no 'id' field"));
         else
         if (object_here(object)) {
-            timeline_del(snac, object);
-            snac_debug(snac, 1, xs_fmt("new 'Delete' %s %s", actor, object));
+            if (xs_startswith(object, srv_baseurl) && !xs_startswith(object, actor))
+                snac_log(snac, xs_fmt("ignored incorrect 'Delete' %s %s", actor, object));
+            else {
+                timeline_del(snac, object);
+                snac_debug(snac, 1, xs_fmt("new 'Delete' %s %s", actor, object));
+            }
         }
         else
             snac_debug(snac, 1, xs_fmt("ignored 'Delete' for unknown object %s", object));
