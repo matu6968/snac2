@@ -1264,6 +1264,46 @@ xs_dict *msg_collection(snac *snac, const char *id, int items)
 }
 
 
+xs_dict *msg_replies(snac *user, const char *id, int fill)
+/* creates a CollectionPage with replies of id */
+{
+    xs *r_id = xs_replace(id, "/p/", "/r/");
+    xs *r_idp = xs_fmt("%s#page", r_id);
+    xs *r_idh = xs_fmt("%s#hdr", r_id);
+
+    xs_dict *msg = msg_base(user, "CollectionPage", r_idp, NULL, NULL, NULL);
+
+    msg = xs_dict_set(msg, "partOf", r_idh);
+
+    xs *items = xs_list_new();
+    if (fill) {
+        xs *children = object_children(id);
+        const char *md5;
+
+        xs_list_foreach(children, md5) {
+            xs *obj = NULL;
+
+            if (valid_status(object_get_by_md5(md5, &obj)) && is_msg_public(obj)) {
+                const char *c_id = xs_dict_get(obj, "id");
+
+                if (xs_is_string(c_id))
+                    items = xs_list_append(items, c_id);
+            }
+        }
+    }
+    else {
+        xs *r_idl = xs_fmt("%s#local", r_id);
+
+        msg = xs_dict_del(msg, "@context");
+        msg = xs_dict_set(msg, "id", r_idl);
+    }
+
+    msg = xs_dict_set(msg, "items", items);
+
+    return msg;
+}
+
+
 xs_dict *msg_accept(snac *snac, const xs_val *object, const char *to)
 /* creates an Accept message (as a response to a Follow) */
 {
@@ -1866,6 +1906,22 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
             cmap = xs_dict_set(cmap, lang, xs_dict_get(msg, "content"));
             msg = xs_dict_set(msg, "contentMap", cmap);
         }
+    }
+
+    if (!priv) {
+        /* create the replies object */
+        xs *replies = xs_dict_new();
+        xs *r_id = xs_replace(id, "/p/", "/r/");
+        xs *h_id = xs_fmt("%s#hdr", r_id);
+        xs *n_id = xs_fmt("%s#page", r_id);
+        xs *rp = msg_replies(snac, id, 0);
+
+        replies = xs_dict_set(replies, "id", h_id);
+        replies = xs_dict_set(replies, "type", "Collection");
+        replies = xs_dict_set(replies, "next", n_id);
+        replies = xs_dict_set(replies, "first", rp);
+
+        msg = xs_dict_set(msg, "replies", replies);
     }
 
     return msg;
@@ -3394,6 +3450,26 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         /* don't return non-public objects */
         if (valid_status(status) && !is_msg_public(msg))
             status = HTTP_STATUS_NOT_FOUND;
+    }
+    else
+    if (xs_startswith(p_path, "r/")) {
+        /* replies to a post */
+        xs *s = xs_dup(p_path);
+        s[0] = 'p';
+
+        xs *id = xs_fmt("%s/%s", snac.actor, s);
+
+        xs *obj = NULL;
+        status = object_get(id, &obj);
+
+        /* don't return non-public objects */
+        if (!valid_status(status))
+            status = HTTP_STATUS_NOT_FOUND;
+        else
+        if (!is_msg_public(obj))
+            status = HTTP_STATUS_NOT_FOUND;
+        else
+            msg = msg_replies(&snac, id, 1);
     }
     else
         status = HTTP_STATUS_NOT_FOUND;

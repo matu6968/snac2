@@ -360,6 +360,7 @@ xs_dict *msg_move(snac *user, const char *new_account);
 xs_dict *msg_accept(snac *snac, const xs_val *object, const char *to);
 xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
                       const xs_list *opts, int multiple, int end_secs);
+xs_dict *msg_replies(snac *user, const char *id, int fill);
 
 int activitypub_request(snac *snac, const char *url, xs_dict **data);
 int actor_request(snac *user, const char *actor, xs_dict **data);
