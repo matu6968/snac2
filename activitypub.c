@@ -1292,10 +1292,9 @@ xs_dict *msg_replies(snac *user, const char *id, int fill)
         }
     }
     else {
-        xs *r_idl = xs_fmt("%s#local", r_id);
-
         msg = xs_dict_del(msg, "@context");
-        msg = xs_dict_set(msg, "id", r_idl);
+        msg = xs_dict_del(msg, "id");
+        msg = xs_dict_set(msg, "next", r_idp);
     }
 
     msg = xs_dict_set(msg, "items", items);
@@ -1913,12 +1912,10 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
         xs *replies = xs_dict_new();
         xs *r_id = xs_replace(id, "/p/", "/r/");
         xs *h_id = xs_fmt("%s#hdr", r_id);
-        xs *n_id = xs_fmt("%s#page", r_id);
         xs *rp = msg_replies(snac, id, 0);
 
         replies = xs_dict_set(replies, "id", h_id);
         replies = xs_dict_set(replies, "type", "Collection");
-        replies = xs_dict_set(replies, "next", n_id);
         replies = xs_dict_set(replies, "first", rp);
 
         msg = xs_dict_set(msg, "replies", replies);
