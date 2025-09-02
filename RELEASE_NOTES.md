@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.82
 
 The language in which a post is written can now be set from the UI; you must configure the list of languages you usually post in in the User Settings.
 
@@ -15,6 +15,10 @@ Mastodon API: Fixed repeated entries in timelines.
 Added nodeinfo 2.1 support.
 
 Fixed boosts from the command line not showing in the public timeline (contributed by xvello).
+
+Updated several language files (contributed by zen and daltux).
+
+Retrieving a post's replies is now possible via ActivityPub.
 
 ## 2.81
 
