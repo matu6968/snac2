@@ -1383,13 +1383,8 @@ xs_str *timeline_fn_by_md5(snac *snac, const char *md5)
             fn = xs_free(fn);
             fn = xs_fmt("%s/public/%s.json", snac->basedir, md5);
 
-            if (mtime(fn) == 0.0) {
+            if (mtime(fn) == 0.0)
                 fn = xs_free(fn);
-                fn = xs_fmt("%s/personal/%s.json", snac->basedir, md5);
-
-                if (mtime(fn) == 0.0)
-                    fn = xs_free(fn);
-            }
         }
     }
 
@@ -1468,8 +1463,6 @@ void timeline_update_indexes(snac *snac, const char *id)
                 else
                     srv_debug(1, xs_fmt("Not added to public instance index %s", id));
             }
-            else
-                object_user_cache_add(snac, id, "personal");
         }
     }
 }
@@ -3884,14 +3877,14 @@ void purge_server(void)
 }
 
 
-void delete_purged_posts(snac *user, const char *subdir, int days)
+void delete_purged_posts(snac *user, int days)
 /* enqueues Delete activities for local purged messages */
 {
     if (days == 0)
         return;
 
     time_t mt = time(NULL) - days * 24 * 3600;
-    xs *spec  = xs_fmt("%s/%s/" "*.json", user->basedir, subdir);
+    xs *spec  = xs_fmt("%s/public/" "*.json", user->basedir);
     xs *list  = xs_glob(spec, 0, 0);
     const char *v;
 
@@ -3944,18 +3937,15 @@ void purge_user(snac *snac)
             pub_days = user_days;
     }
 
-    if (xs_is_true(xs_dict_get(srv_config, "propagate_local_purge"))) {
-        delete_purged_posts(snac, "public",   pub_days);
-        delete_purged_posts(snac, "personal", pub_days);
-    }
+    if (xs_is_true(xs_dict_get(srv_config, "propagate_local_purge")))
+        delete_purged_posts(snac, pub_days);
 
     _purge_user_subdir(snac, "hidden",  priv_days);
     _purge_user_subdir(snac, "private", priv_days);
 
-    _purge_user_subdir(snac, "public",   pub_days);
-    _purge_user_subdir(snac, "personal", pub_days);
+    _purge_user_subdir(snac, "public",  pub_days);
 
-    const char *idxs[] = { "followers.idx", "private.idx", "public.idx", "personal.idx",
+    const char *idxs[] = { "followers.idx", "private.idx", "public.idx",
                            "pinned.idx", "bookmark.idx", "draft.idx", "sched.idx", NULL };
 
     for (n = 0; idxs[n]; n++) {
