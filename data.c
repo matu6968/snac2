@@ -2429,8 +2429,8 @@ xs_list *list_timeline(snac *user, const char *list, int skip, int show)
 }
 
 
-xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op)
-/* list content management */
+xs_val *list_members(snac *user, const char *list, const char *actor_md5, int op)
+/* list member management */
 {
     xs_val *l = NULL;
 
@@ -2443,7 +2443,7 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
     xs *fn = xs_fmt("%s/list/%s.lst", user->basedir, list);
 
     switch (op) {
-    case 0: /** list content **/
+    case 0: /** list members **/
         l = index_list(fn, XS_ALL);
 
         break;

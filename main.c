@@ -354,7 +354,7 @@ int main(int argc, char *argv[])
         xs *lid = list_maint(&snac, url, 4);
 
         if (lid != NULL) {
-            xs *lcont = list_content(&snac, lid, NULL, 0);
+            xs *lcont = list_members(&snac, lid, NULL, 0);
             const char *md5;
 
             xs_list_foreach(lcont, md5) {
@@ -410,7 +410,7 @@ int main(int argc, char *argv[])
                 if (valid_status(webfinger_request(account, &actor, &uid))) {
                     xs *md5 = xs_md5_hex(actor, strlen(actor));
 
-                    list_content(&snac, lid, md5, 1);
+                    list_members(&snac, lid, md5, 1);
                     printf("Actor %s (%s) added to list '%s' (%s)\n", actor, uid, url, lid);
                 }
                 else
@@ -433,7 +433,7 @@ int main(int argc, char *argv[])
             if (lid != NULL) {
                 xs *md5 = xs_md5_hex(account, strlen(account));
 
-                list_content(&snac, lid, md5, 2);
+                list_members(&snac, lid, md5, 2);
                 printf("Actor %s deleted from list '%s' (%s)\n", account, url, lid);
             }
             else
