@@ -229,6 +229,9 @@ int snac_init(const char *basedir)
     xs *ibdir = xs_fmt("%s/inbox", srv_basedir);
     mkdirx(ibdir);
 
+    xs *langdir = xs_fmt("%s/lang", srv_basedir);
+    mkdirx(langdir);
+
     xs *gfn = xs_fmt("%s/greeting.html", srv_basedir);
     if ((f = fopen(gfn, "w")) == NULL) {
         printf("ERROR: cannot create '%s'\n", gfn);
@@ -253,7 +256,10 @@ int snac_init(const char *basedir)
     xs_json_dump(srv_config, 4, f);
     fclose(f);
 
-    printf("Done.\n");
+    printf("Done.\n\n");
+
+    printf("Wanted web UI language files (.po) must be copied manually to %s\n", langdir);
+
     return 0;
 }
 
