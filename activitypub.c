@@ -3516,8 +3516,10 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
                 const char *id   = xs_dict_get(i, "id");
 
                 if (type && id && strcmp(type, "Note") == 0 && xs_startswith(id, snac.actor)) {
-                    xs *c_msg = msg_create(&snac, i);
-                    list = xs_list_append(list, c_msg);
+                    if (is_msg_public(i)) {
+                        xs *c_msg = msg_create(&snac, i);
+                        list = xs_list_append(list, c_msg);
+                    }
                 }
             }
         }
