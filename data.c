@@ -3589,6 +3589,19 @@ void enqueue_collect_replies(snac *user, const char *post)
 }
 
 
+void enqueue_collect_outbox(snac *user, const char *actor_id)
+/* enqueues a collect outbox request */
+{
+    xs *qmsg = _new_qmsg("collect_outbox", actor_id, 0);
+    const char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    snac_debug(user, 1, xs_fmt("enqueue_collect_outbox %s", actor_id));
+}
+
+
 int was_question_voted(snac *user, const char *id)
 /* returns true if the user voted in this poll */
 {

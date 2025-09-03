@@ -739,7 +739,7 @@ int main(int argc, char *argv[])
     }
 
     if (strcmp(cmd, "collect_outbox") == 0) { /** **/
-        collect_outbox(&snac, url);
+        enqueue_collect_outbox(&snac, url);
         return 0;
     }
 
