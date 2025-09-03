@@ -30,6 +30,7 @@ int usage(const char *cmd)
         "upgrade {basedir}                    Upgrade to a new version\n"
         "adduser {basedir} [{uid}]            Adds a new user\n"
         "deluser {basedir} {uid}              Deletes a user\n"
+        "update {basedir} {uid}               Sends a user's updated profile\n"
         "httpd {basedir}                      Starts the HTTPD daemon\n"
         "purge {basedir}                      Purges old data\n"
         "state {basedir}                      Prints server state\n"
