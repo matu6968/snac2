@@ -1463,6 +1463,9 @@ void timeline_update_indexes(snac *snac, const char *id)
                 else
                     srv_debug(1, xs_fmt("Not added to public instance index %s", id));
             }
+            else
+                /* also add it to public, it will be discarded later */
+                object_user_cache_add(snac, id, "public");
         }
     }
 }
