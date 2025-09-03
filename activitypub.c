@@ -1021,6 +1021,107 @@ void collect_replies(snac *user, const char *id)
 }
 
 
+void collect_outbox(snac *user, const char *actor_id)
+/* gets an actor's outbox and inserts a bunch of posts in a user's timeline */
+{
+    int status;
+    xs *actor = NULL;
+
+    if (!valid_status(status = actor_request(user, actor_id, &actor))) {
+        snac_debug(user, 1, xs_fmt("collect_outbox: cannot get actor object '%s' %d", actor_id, status));
+        return;
+    }
+
+    xs *outbox = NULL;
+    const char *outbox_url = xs_dict_get(actor, "outbox");
+
+    if (!xs_is_string(outbox_url))
+        return;
+
+    if (!valid_status(status = activitypub_request(user, outbox_url, &outbox))) {
+        snac_debug(user, 1, xs_fmt("collect_outbox: cannot get actor outbox '%s' %d", outbox_url, status));
+        return;
+    }
+
+    const xs_list *ordered_items = xs_dict_get(outbox, "orderedItems");
+
+    if (!xs_is_list(ordered_items)) {
+        /* the list is not here; does it have a 'first'? */
+        const char *first = xs_dict_get(outbox, "first");
+
+        if (xs_is_string(first)) {
+            /* download this instead */
+            xs *first2 = xs_dup(first);
+            xs_free(outbox);
+
+            if (!valid_status(status = activitypub_request(user, first2, &outbox))) {
+                snac_debug(user, 1, xs_fmt("collect_outbox: cannot get first page of outbox '%s' %d", first2, status));
+                return;
+            }
+
+            /* last chance */
+            ordered_items = xs_dict_get(outbox, "orderedItems");
+        }
+    }
+
+    if (!xs_is_list(ordered_items)) {
+        snac_debug(user, 1, xs_fmt("collect_outbox: cannot get list of posts for actor '%s' outbox", actor_id));
+        return;
+    }
+
+    /* well, ok, then */
+    int max = 4;
+    const xs_val *v;
+
+    xs_list_foreach(ordered_items, v) {
+        if (max == 0)
+            break;
+
+        xs *post = NULL;
+
+        if (xs_is_string(v)) {
+            /* it's probably the post url */
+            if (!valid_status(activitypub_request(user, v, &post)))
+                continue;
+        }
+        else
+        if (xs_is_dict(v))
+            post = xs_dup(v);
+
+        if (post == NULL)
+            continue;
+
+        const char *type = xs_dict_get(post, "type");
+
+        if (!xs_is_string(type) || strcmp(type, "Create")) {
+            /* not a post */
+            continue;
+        }
+
+        const xs_dict *object = xs_dict_get(post, "object");
+
+        if (!xs_is_dict(object))
+            continue;
+
+        type = xs_dict_get(object, "type");
+        const char *id = xs_dict_get(object, "id");
+        const char *attr_to = get_atto(object);
+
+        if (!xs_is_string(type) || !xs_is_string(id) || !xs_is_string(attr_to))
+            continue;
+
+        if (!timeline_here(user, id)) {
+            timeline_add(user, id, object);
+            snac_log(user, xs_fmt("new '%s' (collect_outbox) %s %s", type, attr_to, id));
+        }
+        else
+            snac_debug(user, 1, xs_fmt("collect_outbox: post '%s' already here", id));
+
+        max--;
+    }
+}
+
+
 void notify(snac *snac, const char *type, const char *utype, const char *actor, const xs_dict *msg)
 /* notifies the user of relevant events */
 {
