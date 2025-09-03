@@ -2588,6 +2588,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             if (following_check(snac, actor)) {
                 following_add(snac, actor, msg);
                 snac_log(snac, xs_fmt("confirmed follow from %s", actor));
+
+                /* request a bit of this fellow's outbox */
+                enqueue_collect_outbox(snac, actor);
             }
             else
                 snac_log(snac, xs_fmt("spurious follow accept from %s", actor));
