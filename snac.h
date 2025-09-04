@@ -1,7 +1,7 @@
 /* snac - A simple, minimalistic ActivityPub instance */
 /* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
 
-#define VERSION "2.82-dev"
+#define VERSION "2.82"
 
 #define USER_AGENT "snac/" VERSION
 
@@ -233,7 +233,7 @@ xs_list *tag_search(const char *tag, int skip, int show);
 xs_val *list_maint(snac *user, const char *list, int op);
 xs_str *list_timeline_fn(snac *user, const char *list);
 xs_list *list_timeline(snac *user, const char *list, int skip, int show);
-xs_val *list_content(snac *user, const char *list_id, const char *actor_md5, int op);
+xs_val *list_members(snac *user, const char *list_id, const char *actor_md5, int op);
 void list_distribute(snac *user, const char *who, const xs_dict *post);
 
 int actor_add(const char *actor, const xs_dict *msg);
@@ -298,6 +298,7 @@ void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs);
 void enqueue_webmention(const xs_dict *msg);
 void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries);
 void enqueue_collect_replies(snac *user, const char *post);
+void enqueue_collect_outbox(snac *user, const char *actor_id);
 
 int was_question_voted(snac *user, const char *id);
 
@@ -336,6 +337,7 @@ const char *default_avatar_base64(void);
 xs_str *process_tags(snac *snac, const char *content, xs_list **tag);
 
 void collect_replies(snac *user, const char *id);
+void collect_outbox(snac *user, const char *actor_id);
 
 const char *get_atto(const xs_dict *msg);
 const char *get_in_reply_to(const xs_dict *msg);
@@ -360,6 +362,7 @@ xs_dict *msg_move(snac *user, const char *new_account);
 xs_dict *msg_accept(snac *snac, const xs_val *object, const char *to);
 xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
                       const xs_list *opts, int multiple, int end_secs);
+xs_dict *msg_replies(snac *user, const char *id, int fill);
 
 int activitypub_request(snac *snac, const char *url, xs_dict **data);
 int actor_request(snac *user, const char *actor, xs_dict **data);

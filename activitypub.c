@@ -946,36 +946,33 @@ void collect_replies(snac *user, const char *id)
         return;
     }
 
-    const char *next = xs_dict_get_path(obj, "replies.first.next");
-    if (!xs_is_string(next)) {
-        snac_debug(user, 1, xs_fmt("collect_replies: object '%s' does not have a replies.first.next URL", id));
+    const xs_dict *replies_first = xs_dict_get_path(obj, "replies.first");
+    if (!xs_is_dict(replies_first)) {
+        snac_debug(user, 1, xs_fmt("collect_replies: object '%s' does not have replies.first", id));
         return;
     }
 
-    /* pick the first level replies (may be empty) */
-    const xs_list *level0_replies = xs_dict_get_path(obj, "replies.first.items");
+    const xs_list *level0_replies = xs_dict_get(replies_first, "items");
+    const xs_list *level1_replies = NULL;
 
+    const char *next = xs_dict_get(replies_first, "next");
     xs *reply_obj = NULL;
 
-    if (!valid_status(object_get(next, &reply_obj))) {
-        if (!valid_status(activitypub_request(user, next, &reply_obj))) {
-            snac_debug(user, 1, xs_fmt("collect_replies: cannot get replies object '%s'", next));
-            return;
-        }
-    }
-
-    const xs_list *level1_replies = xs_dict_get(reply_obj, "items");
-    if (!xs_is_list(level1_replies)) {
-        snac_debug(user, 1, xs_fmt("collect_replies: cannot get reply items from object '%s'", next));
+    if (xs_is_string(next) && !valid_status(activitypub_request(user, next, &reply_obj))) {
+        snac_debug(user, 1, xs_fmt("collect_replies: error getting next replies object '%s'", next));
         return;
     }
 
-    xs *items = NULL;
+    if (xs_is_dict(reply_obj))
+        level1_replies = xs_dict_get(reply_obj, "items");
+
+    xs *items = xs_list_new();
 
     if (xs_is_list(level0_replies))
-        items = xs_list_cat(xs_dup(level0_replies), level1_replies);
-    else
-        items = xs_dup(level1_replies);
+        items = xs_list_cat(items, level0_replies);
+
+    if (xs_is_list(level1_replies))
+        items = xs_list_cat(items, level1_replies);
 
     const xs_val *v;
 
@@ -1020,6 +1017,107 @@ void collect_replies(snac *user, const char *id)
         timeline_add(user, id, reply);
 
         snac_log(user, xs_fmt("new '%s' (collect_replies) %s %s", type, attr_to, id));
+    }
+}
+
+
+void collect_outbox(snac *user, const char *actor_id)
+/* gets an actor's outbox and inserts a bunch of posts in a user's timeline */
+{
+    int status;
+    xs *actor = NULL;
+
+    if (!valid_status(status = actor_request(user, actor_id, &actor))) {
+        snac_debug(user, 1, xs_fmt("collect_outbox: cannot get actor object '%s' %d", actor_id, status));
+        return;
+    }
+
+    xs *outbox = NULL;
+    const char *outbox_url = xs_dict_get(actor, "outbox");
+
+    if (!xs_is_string(outbox_url))
+        return;
+
+    if (!valid_status(status = activitypub_request(user, outbox_url, &outbox))) {
+        snac_debug(user, 1, xs_fmt("collect_outbox: cannot get actor outbox '%s' %d", outbox_url, status));
+        return;
+    }
+
+    const xs_list *ordered_items = xs_dict_get(outbox, "orderedItems");
+
+    if (!xs_is_list(ordered_items)) {
+        /* the list is not here; does it have a 'first'? */
+        const char *first = xs_dict_get(outbox, "first");
+
+        if (xs_is_string(first)) {
+            /* download this instead */
+            xs *first2 = xs_dup(first);
+            xs_free(outbox);
+
+            if (!valid_status(status = activitypub_request(user, first2, &outbox))) {
+                snac_debug(user, 1, xs_fmt("collect_outbox: cannot get first page of outbox '%s' %d", first2, status));
+                return;
+            }
+
+            /* last chance */
+            ordered_items = xs_dict_get(outbox, "orderedItems");
+        }
+    }
+
+    if (!xs_is_list(ordered_items)) {
+        snac_debug(user, 1, xs_fmt("collect_outbox: cannot get list of posts for actor '%s' outbox", actor_id));
+        return;
+    }
+
+    /* well, ok, then */
+    int max = 4;
+    const xs_val *v;
+
+    xs_list_foreach(ordered_items, v) {
+        if (max == 0)
+            break;
+
+        xs *post = NULL;
+
+        if (xs_is_string(v)) {
+            /* it's probably the post url */
+            if (!valid_status(activitypub_request(user, v, &post)))
+                continue;
+        }
+        else
+        if (xs_is_dict(v))
+            post = xs_dup(v);
+
+        if (post == NULL)
+            continue;
+
+        const char *type = xs_dict_get(post, "type");
+
+        if (!xs_is_string(type) || strcmp(type, "Create")) {
+            /* not a post */
+            continue;
+        }
+
+        const xs_dict *object = xs_dict_get(post, "object");
+
+        if (!xs_is_dict(object))
+            continue;
+
+        type = xs_dict_get(object, "type");
+        const char *id = xs_dict_get(object, "id");
+        const char *attr_to = get_atto(object);
+
+        if (!xs_is_string(type) || !xs_is_string(id) || !xs_is_string(attr_to))
+            continue;
+
+        if (!timeline_here(user, id)) {
+            timeline_add(user, id, object);
+            snac_log(user, xs_fmt("new '%s' (collect_outbox) %s %s", type, attr_to, id));
+        }
+        else
+            snac_debug(user, 1, xs_fmt("collect_outbox: post '%s' already here", id));
+
+        max--;
     }
 }
 
@@ -1262,6 +1360,45 @@ xs_dict *msg_collection(snac *snac, const char *id, int items)
 
     msg = xs_dict_append(msg, "attributedTo", snac->actor);
     msg = xs_dict_append(msg, "totalItems",   n);
+
+    return msg;
+}
+
+
+xs_dict *msg_replies(snac *user, const char *id, int fill)
+/* creates a CollectionPage with replies of id */
+{
+    xs *r_id = xs_replace(id, "/p/", "/r/");
+    xs *r_idp = xs_fmt("%s#page", r_id);
+    xs *r_idh = xs_fmt("%s#hdr", r_id);
+
+    xs_dict *msg = msg_base(user, "CollectionPage", r_idp, NULL, NULL, NULL);
+
+    msg = xs_dict_set(msg, "partOf", r_idh);
+
+    xs *items = xs_list_new();
+    if (fill) {
+        xs *children = object_children(id);
+        const char *md5;
+
+        xs_list_foreach(children, md5) {
+            xs *obj = NULL;
+
+            if (valid_status(object_get_by_md5(md5, &obj)) && is_msg_public(obj)) {
+                const char *c_id = xs_dict_get(obj, "id");
+
+                if (xs_is_string(c_id))
+                    items = xs_list_append(items, c_id);
+            }
+        }
+    }
+    else {
+        msg = xs_dict_del(msg, "@context");
+        msg = xs_dict_del(msg, "id");
+        msg = xs_dict_set(msg, "next", r_idp);
+    }
+
+    msg = xs_dict_set(msg, "items", items);
 
     return msg;
 }
@@ -1871,6 +2008,20 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
         }
     }
 
+    if (!priv) {
+        /* create the replies object */
+        xs *replies = xs_dict_new();
+        xs *r_id = xs_replace(id, "/p/", "/r/");
+        xs *h_id = xs_fmt("%s#hdr", r_id);
+        xs *rp = msg_replies(snac, id, 0);
+
+        replies = xs_dict_set(replies, "id", h_id);
+        replies = xs_dict_set(replies, "type", "Collection");
+        replies = xs_dict_set(replies, "first", rp);
+
+        msg = xs_dict_set(msg, "replies", replies);
+    }
+
     return msg;
 }
 
@@ -2437,6 +2588,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             if (following_check(snac, actor)) {
                 following_add(snac, actor, msg);
                 snac_log(snac, xs_fmt("confirmed follow from %s", actor));
+
+                /* request a bit of this fellow's outbox */
+                enqueue_collect_outbox(snac, actor);
             }
             else
                 snac_log(snac, xs_fmt("spurious follow accept from %s", actor));
@@ -2538,10 +2692,14 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                 snac_log(snac, xs_fmt("malformed message: no 'id' field"));
             else
             if (object_here(id)) {
-                object_add_ow(id, object);
-                timeline_touch(snac);
+                if (xs_startswith(id, srv_baseurl) && !xs_startswith(id, actor))
+                    snac_log(snac, xs_fmt("ignored incorrect 'Update' %s %s", actor, id));
+                else {
+                    object_add_ow(id, object);
+                    timeline_touch(snac);
 
-                snac_log(snac, xs_fmt("updated '%s' %s", utype, id));
+                    snac_log(snac, xs_fmt("updated '%s' %s", utype, id));
+                }
             }
             else
                 snac_log(snac, xs_fmt("dropped update for unknown '%s' %s", utype, id));
@@ -2578,8 +2736,12 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             snac_log(snac, xs_fmt("malformed message: no 'id' field"));
         else
         if (object_here(object)) {
-            timeline_del(snac, object);
-            snac_debug(snac, 1, xs_fmt("new 'Delete' %s %s", actor, object));
+            if (xs_startswith(object, srv_baseurl) && !xs_startswith(object, actor))
+                snac_log(snac, xs_fmt("ignored incorrect 'Delete' %s %s", actor, object));
+            else {
+                timeline_del(snac, object);
+                snac_debug(snac, 1, xs_fmt("new 'Delete' %s %s", actor, object));
+            }
         }
         else
             snac_debug(snac, 1, xs_fmt("ignored 'Delete' for unknown object %s", object));
@@ -2919,6 +3081,12 @@ void process_user_queue_item(snac *user, xs_dict *q_item)
         const char *post = xs_dict_get(q_item, "message");
 
         collect_replies(user, post);
+    }
+    else
+    if (strcmp(type, "collect_outbox") == 0) {
+        const char *actor_id = xs_dict_get(q_item, "message");
+
+        collect_outbox(user, actor_id);
     }
     else
         snac_log(user, xs_fmt("unexpected user q_item type '%s'", type));
@@ -3389,6 +3557,26 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         /* don't return non-public objects */
         if (valid_status(status) && !is_msg_public(msg))
             status = HTTP_STATUS_NOT_FOUND;
+    }
+    else
+    if (xs_startswith(p_path, "r/")) {
+        /* replies to a post */
+        xs *s = xs_dup(p_path);
+        s[0] = 'p';
+
+        xs *id = xs_fmt("%s/%s", snac.actor, s);
+
+        xs *obj = NULL;
+        status = object_get(id, &obj);
+
+        /* don't return non-public objects */
+        if (!valid_status(status))
+            status = HTTP_STATUS_NOT_FOUND;
+        else
+        if (!is_msg_public(obj))
+            status = HTTP_STATUS_NOT_FOUND;
+        else
+            msg = msg_replies(&snac, id, 1);
     }
     else
         status = HTTP_STATUS_NOT_FOUND;

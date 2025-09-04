@@ -2429,8 +2429,8 @@ xs_list *list_timeline(snac *user, const char *list, int skip, int show)
 }
 
 
-xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op)
-/* list content management */
+xs_val *list_members(snac *user, const char *list, const char *actor_md5, int op)
+/* list member management */
 {
     xs_val *l = NULL;
 
@@ -2443,7 +2443,7 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
     xs *fn = xs_fmt("%s/list/%s.lst", user->basedir, list);
 
     switch (op) {
-    case 0: /** list content **/
+    case 0: /** list members **/
         l = index_list(fn, XS_ALL);
 
         break;
@@ -3586,6 +3586,19 @@ void enqueue_collect_replies(snac *user, const char *post)
     qmsg = _enqueue_put(fn, qmsg);
 
     snac_debug(user, 1, xs_fmt("enqueue_collect_replies %s", post));
+}
+
+
+void enqueue_collect_outbox(snac *user, const char *actor_id)
+/* enqueues a collect outbox request */
+{
+    xs *qmsg = _new_qmsg("collect_outbox", actor_id, 0);
+    const char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    snac_debug(user, 1, xs_fmt("enqueue_collect_outbox %s", actor_id));
 }
 
 

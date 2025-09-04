@@ -30,6 +30,7 @@ int usage(const char *cmd)
         "upgrade {basedir}                    Upgrade to a new version\n"
         "adduser {basedir} [{uid}]            Adds a new user\n"
         "deluser {basedir} {uid}              Deletes a user\n"
+        "update {basedir} {uid}               Sends a user's updated profile\n"
         "httpd {basedir}                      Starts the HTTPD daemon\n"
         "purge {basedir}                      Purges old data\n"
         "state {basedir}                      Prints server state\n"
@@ -354,7 +355,7 @@ int main(int argc, char *argv[])
         xs *lid = list_maint(&snac, url, 4);
 
         if (lid != NULL) {
-            xs *lcont = list_content(&snac, lid, NULL, 0);
+            xs *lcont = list_members(&snac, lid, NULL, 0);
             const char *md5;
 
             xs_list_foreach(lcont, md5) {
@@ -410,7 +411,7 @@ int main(int argc, char *argv[])
                 if (valid_status(webfinger_request(account, &actor, &uid))) {
                     xs *md5 = xs_md5_hex(actor, strlen(actor));
 
-                    list_content(&snac, lid, md5, 1);
+                    list_members(&snac, lid, md5, 1);
                     printf("Actor %s (%s) added to list '%s' (%s)\n", actor, uid, url, lid);
                 }
                 else
@@ -433,7 +434,7 @@ int main(int argc, char *argv[])
             if (lid != NULL) {
                 xs *md5 = xs_md5_hex(account, strlen(account));
 
-                list_content(&snac, lid, md5, 2);
+                list_members(&snac, lid, md5, 2);
                 printf("Actor %s deleted from list '%s' (%s)\n", account, url, lid);
             }
             else
@@ -735,6 +736,11 @@ int main(int argc, char *argv[])
     if (strcmp(cmd, "collect_replies") == 0) { /** **/
         enqueue_collect_replies(&snac, url);
 
+        return 0;
+    }
+
+    if (strcmp(cmd, "collect_outbox") == 0) { /** **/
+        enqueue_collect_outbox(&snac, url);
         return 0;
     }
 
