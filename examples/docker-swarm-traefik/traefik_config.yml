@@ -1,0 +1,89 @@
+---
+# Traefik main config file
+# e.g. /opt/docker/traefik/traefik_config.yml
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      encodeQuerySemicolons: true
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
+    asDefault: true
+    http:
+      encodeQuerySemicolons: true
+      tls:
+        certResolver: letsencrypt
+    http2:
+      maxConcurrentStreams: 100
+    http3: {}
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: you@example.net
+      storage: "/acme/letsencrypt.json"
+      keyType: EC384
+      httpChallenge:
+        entryPoint: web
+#  buypass:
+#    acme:
+#      email: you@example.net
+#      caServer: "https://api.buypass.com/acme/directory"
+#      storage: "/acme/buypass.json"
+#      keyType: EC256
+#      certificatesDuration: 4320
+#      httpChallenge:
+#        entryPoint: web
+
+ocsp: {}
+
+tls:
+  stores:
+    default:
+      defaultGeneratedCert:
+        resolver: letsencrypt
+        domain:
+          main: snac.example.net
+          # sans:
+          #  - other.example.net
+          #  - another.example.net
+
+providers:
+  file:
+    directory: "/etc/traefik/dynamic"
+    watch: true
+  swarm:
+    network: "proxy"
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    watch: true
+    allowEmptyServices: true
+
+api:
+  dashboard: true
+  insecure: false
+  debug: false
+  disabledashboardad: true
+
+log:
+  level: "INFO"
+  filePath: "/var/log/server.log"
+
+accessLog:
+  filePath: "/var/log/traefik-access.log"
+  bufferingSize: 15
+  fields:
+    names:
+      StartUTC: "drop"
+
+experimental:
+  plugins:
+    souin:
+      moduleName: "github.com/darkweak/souin"
+      version: "v1.7.7"

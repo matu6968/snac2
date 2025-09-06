@@ -9,8 +9,9 @@ RUN apk -U --no-progress --no-cache add curl-dev build-base && \
   cp examples/docker-entrypoint.sh /build/out/usr/local/bin/entrypoint.sh
 
 FROM alpine:${ALPINE_VERSION}
-RUN apk -U --no-progress --no-cache add libcurl
+RUN apk -U --no-progress --no-cache add libcurl tzdata
 COPY --from=builder /build/out /
 EXPOSE 5050
 VOLUME [ "/data" ]
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
+
