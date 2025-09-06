@@ -1,0 +1,114 @@
+---
+# Example of a SNAC + Traefik stack on Docker Swarm mode
+# SNAC behind Traefik v3 reverse proxy
+# including Let's Encrypt certificates, HTTP security headers
+# and caching */s/* (SNAC static files) for 24h with souin.
+#
+# docker stack deploy -c snac_stack.yml snac
+
+services:
+  traefik:
+    image: traefik:v3
+    hostname: '{{.Node.Hostname}}'
+    ports:
+      # listen on host ports without ingress network
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: udp   # for HTTP3
+        mode: host
+    networks:
+      - proxy
+    volumes:
+      - /opt/docker/traefik/traefik.yml:/etc/traefik/traefik_config.yml  # main Traefik static configuration
+      - /opt/docker/traefik/dynamic:/etc/traefik/dynamic   # for Traefik dynamic configuration files
+      - /opt/docker/acme:/acme    # directory for certificate storage files
+      - /opt/docker/traefik/log:/var/log
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /usr/share/zoneinfo/America/Sao_Paulo:/etc/localtime:ro  # Change this to another or comment/remove to use UTC
+      - /etc/timezone:/etc/timezone:ro    # Comment/remove to use UTC
+    environment:
+      - TZ=America/Sao_Paulo  # Change it to another or comment/remove to use UTC
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role==manager
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.mydashboard.rule=Host(`traefik.example.net`)   # for Traefik dashboard
+        - traefik.http.routers.mydashboard.service=api@internal
+        - traefik.http.routers.mydashboard.middlewares=traefik_auth,traefik_retry
+        - traefik.http.services.mydashboard.loadbalancer.server.port=1337
+        - traefik.http.middlewares.traefik_retry.retry.attempts=3
+        - traefik.http.middlewares.traefik_retry.retry.initialinterval=200ms
+        # How to generate a password hash: echo $(htpasswd -nB desired_username) | sed -e s/\\$/\\$\\$/g
+        - traefik.http.middlewares.traefik_auth.basicauth.users=desired_username:PASTE_THE_PASSWORD_HASH_HERE
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1g
+        reservations:
+          memory: 256m
+
+  snac:
+    image: codeberg.org/daltux/snac:2.82-dev_daltux3
+    hostname: '{{.Node.Hostname}}'
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /opt/snac:/data
+    networks:
+      - proxy
+    depends_on:
+      - traefik
+    environment:
+      - TZ=America/Sao_Paulo   # Change this to your own or comment/remove it to use UTC.
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.http.services.snac.loadbalancer.server.port=8001
+        - traefik.http.routers.snac.rule=Host(`snac.example.net`)
+        - traefik.http.routers.snac.priority=1
+        - traefik.http.routers.snac.middlewares=snac_headers@swarm,traefik_retry@swarm
+        - "traefik.http.routers.snac_static.rule=Host(`snac.example.net`) && PathRegexp(`^/.+/s/.+`)"
+        - "traefik.http.routers.snac_static.priority=2"
+        - "traefik.http.routers.snac_static.middlewares=snac_headers@swarm,snac_cache_static@swarm,traefik_retry@swarm"
+        - traefik.http.middlewares.snac_headers.headers.stsSeconds=31536000
+        - traefik.http.middlewares.snac_headers.headers.stsIncludeSubdomains=false
+        - traefik.http.middlewares.snac_headers.headers.stsPreload=false
+        - traefik.http.middlewares.snac_headers.headers.customFrameOptionsValue=SAMEORIGIN
+        - traefik.http.middlewares.snac_headers.headers.contentTypeNosniff=true
+        - traefik.http.middlewares.snac_headers.headers.browserXssFilter=true
+        - traefik.http.middlewares.snac_headers.headers.referrerPolicy=strict-origin-when-cross-origin
+        - "traefik.http.middlewares.snac_headers.headers.contentSecurityPolicy=default-src 'self'; base-uri 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; form-action 'self'; img-src https: data:; font-src 'self'; media-src https: data:; connect-src 'none'; frame-src 'none'; frame-ancestors 'none';"
+        - traefik.http.middlewares.snac_cache_static.plugin.souin.api.souin=true
+        - traefik.http.middlewares.snac_cache_static.plugin.souin.log_level=info
+        - traefik.http.middlewares.snac_cache_static.plugin.souin.default_cache.ttl=1440m
+        - traefik.http.middlewares.snac_cache_static.plugin.souin.default_cache.allowed_http_verbs=GET,HEAD
+        - traefik.http.middlewares.snac_cache_static.plugin.souin.default_cache.stale=1h
+        - traefik.http.middlewares.snac_cache_static.plugin.souin.default_cache.etag=true
+        - "traefik.http.middlewares.snac_cache_static.plugin.souin.default_cache.default_cache_control=public, max-age=86400"
+      resources:
+        limits:
+          cpus: "3"
+          memory: 1g
+        reservations:
+          memory: 256m
+
+networks:
+  proxy:
+    name: proxy
+    driver: overlay
+    attachable: true
+    external: true
