@@ -3377,6 +3377,12 @@ void process_queue_item(xs_dict *q_item)
         rss_poll_hashtags();
     }
     else
+    if (strcmp(type, "fsck") == 0) {
+        srv_log(xs_fmt("started deferred data integrity check"));
+        data_fsck();
+        srv_log(xs_fmt("finished deferred data integrity check"));
+    }
+    else
         srv_log(xs_fmt("unexpected q_item type '%s'", type));
 }
 

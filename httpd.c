@@ -805,6 +805,8 @@ static void *background_thread(void *arg)
 
     srv_log(xs_fmt("background thread started"));
 
+    enqueue_fsck();
+
     while (p_state->srv_running) {
         int cnt = 0;
 

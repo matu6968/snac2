@@ -299,6 +299,7 @@ void enqueue_webmention(const xs_dict *msg);
 void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries);
 void enqueue_collect_replies(snac *user, const char *post);
 void enqueue_collect_outbox(snac *user, const char *actor_id);
+void enqueue_fsck(void);
 
 int was_question_voted(snac *user, const char *id);
 

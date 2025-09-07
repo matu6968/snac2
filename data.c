@@ -3605,6 +3605,17 @@ void enqueue_collect_outbox(snac *user, const char *actor_id)
 }
 
 
+void enqueue_fsck(void)
+/* enqueues an fsck */
+{
+    xs *qmsg   = _new_qmsg("fsck", "", 0);
+    const char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
+
+    qmsg = _enqueue_put(fn, qmsg);
+}
+
+
 int was_question_voted(snac *user, const char *id)
 /* returns true if the user voted in this poll */
 {
