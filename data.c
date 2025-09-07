@@ -4412,7 +4412,7 @@ void data_fsck(void)
                 }
 
                 /* link */
-                snac_log(&user, xs_fmt("fsck: fixed missing link %s", xs_dict_get(post, "id")));
+                snac_debug(&user, 1, xs_fmt("fsck: fixed missing link %s", xs_dict_get(post, "id")));
                 link(priv_fn, pub_fn);
             }
         }
