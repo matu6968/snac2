@@ -4362,3 +4362,61 @@ const char *lang_str(const char *str, const snac *user)
 
     return n_str;
 }
+
+
+/** integrity checks **/
+
+void data_fsck(void)
+{
+    xs *list = user_list();
+    const char *uid;
+
+    xs_list_foreach(list, uid) {
+        snac user;
+
+        if (!user_open(&user, uid))
+            continue;
+
+        {
+            /* iterate all private posts and check that non-public posts
+               from this user are also linked into the public directory,
+               to avoid the don't-fucking-delete-my-own-private-posts purge bug */
+
+            xs *priv_spec = xs_fmt("%s/private/""*.json", user.basedir);
+            xs *posts = xs_glob(priv_spec, 0, 0);
+            const char *priv_fn;
+
+            xs_list_foreach(posts, priv_fn) {
+                xs *pub_fn = xs_replace(priv_fn, "/private/", "/public/");
+
+                /* already there? look no more */
+                if (mtime(pub_fn))
+                    continue;
+
+                /* read the post */
+                FILE *f;
+                if ((f = fopen(priv_fn, "r")) == NULL)
+                    continue;
+
+                xs *post = xs_json_load(f);
+                fclose(f);
+
+                if (!xs_is_dict(post))
+                    continue;
+
+                const char *attr_to = get_atto(post);
+
+                if (!xs_is_string(attr_to) || strcmp(attr_to, user.actor) != 0) {
+                    /* not from this user */
+                    continue;
+                }
+
+                /* link */
+                snac_log(&user, xs_fmt("fsck: fixed missing link %s", xs_dict_get(post, "id")));
+                link(priv_fn, pub_fn);
+            }
+        }
+
+        user_free(&user);
+    }
+}

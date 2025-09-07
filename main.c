@@ -34,6 +34,7 @@ int usage(const char *cmd)
         "httpd {basedir}                      Starts the HTTPD daemon\n"
         "purge {basedir}                      Purges old data\n"
         "state {basedir}                      Prints server state\n"
+        "fsck {basedir}                       Performs a non-destructive data integrity check\n"
         "webfinger {basedir} {account}        Queries about an account (@user@host or actor url)\n"
         "queue {basedir} {uid}                Processes a user queue\n"
         "follow {basedir} {uid} {actor}       Follows an actor\n"
@@ -197,6 +198,11 @@ int main(int argc, char *argv[])
         for (n = 0; n < ss.n_threads; n++)
             printf("thread #%d state: %s\n", n, th_states[ss.th_state[n]]);
 
+        return 0;
+    }
+
+    if (strcmp(cmd, "fsck") == 0) { /** **/
+        data_fsck();
         return 0;
     }
 
