@@ -136,7 +136,7 @@ struct {
     { "AKST (Alaska Time Zone)",                 -9 },
     { "AKDT (Alaska Daylight Time Zone)",        -8 },
     { "China Time Zone",                         8 },
-    { "IST (Israel Standard Time)",              2 },
+    { "IST (Indian Standard Time)",              5.5 },
     { "IDT (Israel Daylight Standard Time)",     3 },
     { "WIB (Western Indonesia Time)",            7 },
     { "WITA (Central Indonesia Time)",           8 },
