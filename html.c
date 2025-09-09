@@ -4174,7 +4174,7 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         xs *id  = xs_fmt("%s/%s", snac.actor, p_path);
         xs *msg = NULL;
 
-        if (valid_status(object_get(id, &msg))) {
+        if (valid_status(object_get(id, &msg)) && is_msg_public(msg)) {
             xs *md5  = xs_md5_hex(id, strlen(id));
             xs *list = xs_list_new();
 
