@@ -12,6 +12,8 @@ Docker: add timezone, new examples for building and complete Swarm mode stack wi
 
 Fixed timezone names (contributed by dharmik).
 
+Documented the `update` command (contributed by xvello).
+
 ## 2.82
 
 The language in which a post is written can now be set from the UI; you must configure the list of languages you usually post in in the User Settings.
