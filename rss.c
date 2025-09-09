@@ -64,6 +64,9 @@ xs_str *rss_from_timeline(snac *user, const xs_list *timeline,
         if (!id || !content || !published)
             continue;
 
+        if (!is_msg_public(msg))
+            continue;
+
         /* create a title with the first line of the content */
         xs *title = xs_replace(content, "<br>", "\n");
         title = xs_regex_replace_i(title, "<[^>]+>", " ");
