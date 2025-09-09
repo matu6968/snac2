@@ -1,1 +1,1 @@
-For security issues, please email grunfink@comam.es.
+If you find any security issue, please email grunfink@comam.es
