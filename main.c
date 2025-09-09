@@ -808,6 +808,20 @@ int main(int argc, char *argv[])
         const char *fn = NULL;
         const char *in_reply_to = NULL;
         const char **next = NULL;
+        xs *post_date = NULL;
+
+        const char *env_date = getenv("SNAC_POST_DATE");
+        if (env_date) {
+            /* convert to ISO */
+            time_t t = xs_parse_localtime(env_date, "%Y%m%d%H%M%S");
+
+            if (t == 0) {
+                fprintf(stderr, "Invalid $SNAC_POST_DATE format (must be YYYYmmddHHMMSS)\n");
+                return 1;
+            }
+
+            post_date = xs_str_iso_date(t);
+        }
 
         /* iterate possible attachments */
         while ((fn = GET_ARGV())) {
@@ -885,7 +899,7 @@ int main(int argc, char *argv[])
             content = xs_dup(url);
 
         if (!content || !*content) {
-            printf("Nothing to send\n");
+            fprintf(stderr, "Nothing to send\n");
             return 1;
         }
 
@@ -896,18 +910,24 @@ int main(int argc, char *argv[])
         if (strcmp(cmd, "note_unlisted") == 0)
             scope = 2;
 
-        msg = msg_note(&snac, content, NULL, in_reply_to, attl, scope, getenv("LANG"), NULL);
+        msg = msg_note(&snac, content, NULL, in_reply_to, attl, scope, getenv("LANG"), post_date);
 
-        c_msg = msg_create(&snac, msg);
+        const char *id = xs_dict_get(msg, "id");
 
-        if (dbglevel) {
-            xs_json_dump(c_msg, 4, stdout);
+        if (post_date)
+            schedule_add(&snac, id, msg);
+        else {
+            c_msg = msg_create(&snac, msg);
+
+            if (dbglevel) {
+                xs_json_dump(c_msg, 4, stdout);
+            }
+
+            enqueue_message(&snac, c_msg);
+            enqueue_webmention(msg);
+
+            timeline_add(&snac, id, msg);
         }
-
-        enqueue_message(&snac, c_msg);
-        enqueue_webmention(msg);
-
-        timeline_add(&snac, xs_dict_get(msg, "id"), msg);
 
         return 0;
     }
