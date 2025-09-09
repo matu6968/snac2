@@ -4,6 +4,8 @@
 
 After receiving a follow confirmation, a bunch of posts from that account are requested and inserted into the timeline.
 
+Scheduled posts can now be sent from the command line (see `snac(1)` for more information on how to do it).
+
 Docker: add timezone, new examples for building and complete Swarm mode stack with Traefik (contributed by daltux).
 
 Fixed timezone names (contributed by dharmik).
