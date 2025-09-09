@@ -807,34 +807,40 @@ int main(int argc, char *argv[])
         xs *attl = xs_list_new();
         const char *fn = NULL;
         const char *in_reply_to = NULL;
-        const char **next = NULL;
+        const char **arg_irt = NULL;
+        int arg_date = 0;
         xs *post_date = NULL;
-
-        const char *env_date = getenv("SNAC_POST_DATE");
-        if (env_date) {
-            /* convert to ISO */
-            time_t t = xs_parse_localtime(env_date, "%Y%m%d%H%M%S");
-
-            if (t == 0) {
-                fprintf(stderr, "Invalid $SNAC_POST_DATE format (must be YYYYmmddHHMMSS)\n");
-                return 1;
-            }
-
-            post_date = xs_str_iso_date(t);
-        }
 
         /* iterate possible attachments */
         while ((fn = GET_ARGV())) {
             FILE *f;
 
-            if (next) {
-                *next = fn;
-                next = NULL;
+            if (arg_irt) {
+                *arg_irt = fn;
+                arg_irt = NULL;
+            }
+            else
+            if (arg_date) {
+                /* convert to ISO */
+                time_t t = xs_parse_localtime(fn, "%Y%m%d%H%M%S");
+
+                if (t == 0) {
+                    fprintf(stderr, "Invalid scheduled date format (must be YYYYmmddHHMMSS)\n");
+                    return 1;
+                }
+
+                post_date = xs_str_iso_date(t);
+                arg_date = 0;
             }
             else
             if (strcmp(fn, "-r") == 0) {
                 /* next argument is an inReplyTo */
-                next = &in_reply_to;
+                arg_irt = &in_reply_to;
+            }
+            else
+            if (strcmp(fn, "-d") == 0) {
+                /* next argument is the schedule date */
+                arg_date = 1;
             }
             else
             if ((f = fopen(fn, "rb")) != NULL) {
