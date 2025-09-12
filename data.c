@@ -3054,7 +3054,7 @@ int instance_failure(const char *url, int op)
         return 0;
 
     xs *md5 = xs_md5_hex(hostname, strlen(hostname));
-    xs *fn = xs_fmt("%s/%s", srv_basedir, md5);
+    xs *fn = xs_fmt("%s/failure/%s", srv_basedir, md5);
 
     switch (op) {
     case 0: /** check **/
