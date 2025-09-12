@@ -2261,6 +2261,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         return -1;
     }
 
+    /* this instance is alive */
+    instance_failure(actor, 2);
+
     /* question votes may not have a type */
     if (xs_is_null(type))
         type = "Note";
@@ -3152,6 +3155,11 @@ void process_queue_item(xs_dict *q_item)
             return;
         }
 
+        if (instance_failure(inbox, 0)) {
+            srv_debug(1, xs_fmt("too many failures for instance %s", inbox));
+            return;
+        }
+
         /* deliver (if previous error status was a timeout, try now longer) */
         if (p_status == 599)
             timeout = xs_number_get(xs_dict_get_def(srv_config, "queue_timeout_2", "8"));
@@ -3162,6 +3170,9 @@ void process_queue_item(xs_dict *q_item)
             timeout = 6;
 
         status = send_to_inbox_raw(keyid, seckey, inbox, msg, &payload, &p_size, timeout);
+
+        /* register or clear a value for this instance */
+        instance_failure(inbox, valid_status(status) ? 2 : 1);
 
         if (payload) {
             if (p_size > 64) {

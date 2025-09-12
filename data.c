@@ -112,6 +112,9 @@ int srv_open(const char *basedir, int auto_upgrade)
     xs *tmpdir = xs_fmt("%s/tmp", srv_basedir);
     mkdirx(tmpdir);
 
+    xs *faildir = xs_fmt("%s/failure", srv_basedir);
+    mkdirx(faildir);
+
 #ifdef __APPLE__
 /* Apple uses st_atimespec instead of st_atim etc */
 #define st_atim st_atimespec
@@ -3036,6 +3039,56 @@ xs_list *content_search(snac *user, const char *regex,
     xs_free(tls[2]);
 
     return r;
+}
+
+
+int instance_failure(const char *url, int op)
+/* do some checks and accounting on instance failures */
+{
+    int ret = 0;
+    xs *l = xs_split(url, "/");
+    const char *hostname = xs_list_get(l, 2);
+    double mt;
+
+    if (!xs_is_string(hostname))
+        return 0;
+
+    xs *md5 = xs_md5_hex(hostname, strlen(hostname));
+    xs *fn = xs_fmt("%s/%s", srv_basedir, md5);
+
+    switch (op) {
+    case 0: /** check **/
+        if ((mt = mtime(fn)) != 0.0) {
+            /* grace time */
+            double seconds_failing = 30 * (24 * 60 * 60);
+
+            if ((double)time(NULL) - mt > seconds_failing)
+                ret = -1;
+        }
+
+        break;
+
+    case 1: /** register a failure **/
+        if (mtime(fn) == 0.0) {
+            FILE *f;
+
+            /* only create once, as the date will be used */
+            if ((f = fopen(fn, "w")) != NULL) {
+                fprintf(f, "%s\n", hostname);
+                fclose(f);
+            }
+        }
+
+        break;
+
+    case 2: /** clear a failure **/
+        /* called whenever a message comes from this instance */
+        unlink(fn);
+
+        break;
+    }
+
+    return ret;
 }
 
 
