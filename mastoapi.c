@@ -1767,7 +1767,7 @@ int mastoapi_get_handler(const xs_dict *req, const char *q_path,
                         if (valid_status(timeline_get_by_md5(&snac2, v, &msg))) {
                             /* add only posts by the author */
                             if (strcmp(xs_dict_get(msg, "type"), "Note") == 0 &&
-                                xs_startswith(xs_dict_get(msg, "id"), snac2.actor)) {
+                                xs_startswith(xs_dict_get(msg, "id"), snac2.actor) && is_msg_public(msg)) {
                                 xs *st = mastoapi_status(&snac2, msg);
 
                                 if (st)
