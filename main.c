@@ -45,6 +45,7 @@ int usage(const char *cmd)
         "note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n"
         "note_unlisted {basedir} {uid} {text} [files...] Sends an unlisted note with optional attachments\n"
         "note_mention {basedir} {uid} {text} [files...] Sends a note only to mentioned accounts\n"
+        "note_followers {basedir} {uid} {text} [files...] Sends a note only to followers\n"
         "boost|announce {basedir} {uid} {url} Boosts (announces) a post\n"
         "unboost {basedir} {uid} {url}        Unboosts a post\n"
         "resetpwd {basedir} {uid}             Resets the password of a user\n"
@@ -800,7 +801,8 @@ int main(int argc, char *argv[])
 
     if (strcmp(cmd, "note") == 0 ||             /** **/
         strcmp(cmd, "note_unlisted") == 0 ||    /** **/
-        strcmp(cmd, "note_mention") == 0) {     /** **/
+        strcmp(cmd, "note_mention") == 0 ||     /** **/
+        strcmp(cmd, "note_followers") == 0) {   /** **/
         xs *content = NULL;
         xs *msg = NULL;
         xs *c_msg = NULL;
@@ -909,12 +911,15 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        int scope = 0;
+        int scope = SCOPE_PUBLIC;
         if (strcmp(cmd, "note_mention") == 0)
-            scope = 1;
+            scope = SCOPE_MENTIONED;
         else
         if (strcmp(cmd, "note_unlisted") == 0)
-            scope = 2;
+            scope = SCOPE_UNLISTED;
+        else
+        if (strcmp(cmd, "note_followers") == 0)
+            scope = SCOPE_FOLLOWERS;
 
         msg = msg_note(&snac, content, NULL, in_reply_to, attl, scope, getenv("LANG"), post_date);
 

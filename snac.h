@@ -78,6 +78,13 @@ typedef struct {
 
 extern srv_state *p_state;
 
+enum {
+    SCOPE_PUBLIC = 0,
+    SCOPE_MENTIONED = 1,
+    SCOPE_UNLISTED = 2,
+    SCOPE_FOLLOWERS = 3,
+};
+
 void snac_log(snac *user, xs_str *str);
 #define snac_debug(user, level, str) do { if (dbglevel >= (level)) \
     { snac_log((user), (str)); } } while (0)
@@ -366,6 +373,7 @@ xs_dict *msg_accept(snac *snac, const xs_val *object, const char *to);
 xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
                       const xs_list *opts, int multiple, int end_secs);
 xs_dict *msg_replies(snac *user, const char *id, int fill);
+int get_msg_visibility(const xs_dict *msg);
 
 int activitypub_request(snac *snac, const char *url, xs_dict **data);
 int actor_request(snac *user, const char *actor, xs_dict **data);
