@@ -2,9 +2,11 @@
 
 ## UNRELEASED
 
-Fixed a nasty bug that incorrectly deleted private local posts in certain cases.
-
 After receiving a follow confirmation, a bunch of posts from that account are requested and inserted into the timeline as context.
+
+Continuously failing instances are marked as broken after a given number of days (see `snac(8)` on how to tune this counter). Incoming activity from any of these instances resets the counter.
+
+Fixed a nasty bug that incorrectly deleted private local posts in certain cases.
 
 Scheduled posts can now be sent from the command line (see `snac(1)` for more information on how to do it).
 
