@@ -3060,7 +3060,8 @@ int instance_failure(const char *url, int op)
     case 0: /** check **/
         if ((mt = mtime(fn)) != 0.0) {
             /* grace time */
-            double seconds_failing = 30 * (24 * 60 * 60);
+            double seconds_failing = xs_number_get(xs_dict_get_def(srv_config, "max_failing_days", "30"))
+                * (24 * 60 * 60);
 
             if ((double)time(NULL) - mt > seconds_failing)
                 ret = -1;
