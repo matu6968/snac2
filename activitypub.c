@@ -3502,6 +3502,8 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
 
     p_path = xs_list_get(l, 2);
 
+    const xs_dict *q_vars = xs_dict_get(req, "q_vars");
+
     *ctype  = "application/activity+json";
 
     int show_contact_metrics = xs_is_true(xs_dict_get(snac.config, "show_contact_metrics"));
@@ -3595,7 +3597,15 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         if (!is_msg_public(obj))
             status = HTTP_STATUS_NOT_FOUND;
         else
+        if (xs_dict_get(q_vars, "page"))
             msg = msg_replies(&snac, id, 1);
+        else {
+            const xs_dict *replies = xs_dict_get(obj, "replies");
+            if (xs_is_dict(replies)) {
+                msg = xs_dup(replies);
+                msg = xs_dict_set(msg, "@context", "https:/""/www.w3.org/ns/activitystreams");
+            }
+        }
     }
     else
         status = HTTP_STATUS_NOT_FOUND;
