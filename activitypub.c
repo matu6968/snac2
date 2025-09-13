@@ -1369,8 +1369,8 @@ xs_dict *msg_replies(snac *user, const char *id, int fill)
 /* creates a CollectionPage with replies of id */
 {
     xs *r_id = xs_replace(id, "/p/", "/r/");
-    xs *r_idp = xs_fmt("%s#page", r_id);
-    xs *r_idh = xs_fmt("%s#hdr", r_id);
+    xs *r_idp = xs_fmt("%s?page=true", r_id);
+    xs *r_idh = xs_fmt("%s", r_id);
 
     xs_dict *msg = msg_base(user, "CollectionPage", r_idp, NULL, NULL, NULL);
 
@@ -2012,7 +2012,7 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
         /* create the replies object */
         xs *replies = xs_dict_new();
         xs *r_id = xs_replace(id, "/p/", "/r/");
-        xs *h_id = xs_fmt("%s#hdr", r_id);
+        xs *h_id = xs_fmt("%s", r_id);
         xs *rp = msg_replies(snac, id, 0);
 
         replies = xs_dict_set(replies, "id", h_id);
