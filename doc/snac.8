@@ -290,6 +290,10 @@ Since version 2.78, users can set a webhook URL to receive notifications. Set th
 to true if you don't want your users to have this privilege.
 .It Ic favicon_url
 The URL to a favicon. If it's not set, the default one is used instead.
+.It Ic max_failing_days
+The maximum number of days an instance is considered down after continuous failed
+outgoing messages (default: 15). Anyway, whenever any incoming activity from a
+failed instance is detected, this counter is reset for it.
 .El
 .Pp
 You must restart the server to make effective these changes.
