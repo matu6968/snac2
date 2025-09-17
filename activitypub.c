@@ -3156,7 +3156,7 @@ void process_queue_item(xs_dict *q_item)
         }
 
         if (instance_failure(inbox, 0)) {
-            srv_debug(1, xs_fmt("too many failures for instance %s", inbox));
+            srv_debug(1, xs_fmt("output message error: too many failures for instance %s", inbox));
             return;
         }
 
