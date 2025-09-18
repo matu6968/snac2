@@ -22,7 +22,7 @@ msgstr "只有提及到的人："
 
 #: html.c:446
 msgid "Reply to (URL): "
-msgstr "回复给(URL)"
+msgstr "回复给(URL)："
 
 #: html.c:455
 msgid "Don't send, but store as a draft"
