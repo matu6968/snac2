@@ -762,20 +762,20 @@ msgstr "Časové pásmo:"
 
 #: html.c:491
 msgid "Language:"
-msgstr ""
+msgstr "Jazyk:"
 
 #: html.c:1512
 msgid "Notify webhook:"
-msgstr ""
+msgstr "Notify webhook:"
 
 #: html.c:1518
 msgid "http://example.com/webhook"
-msgstr ""
+msgstr "http://priklad.cz/webhook"
 
 #: html.c:1626
 msgid "Languages you usually post in:"
-msgstr ""
+msgstr "Jazyky ve kterých píšete:"
 
 #: html.c:1632
 msgid "en fr es de_AT"
-msgstr ""
+msgstr "cs en fr de_AT"
