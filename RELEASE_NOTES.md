@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.83
 
 After receiving a follow confirmation, a bunch of posts from that account are requested and inserted into the timeline as context.
 
