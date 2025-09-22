@@ -16,7 +16,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 
-static const char *default_srv_config = "{"
+static const char * const default_srv_config = "{"
     "\"host\":                 \"\","
     "\"prefix\":               \"\","
     "\"address\":              \"127.0.0.1\","
@@ -42,7 +42,7 @@ static const char *default_srv_config = "{"
     "\"fastcgi\":              false"
     "}";
 
-static const char *default_css =
+static const char * const default_css =
     "body { max-width: 48em; margin: auto; line-height: 1.5; padding: 0.8em; word-wrap: break-word; }\n"
     "pre { overflow-x: scroll; }\n"
     "blockquote { font-style: italic; }\n"
@@ -97,7 +97,7 @@ const char *snac_blurb =
     "automatic sign-up process.</p>\n"
 ;
 
-static const char *greeting_html =
+static const char * const greeting_html =
     "<!DOCTYPE html>\n"
     "<html><head>\n"
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n"

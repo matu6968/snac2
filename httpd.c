@@ -59,7 +59,7 @@ static jmp_buf on_break;
 /** code **/
 
 /* nodeinfo 2.0 template */
-const char *nodeinfo_2_0_template = ""
+const char * const nodeinfo_2_0_template = ""
     "{\"version\":\"2.0\","
     "\"software\":{\"name\":\"snac\",\"version\":\"" VERSION "\"},"
     "\"protocols\":[\"activitypub\"],"
@@ -172,7 +172,7 @@ static xs_str *greeting_html(void)
 }
 
 
-const char *share_page = ""
+const char * const share_page = ""
 "<!DOCTYPE html>\n"
 "<html>\n"
 "<head>\n"
@@ -190,7 +190,7 @@ const char *share_page = ""
 "";
 
 
-const char *authorize_interaction_page = ""
+const char * const authorize_interaction_page = ""
 "<!DOCTYPE html>\n"
 "<html>\n"
 "<head>\n"

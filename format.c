@@ -13,7 +13,7 @@
 #include "snac.h"
 
 /* emoticons, people laughing and such */
-const char *smileys[] = {
+const char * const smileys[] = {
     ":-)",        "&#128578;",
     ":-D",        "&#128512;",
     "X-D",        "&#128518;",
@@ -49,7 +49,7 @@ xs_dict *emojis(void)
     if (mtime(fn) == 0) {
         /* file does not exist; create it with the defaults */
         xs *d = xs_dict_new();
-        const char **emo = smileys;
+        const char * const *emo = smileys;
 
         while (*emo) {
             d = xs_dict_append(d, emo[0], emo[1]);
@@ -443,7 +443,7 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
 }
 
 
-const char *valid_tags[] = {
+const char * const valid_tags[] = {
     "a", "p", "br", "br/", "blockquote", "ul", "ol", "li", "cite", "small",
     "span", "i", "b", "u", "s", "pre", "code", "em", "strong", "hr", "img", "del", "bdi",
     "h2","h3", //anzu
