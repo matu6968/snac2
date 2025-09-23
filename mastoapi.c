@@ -161,7 +161,7 @@ int token_del(const char *id)
 }
 
 
-const char *login_page = ""
+const char * const login_page = ""
 "<!DOCTYPE html>\n"
 "<html>\n"
 "<head>\n"
