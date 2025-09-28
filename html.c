@@ -2323,8 +2323,9 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
     v = xs_dict_get(msg, "summary");
 
-    /* is it sensitive? */
-    if (xs_type(xs_dict_get(msg, "sensitive")) == XSTYPE_TRUE) {
+    /* if it has summary or marked as sensitive - add CW */
+    /* come clients don't set "sensitive" flag properly */
+    if ((!xs_is_null(v) && *v) || xs_type(xs_dict_get(msg, "sensitive")) == XSTYPE_TRUE) {
         if (xs_is_null(v) || *v == '\0')
             v = "...";
 
@@ -2344,15 +2345,6 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                 xs_html_text(L(" [SENSITIVE CONTENT]"))));
     }
     else {
-        /* print the summary as a header (sites like e.g. Friendica can contain one) */
-        if (!has_title && !xs_is_null(v) && *v) {
-            xs_html_add(snac_content_wrap,
-                xs_html_tag("h3",
-                    xs_html_attr("class", "snac-entry-title"),
-                    xs_html_text(v)));
-
-            has_title = 1;
-        }
         snac_content = xs_html_tag("div", NULL);
     }
 
