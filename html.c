@@ -249,6 +249,22 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
                 xs_html_raw("&#129309;")));
     }
 
+    if (instance_failure(actor_id, 0) == -1) {
+        xs_html_add(actor_icon,
+            xs_html_text(" "),
+            xs_html_tag("span",
+                xs_html_attr("title", "broken instance"),
+                xs_html_raw("&#128148;")));
+    }
+
+    if (actor_failure(actor_id, 0) == -1) {
+        xs_html_add(actor_icon,
+            xs_html_text(" "),
+            xs_html_tag("span",
+                xs_html_attr("title", "account no longer exists"),
+                xs_html_raw("&#128128;")));
+    }
+
     if (priv) {
         xs_html_add(actor_icon,
             xs_html_text(" "),
