@@ -569,14 +569,21 @@ xs_list *recipient_list(snac *snac, const xs_dict *msg, int expand_public)
         }
 
         while (xs_list_iter(&l, &v)) {
-            if (expand_public && strcmp(v, public_address) == 0) {
-                /* iterate the followers and add them */
-                xs *fwers = follower_list(snac);
-                const char *actor;
+            if (expand_public) {
+                if (strcmp(v, public_address) == 0 ||
+                    /* check if it's a followers collection URL */
+                    (xs_type(v) == XSTYPE_STRING &&
+                        strcmp(v, xs_fmt("%s/followers", snac->actor)) == 0) ||
+                    (xs_type(v) == XSTYPE_LIST &&
+                        xs_list_in(v, xs_fmt("%s/followers", snac->actor)) != -1)) {
+                    /* iterate the followers and add them */
+                    xs *fwers = follower_list(snac);
+                    const char *actor;
 
-                char *p = fwers;
-                while (xs_list_iter(&p, &actor))
-                    xs_set_add(&rcpts, actor);
+                    char *p = fwers;
+                    while (xs_list_iter(&p, &actor))
+                        xs_set_add(&rcpts, actor);
+                }
             }
             else
                 xs_set_add(&rcpts, v);
@@ -1840,8 +1847,7 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     xs_list *p;
     const xs_val *v;
 
-    /* FIXME: implement scope 3 */
-    int priv = scope == 1;
+    const int priv = (scope == SCOPE_MENTIONED || scope == SCOPE_FOLLOWERS);
 
     if (rcpts == NULL)
         to = xs_list_new();
@@ -1901,9 +1907,13 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
             if ((v = xs_dict_get(p_msg, "conversation")))
                 msg = xs_dict_append(msg, "conversation", v);
 
-            /* if this message is public, ours will also be */
-            if (!priv && is_msg_public(p_msg) && xs_list_in(to, public_address) == -1)
+            /* if this message is public or unlisted, ours will also be */
+            const int orig_scope = get_msg_visibility(p_msg);
+            if (!priv && orig_scope == SCOPE_PUBLIC && xs_list_in(to, public_address) == -1)
                 to = xs_list_append(to, public_address);
+            else
+            if (!priv && orig_scope == SCOPE_UNLISTED && xs_list_in(cc, public_address) == -1)
+                cc = xs_list_append(cc, public_address);
         }
 
         irt = xs_dup(in_reply_to);
@@ -1947,28 +1957,50 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     if (ctxt == NULL)
         ctxt = xs_fmt("%s#ctxt", id);
 
-    /* add all mentions to the cc */
+    /* add all mentions to the appropriate field */
     p = tag;
     while (xs_list_iter(&p, &v)) {
         if (xs_type(v) == XSTYPE_DICT) {
             const char *t;
 
             if (!xs_is_null(t = xs_dict_get(v, "type")) && strcmp(t, "Mention") == 0) {
-                if (!xs_is_null(t = xs_dict_get(v, "href")))
-                    cc = xs_list_append(cc, t);
+                if (!xs_is_null(t = xs_dict_get(v, "href"))) {
+                    if (scope == SCOPE_MENTIONED) {
+                        /* for DMs, mentions go to 'to' */
+                        to = xs_list_append(to, t);
+                    } else {
+                        /* for other visibility levels, mentions go to 'cc' */
+                        cc = xs_list_append(cc, t);
+                    }
+                }
             }
         }
     }
 
-    if (scope == 2) {
-        /* Mastodon's "quiet public": add public address to cc */
+    if (scope == SCOPE_UNLISTED) {
+        /* Mastodon's "quiet public": remove from to, add public address to cc */
+        int idx;
+        if ((idx = xs_list_in(to, public_address)) != -1)
+            to = xs_list_del(to, idx);
         if (xs_list_in(cc, public_address) == -1)
             cc = xs_list_append(cc, public_address);
     }
     else
-    /* no recipients? must be for everybody */
-    if (!priv && xs_list_len(to) == 0)
-        to = xs_list_append(to, public_address);
+    if (scope == SCOPE_FOLLOWERS) {
+        /* followers-only: add followers collection to to */
+        xs *followers_url = xs_fmt("%s/followers", snac->actor);
+        if (xs_list_in(to, followers_url) == -1)
+            to = xs_list_append(to, followers_url);
+    }
+    else
+    if (scope == SCOPE_PUBLIC) {
+        /* public: ensure public address is in to and not in cc */
+        int idx;
+        if ((idx = xs_list_in(cc, public_address)) != -1)
+            cc = xs_list_del(cc, idx);
+        if (xs_list_in(to, public_address) == -1)
+            to = xs_list_append(to, public_address);
+    }
 
     /* delete all cc recipients that also are in the to */
     p = to;
@@ -2113,6 +2145,42 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
     return msg;
 }
 
+int get_msg_visibility(const xs_dict *msg)
+/* determine visibility from message based on CC, TO and /followers mark */
+{
+    const xs_val *to = xs_dict_get(msg, "to");
+    const xs_val *cc = xs_dict_get(msg, "cc");
+
+    /* check if it's unlisted (public in cc but not in to) */
+    int pub_in_to = 0;
+    int pub_in_cc = 0;
+
+    if ((xs_type(to) == XSTYPE_STRING && strcmp(to, public_address) == 0) ||
+        (xs_type(to) == XSTYPE_LIST && xs_list_in(to, public_address) != -1))
+        pub_in_to = 1;
+
+    if ((xs_type(cc) == XSTYPE_STRING && strcmp(cc, public_address) == 0) ||
+        (xs_type(cc) == XSTYPE_LIST && xs_list_in(cc, public_address) != -1))
+        pub_in_cc = 1;
+
+    if (!pub_in_to && pub_in_cc) {
+        return SCOPE_UNLISTED;
+    }
+    if (pub_in_to && !pub_in_cc) {
+        return SCOPE_PUBLIC;
+    }
+
+    xs *followers_url = xs_fmt("%s/followers", xs_dict_get(msg, "attributedTo"));
+
+    if ((xs_type(to) == XSTYPE_STRING && strcmp(to, followers_url) == 0) ||
+        (xs_type(to) == XSTYPE_LIST && xs_list_in(to, followers_url) != -1))
+        return SCOPE_FOLLOWERS;
+    else
+        return SCOPE_MENTIONED;
+    /* should be unreachable, someone violated the protocol.                    */
+    /* better treat it as followers-only to make sure we don't leak information.*/
+    return SCOPE_FOLLOWERS;
+}
 
 int update_question(snac *user, const char *id)
 /* updates the poll counts */

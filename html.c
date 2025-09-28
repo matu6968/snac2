@@ -165,7 +165,7 @@ xs_str *format_text_with_emoji(snac *user, const char *text, int ems, const char
 
 
 xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
-                        const char *udate, const char *url, int priv,
+                        const char *udate, const char *url, int scope,
                         int in_people, const char *proxy, const char *lang,
                         const char *md5)
 {
@@ -249,12 +249,35 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
                 xs_html_raw("&#129309;")));
     }
 
-    if (priv) {
-        xs_html_add(actor_icon,
-            xs_html_text(" "),
-            xs_html_tag("span",
-                xs_html_attr("title", "private"),
-                xs_html_raw("&#128274;")));
+    if (scope != -1) {
+        if (scope == SCOPE_FOLLOWERS) {
+            xs_html_add(actor_icon,
+                xs_html_text(" "),
+                xs_html_tag("span",
+                    xs_html_attr("title", "followers"),
+                    xs_html_raw("&#128274;"))); // emoji of a lock
+        }
+        else if (scope == SCOPE_PUBLIC) {
+            xs_html_add(actor_icon,
+                xs_html_text(" "),
+                xs_html_tag("span",
+                    xs_html_attr("title", "public"),
+                    xs_html_raw("&#127760;"))); // emoji of a globe
+        }
+        else if (scope == SCOPE_UNLISTED) {
+            xs_html_add(actor_icon,
+                xs_html_text(" "),
+                xs_html_tag("span",
+                    xs_html_attr("title", "unlisted"),
+                    xs_html_raw("&#128275;"))); // emoji of an unlocked lock
+        }
+        else if (scope == SCOPE_MENTIONED) {
+            xs_html_add(actor_icon,
+                xs_html_text(" "),
+                xs_html_tag("span",
+                    xs_html_attr("title", "mentioned"),
+                    xs_html_raw("&#9993;&#65039;"))); // emoji of a mail
+        }
     }
 
     if (xs_is_null(date)) {
@@ -342,18 +365,17 @@ xs_html *html_msg_icon(snac *user, const char *actor_id, const xs_dict *msg,
         const char *date  = NULL;
         const char *udate = NULL;
         const char *url   = NULL;
-        int priv    = 0;
         const char *type = xs_dict_get(msg, "type");
+        const int scope = get_msg_visibility(msg);
 
         if (xs_match(type, POSTLIKE_OBJECT_TYPE))
             url = xs_dict_get(msg, "id");
 
-        priv = !is_msg_public(msg);
 
         date  = xs_dict_get(msg, "published");
         udate = xs_dict_get(msg, "updated");
 
-        actor_icon = html_actor_icon(user, actor, date, udate, url, priv, 0, proxy, lang, md5);
+        actor_icon = html_actor_icon(user, actor, date, udate, url, scope, 0, proxy, lang, md5);
     }
 
     return actor_icon;
@@ -365,7 +387,7 @@ xs_html *html_note(snac *user, const char *summary,
                    const char *ta_plh, const char *ta_content,
                    const char *edit_id, const char *actor_id,
                    const xs_val *cw_yn, const char *cw_text,
-                   const xs_val *mnt_only, const char *redir,
+                   const int scope, const char *redir,
                    const char *in_reply_to, int poll,
                    const xs_list *att_files, const xs_list *att_alt_texts,
                    int is_draft, const char *published,
@@ -417,14 +439,44 @@ xs_html *html_note(snac *user, const char *summary,
                 xs_html_attr("name",  "to"),
                 xs_html_attr("value", actor_id)));
     else {
-        /* no actor_id; ask for mentioned_only */
         xs_html_add(form,
-            xs_html_tag("p", NULL),
-            xs_html_text(L("Only for mentioned people: ")),
-            xs_html_sctag("input",
-                xs_html_attr("type",  "checkbox"),
-                xs_html_attr("name",  "mentioned_only"),
-                xs_html_attr(xs_type(mnt_only) == XSTYPE_TRUE ? "checked" : "", NULL)));
+            xs_html_tag("p",
+                xs_html_text(L("Visibility: ")),
+                xs_html_tag("label",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "radio"),
+                        xs_html_attr("name", "visibility"),
+                        xs_html_attr("value", "public"),
+                        xs_html_attr(scope == SCOPE_PUBLIC ? "checked" : "", NULL)),
+                    xs_html_text(" "),
+                    xs_html_text(L("Public"))),
+                xs_html_text(" "),
+                xs_html_tag("label",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "radio"),
+                        xs_html_attr("name", "visibility"),
+                        xs_html_attr("value", "unlisted"),
+                        xs_html_attr(scope == SCOPE_UNLISTED ? "checked" : "", NULL)),
+                    xs_html_text(" "),
+                    xs_html_text(L("Unlisted"))),
+                xs_html_text(" "),
+                xs_html_tag("label",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "radio"),
+                        xs_html_attr("name", "visibility"),
+                        xs_html_attr("value", "followers"),
+                        xs_html_attr(scope == SCOPE_FOLLOWERS ? "checked" : "", NULL)),
+                    xs_html_text(" "),
+                    xs_html_text(L("Followers-only"))),
+                xs_html_text(" "),
+                xs_html_tag("label",
+                    xs_html_sctag("input",
+                        xs_html_attr("type", "radio"),
+                        xs_html_attr("name", "visibility"),
+                        xs_html_attr("value", "mentioned"),
+                        xs_html_attr(scope == SCOPE_MENTIONED ? "checked" : "", NULL)),
+                    xs_html_text(" "),
+                    xs_html_text(L("Direct Message")))));
     }
 
     if (redir)
@@ -1236,7 +1288,7 @@ xs_html *html_top_controls(snac *user)
             L("What's on your mind?"), "",
             NULL, NULL,
             xs_stock(XSTYPE_FALSE), "",
-            xs_stock(XSTYPE_FALSE), NULL,
+            SCOPE_PUBLIC, NULL,
             NULL, 1, NULL, NULL, 0, NULL, NULL),
 
         /** operations **/
@@ -1942,6 +1994,8 @@ xs_html *html_entry_controls(snac *user, const char *actor,
             xs_dict_next(cmap, &note_lang, &dummy, &c);
         }
 
+        const int edit_scope = get_msg_visibility(msg);
+
         xs_html_add(controls, xs_html_tag("div",
             xs_html_tag("p", NULL),
             html_note(user, L("Edit..."),
@@ -1949,7 +2003,7 @@ xs_html *html_entry_controls(snac *user, const char *actor,
                 "", prev_src,
                 id, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
-                xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
+                edit_scope, redir,
                 NULL, 0, att_files, att_alt_texts, is_draft(user, id),
                 xs_dict_get(msg, "published"), note_lang)),
             xs_html_tag("p", NULL));
@@ -1962,6 +2016,8 @@ xs_html *html_entry_controls(snac *user, const char *actor,
         xs *form_id = xs_fmt("%s_reply_form", md5);
         xs *redir   = xs_fmt("%s_entry", md5);
 
+        const int scope = get_msg_visibility(msg);
+
         xs_html_add(controls, xs_html_tag("div",
             xs_html_tag("p", NULL),
             html_note(user, L("Reply..."),
@@ -1969,7 +2025,7 @@ xs_html *html_entry_controls(snac *user, const char *actor,
                 "", ct,
                 NULL, NULL,
                 xs_dict_get(msg, "sensitive"), xs_dict_get(msg, "summary"),
-                xs_stock(is_msg_public(msg) ? XSTYPE_FALSE : XSTYPE_TRUE), redir,
+                scope, redir,
                 id, 0, NULL, NULL, 0, NULL, NULL)),
             xs_html_tag("p", NULL));
     }
@@ -2059,6 +2115,12 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         return xs_html_tag("div",
             xs_html_tag("a",
                 xs_html_attr("name", s1)));
+    }
+
+    /* don't show followers-only notes from not followed users */
+    if (user && get_msg_visibility(msg) == SCOPE_FOLLOWERS &&
+        strcmp(user->actor, actor) != 0 && following_check(user, actor) == 0) {
+        return NULL;
     }
 
     if ((user == NULL || strcmp(actor, user->actor) != 0)
@@ -2275,7 +2337,6 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
             has_title = 1;
         }
-
         snac_content = xs_html_tag("div", NULL);
     }
 
@@ -3089,8 +3150,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                 xs_html_text(title)));
     }
 
-    xs_html_add(body,
-        posts);
+    xs_html_add(body, posts);
 
     int mark_shown = 0;
 
@@ -3130,8 +3190,9 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
         if (user == NULL && is_msg_from_private_user(msg))
             continue;
 
-        /* is this message a non-public reply? */
-        if (user != NULL && !is_msg_public(msg)) {
+        const int scope = get_msg_visibility(msg);
+        if (user != NULL && scope != SCOPE_PUBLIC){
+            /* is this message a non-public reply? */
             const char *irt = get_in_reply_to(msg);
 
             /* is it a reply to something not in the storage? */
@@ -3145,6 +3206,14 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                     continue;
                 }
             }
+        }
+        /* hide non-public posts from /instance view */
+        if (page != NULL && strcmp(page, "/instance") == 0 && scope != SCOPE_PUBLIC){
+            continue;
+        }
+        /* hide non-public posts viewed from outside */
+        if (read_only && scope != SCOPE_PUBLIC){
+            continue;
         }
 
         xs_html *entry = html_entry(user, msg, read_only, 0, v, (user && !hide_children) ? 0 : 1);
@@ -3256,7 +3325,7 @@ xs_html *html_people_list(snac *user, xs_list *list, const char *header, const c
                 xs_html_tag("div",
                     xs_html_attr("class", "snac-post-header"),
                     html_actor_icon(user, actor, xs_dict_get(actor, "published"),
-                                    NULL, NULL, 0, 1, proxy, NULL, NULL)));
+                                    NULL, NULL, -1, 1, proxy, NULL, NULL)));
 
             /* content (user bio) */
             const char *c = xs_dict_get(actor, "summary");
@@ -3357,7 +3426,7 @@ xs_html *html_people_list(snac *user, xs_list *list, const char *header, const c
                     "", "",
                     NULL, actor_id,
                     xs_stock(XSTYPE_FALSE), "",
-                    xs_stock(XSTYPE_FALSE), NULL,
+                    SCOPE_MENTIONED, NULL,
                     NULL, 0, NULL, NULL, 0, NULL, NULL),
                 xs_html_tag("p", NULL));
 
@@ -3564,7 +3633,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
                 xs_html_add(entry,
                     xs_html_tag("div",
                         xs_html_attr("class", "snac-post"),
-                        html_actor_icon(user, actor, NULL, NULL, NULL, 0, 0, proxy, NULL, NULL)));
+                        html_actor_icon(user, actor, NULL, NULL, NULL, -1, 0, proxy, NULL, NULL)));
         }
         else
         if (strcmp(type, "Move") == 0) {
@@ -3578,7 +3647,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_add(entry,
                         xs_html_tag("div",
                             xs_html_attr("class", "snac-post"),
-                            html_actor_icon(user, old_actor, NULL, NULL, NULL, 0, 0, proxy, NULL, NULL)));
+                            html_actor_icon(user, old_actor, NULL, NULL, NULL, -1, 0, proxy, NULL, NULL)));
                 }
             }
         }
@@ -4445,7 +4514,18 @@ int html_post_handler(const xs_dict *req, const char *q_path,
         const char *post_date    = xs_dict_get_def(p_vars, "post_date", "");
         const char *post_time    = xs_dict_get_def(p_vars, "post_time", "");
         const char *post_lang    = xs_dict_get(p_vars, "post_lang");
-        int priv             = !xs_is_null(xs_dict_get(p_vars, "mentioned_only"));
+        const char *visibility   = xs_dict_get(p_vars, "visibility");
+        int scope = SCOPE_PUBLIC;  /* default to public */
+        if (!xs_is_null(visibility)) {
+            if (strcmp(visibility, "unlisted") == 0)
+                scope = SCOPE_UNLISTED;
+            else
+            if (strcmp(visibility, "followers") == 0)
+                scope = SCOPE_FOLLOWERS;
+            else
+            if (strcmp(visibility, "mentioned") == 0)
+                scope = SCOPE_MENTIONED;
+        }
         int store_as_draft   = !xs_is_null(xs_dict_get(p_vars, "is_draft"));
         xs *attach_list      = xs_list_new();
 
@@ -4528,7 +4608,7 @@ int html_post_handler(const xs_dict *req, const char *q_path,
                 enqueue_close_question(&snac, xs_dict_get(msg, "id"), end_secs);
             }
             else
-                msg = msg_note(&snac, content_2, to, in_reply_to, attach_list, priv, post_lang, NULL);
+                msg = msg_note(&snac, content_2, to, in_reply_to, attach_list, scope, post_lang, NULL);
 
             if (sensitive != NULL) {
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));

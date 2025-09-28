@@ -884,8 +884,16 @@ xs_dict *mastoapi_status(snac *snac, const xs_dict *msg)
         st = xs_dict_append(st, "content", s1);
     }
 
-    st = xs_dict_append(st, "visibility",
-        is_msg_public(msg) ? "public" : "private");
+    /* determine visibility: https://docs.joinmastodon.org/entities/Status/#visibility */
+    const int scope = get_msg_visibility(msg);
+    if (scope == SCOPE_PUBLIC)
+        st = xs_dict_append(st, "visibility", "public");
+    else if (scope == SCOPE_FOLLOWERS)
+        st = xs_dict_append(st, "visibility", "private");
+    else if (scope == SCOPE_MENTIONED)
+        st = xs_dict_append(st, "visibility", "direct");
+    else if (scope == SCOPE_UNLISTED)
+        st = xs_dict_append(st, "visibility", "unlisted");
 
     tmp = xs_dict_get(msg, "sensitive");
     if (xs_is_null(tmp))
@@ -2856,12 +2864,15 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             }
 
             /* prepare the message */
-            int scope = 1;
+            int scope = SCOPE_MENTIONED;
             if (strcmp(visibility, "unlisted") == 0)
-                scope = 2;
+                scope = SCOPE_UNLISTED;
             else
             if (strcmp(visibility, "public") == 0)
-                scope = 0;
+                scope = SCOPE_PUBLIC;
+            else
+            if (strcmp(visibility, "private") == 0)
+                scope = SCOPE_FOLLOWERS;
 
             xs *msg = msg_note(&snac, content, NULL, irt, attach_list, scope, language, NULL);
 

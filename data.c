@@ -1456,15 +1456,16 @@ void timeline_update_indexes(snac *snac, const char *id)
         xs *msg = NULL;
 
         if (valid_status(object_get(id, &msg))) {
+            const int scope = get_msg_visibility(msg);
             /* if its ours and is public, also store in public */
-            if (is_msg_public(msg)) {
+            if (scope == SCOPE_PUBLIC) {
                 if (object_user_cache_add(snac, id, "public") >= 0) {
                     /* also add it to the instance public timeline */
                     xs *ipt = xs_fmt("%s/public.idx", srv_basedir);
                     index_add(ipt, id);
                 }
                 else
-                    srv_debug(1, xs_fmt("Not added to public instance index %s", id));
+                    srv_debug(1, xs_fmt("Not added to public instance index %s, visibility %d", id, scope));
             }
             else
                 /* also add it to public, it will be discarded later */
@@ -2222,7 +2223,10 @@ void tag_index(const char *id, const xs_dict *obj)
     const xs_list *tags = xs_dict_get(obj, "tag");
     xs *md5_id = xs_md5_hex(id, strlen(id));
 
-    if (is_msg_public(obj) && xs_type(tags) == XSTYPE_LIST && xs_list_len(tags) > 0) {
+    if (get_msg_visibility(obj) != SCOPE_PUBLIC)
+        return;
+
+    if (xs_type(tags) == XSTYPE_LIST && xs_list_len(tags) > 0) {
         xs *g_tag_dir = xs_fmt("%s/tag", srv_basedir);
 
         mkdirx(g_tag_dir);
