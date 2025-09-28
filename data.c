@@ -3042,6 +3042,45 @@ xs_list *content_search(snac *user, const char *regex,
 }
 
 
+int actor_failure(const char *actor, int op)
+/* actor failure maintenance */
+{
+    int ret = 0;
+
+    xs *md5 = xs_md5_hex(actor, strlen(actor));
+    xs *fn = xs_fmt("%s/failure/%s", srv_basedir, md5);
+
+    switch (op) {
+    case 0: /** check **/
+        if (mtime(fn))
+            ret = -1;
+
+        break;
+
+    case 1: /** register a failure **/
+        if (mtime(fn) == 0.0) {
+            FILE *f;
+
+            /* only create once, as the date will be used */
+            if ((f = fopen(fn, "w")) != NULL) {
+                fprintf(f, "%s\n", actor);
+                fclose(f);
+            }
+        }
+
+        break;
+
+    case 2: /** clear a failure **/
+        /* called whenever a message comes from this instance */
+        unlink(fn);
+
+        break;
+    }
+
+    return ret;
+}
+
+
 int instance_failure(const char *url, int op)
 /* do some checks and accounting on instance failures */
 {
