@@ -3042,18 +3042,13 @@ xs_list *content_search(snac *user, const char *regex,
 }
 
 
-int instance_failure(const char *url, int op)
-/* do some checks and accounting on instance failures */
+int actor_failure(const char *id, int op)
+/* actor failure maintenance */
 {
     int ret = 0;
-    xs *l = xs_split(url, "/");
-    const char *hostname = xs_list_get(l, 2);
     double mt;
 
-    if (!xs_is_string(hostname))
-        return 0;
-
-    xs *md5 = xs_md5_hex(hostname, strlen(hostname));
+    xs *md5 = xs_md5_hex(id, strlen(id));
     xs *fn = xs_fmt("%s/failure/%s", srv_basedir, md5);
 
     switch (op) {
@@ -3075,7 +3070,7 @@ int instance_failure(const char *url, int op)
 
             /* only create once, as the date will be used */
             if ((f = fopen(fn, "w")) != NULL) {
-                fprintf(f, "%s\n", hostname);
+                fprintf(f, "%s\n", id);
                 fclose(f);
             }
         }
@@ -3090,6 +3085,20 @@ int instance_failure(const char *url, int op)
     }
 
     return ret;
+}
+
+
+int instance_failure(const char *url, int op)
+/* instance failure maintenance */
+{
+    /* extract just the host name */
+    xs *l = xs_split(url, "/");
+    const char *hostname = xs_list_get(l, 2);
+
+    if (!xs_is_string(hostname))
+        return 0;
+
+    return actor_failure(hostname, op);
 }
 
 
