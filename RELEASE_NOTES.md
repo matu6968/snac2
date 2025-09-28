@@ -1,5 +1,11 @@
 # Release Notes
 
+## UNRELEASED
+
+Implemented more scopes (public, unlisted, followers-only and direct message) (contributed by byte).
+
+New icons showing instance and actor failures.
+
 ## 2.83
 
 After receiving a follow confirmation, a bunch of posts from that account are requested and inserted into the timeline as context.
