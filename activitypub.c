@@ -3033,6 +3033,11 @@ void process_user_queue_item(snac *user, xs_dict *q_item)
         const char *actor = xs_dict_get(q_item, "actor");
         double mtime = object_mtime(actor);
 
+        if (actor_failure(actor, 0) == -1) {
+            /* actor is broken beyond repair */
+            snac_debug(user, 1, xs_fmt("actor_refresh skipped broken actor %s", actor));
+        }
+        else
         /* only refresh if it was refreshed more than an hour ago */
         if (mtime + 3600.0 < (double) time(NULL)) {
             xs *actor_o = NULL;
@@ -3040,8 +3045,16 @@ void process_user_queue_item(snac *user, xs_dict *q_item)
 
             if (valid_status((status = activitypub_request(user, actor, &actor_o))))
                 actor_add(actor, actor_o);
-            else
-                object_touch(actor);
+            else {
+                if (status == HTTP_STATUS_GONE) {
+                    actor_failure(actor, 1);
+                    snac_log(user, xs_fmt("actor_refresh marking actor %s as broken %d", actor, status));
+                }
+                else {
+                    actor_failure(actor, 2);
+                    object_touch(actor);
+                }
+            }
 
             snac_log(user, xs_fmt("actor_refresh %s %d", actor, status));
         }
