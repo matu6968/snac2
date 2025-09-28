@@ -278,7 +278,6 @@ int content_match(const char *file, const xs_dict *msg);
 xs_list *content_search(snac *user, const char *regex,
             int priv, int skip, int show, int max_secs, int *timeout);
 
-int actor_failure(const char *id, int op);
 int instance_failure(const char *url, int op);
 
 void enqueue_input(snac *snac, const xs_dict *msg, const xs_dict *req, int retries);
