@@ -1104,6 +1104,10 @@ void collect_outbox(snac *user, const char *actor_id)
             /* not a post */
             continue;
         }
+        if (is_msg_for_me(user, post) == 0) {
+            /* not for us */
+            continue;
+        }
 
         const xs_dict *object = xs_dict_get(post, "object");
 
