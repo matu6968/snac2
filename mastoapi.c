@@ -3462,7 +3462,6 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
                           char **body, int *b_size, char **ctype)
 {
     (void)p_size;
-    (void)body;
     (void)b_size;
     (void)ctype;
 
@@ -3531,6 +3530,41 @@ int mastoapi_delete_handler(const xs_dict *req, const char *q_path,
 
             *ctype = "application/json";
             status = HTTP_STATUS_OK;
+        }
+        else
+            status = HTTP_STATUS_UNAUTHORIZED;
+    }
+    else
+    if (xs_startswith(cmd, "/v1/statuses/")) {
+        if (logged_in) {
+            xs *l = xs_split(cmd, "/");
+            const char *p = xs_list_get(l, -1);
+            p = MID_TO_MD5(p);
+
+            xs *obj = NULL;
+            if (valid_status(object_get_by_md5(p, &obj))) {
+                const char *id = xs_dict_get(obj, "id");
+
+                if (xs_is_string(id) && xs_startswith(id, snac.actor)) {
+                    xs *out = mastoapi_status(&snac, obj);
+
+                    xs *msg = msg_delete(&snac, id);
+
+                    enqueue_message(&snac, msg);
+
+                    timeline_del(&snac, id);
+
+                    draft_del(&snac, id);
+
+                    schedule_del(&snac, id);
+
+                    snac_log(&snac, xs_fmt("deleted entry %s", id));
+
+                    *body = xs_json_dumps(out, 4);
+                    *ctype = "application/json";
+                    status = HTTP_STATUS_OK;
+                }
+            }
         }
         else
             status = HTTP_STATUS_UNAUTHORIZED;
