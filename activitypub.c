@@ -584,6 +584,8 @@ xs_list *recipient_list(snac *snac, const xs_dict *msg, int expand_public)
                     while (xs_list_iter(&p, &actor))
                         xs_set_add(&rcpts, actor);
                 }
+                else
+                    xs_set_add(&rcpts, v);
             }
             else
                 xs_set_add(&rcpts, v);
