@@ -8,9 +8,9 @@ New icons showing instance and actor failures.
 
 Mastodon API: fixed post deletion.
 
-Fixed outbox collections (contributed by byte).
+Fixed outbox collection (contributed by byte).
 
-Updated translations (contributed by pmjv and daltux).
+Updated cs and pt_BR translations (contributed by pmjv and daltux).
 
 ## 2.83
 
