@@ -2,9 +2,15 @@
 
 ## UNRELEASED
 
-Implemented more scopes (public, unlisted, followers-only and direct message) (contributed by byte).
+Implemented more scopes to match other ActivityPub implementations (public, unlisted, followers-only and direct message) (contributed by byte).
 
 New icons showing instance and actor failures.
+
+Mastodon API: fixed post deletion.
+
+Fixed outbox collections (contributed by byte).
+
+Updated translations (contributed by pmjv and daltux).
 
 ## 2.83
 
