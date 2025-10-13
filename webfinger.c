@@ -5,6 +5,7 @@
 #include "xs_json.h"
 #include "xs_curl.h"
 #include "xs_mime.h"
+#include "xs_http.h"
 
 #include "snac.h"
 

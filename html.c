@@ -15,6 +15,7 @@
 #include "xs_unicode.h"
 #include "xs_url.h"
 #include "xs_random.h"
+#include "xs_http.h"
 
 #include "snac.h"
 

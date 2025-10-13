@@ -10,6 +10,7 @@
 #include "xs_glob.h"
 #include "xs_curl.h"
 #include "xs_regex.h"
+#include "xs_http.h"
 
 #include "snac.h"
 

@@ -8,6 +8,7 @@
 #include "xs_openssl.h"
 #include "xs_match.h"
 #include "xs_random.h"
+#include "xs_http.h"
 
 #include "snac.h"
 

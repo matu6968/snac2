@@ -16,6 +16,7 @@
 #include "xs_mime.h"
 #include "xs_match.h"
 #include "xs_unicode.h"
+#include "xs_http.h"
 
 #include "snac.h"
 

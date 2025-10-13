@@ -12,6 +12,7 @@
 #include "xs_match.h"
 #include "xs_unicode.h"
 #include "xs_webmention.h"
+#include "xs_http.h"
 
 #include "snac.h"
 
@@ -3210,7 +3211,7 @@ int process_user_queue(snac *snac)
 
 xs_str *str_status(int status)
 {
-    return xs_fmt("%d %s", status, status < 0 ? xs_curl_strerr(status) : http_status_text(status));
+    return xs_fmt("%d %s", status, status < 0 ? xs_curl_strerr(status) : xs_http_status_text(status));
 }
 
 

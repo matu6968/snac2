@@ -44,7 +44,7 @@ extern int dbglevel;
 
 int mkdirx(const char *pathname);
 
-int valid_status(int status);
+#define valid_status(status) xs_http_valid_status(status)
 xs_str *tid(int offset);
 double ftime(void);
 
@@ -463,14 +463,6 @@ void import_following_accounts_csv(snac *user, const char *fn);
 void import_list_csv(snac *user, const char *fn);
 void import_csv(snac *user);
 int parse_port(const char *url, const char **errstr);
-
-typedef enum {
-#define HTTP_STATUS(code, name, text) HTTP_STATUS_ ## name = code,
-#include "http_codes.h"
-#undef HTTP_STATUS
-} http_status;
-
-const char *http_status_text(int status);
 
 typedef struct {
     double timestamp;

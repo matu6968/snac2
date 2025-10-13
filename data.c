@@ -14,6 +14,7 @@
 #include "xs_unicode.h"
 #include "xs_random.h"
 #include "xs_po.h"
+#include "xs_http.h"
 
 #include "snac.h"
 

@@ -14,6 +14,7 @@
 #include "xs_socket.h"
 #include "xs_unix_socket.h"
 #include "xs_url.h"
+#include "xs_http.h"
 #include "xs_httpd.h"
 #include "xs_mime.h"
 #include "xs_regex.h"
@@ -55,13 +56,6 @@ int mkdirx(const char *pathname)
     }
 
     return ret;
-}
-
-
-int valid_status(int status)
-/* is this HTTP status valid? */
-{
-    return status >= 200 && status <= 299;
 }
 
 
@@ -175,17 +169,4 @@ int check_password(const char *uid, const char *passwd, const char *hash)
     }
 
     return ret;
-}
-
-
-const char *http_status_text(int status)
-/* translate status codes to canonical status texts */
-{
-    switch (status) {
-        case 599: return "Timeout";
-#define HTTP_STATUS(code, name, text) case HTTP_STATUS_ ## name: return #text;
-#include "http_codes.h"
-#undef HTTP_STATUS
-        default: return "Unknown";
-    }
 }

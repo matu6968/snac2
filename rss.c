@@ -9,6 +9,7 @@
 #include "xs_curl.h"
 #include "xs_openssl.h"
 #include "xs_json.h"
+#include "xs_http.h"
 
 #include "snac.h"
 
