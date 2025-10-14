@@ -10,6 +10,8 @@ int xs_webmention_hook(const char *source, const char *target, const char *user_
 
 #ifdef XS_IMPLEMENTATION
 
+#include "xs_http.h"
+
 int xs_webmention_send(const char *source, const char *target, const char *user_agent)
 /* sends a Webmention to target.
    Returns: < 0, error; 0, no Webmention endpoint; > 0, Webmention sent */
@@ -29,7 +31,7 @@ int xs_webmention_send(const char *source, const char *target, const char *user_
     h_req = xs_http_request("HEAD", target, headers, NULL, 0, &status, NULL, &p_size, 0);
 
     /* return immediate failures */
-    if (status < 200 || status > 299)
+    if (!xs_http_valid_status(status))
         return -1;
 
     const char *link = xs_dict_get(h_req, "link");
@@ -51,7 +53,7 @@ int xs_webmention_send(const char *source, const char *target, const char *user_
 
         g_req = xs_http_request("GET", target, headers, NULL, 0, &status, &payload, &p_size, 0);
 
-        if (status < 200 || status > 299)
+        if (!xs_http_valid_status(status))
             return -1;
 
         const char *ctype = xs_dict_get(g_req, "content-type");
@@ -107,7 +109,7 @@ int xs_webmention_send(const char *source, const char *target, const char *user_
 
         xs *rsp = xs_http_request("POST", endpoint, headers, body, strlen(body), &status, NULL, 0, 0);
 
-        if (status < 200 || status > 299)
+        if (!xs_http_valid_status(status))
             status = -4;
         else
             status = 1;
@@ -136,7 +138,7 @@ int xs_webmention_hook(const char *source, const char *target, const char *user_
 
     g_req = xs_http_request("GET", source, headers, NULL, 0, &status, &payload, &p_size, 0);
 
-    if (status < 200 || status > 299)
+    if (!xs_http_valid_status(status))
         return -1;
 
     if (!xs_is_string(payload))
