@@ -10,7 +10,7 @@ Mastodon API: fixed post deletion.
 
 Fixed outbox collection (contributed by byte).
 
-Updated cs and pt_BR translations (contributed by pmjv and daltux).
+Updated Czech, Spanish and Brazilian Portuguese translations (contributed by pmjv and daltux).
 
 ## 2.83
 
