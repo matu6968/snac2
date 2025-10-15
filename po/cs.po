@@ -125,7 +125,7 @@ msgid ""
 "Search posts by URL or content (regular expression), @user@host accounts, or "
 "#tag"
 msgstr ""
-"Vyhledejte příspěvek podle URL (regex), @uživatel@instance účtu, nebo #tagu"
+"Vyhledat příspěvek podle URL (regex), @uživatel@instance účtu, nebo #tagu"
 
 #: html.c:1087
 msgid "Content search"
@@ -254,7 +254,7 @@ msgstr "Žádosti o sledování je nutno manuálně potvrdit"
 
 #: html.c:1657
 msgid "Publish follower and following metrics"
-msgstr "Zobraz údaje o počtu sledovaných a sledujících"
+msgstr "Zobrazit údaje o počtu sledovaných a sledujících"
 
 #: html.c:1659
 msgid "Current location:"
@@ -294,7 +294,7 @@ msgstr "Aktualizovat hashtagy"
 
 #: html.c:1904
 msgid "Say you like this post"
-msgstr "Dejte najevo, že se vám příspěvek líbí"
+msgstr "Dát najevo, že se vám příspěvek líbí"
 
 #: html.c:1909 html.c:4775
 msgid "Unlike"
@@ -322,7 +322,7 @@ msgstr "Připnout tento příspěvěk na začátek vaší osy"
 
 #: html.c:1925
 msgid "Announce this post to your followers"
-msgstr "Ukázat tenhle příspěvek vašim sledujícím"
+msgstr "Ukázat tento příspěvek vaším sledujícím"
 
 #: html.c:1930 html.c:4783
 msgid "Unboost"
@@ -338,7 +338,7 @@ msgstr "Zahodit"
 
 #: html.c:1936
 msgid "Delete this post from your bookmarks"
-msgstr "Odstraň tenhle příspěvěk ze svých záložek"
+msgstr "Odstranit tento příspěvěk ze záložek"
 
 #: html.c:1939 html.c:4917
 msgid "Bookmark"
@@ -346,7 +346,7 @@ msgstr "Uložit"
 
 #: html.c:1939
 msgid "Add this post to your bookmarks"
-msgstr "Uložit tenhle příspěvek mezi záložky"
+msgstr "Uložit tento příspěvek do záložek"
 
 #: html.c:1945 html.c:3386 html.c:3577 html.c:4830
 msgid "Unfollow"
@@ -515,7 +515,7 @@ msgstr "Záložky"
 
 #: html.c:3101 html.c:4199
 msgid "Post drafts"
-msgstr "Rozepsané příspěky"
+msgstr "Rozepsané příspěvky"
 
 #: html.c:3177
 msgid "No more unseen posts"
@@ -551,7 +551,7 @@ msgstr "Ztišit boosty od tohoto uživatele"
 
 #: html.c:3405
 msgid "Delete this user"
-msgstr "Smazat tohoto užiatele"
+msgstr "Smazat tohoto uživatele"
 
 #: html.c:3410 html.c:4927
 msgid "Approve"
@@ -781,20 +781,20 @@ msgstr "cs en fr de_AT"
 
 #: html.c:460
 msgid "Visibility: "
-msgstr ""
+msgstr "Viditelnost"
 
 #: html.c:468
 msgid "Public"
-msgstr ""
+msgstr "Veřejné"
 
 #: html.c:477
 msgid "Unlisted"
-msgstr ""
+msgstr "Neveřejné"
 
 #: html.c:486
 msgid "Followers-only"
-msgstr ""
+msgstr "Pouze pro sledující"
 
 #: html.c:495
 msgid "Direct Message"
-msgstr ""
+msgstr "Soukromá Zpráva"
