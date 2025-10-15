@@ -26,7 +26,7 @@
 
 ### Collections and endpoints
 
-- `GET /<user>` returns the actor document (`application/ld+json`) including inbox/outbox/followers/following/featured collection URLs and the actor’s public key.
+- `GET /<user>` returns the actor document (`application/ld+json`) including inbox/outbox/followers/following/featured collection URLs and the actor's public key.
 - `GET /<user>/outbox` exposes most recent public posts in `orderedItems`.
 - `GET /<user>/featured` publishes user's pinned posts collection.
 - `GET /<user>/followers` and `/following` return empty collections unless the user enables `show_contact_metrics`, in which case only totals are shared.
