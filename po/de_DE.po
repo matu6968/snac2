@@ -782,20 +782,20 @@ msgstr "en fr es de_DE"
 
 #: html.c:460
 msgid "Visibility: "
-msgstr ""
+msgstr "Sichtbarkeit"
 
 #: html.c:468
 msgid "Public"
-msgstr ""
+msgstr "Öffentlich"
 
 #: html.c:477
 msgid "Unlisted"
-msgstr ""
+msgstr "Ungelistete"
 
 #: html.c:486
 msgid "Followers-only"
-msgstr ""
+msgstr "Nur Follower"
 
 #: html.c:495
 msgid "Direct Message"
-msgstr ""
+msgstr "Direktnachricht"

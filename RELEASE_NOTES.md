@@ -1,6 +1,6 @@
 # Release Notes
 
-## UNRELEASED
+## 2.84
 
 Implemented more scopes to match other ActivityPub implementations (public, unlisted, followers-only and direct message) (contributed by byte).
 
