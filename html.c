@@ -3042,11 +3042,14 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                         xs_html_attr("value", L("Dismiss"))))));
     }
 
+    xs_html *lists_hld = xs_html_tag("div",
+        xs_html_attr("class", "snac-lists-holder"));
+    xs_html_add(body, lists_hld);
     /* show links to the available lists */
     if (user && !read_only) {
         xs_html *lol = xs_html_tag("ul",
             xs_html_attr("class", "snac-list-of-lists"));
-        xs_html_add(body, lol);
+        xs_html_add(lists_hld, lol);
 
         xs *lists = list_maint(user, NULL, 0); /* get list of lists */
 
@@ -3121,7 +3124,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
         if (xs_is_list(followed_hashtags) && xs_list_len(followed_hashtags)) {
             xs_html *loht = xs_html_tag("ul",
                 xs_html_attr("class", "snac-list-of-lists"));
-            xs_html_add(body, loht);
+            xs_html_add(lists_hld, loht);
 
             const char *ht;
 
