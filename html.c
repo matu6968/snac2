@@ -331,6 +331,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             xs_html_add(actor_icon,
                 xs_html_text(" "),
                 xs_html_tag("span",
+                    xs_html_attr("class", "snac-post-visibility"),
                     xs_html_attr("title", "followers"),
                     xs_html_raw("&#128274;"))); // emoji of a lock
         }
@@ -338,6 +339,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             xs_html_add(actor_icon,
                 xs_html_text(" "),
                 xs_html_tag("span",
+                    xs_html_attr("class", "snac-post-visibility"),
                     xs_html_attr("title", "public"),
                     xs_html_raw("&#127760;"))); // emoji of a globe
         }
@@ -345,6 +347,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             xs_html_add(actor_icon,
                 xs_html_text(" "),
                 xs_html_tag("span",
+                    xs_html_attr("class", "snac-post-visibility"),
                     xs_html_attr("title", "unlisted"),
                     xs_html_raw("&#128275;"))); // emoji of an unlocked lock
         }
@@ -352,6 +355,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
             xs_html_add(actor_icon,
                 xs_html_text(" "),
                 xs_html_tag("span",
+                    xs_html_attr("class", "snac-post-visibility"),
                     xs_html_attr("title", "mentioned"),
                     xs_html_raw("&#9993;&#65039;"))); // emoji of a mail
         }
