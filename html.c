@@ -3546,7 +3546,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                     xs_html_tag("li",
                         xs_html_tag("a",
                             xs_html_attr("href", url),
-                            xs_html_attr("class", "snac-list-link"),
+                            xs_html_attr("class", "snac-list-link snac-list-hashtag"),
                             xs_html_text(ht))));
             }
         }
