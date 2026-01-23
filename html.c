@@ -265,12 +265,13 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
 
     if (*pronouns) {
         xs_html_add(name_link,
-            xs_html_text(" ["),
+            xs_html_text(" "),
             xs_html_tag("span",
                 xs_html_attr("class",   "snac-pronouns"),
                 xs_html_attr("title",   "user's pronouns"),
-                xs_html_raw(pronouns)),
-            xs_html_text("]"));
+                xs_html_text("["),
+                xs_html_raw(pronouns),
+                xs_html_text("]")));
     }
 
     xs_html_add(actor_icon,
