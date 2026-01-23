@@ -1945,7 +1945,7 @@ xs_html *html_top_controls(snac *user)
 
 static xs_html *html_button(const char *clss, const char *label, const char *hint)
 {
-    xs *c = xs_fmt("snac-btn-%s", clss);
+    xs *c = xs_fmt("snac-btn snac-btn-%s", clss);
 
     /* use an NULL tag to separate non-css-classed buttons from one another */
     return xs_html_container(
