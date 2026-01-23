@@ -215,7 +215,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
                         int in_people, const char *proxy, const char *lang,
                         const char *md5)
 {
-    xs_html *actor_icon = xs_html_tag("p", NULL);
+    xs_html *actor_icon = xs_html_tag("p", xs_html_attr("class", "snac-actor-icon"), NULL);
 
     xs *avatar = NULL;
     const char *v;
