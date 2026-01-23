@@ -4276,6 +4276,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
                         xs_html_tag("form",
                             xs_html_attr("method", "post"),
                             xs_html_attr("action", action),
+                            xs_html_attr("class",  "snac-compact-btn-form"),
                             xs_html_sctag("input",
                                 xs_html_attr("type", "hidden"),
                                 xs_html_attr("name", "actor"),
