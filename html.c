@@ -4311,6 +4311,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_tag("p",
                         xs_html_tag("a",
                             xs_html_attr("href", ctxt),
+                            xs_html_attr("class", "snac-context-link"),
                             xs_html_text(L("Context")))),
                     h);
             }
