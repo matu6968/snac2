@@ -1,17 +1,19 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_io.h"
 #include "xs_json.h"
 #include "xs_socket.h"
 #include "xs_unix_socket.h"
+#include "xs_http.h"
 #include "xs_httpd.h"
 #include "xs_mime.h"
 #include "xs_time.h"
 #include "xs_openssl.h"
 #include "xs_fcgi.h"
 #include "xs_html.h"
+#include "xs_webmention.h"
 
 #include "snac.h"
 
@@ -58,14 +60,16 @@ static jmp_buf on_break;
 /** code **/
 
 /* nodeinfo 2.0 template */
-const char *nodeinfo_2_0_template = ""
+const char * const nodeinfo_2_0_template = ""
     "{\"version\":\"2.0\","
     "\"software\":{\"name\":\"snac\",\"version\":\"" VERSION "\"},"
     "\"protocols\":[\"activitypub\"],"
     "\"services\":{\"outbound\":[],\"inbound\":[]},"
     "\"usage\":{\"users\":{\"total\":%d,\"activeMonth\":%d,\"activeHalfyear\":%d},"
     "\"localPosts\":%d},"
-    "\"openRegistrations\":false,\"metadata\":{}}";
+    "\"openRegistrations\":false,\"metadata\":{"
+    "\"nodeDescription\":\"%s\",\"nodeName\":\"%s\""
+    "}}";
 
 xs_str *nodeinfo_2_0(void)
 /* builds a nodeinfo json object */
@@ -98,7 +102,10 @@ xs_str *nodeinfo_2_0(void)
         n_posts += index_len(pidxfn);
     }
 
-    return xs_fmt(nodeinfo_2_0_template, n_utotal, n_umonth, n_uhyear, n_posts);
+    const char *name = xs_dict_get_def(srv_config, "title", "");
+    const char *desc = xs_dict_get_def(srv_config, "short_description", "");
+
+    return xs_fmt(nodeinfo_2_0_template, n_utotal, n_umonth, n_uhyear, n_posts, desc, name);
 }
 
 
@@ -166,7 +173,7 @@ static xs_str *greeting_html(void)
 }
 
 
-const char *share_page = ""
+const char * const share_page = ""
 "<!DOCTYPE html>\n"
 "<html>\n"
 "<head>\n"
@@ -184,7 +191,7 @@ const char *share_page = ""
 "";
 
 
-const char *authorize_interaction_page = ""
+const char * const authorize_interaction_page = ""
 "<!DOCTYPE html>\n"
 "<html>\n"
 "<head>\n"
@@ -220,7 +227,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
         const xs_dict *q_vars = xs_dict_get(req, "q_vars");
         const char *t = NULL;
 
-        if (xs_type(q_vars) == XSTYPE_DICT && (t = xs_dict_get(q_vars, "t"))) {
+        if (xs_type(q_vars) == XSTYPE_DICT && xs_is_string(t = xs_dict_get(q_vars, "t"))) {
             /** search by tag **/
             int skip = 0;
             int show = xs_number_get(xs_dict_get_def(srv_config, "def_timeline_entries",
@@ -250,7 +257,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
             else {
                 xs *page = xs_fmt("?t=%s", t);
                 xs *title = xs_fmt(L("Search results for tag #%s"), t);
-                *body = html_timeline(NULL, tl, 0, skip, show, more, title, page, 0, NULL);
+                *body = html_timeline(NULL, tl, 0, skip, show, more, title, page, 0, NULL, 0);
             }
         }
         else
@@ -258,7 +265,7 @@ int server_get_handler(xs_dict *req, const char *q_path,
             /** instance timeline **/
             xs *tl = timeline_instance_list(0, 30);
             *body = html_timeline(NULL, tl, 0, 0, 0, 0,
-                L("Recent posts by users in this instance"), NULL, 0, NULL);
+                L("Recent posts by users in this instance"), NULL, 0, NULL, 0);
         }
         else
             *body = greeting_html();
@@ -277,9 +284,10 @@ int server_get_handler(xs_dict *req, const char *q_path,
         status = HTTP_STATUS_OK;
         *ctype = "application/json; charset=utf-8";
         *body  = xs_fmt("{\"links\":["
-            "{\"rel\":\"http:/" "/nodeinfo.diaspora.software/ns/schema/2.0\","
-            "\"href\":\"%s/nodeinfo_2_0\"}]}",
-            srv_baseurl);
+            "{\"rel\":\"http:/" "/nodeinfo.diaspora.software/ns/schema/2.0\",\"href\":\"%s/nodeinfo_2_0\"},"
+            "{\"rel\":\"http:/" "/nodeinfo.diaspora.software/ns/schema/2.1\",\"href\":\"%s/nodeinfo_2_1\"}"
+            "]}",
+            srv_baseurl, srv_baseurl);
     }
     else
     if (strcmp(q_path, "/.well-known/host-meta") == 0) {
@@ -295,6 +303,19 @@ int server_get_handler(xs_dict *req, const char *q_path,
         status = HTTP_STATUS_OK;
         *ctype = "application/json; charset=utf-8";
         *body  = nodeinfo_2_0();
+    }
+    else
+    if (strcmp(q_path, "/nodeinfo_2_1") == 0) {
+        xs *s = nodeinfo_2_0();
+        xs *j = xs_json_loads(s);
+
+        j = xs_dict_set(j, "version", "2.1");
+        j = xs_dict_set_path(j, "software.repository", WHAT_IS_SNAC_URL);
+        j = xs_dict_set_path(j, "software.homepage", SNAC_DOC_URL);
+
+        status = HTTP_STATUS_OK;
+        *ctype = "application/json; charset=utf-8";
+        *body  = xs_json_dumps(j, 4);
     }
     else
     if (strcmp(q_path, "/robots.txt") == 0) {
@@ -373,6 +394,68 @@ int server_get_handler(xs_dict *req, const char *q_path,
 }
 
 
+int server_post_handler(const xs_dict *req, const char *q_path,
+                      char *payload, int p_size,
+                      char **body, int *b_size, char **ctype)
+{
+    int status = 0;
+
+    (void)payload;
+    (void)p_size;
+    (void)body;
+    (void)b_size;
+    (void)ctype;
+
+    if (strcmp(q_path, "/webmention-hook") == 0) {
+        status = HTTP_STATUS_BAD_REQUEST;
+
+        const xs_dict *p_vars = xs_dict_get(req, "p_vars");
+
+        if (!xs_is_dict(p_vars))
+            return status;
+
+        const char *source = xs_dict_get(p_vars, "source");
+        const char *target = xs_dict_get(p_vars, "target");
+
+        if (!xs_is_string(source) || !xs_is_string(target)) {
+            srv_debug(1, xs_fmt("webmention-hook bad source or target"));
+            return status;
+        }
+
+        if (!xs_startswith(target, srv_baseurl)) {
+            srv_debug(1, xs_fmt("webmention-hook unknown target %s", target));
+            return status;
+        }
+
+        /* get the user */
+        xs *s1 = xs_replace(target, srv_baseurl, "");
+
+        xs *l1 = xs_split(s1, "/");
+        const char *uid = xs_list_get(l1, 1);
+        snac user;
+
+        if (!xs_is_string(uid) || !user_open(&user, uid)) {
+            srv_debug(1, xs_fmt("webmention-hook cannot find user for %s", target));
+            return status;
+        }
+
+        int r = xs_webmention_hook(source, target, USER_AGENT);
+
+        if (r > 0) {
+            notify_add(&user, "Webmention", NULL, source, target, xs_stock(XSTYPE_DICT));
+            timeline_touch(&user);
+        }
+
+        srv_log(xs_fmt("webmention-hook source=%s target=%s %d", source, target, r));
+
+        user_free(&user);
+        status = HTTP_STATUS_OK;
+    }
+
+    return status;
+}
+
+
 void httpd_connection(FILE *f)
 /* the connection processor */
 {
@@ -444,6 +527,10 @@ void httpd_connection(FILE *f)
     else
     if (strcmp(method, "POST") == 0) {
 
+        if (status == 0)
+            status = server_post_handler(req, q_path,
+                        payload, p_size, &body, &b_size, &ctype);
+
 #ifndef NO_MASTODON_API
         if (status == 0)
             status = oauth_post_handler(req, q_path,
@@ -511,6 +598,9 @@ void httpd_connection(FILE *f)
     if (status == HTTP_STATUS_NOT_FOUND)
         body = xs_str_new("<h1>404 Not Found (" USER_AGENT ")</h1>");
 
+    if (status == HTTP_STATUS_GONE)
+        body = xs_str_new("<h1>410 Gone (" USER_AGENT ")</h1>");
+
     if (status == HTTP_STATUS_BAD_REQUEST && body != NULL)
         body = xs_str_new("<h1>400 Bad Request (" USER_AGENT ")</h1>");
 
@@ -564,7 +654,7 @@ void httpd_connection(FILE *f)
     if (p_state->use_fcgi)
         xs_fcgi_response(f, status, headers, body, b_size, fcgi_id);
     else
-        xs_httpd_response(f, status, http_status_text(status), headers, body, b_size);
+        xs_httpd_response(f, status, xs_http_status_text(status), headers, body, b_size);
 
     fclose(f);
 
@@ -718,6 +808,8 @@ static void *background_thread(void *arg)
     rss_time = t + 15 * 60;
 
     srv_log(xs_fmt("background thread started"));
+
+    enqueue_fsck();
 
     while (p_state->srv_running) {
         int cnt = 0;

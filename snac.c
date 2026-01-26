@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #define XS_IMPLEMENTATION
 
@@ -14,6 +14,7 @@
 #include "xs_socket.h"
 #include "xs_unix_socket.h"
 #include "xs_url.h"
+#include "xs_http.h"
 #include "xs_httpd.h"
 #include "xs_mime.h"
 #include "xs_regex.h"
@@ -26,11 +27,15 @@
 #include "xs_html.h"
 #include "xs_po.h"
 #include "xs_webmention.h"
+#include "xs_list_tools.h"
 
 #include "snac.h"
 
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <limits.h>
+#include <stdlib.h>
 
 xs_str *srv_basedir = NULL;
 xs_dict *srv_config = NULL;
@@ -55,13 +60,6 @@ int mkdirx(const char *pathname)
     }
 
     return ret;
-}
-
-
-int valid_status(int status)
-/* is this HTTP status valid? */
-{
-    return status >= 200 && status <= 299;
 }
 
 
@@ -178,14 +176,148 @@ int check_password(const char *uid, const char *passwd, const char *hash)
 }
 
 
-const char *http_status_text(int status)
-/* translate status codes to canonical status texts */
+int strip_media(const char *fn)
+/* strips EXIF data from a file */
 {
-    switch (status) {
-        case 599: return "Timeout";
-#define HTTP_STATUS(code, name, text) case HTTP_STATUS_ ## name: return #text;
-#include "http_codes.h"
-#undef HTTP_STATUS
-        default: return "Unknown";
+    int ret = 0;
+
+    const xs_val *v = xs_dict_get(srv_config, "strip_exif");
+
+    if (xs_type(v) == XSTYPE_TRUE) {
+        /* Heuristic: find 'user/' in the path to make it relative */
+        /* This works for ~/user/..., /var/snac/user/..., etc. */
+        const char *r_fn = strstr(fn, "user/");
+        
+        if (r_fn == NULL) {
+            /* Fallback: try to strip ~/ if present */
+            if (strncmp(fn, "~/", 2) == 0)
+                r_fn = fn + 2;
+            else
+                r_fn = fn;
+        }
+
+        xs *l_fn = xs_tolower_i(xs_dup(r_fn));
+
+        /* check image extensions */
+        if (xs_endswith(l_fn, ".jpg") || xs_endswith(l_fn, ".jpeg") ||
+            xs_endswith(l_fn, ".png") || xs_endswith(l_fn, ".webp") ||
+            xs_endswith(l_fn, ".heic") || xs_endswith(l_fn, ".heif") ||
+            xs_endswith(l_fn, ".avif") || xs_endswith(l_fn, ".tiff") ||
+            xs_endswith(l_fn, ".gif")  || xs_endswith(l_fn, ".bmp")) {
+
+            const char *mp = xs_dict_get(srv_config, "mogrify_path");
+            if (mp == NULL)
+                mp = "mogrify";
+
+            xs *cmd = xs_fmt("cd \"%s\" && %s -auto-orient -strip \"%s\" 2>/dev/null", srv_basedir, mp, r_fn);
+
+            ret = system(cmd);
+
+            if (ret != 0) {
+                int code = 0;
+                if (WIFEXITED(ret))
+                    code = WEXITSTATUS(ret);
+                
+                if (code == 127)
+                    srv_log(xs_fmt("strip_media: error stripping %s. '%s' not found (exit 127). Set 'mogrify_path' in server.json.", r_fn, mp));
+                else
+                    srv_log(xs_fmt("strip_media: error stripping %s %d", r_fn, ret));
+            }
+            else
+                srv_debug(1, xs_fmt("strip_media: stripped %s", r_fn));
+        }
+        else
+        /* check video extensions */
+        if (xs_endswith(l_fn, ".mp4") || xs_endswith(l_fn, ".m4v") ||
+            xs_endswith(l_fn, ".mov") || xs_endswith(l_fn, ".webm") ||
+            xs_endswith(l_fn, ".mkv") || xs_endswith(l_fn, ".avi")) {
+
+            const char *fp = xs_dict_get(srv_config, "ffmpeg_path");
+            if (fp == NULL)
+                fp = "ffmpeg";
+
+            /* ffmpeg cannot modify in-place, so we need a temp file */
+            /* we must preserve valid extension for ffmpeg to guess the format */
+            const char *ext = strrchr(r_fn, '.');
+            if (ext == NULL) ext = "";
+            xs *tmp_fn = xs_fmt("%s.tmp%s", r_fn, ext);
+            
+            /* -map_metadata -1 strips all global metadata */
+            /* -c copy copies input streams without re-encoding */
+            /* we don't silence stderr so we can debug issues */
+            /* we explicitly cd to srv_basedir to ensure relative paths work */
+            xs *cmd = xs_fmt("cd \"%s\" && %s -y -i \"%s\" -map_metadata -1 -c copy \"%s\"", srv_basedir, fp, r_fn, tmp_fn);
+
+            ret = system(cmd);
+
+            if (ret != 0) {
+                int code = 0;
+                if (WIFEXITED(ret))
+                    code = WEXITSTATUS(ret);
+                
+                if (code == 127)
+                    srv_log(xs_fmt("strip_media: error stripping %s. '%s' not found (exit 127). Set 'ffmpeg_path' in server.json.", r_fn, fp));
+                else {
+                    srv_log(xs_fmt("strip_media: error stripping %s %d", r_fn, ret));
+                    srv_log(xs_fmt("strip_media: command was: %s", cmd));
+                }
+                
+                /* try to cleanup, just in case */
+                /* unlink needs full path too if we are not in basedir */
+                xs *full_tmp_fn = xs_fmt("%s/%s", srv_basedir, tmp_fn);
+                unlink(full_tmp_fn);
+            }
+            else {
+                /* rename tmp file to original */
+                /* use full path for source because it was created relative to basedir */
+                xs *full_tmp_fn = xs_fmt("%s/%s", srv_basedir, tmp_fn);
+                
+                if (rename(full_tmp_fn, fn) == 0)
+                    srv_debug(1, xs_fmt("strip_media: stripped %s", fn));
+                else
+                    srv_log(xs_fmt("strip_media: error renaming %s to %s", full_tmp_fn, fn));
+            }
+        }
     }
+
+    return ret;
+}
+
+
+int check_strip_tool(void)
+{
+    const xs_val *v = xs_dict_get(srv_config, "strip_exif");
+    int ret = 1;
+
+    if (xs_type(v) == XSTYPE_TRUE) {
+        /* check mogrify */
+        {
+            const char *mp = xs_dict_get(srv_config, "mogrify_path");
+            if (mp == NULL)
+                mp = "mogrify";
+
+            xs *cmd = xs_fmt("%s -version 2>/dev/null >/dev/null", mp);
+            
+            if (system(cmd) != 0) {
+                srv_log(xs_fmt("check_strip_tool: '%s' not working", mp));
+                ret = 0;
+            }
+        }
+
+        /* check ffmpeg */
+        if (ret) {
+            const char *fp = xs_dict_get(srv_config, "ffmpeg_path");
+            if (fp == NULL)
+                fp = "ffmpeg";
+
+            xs *cmd = xs_fmt("%s -version 2>/dev/null >/dev/null", fp);
+            
+            if (system(cmd) != 0) {
+                srv_log(xs_fmt("check_strip_tool: '%s' not working", fp));
+                ret = 0;
+            }
+        }
+    }
+
+    return ret;
 }

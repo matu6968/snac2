@@ -1,5 +1,6 @@
 body { max-width: 48em; margin: auto; line-height: 1.5; padding: 0.8em; word-wrap: break-word; }
 pre { overflow-x: scroll; }
+blockquote { font-style: italic; }
 .snac-embedded-video, img { max-width: 100% }
 .snac-origin { font-size: 85% }
 .snac-score { float: right; font-size: 85% }
@@ -31,8 +32,12 @@ pre { overflow-x: scroll; }
 .snac-list-of-lists li { display: inline; border: 1px solid #a0a0a0; border-radius: 25px;
   margin-right: 0.5em; padding-left: 0.5em; padding-right: 0.5em; }
 .snac-no-more-unseen-posts { border-top: 1px solid #a0a0a0; border-bottom: 1px solid #a0a0a0; padding: 0.5em 0; margin: 1em 0; }
-@media (prefers-color-scheme: dark) { 
+.snac-reaction { padding:5px; padding-left: 10px; padding-right: 10px; display: inline-flex; margin-right: 5px; font-family: inherit; font-size: medium; height: 2.5rem; vertical-align:middle; align-items:center;}
+.snac-reaction-image { max-width: 100%; max-height: 100%; }
+.snac-reaction-div { border-left: darkgray; border-left-style: solid; margin-bottom: .3em; padding-left: .3em; border-left-width: 2px; }
+@media (prefers-color-scheme: dark) {
   body, input, textarea { background-color: #000; color: #fff; }
   a { color: #7799dd }
   a:visited { color: #aa99dd }
 }
+select { max-width: 40%; }

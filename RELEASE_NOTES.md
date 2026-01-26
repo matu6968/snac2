@@ -1,5 +1,155 @@
 # Release Notes
 
+## 2.89
+
+Fixed crash in pronouns processing (contributed by byte).
+
+Added counters in the people page (contributed by byte).
+
+New command-line option `refresh`, to refresh all follower and following `Actor` objects, marking them as broken if they are.
+
+## 2.88
+
+If `disable_emojireact` is set to `true` in `server.json`, EmojiReacts (incoming and outgoing) are totally disabled.
+
+New command-line option `top_ten`, that returns the top ten most popular posts by a user (ordered by the sum of likes and boosts) (contributed by aov).
+
+Added a new set of per-user muted words; if a post contains any of them, it's hidden behind a dropdown (contributed by byte).
+
+If an account has a metadata named `pronouns`, it's shown by the name (contributed by violette).
+
+Mastodon API: children of a post are returned recursively, not just the first level (contributed by violette).
+
+Implemented optional metadata stripping for images and videos using external tools (contributed by Stefano Marinelli).
+
+## 2.87
+
+Hide EmojiReacts from muted actors and blocked instances.
+
+## 2.86
+
+Truncate RSS titles at UTF-8 character boundaries (contributed by lxo).
+
+Link contacts to single-user people pages. Also, user's posts are shown (contributed by lxo).
+
+Added emoji reactions (contributed by violette).
+
+Mastodon API: Fix for some client notifications (contributed by violette), fix for a status visibility error (contributed by fruye).
+
+If the query variable `terse` of a public post page is set to anything, no header is shown.
+
+Fixed search failures when the query string has any leading blank.
+
+## 2.85
+
+Quoted posts are now shown.
+
+Added metadata to remote users in the people page (contributed by dandelions).
+
+Fixed memory leak (contributed by dandelions).
+
+Fixed user matching (contributed by rakoo).
+
+Rendering visibility conditionally, with lesser reach if needed (contributed by byte).
+
+Added a button next to a follow notification to follow back.
+
+Fixed typo in man page (contributed by spky).
+
+Updated Czech and German translations (contributed by pmjv and zen).
+
+## 2.84
+
+Implemented more scopes to match other ActivityPub implementations (public, unlisted, followers-only and direct message) (contributed by byte).
+
+New icons showing instance and actor failures.
+
+Mastodon API: Added remote accounts follow metrics and statuses when viewing profiles (contributed by Stefano Marinelli), fixed post deletion.
+
+Fixed outbox collection (contributed by byte).
+
+New file FEDERATION.md (contributed by andypiper).
+
+Updated Czech, Spanish and Brazilian Portuguese translations (contributed by pmjv and daltux).
+
+Fixed manpage typos (contributed by r-ricci).
+
+## 2.83
+
+After receiving a follow confirmation, a bunch of posts from that account are requested and inserted into the timeline as context.
+
+Continuously failing instances are marked as broken after a given number of days (see `snac(8)` on how to tune this counter). Incoming activity from any of these instances resets the counter.
+
+Fixed a nasty bug that incorrectly deleted private local posts in certain cases.
+
+Scheduled posts can now be sent from the command line (see `snac(1)` for more information on how to do it).
+
+Docker: add timezone, new examples for building and complete Swarm mode stack with Traefik (contributed by daltux).
+
+Fixed timezone names (contributed by dharmik).
+
+Documented the `update` command (contributed by xvello).
+
+## 2.82
+
+The language in which a post is written can now be set from the UI; you must configure the list of languages you usually post in in the User Settings.
+
+Added support for bullet points in posts (lines starting with an asterisk or a hyphen, plus a space).
+
+Added Dutch (nl_NL) translation (contributed by martijndeb).
+
+Added Western Frisian (fy_NL) translation (contributed by martijndeb).
+
+Mastodon API: Fixed repeated entries in timelines.
+
+Added nodeinfo 2.1 support.
+
+Fixed boosts from the command line not showing in the public timeline (contributed by xvello).
+
+Updated several language files (contributed by zen and daltux).
+
+Retrieving a post's replies is now possible via ActivityPub.
+
+## 2.81
+
+If the `propagate_local_purge` configuration variable is set to `true` in `server.json`, purged local posts generate a `Delete` activity that is sent everywhere, instead of only deleted from the filesystem.
+
+Included a small tweak to avoid being confused by implementations that return valid webfinger queries for non-account URLs (like i.e. the Wordpress ActivityPub plugin in some configurations). This helps in searching by URL.
+
+Added Ukrainian translation (contributed by wincentbalin).
+
+New command-line option `muted`, to list all MUTEd actors.
+
+Mastodon API: Fixed metadata and follower approval flag when editing the account.
+
+## 2.80
+
+Mastodon API: fixed a regression (introduced in previous version in the "boosts disappear in Tusky" fix) that interrupted timelines.
+
+## 2.79
+
+Added a server-wide Webmention hook; this way, if somebody out there (that supports Webmention) links to a user or post in this instance, a notification is sent (this is the complementary of what was implemented in version 2.76).
+
+Fixed regression while sending email via pipe on OpenBSD.
+
+Fixed Markdown parsing when the URL has parenthesis.
+
+Always show the 'pending follow confirmations' section if there are any (even if the toggle is off).
+
+If a metadata value is an account handler, it's also tried to be validated (rel="me" links).
+
+Another search by URL tweak (this time for Pixelfed links).
+
+Mastodon API: fixed a bug that made some boosts disappear after being shown in apps like Tusky, added followed hashtags maintenance, other minor changes.
+
+Renamed command-line actions `create_list` to `list_create` and `delete_list` to `list_remove`.
+
+The default favicon URL can be changed from the server configuration.
+
+New command-line option `export_posts`, to export all posts by a user in a JSON format compatible with the one generated by Mastodon.
+
+The command-line options to send notes also allow an optional `-r` argument, to set the URL of a Fediverse post this note is a reply to.
+
 ## 2.78
 
 Hashtag following also allow URLs to RSS feeds of ActivityPub objects (like e.g. https://mastodon.social/tags/ThankYouTuesday).

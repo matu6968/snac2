@@ -24,9 +24,9 @@ For file and data formats, see
 .Ss Web Interface
 The web interface provided by
 .Nm
-is split in two data streams: the public timeline and the
-private timeline. There are no other feeds like the server-scoped
-or the federated firehoses provided by other similar ActivityPub
+is split in three data streams: the public timeline, the private
+timeline and the instance timeline. There are no other feeds like
+the federated firehoses provided by other similar ActivityPub
 implementations like Mastodon or Pleroma.
 .Pp
 The public timeline, also called the local timeline, is what an
@@ -35,7 +35,7 @@ external visitor sees about the activity of a
 user: that is, only the list of public notes, boosts and likes
 the user generates or participates into. This is, obviously,
 read-only, and not very remarkable, unless the user publishes
-messages of staggering genious. A set of history links, grouped
+messages of staggering genius. A set of history links, grouped
 by month, will also be available at the bottom of the page.
 .Pp
 The private timeline, or simply the timeline, is the private,
@@ -60,16 +60,35 @@ If you set this checkbox, your post will be marked with a
 content warning. The immediately following, optional text box
 allows you to write a description about why your content is
 so sensitive.
-.It Only for mentioned people
-If you set this checkbox, your text will not be public, but only
-sent to those people you mention in the post body.
+.It Visibility
+From these radio button set you can select the scope of the new
+post. The available options are: Public, Unlisted, Followers-only
+and Direct Message (sent only to accounts mentioned in the post body).
 .It Reply to (URL)
 If you fill this optional text field with the URL of another one's
 post, your text will be considered as a reply to it, not a
 standalone one.
+.It Draft
+If you set this checkbox, your text will not be sent when you
+push the Post button, but stored for later modification in
+the "Drafts" section.
+.It Language
+A dropdown to select which language your post will be written
+in. This control only appears after you configure the set of
+languages you expect to use in the User Settings (see below).
+.It Scheduled post...
+This dropdown menu allows setting a date and time for the
+post publication.
+.It Attachments...
+This dropdown menu allows uploading media attachments (images,
+audio, video, etc.) to your post.
+.It Poll...
+this dropdown menu gives access to the voting options, that
+will make your post a poll. You can set the options to be
+voted, if it's a multiple choice poll and the due date.
 .El
 .Pp
-More options are hidden under a toggle control. They are the
+More options are hidden under dropdown menus. They are the
 following:
 .Bl -tag -offset indent
 .It Follow (by URL or user@host)
@@ -91,6 +110,9 @@ URLs to RSS feeds of ActivityPub objects are also allowed
 .It Blocked hashtags...
 Enter here the list of hashtags you want to block, one
 per line, with or without the # symbol.
+.It Muted words...
+Enter here a list of words to be silenced. If a post includes
+any of this words, it's hidden behind a dropdown.
 .El
 .Pp
 The user setup dialog allows some user information to be
@@ -138,7 +160,9 @@ what the administrator defined in the global server settings
 only if it's lesser (i.e. you cannot keep posts for longer
 than what the admin desires). A value of 0 (the default) means
 that the global server settings will apply to the posts in your
-timeline.
+timeline. Also, if the administrator has configured it,
+purged local posts generate a Delete activity that is sent
+everywhere.
 .It Drop direct messages from people you don't follow
 Just what it says in the tin. This is to mitigate spammers
 coming from Fediverse instances with lax / open registration
@@ -172,6 +196,9 @@ can be selected here.
 .It Time zone
 The time zone the user is on (default: UTC). Only
 used for scheduled posts.
+.It Languages you usually post in
+Fill this string with the ISO 639 Language Codes you expect to
+write your posts in, space-separated (example: en fr pt_BR).
 .It Password
 Write the same string in these two fields to change your
 password. Don't write anything if you don't want to do this.
@@ -194,13 +221,20 @@ also private and cannot be liked nor boosted.
 For each entry in the timeline, a set of reasonable actions
 in the form of buttons will be shown. These can be:
 .Bl -tag -offset indent
-.It Reply
+.It Reply...
 Unveils a text area to write your intelligent and acute comment
 to an uninformed fellow. This note is sent to the original
 author as well as to your followers. The note can include
 mentions in the @user@format; these people will also become
 recipients of the message. If you reply to a boost or like,
 you are really replying to the note, not to the admirer of it.
+.It Emoji react...
+Unveils a text area that allows a user to react with an emoji
+by typing its identifier, that should match one of the emojis
+defined in the
+.Pa emojis.json
+file. By now, only those emoji identifiers surrounded by colons
+can be used.
 .It Like
 Click this if you admire this post. The poster and your
 followers will be informed.
@@ -259,6 +293,8 @@ necessary information will be prompted for.
 Deletes a user, unfollowing all accounts first.
 .It Cm resetpwd Ar basedir Ar uid
 Resets a user's password to a new, random one.
+.It Cm update Ar basedir Ar uid
+Sends a user's updated profile to following instances.
 .It Cm queue Ar basedir Ar uid
 Processes the output queue of the specified user, sending all
 enqueued messages and re-enqueing the failing ones. This command
@@ -270,7 +306,7 @@ Requests an object and dumps it to stdout. This is a very low
 level command that is not very useful to you.
 .It Cm announce Ar basedir Ar uid Ar url
 Announces (boosts) a post via its URL.
-.It Cm note Ar basedir Ar uid Ar text Op file file ...
+.It Cm note Ar basedir Ar uid Ar text Op file file ... Op -r inReplyTo Op -d YYYYmmddHHMMSS
 Enqueues a Create + Note message to all followers. If the
 .Ar text
 argument is -e, the external editor defined by the EDITOR
@@ -278,10 +314,14 @@ environment variable will be invoked to prepare a message; if
 it's - (a lonely hyphen), the post content will be read from stdin.
 The rest of command line arguments are treated as media files to be
 attached to the post. The LANG environment variable (if defined) is used
-as the post language.
-.It Cm note_unlisted Ar basedir Ar uid Ar text Op file file ...
+as the post language. An optional URL to a Fediverse post, prefixed by \-r,
+can be specified for this note to be a reply to. If a date in YYYYmmddHHMMSS
+format is followed by \-d, the note is scheduled for that moment instead of
+immediately posted (this date must be in the same timezone the user has
+configured in the web UI).
+.It Cm note_unlisted Ar basedir Ar uid Ar text Op file file ... Op -r inReplyTo Op -d YYYYmmddHHMMSS
 Like the previous one, but creates an "unlisted" (or "quiet public") post.
-.It Cm note_mention Ar basedir Ar uid Ar text Op file file ...
+.It Cm note_mention Ar basedir Ar uid Ar text Op file file ... Op -r inReplyTo Op -d YYYYmmddHHMMSS
 Like the previous one, but creates a post only for accounts mentioned
 in the post body.
 .It Cm block Ar basedir Ar instance_url
@@ -291,9 +331,9 @@ blocked without further inspection.
 .It Cm unblock Ar basedir Ar instance_url
 Unblocks a previously blocked instance.
 .It Cm verify_links Ar basedir Ar uid
-Verifies all links stored as metadata for the given user. This verification
-is done by downloading the link content and searching for a link back to
-the
+Verifies all links or account handles stored as metadata for the given user.
+This verification is done by downloading the link content and searching for
+a link back to the
 .Nm
 user url that also contains a rel="me" attribute. These links are specially
 marked as verified in the user's public timeline and also via the Mastodon API.
@@ -306,6 +346,13 @@ subdirectory inside the user directory:
 .Pa blocked_accounts.csv ,
 .Pa lists.csv , and
 .Pa following_accounts.csv .
+.It Cm export_posts Ar basedir Ar uid
+Exports all posts written by the user to the file
+.Pa outbox.json
+inside the
+.Pa export/
+subdirectory inside the user directory. The format is compatible with the
+one generated by the equivalent option in Mastodon.
 .It Cm alias Ar basedir Ar uid Ar "@account@remotehost"
 Sets an account as an alias of this one. This is a necessary step to migrate
 an account to a remote Mastodon instance (see
@@ -360,14 +407,17 @@ subdirectory of a user's directory inside the server base directory.
 Prints the name of the user created lists.
 .It Cm list_members Ar basedir Ar uid Ar name
 Prints the list of actors in the named list.
-.It Cm create_list Ar basedir Ar uid Ar name
+.It Cm list_create Ar basedir Ar uid Ar name
 Creates a new list.
-.It Cm delete_list Ar basedir Ar uid Ar name
-Deletes an existing list.
+.It Cm list_remove Ar basedir Ar uid Ar name
+Removes an existing list.
 .It Cm list_add Ar basedir Ar uid Ar name Ar account
 Adds an account (by its @name@host handle or actor URL) to a list.
 .It Cm list_del Ar basedir Ar uid Ar name Ar actor_url
 Deletes an actor (by its actor URL) from a list.
+.It Cm top_ten Ar basedir Ar uid Op N
+Returns the ids of the top ten (or top N) most popular posts (considering the
+sum of likes and boosts).
 .El
 .Ss Migrating an account to/from Mastodon
 See 
@@ -431,20 +481,24 @@ the origin actor id
 the target actor id
 .It date
 the notification date
-.It message
+.It msg
 the full ActivityPub action JSON object
 .It objid
-the object identifier (extracted from message, may be null)
+the object identifier (extracted from msg, may be null)
 .It type
-the action type (extracted from message)
+the action type (extracted from msg)
 .It utype
-the action subtype (extracted from message, may be null)
+the action subtype (extracted from msg, may be null)
 .It uid
 the user identifier (account name)
 .It basedir
 the server base directory
 .It baseurl
 the server base URL
+.It account
+the origin actor object
+.It reply
+the activity this post is a reply to (may not exist)
 .El
 .Pp
 .Sh ENVIRONMENT
@@ -455,15 +509,15 @@ your installation; if set, you don't have to add the base directory as an
 argument to command-line operations. This may prove useful if you only
 have one
 .Nm
-instance in you system (which is probably your case).
+instance in your system (which is probably your case).
 .It Ev DEBUG
 Overrides the debugging level from the server 'dbglevel' configuration
 variable. Set it to an integer value. The higher, the deeper in meaningless
 verbiage you'll find yourself into.
 .It Ev EDITOR
-The user-preferred interactive text editor to prepare messages.
+The user-preferred interactive text editor to prepare notes.
 .It Ev LANG
-The language of the post when sending messages.
+The language of the post when sending notes from the command line.
 .El
 .Sh SEE ALSO
 .Xr snac 5 ,

@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_hex.h"
@@ -14,6 +14,7 @@
 #include "xs_unicode.h"
 #include "xs_random.h"
 #include "xs_po.h"
+#include "xs_http.h"
 
 #include "snac.h"
 
@@ -88,8 +89,15 @@ int srv_open(const char *basedir, int auto_upgrade)
                 else {
                     if (xs_number_get(xs_dict_get(srv_config, "layout")) < disk_layout)
                         error = xs_fmt("ERROR: disk layout changed - execute 'snac upgrade' first");
-                    else
-                        ret = 1;
+                    else {
+                        if (!check_strip_tool()) {
+                            const char *mp = xs_dict_get(srv_config, "mogrify_path");
+                            if (mp == NULL) mp = "mogrify";
+                            error = xs_fmt("ERROR: strip_exif enabled but '%s' not found or not working (set 'mogrify_path' in server.json)", mp);
+                        }
+                        else
+                            ret = 1;
+                    }
                 }
             }
 
@@ -111,6 +119,9 @@ int srv_open(const char *basedir, int auto_upgrade)
 
     xs *tmpdir = xs_fmt("%s/tmp", srv_basedir);
     mkdirx(tmpdir);
+
+    xs *faildir = xs_fmt("%s/failure", srv_basedir);
+    mkdirx(faildir);
 
 #ifdef __APPLE__
 /* Apple uses st_atimespec instead of st_atim etc */
@@ -333,6 +344,7 @@ int user_open_by_md5(snac *snac, const char *md5)
     return 0;
 }
 
+
 int user_persist(snac *snac, int publish)
 /* store user */
 {
@@ -348,7 +360,7 @@ int user_persist(snac *snac, int publish)
 
             if (old != NULL) {
                 int nw = 0;
-                const char *fields[] = { "header", "avatar", "name", "bio",
+                const char *fields[] = { "header", "avatar", "name", "bio", "alias", "alias_raw",
                                          "metadata", "latitude", "longitude", NULL };
 
                 for (int n = 0; fields[n]; n++) {
@@ -1038,6 +1050,14 @@ xs_list *object_children(const char *id)
 }
 
 
+xs_list *object_get_emoji_reacts(const char *id)
+/* returns the list of an object's emoji reactions */
+{
+    xs *fn = _object_index_fn(id, "_e.idx");
+    return index_list(fn, XS_ALL);
+}
+
+
 xs_list *object_likes(const char *id)
 {
     xs *fn = _object_index_fn(id, "_l.idx");
@@ -1081,12 +1101,26 @@ int object_admire(const char *id, const char *actor, int like)
 
 
 int object_unadmire(const char *id, const char *actor, int like)
-/* actor no longer likes or announces this object */
+/* actor retrives their likes, announces or emojis this object */
 {
+    switch (like) {
+    case 0:
+        like = 'a';
+        break;
+    case 1:
+        like = 'l';
+        break;
+    case 2:
+        like = 'e';
+        break;
+    }
     int status;
     xs *fn = _object_fn(id);
 
-    fn = xs_replace_i(fn, ".json", like ? "_l.idx" : "_a.idx");
+    char sfx[7] = "_x.idx";
+    sfx[1] = like;
+
+    fn = xs_replace_i(fn, ".json", sfx);
 
     status = index_del(fn, actor);
 
@@ -1094,7 +1128,46 @@ int object_unadmire(const char *id, const char *actor, int like)
         index_gc(fn);
 
     srv_debug(0,
-        xs_fmt("object_unadmire (%s) %s %s %d", like ? "Like" : "Announce", actor, fn, status));
+        xs_fmt("object_unadmire (%s) %s %s %d", like >= 'e' ?
+            (like == 'l' ? "Like" : "EmojiReact") : "Announce" , actor, fn, status));
+
+    return status;
+}
+
+int object_emoji_react(const char *mid, const char *eid)
+/* actor reacts w/ an emoji */
+{
+    int status = HTTP_STATUS_OK;
+    xs *fn     = _object_fn(mid);
+
+    fn = xs_replace_i(fn, ".json", "_e.idx");
+
+    if (!index_in(fn, eid)) {
+        status = index_add(fn, eid);
+
+        srv_debug(1, xs_fmt("object_emoji_react (%s) added %s to %s", "EmojiReact", eid, fn));
+    }
+
+    return status;
+}
+
+
+int object_rm_emoji_react(const char *mid, const char *eid)
+/* actor retrives their emoji reaction */
+{
+    int status;
+    xs *fn = _object_fn(mid);
+
+    fn = xs_replace_i(fn, ".json", "_e.idx");
+
+    status = index_del(fn, eid);
+    object_del(eid);
+
+    if (valid_status(status))
+        index_gc(fn);
+
+    srv_debug(0,
+        xs_fmt("object_unadmire (EmojiReact) %s %s %d", eid, fn, status));
 
     return status;
 }
@@ -1353,6 +1426,20 @@ int pending_count(snac *user)
 }
 
 
+int is_msg_mine(snac *user, const char *id)
+/* returns true if a post id is by the given user */
+{
+    int ret = 0;
+
+    if (xs_is_string(id)) {
+        xs *s1 = xs_fmt("%s/", user->actor);
+        ret = xs_startswith(id, s1);
+    }
+
+    return ret;
+}
+
+
 /** timeline **/
 
 double timeline_mtime(snac *snac)
@@ -1448,20 +1535,24 @@ void timeline_update_indexes(snac *snac, const char *id)
 {
     object_user_cache_add(snac, id, "private");
 
-    if (xs_startswith(id, snac->actor)) {
+    if (is_msg_mine(snac, id)) {
         xs *msg = NULL;
 
         if (valid_status(object_get(id, &msg))) {
+            const int scope = get_msg_visibility(msg);
             /* if its ours and is public, also store in public */
-            if (is_msg_public(msg)) {
+            if (scope == SCOPE_PUBLIC) {
                 if (object_user_cache_add(snac, id, "public") >= 0) {
                     /* also add it to the instance public timeline */
                     xs *ipt = xs_fmt("%s/public.idx", srv_basedir);
                     index_add(ipt, id);
                 }
                 else
-                    srv_debug(1, xs_fmt("Not added to public instance index %s", id));
+                    srv_debug(1, xs_fmt("Not added to public instance index %s, visibility %d", id, scope));
             }
+            else
+                /* also add it to public, it will be discarded later */
+                object_user_cache_add(snac, id, "public");
         }
     }
 }
@@ -1483,19 +1574,48 @@ int timeline_add(snac *snac, const char *id, const xs_dict *o_msg)
 }
 
 
-int timeline_admire(snac *snac, const char *id, const char *admirer, int like)
-/* updates a timeline entry with a new admiration */
+int timeline_emoji_react(const char *act, const char *id, const xs_dict *msg_o)
+/* adds an emoji reaction to a message */
 {
+    xs *msg = xs_dup(msg_o);
+    msg = xs_dict_append(msg, "attributedTo", act);
+    msg = xs_dict_set(msg, "type", "EmojiReact");
+    const char *emote_id = xs_dict_get(msg, "id");
+
+    int ret = object_add(emote_id, msg);
+    if (ret == HTTP_STATUS_OK || ret == HTTP_STATUS_CREATED)
+        ret = object_emoji_react(id, emote_id);
+
+    return ret;
+}
+
+
+int timeline_admire(snac *snac, const char *id,
+                    const char *admirer, int like, const xs_dict *msg)
+/* updates a timeline entry with a new admiration or emoji reaction */
+{
+    int ret;
+    const char *content = xs_dict_get_path(msg, "content");
+    const char *type = xs_dict_get_path(msg, "type");
+
     /* if we are admiring this, add to both timelines */
     if (!like && strcmp(admirer, snac->actor) == 0) {
         object_user_cache_add(snac, id, "public");
         object_user_cache_add(snac, id, "private");
     }
 
-    int ret = object_admire(id, admirer, like);
+    /* use utf <3 as a like, as it is ugly */
+    if (type && xs_match(type, "Like|EmojiReact|Emoji") &&
+            content && strcmp(content, "❤") != 0) {
+        ret = timeline_emoji_react(snac->actor, id, msg);
+        snac_debug(snac, 1, xs_fmt("timeline_emoji_react %s", id));
+    }
 
-    snac_debug(snac, 1, xs_fmt("timeline_admire (%s) %s %s",
-            like ? "Like" : "Announce", id, admirer));
+    else {
+        ret = object_admire(id, admirer, like);
+        snac_debug(snac, 1, xs_fmt("timeline_admire (%s) %s %s",
+                like ? "Like" : "Announce", id, admirer));
+    }
 
     return ret;
 }
@@ -1844,6 +1964,25 @@ xs_list *muted_list(snac *user)
     return l;
 }
 
+/** emojis react **/
+
+xs_str *emoji_reacted(snac *user, const char *id)
+/* returns the emoji an user reacted to a message */
+{
+    xs *emojis = object_get_emoji_reacts(id);
+    int c = 0;
+    const char *v;
+
+    while (xs_list_next(emojis, &v, &c)) {
+        xs *msg = NULL;
+        if (object_get_by_md5(v, &msg)) {
+            const xs_val *act = xs_dict_get(msg, "actor");
+            if (act && strcmp(act, user->actor) == 0)
+                return xs_dup(xs_dict_get(msg, "content"));
+        }
+    }
+    return NULL;
+}
 
 /** bookmarking **/
 
@@ -1904,7 +2043,7 @@ int pin(snac *user, const char *id)
 {
     int ret = -2;
 
-    if (xs_startswith(id, user->actor)) {
+    if (is_msg_mine(user, id)) {
         if (is_pinned(user, id))
             ret = -3;
         else
@@ -2040,7 +2179,7 @@ xs_str *_hidden_fn(snac *snac, const char *id)
 
 
 void hide(snac *snac, const char *id)
-/* hides a message tree */
+/* hides an object and its children (if it's a post) */
 {
     xs *fn = _hidden_fn(snac, id);
     FILE *f;
@@ -2077,6 +2216,14 @@ int is_hidden(snac *snac, const char *id)
     xs *fn = _hidden_fn(snac, id);
 
     return !!(mtime(fn) != 0.0);
+}
+
+
+int unhide(snac *user, const char *id)
+/* unhides an object */
+{
+    xs *fn = _hidden_fn(user, id);
+    return unlink(fn);
 }
 
 
@@ -2207,7 +2354,10 @@ void tag_index(const char *id, const xs_dict *obj)
     const xs_list *tags = xs_dict_get(obj, "tag");
     xs *md5_id = xs_md5_hex(id, strlen(id));
 
-    if (is_msg_public(obj) && xs_type(tags) == XSTYPE_LIST && xs_list_len(tags) > 0) {
+    if (get_msg_visibility(obj) != SCOPE_PUBLIC)
+        return;
+
+    if (xs_type(tags) == XSTYPE_LIST && xs_list_len(tags) > 0) {
         xs *g_tag_dir = xs_fmt("%s/tag", srv_basedir);
 
         mkdirx(g_tag_dir);
@@ -2225,9 +2375,9 @@ void tag_index(const char *id, const xs_dict *obj)
                 if (*name == '\0')
                     continue;
 
-                name = xs_utf8_to_lower((xs_str *)name);
+                xs* name_cased = xs_utf8_to_lower((xs_str *)name);
 
-                xs *md5_tag   = xs_md5_hex(name, strlen(name));
+                xs *md5_tag   = xs_md5_hex(name_cased, strlen(name_cased));
                 xs *tag_dir   = xs_fmt("%s/%c%c", g_tag_dir, md5_tag[0], md5_tag[1]);
                 mkdirx(tag_dir);
 
@@ -2239,7 +2389,7 @@ void tag_index(const char *id, const xs_dict *obj)
                 FILE *f;
                 xs *g_tag_name = xs_replace(g_tag_idx, ".idx", ".tag");
                 if ((f = fopen(g_tag_name, "w")) != NULL) {
-                    fprintf(f, "%s\n", name);
+                    fprintf(f, "%s\n", name_cased);
                     fclose(f);
                 }
 
@@ -2420,8 +2570,8 @@ xs_list *list_timeline(snac *user, const char *list, int skip, int show)
 }
 
 
-xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op)
-/* list content management */
+xs_val *list_members(snac *user, const char *list, const char *actor_md5, int op)
+/* list member management */
 {
     xs_val *l = NULL;
 
@@ -2434,7 +2584,7 @@ xs_val *list_content(snac *user, const char *list, const char *actor_md5, int op
     xs *fn = xs_fmt("%s/list/%s.lst", user->basedir, list);
 
     switch (op) {
-    case 0: /** list content **/
+    case 0: /** list members **/
         l = index_list(fn, XS_ALL);
 
         break;
@@ -2567,6 +2717,8 @@ void static_put(snac *snac, const char *id, const char *data, int size)
     if (fn && (f = fopen(fn, "wb")) != NULL) {
         fwrite(data, size, 1, f);
         fclose(f);
+
+        strip_media(fn);
     }
 }
 
@@ -2975,11 +3127,14 @@ xs_list *content_search(snac *user, const char *regex,
         xs *c = xs_str_new(NULL);
         const char *content = xs_dict_get(post, "content");
         const char *name    = xs_dict_get(post, "name");
+        const char *atto    = get_atto(post);
 
         if (!xs_is_null(content))
             c = xs_str_cat(c, content);
         if (!xs_is_null(name))
             c = xs_str_cat(c, " ", name);
+        if (!xs_is_null(atto))
+            c = xs_str_cat(c, " ", atto);
 
         /* add alt-texts from attachments */
         const xs_list *atts = xs_dict_get(post, "attachment");
@@ -3021,6 +3176,125 @@ xs_list *content_search(snac *user, const char *regex,
     xs_free(tls[2]);
 
     return r;
+}
+
+
+int actor_failure(const char *actor, int op)
+/* actor failure maintenance */
+{
+    int ret = 0;
+
+    xs *md5 = xs_md5_hex(actor, strlen(actor));
+    xs *fn = xs_fmt("%s/failure/%s", srv_basedir, md5);
+
+    switch (op) {
+    case 0: /** check **/
+        if (mtime(fn))
+            ret = -1;
+
+        break;
+
+    case 1: /** register a failure **/
+        if (mtime(fn) == 0.0) {
+            FILE *f;
+
+            /* only create once, as the date will be used */
+            if ((f = fopen(fn, "w")) != NULL) {
+                fprintf(f, "%s\n", actor);
+                fclose(f);
+            }
+        }
+
+        break;
+
+    case 2: /** clear a failure **/
+        /* called whenever a message comes from this instance */
+        unlink(fn);
+
+        break;
+    }
+
+    return ret;
+}
+
+
+int instance_failure(const char *url, int op)
+/* do some checks and accounting on instance failures */
+{
+    int ret = 0;
+    xs *l = xs_split(url, "/");
+    const char *hostname = xs_list_get(l, 2);
+    double mt;
+
+    if (!xs_is_string(hostname))
+        return 0;
+
+    xs *md5 = xs_md5_hex(hostname, strlen(hostname));
+    xs *fn = xs_fmt("%s/failure/%s", srv_basedir, md5);
+
+    switch (op) {
+    case 0: /** check **/
+        if ((mt = mtime(fn)) != 0.0) {
+            /* grace time */
+            double seconds_failing = xs_number_get(xs_dict_get_def(srv_config, "max_failing_days", "15"))
+                * (24 * 60 * 60);
+
+            if ((double)time(NULL) - mt > seconds_failing)
+                ret = -1;
+        }
+
+        break;
+
+    case 1: /** register a failure **/
+        if (mtime(fn) == 0.0) {
+            FILE *f;
+
+            /* only create once, as the date will be used */
+            if ((f = fopen(fn, "w")) != NULL) {
+                fprintf(f, "%s\n", hostname);
+                fclose(f);
+            }
+        }
+
+        break;
+
+    case 2: /** clear a failure **/
+        /* called whenever a message comes from this instance */
+        unlink(fn);
+
+        break;
+    }
+
+    return ret;
+}
+
+
+int grave(const char *objid, int op)
+/* the graveyeard of deleted objects */
+{
+    int ret = 0;
+    xs *dir = xs_fmt("%s/grave", srv_basedir);
+    xs *md5 = xs_md5_hex(objid, strlen(objid));
+    xs *fn  = xs_fmt("%s/%s", dir, md5);
+    FILE *f;
+
+    switch (op) {
+    case 0: /** check **/
+        ret = mtime(fn) > 0.0 ? 1 : 0;
+        break;
+
+    case 1: /** add **/
+        mkdirx(dir);
+
+        if ((f = fopen(fn, "w")) != NULL) {
+            fprintf(f, "%s\n", objid);
+            fclose(f);
+        }
+
+        break;
+    }
+
+    return ret;
 }
 
 
@@ -3371,7 +3645,7 @@ void enqueue_output(snac *snac, const xs_dict *msg,
                     const xs_str *inbox, int retries, int p_status)
 /* enqueues an output message to an inbox */
 {
-    if (xs_startswith(inbox, snac->actor)) {
+    if (is_msg_mine(snac, inbox)) {
         snac_debug(snac, 1, xs_str_new("refusing enqueue to myself"));
         return;
     }
@@ -3543,6 +3817,16 @@ void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries)
         if (valid_status(object_get(xs_dict_get(noti, "actor"), &actor_obj)) && actor_obj)
             msg = xs_dict_set(msg, "account", actor_obj);
 
+        /* if this post is a reply, also add the inReplyTo object */
+        const char *in_reply_to = xs_dict_get_path(msg, "msg.object.inReplyTo");
+
+        if (xs_is_string(in_reply_to)) {
+            xs *irt_obj = NULL;
+
+            if (valid_status(object_get(in_reply_to, &irt_obj)))
+                msg = xs_dict_set(msg, "reply", irt_obj);
+        }
+
         xs *qmsg = _new_qmsg("notify_webhook", msg, retries);
         const char *ntid = xs_dict_get(qmsg, "ntid");
         xs *fn   = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
@@ -3551,6 +3835,43 @@ void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries)
 
         snac_debug(user, 1, xs_fmt("notify_webhook"));
     }
+}
+
+
+void enqueue_collect_replies(snac *user, const char *post)
+/* enqueues a collect replies request */
+{
+    xs *qmsg = _new_qmsg("collect_replies", post, 0);
+    const char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    snac_debug(user, 1, xs_fmt("enqueue_collect_replies %s", post));
+}
+
+
+void enqueue_collect_outbox(snac *user, const char *actor_id)
+/* enqueues a collect outbox request */
+{
+    xs *qmsg = _new_qmsg("collect_outbox", actor_id, 0);
+    const char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn = xs_fmt("%s/queue/%s.json", user->basedir, ntid);
+
+    qmsg = _enqueue_put(fn, qmsg);
+
+    snac_debug(user, 1, xs_fmt("enqueue_collect_outbox %s", actor_id));
+}
+
+
+void enqueue_fsck(void)
+/* enqueues an fsck */
+{
+    xs *qmsg   = _new_qmsg("fsck", "", 0);
+    const char *ntid = xs_dict_get(qmsg, "ntid");
+    xs *fn     = xs_fmt("%s/queue/%s.json", srv_basedir, ntid);
+
+    qmsg = _enqueue_put(fn, qmsg);
 }
 
 
@@ -3829,6 +4150,43 @@ void purge_server(void)
 }
 
 
+void delete_purged_posts(snac *user, int days)
+/* enqueues Delete activities for local purged messages */
+{
+    if (days == 0)
+        return;
+
+    time_t mt = time(NULL) - days * 24 * 3600;
+    xs *spec  = xs_fmt("%s/public/" "*.json", user->basedir);
+    xs *list  = xs_glob(spec, 0, 0);
+    const char *v;
+
+    xs_list_foreach(list, v) {
+        if (mtime(v) < mt) {
+            /* to be purged; is it a Note by us? */
+            FILE *f;
+
+            if ((f = fopen(v, "r")) != NULL) {
+                xs *msg = xs_json_load(f);
+                fclose(f);
+
+                if (xs_is_dict(msg)) {
+                    const char *id = xs_dict_get(msg, "id");
+
+                    if (xs_is_string(id) && is_msg_mine(user, id)) {
+                        xs *d_msg = msg_delete(user, id);
+
+                        enqueue_message(user, d_msg);
+
+                        snac_log(user, xs_fmt("enqueued Delete for purged message %s", id));
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 void purge_user(snac *snac)
 /* do the purge for this user */
 {
@@ -3851,6 +4209,9 @@ void purge_user(snac *snac)
         if (pub_days == 0 || user_days < pub_days)
             pub_days = user_days;
     }
+
+    if (xs_is_true(xs_dict_get(srv_config, "propagate_local_purge")))
+        delete_purged_posts(snac, pub_days);
 
     _purge_user_subdir(snac, "hidden",  priv_days);
     _purge_user_subdir(snac, "private", priv_days);
@@ -4270,4 +4631,62 @@ const char *lang_str(const char *str, const snac *user)
     }
 
     return n_str;
+}
+
+
+/** integrity checks **/
+
+void data_fsck(void)
+{
+    xs *list = user_list();
+    const char *uid;
+
+    xs_list_foreach(list, uid) {
+        snac user;
+
+        if (!user_open(&user, uid))
+            continue;
+
+        {
+            /* iterate all private posts and check that non-public posts
+               from this user are also linked into the public directory,
+               to avoid the don't-fucking-delete-my-own-private-posts purge bug */
+
+            xs *priv_spec = xs_fmt("%s/private/""*.json", user.basedir);
+            xs *posts = xs_glob(priv_spec, 0, 0);
+            const char *priv_fn;
+
+            xs_list_foreach(posts, priv_fn) {
+                xs *pub_fn = xs_replace(priv_fn, "/private/", "/public/");
+
+                /* already there? look no more */
+                if (mtime(pub_fn))
+                    continue;
+
+                /* read the post */
+                FILE *f;
+                if ((f = fopen(priv_fn, "r")) == NULL)
+                    continue;
+
+                xs *post = xs_json_load(f);
+                fclose(f);
+
+                if (!xs_is_dict(post))
+                    continue;
+
+                const char *attr_to = get_atto(post);
+
+                if (!xs_is_string(attr_to) || strcmp(attr_to, user.actor) != 0) {
+                    /* not from this user */
+                    continue;
+                }
+
+                /* link */
+                snac_debug(&user, 1, xs_fmt("fsck: fixed missing link %s", xs_dict_get(post, "id")));
+                link(priv_fn, pub_fn);
+            }
+        }
+
+        user_free(&user);
+    }
 }

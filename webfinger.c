@@ -1,10 +1,11 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_json.h"
 #include "xs_curl.h"
 #include "xs_mime.h"
+#include "xs_http.h"
 
 #include "snac.h"
 
@@ -75,9 +76,9 @@ int webfinger_request_signed(snac *snac, const char *qs, xs_str **actor, xs_str 
         xs *url = xs_fmt("%s:/" "/%s/.well-known/webfinger?resource=%s", proto, host, resource);
 
         if (snac == NULL)
-            xs_http_request("GET", url, headers, NULL, 0, &status, &payload, &p_size, 0);
+            xs_free(xs_http_request("GET", url, headers, NULL, 0, &status, &payload, &p_size, 0));
         else
-            http_signed_request(snac, "GET", url, headers, NULL, 0, &status, &payload, &p_size, 0);
+            xs_free(http_signed_request(snac, "GET", url, headers, NULL, 0, &status, &payload, &p_size, 0));
     }
 
     if (obj == NULL && valid_status(status) && payload) {
@@ -93,7 +94,7 @@ int webfinger_request_signed(snac *snac, const char *qs, xs_str **actor, xs_str 
         if (user != NULL) {
             const char *subject = xs_dict_get(obj, "subject");
 
-            if (subject)
+            if (subject && xs_startswith(subject, "acct:"))
                 *user = xs_replace_n(subject, "acct:", "", 1);
         }
 
@@ -152,7 +153,7 @@ int webfinger_request_fake(const char *qs, xs_str **actor, xs_str **user)
 }
 
 
-int webfinger_get_handler(xs_dict *req, const char *q_path,
+int webfinger_get_handler(const xs_dict *req, const char *q_path,
                            xs_val **body, int *b_size, char **ctype)
 /* serves webfinger queries */
 {

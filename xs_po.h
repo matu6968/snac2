@@ -1,4 +1,4 @@
-/* copyright (c) 2025 grunfink et al. / MIT license */
+/* copyright (c) 2025 - 2026 grunfink et al. / MIT license */
 
 #ifndef _XS_PO_H
 

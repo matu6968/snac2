@@ -1,11 +1,12 @@
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #ifndef _XS_HTTPD_H
 
 #define _XS_HTTPD_H
 
 xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size);
-void xs_httpd_response(FILE *f, int status, const char *status_text, xs_dict *headers, xs_str *body, int b_size);
+void xs_httpd_response(FILE *f, int status, const char *status_text,
+                        const xs_dict *headers, const xs_val *body, int b_size);
 
 
 #ifdef XS_IMPLEMENTATION
@@ -86,6 +87,34 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
         *p_size  = atoi(v);
         *payload = xs_read(f, p_size);
     }
+    else if ((v = xs_dict_get(req, "transfer-encoding")) != NULL &&
+             xs_startswith(v, "chunked")) {
+        /* handle chunked transfer encoding */
+        xs_str *body = xs_str_new(NULL);
+
+        for (;;) {
+            xs *line = xs_strip_i(xs_readline(f));
+
+            /* parse chunk size (in hex) */
+            int chunk_size = strtol(line, NULL, 16);
+
+            if (chunk_size <= 0)
+                break;
+
+            /* read chunk data */
+            xs *chunk = xs_read(f, &chunk_size);
+            if (chunk == NULL)
+                break;
+
+            body = xs_append_m(body, chunk, chunk_size);
+
+            /* read trailing \r\n after chunk data */
+            xs *dummy = xs_readline(f);
+        }
+
+        *p_size = xs_size(body) - 1; /* subtract trailing null */
+        *payload = body;
+    }
 
     v = xs_dict_get(req, "content-type");
 
@@ -109,15 +138,14 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
 }
 
 
-void xs_httpd_response(FILE *f, int status, const char *status_text, xs_dict *headers, xs_str *body, int b_size)
+void xs_httpd_response(FILE *f, int status, const char *status_text,
+                        const xs_dict *headers, const xs_val *body, int b_size)
 /* sends an httpd response */
 {
-    xs *proto;
+    fprintf(f, "HTTP/1.1 %d %s\r\n", status, status_text ? status_text : "");
+
     const xs_str *k;
     const xs_val *v;
-
-    proto = xs_fmt("HTTP/1.1 %d %s", status, status_text);
-    fprintf(f, "%s\r\n", proto);
 
     xs_dict_foreach(headers, k, v) {
         fprintf(f, "%s: %s\r\n", k, v);

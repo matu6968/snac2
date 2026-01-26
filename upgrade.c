@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_io.h"
@@ -213,7 +213,7 @@ int snac_upgrade(xs_str **error)
                             object_add_ow(id, o);
 
                             /* if it's from us, add to public */
-                            if (xs_startswith(id, snac.actor)) {
+                            if (is_msg_mine(&snac, id)) {
                                 const xs_list *p;
                                 const char *v;
                                 int c;

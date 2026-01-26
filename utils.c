@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_io.h"
@@ -10,13 +10,16 @@
 #include "xs_glob.h"
 #include "xs_curl.h"
 #include "xs_regex.h"
+#include "xs_http.h"
+#include "xs_list_tools.h"
+#include "xs_set.h"
 
 #include "snac.h"
 
 #include <sys/stat.h>
 #include <stdlib.h>
 
-static const char *default_srv_config = "{"
+static const char * const default_srv_config = "{"
     "\"host\":                 \"\","
     "\"prefix\":               \"\","
     "\"address\":              \"127.0.0.1\","
@@ -42,9 +45,10 @@ static const char *default_srv_config = "{"
     "\"fastcgi\":              false"
     "}";
 
-static const char *default_css =
+static const char * const default_css =
     "body { max-width: 48em; margin: auto; line-height: 1.5; padding: 0.8em; word-wrap: break-word; }\n"
     "pre { overflow-x: scroll; }\n"
+    "blockquote { font-style: italic; }\n"
     ".snac-embedded-video, img { max-width: 100% }\n"
     ".snac-origin { font-size: 85% }\n"
     ".snac-score { float: right; font-size: 85% }\n"
@@ -76,11 +80,15 @@ static const char *default_css =
     ".snac-list-of-lists li { display: inline; border: 1px solid #a0a0a0; border-radius: 25px;\n"
     "  margin-right: 0.5em; padding-left: 0.5em; padding-right: 0.5em; }\n"
     ".snac-no-more-unseen-posts { border-top: 1px solid #a0a0a0; border-bottom: 1px solid #a0a0a0; padding: 0.5em 0; margin: 1em 0; }\n"
+    ".snac-reaction { padding:5px; padding-left: 10px; padding-right: 10px; display: inline-flex; margin-right: 5px; font-family: inherit; font-size: medium; height: 2.5rem; vertical-align:middle; align-items:center;}\n"
+    ".snac-reaction-image { max-width: 100%; max-height: 100%; }\n"
+    ".snac-reaction-div { border-left: darkgray; border-left-style: solid; margin-bottom: .3em; padding-left: .3em; border-left-width: 2px; }\n"
     "@media (prefers-color-scheme: dark) { \n"
     "  body, input, textarea { background-color: #000; color: #fff; }\n"
     "  a { color: #7799dd }\n"
     "  a:visited { color: #aa99dd }\n"
     "}\n"
+    "select { max-width: 40%; }\n"
 ;
 
 const char *snac_blurb =
@@ -96,7 +104,7 @@ const char *snac_blurb =
     "automatic sign-up process.</p>\n"
 ;
 
-static const char *greeting_html =
+static const char * const greeting_html =
     "<!DOCTYPE html>\n"
     "<html><head>\n"
     "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n"
@@ -228,6 +236,9 @@ int snac_init(const char *basedir)
     xs *ibdir = xs_fmt("%s/inbox", srv_basedir);
     mkdirx(ibdir);
 
+    xs *langdir = xs_fmt("%s/lang", srv_basedir);
+    mkdirx(langdir);
+
     xs *gfn = xs_fmt("%s/greeting.html", srv_basedir);
     if ((f = fopen(gfn, "w")) == NULL) {
         printf("ERROR: cannot create '%s'\n", gfn);
@@ -252,7 +263,10 @@ int snac_init(const char *basedir)
     xs_json_dump(srv_config, 4, f);
     fclose(f);
 
-    printf("Done.\n");
+    printf("Done.\n\n");
+
+    printf("Wanted web UI language files (.po) must be copied manually to %s\n", langdir);
+
     return 0;
 }
 
@@ -446,6 +460,8 @@ int deluser(snac *user)
         }
     }
 
+    grave(user->uid, 1);
+
     rm_rf(user->basedir);
 
     return ret;
@@ -488,6 +504,26 @@ void verify_links(snac *user)
 
     int c = 0;
     while (metadata && xs_dict_next(metadata, &k, &v, &c)) {
+        xs *wfinger = NULL;
+        const char *ov = NULL;
+
+        /* is it an account handle? */
+        if (*v == '@' && strchr(v + 1, '@')) {
+            /* resolve it via webfinger */
+            if (valid_status(webfinger_request(v, &wfinger, NULL)) && xs_is_string(wfinger)) {
+                ov = v;
+                v = wfinger;
+
+                /* store the alias */
+                if (user->links == NULL)
+                    user->links = xs_dict_new();
+
+                user->links = xs_dict_set(user->links, ov, v);
+
+                changed++;
+            }
+        }
+
         /* not an https link? skip */
         if (!xs_startswith(v, "https:/" "/"))
             continue;
@@ -660,7 +696,7 @@ void export_csv(snac *user)
             const char *lid = xs_list_get(li, 0);
             const char *ltitle = xs_list_get(li, 1);
 
-            xs *actors = list_content(user, lid, NULL, 0);
+            xs *actors = list_members(user, lid, NULL, 0);
             const char *md5;
 
             xs_list_foreach(actors, md5) {
@@ -702,6 +738,61 @@ void export_csv(snac *user)
     }
     else
         snac_log(user, xs_fmt("Cannot create file %s", fn));
+}
+
+
+void export_posts(snac *user)
+/* exports all posts to an OrderedCollection */
+{
+    xs *ifn = xs_fmt("%s/public.idx", user->basedir);
+    xs *index = index_list(ifn, XS_ALL);
+    xs *ofn = xs_fmt("%s/export/outbox.json", user->basedir);
+    FILE *f;
+
+    if ((f = fopen(ofn, "w")) == NULL) {
+        snac_log(user, xs_fmt("Cannot create file %s", ofn));
+        return;
+    }
+
+    int cnt = 0;
+
+    /* raw output */
+    fprintf(f, "{\"@context\": \"https:/" "/www.w3.org/ns/activitystreams\",");
+    fprintf(f, "\"id\": \"outbox.json\",");
+    fprintf(f, "\"type\": \"OrderedCollection\",");
+    fprintf(f, "\"orderedItems\": [");
+
+    const char *md5;
+
+    snac_log(user, xs_fmt("Creating %s...", ofn));
+
+    xs_list_foreach(index, md5) {
+        xs *obj = NULL;
+
+        if (!valid_status(object_get_by_md5(md5, &obj)))
+            continue;
+
+        const char *type = xs_dict_get(obj, "type");
+
+        if (!xs_is_string(type) || strcmp(type, "Note"))
+            continue;
+
+        const char *atto = get_atto(obj);
+
+        if (!xs_is_string(atto) || strcmp(atto, user->actor))
+            continue;
+
+        if (cnt)
+            fprintf(f, ",");
+
+        xs *c_msg = msg_create(user, obj);
+        xs_json_dump(c_msg, 0, f);
+        cnt++;
+    }
+
+    fprintf(f, "], \"totalItems\": %d}", cnt);
+
+    fclose(f);
 }
 
 
@@ -831,7 +922,7 @@ void import_list_csv(snac *user, const char *ifn)
                     if (valid_status(webfinger_request(acct, &url, &uid))) {
                         xs *actor_md5 = xs_md5_hex(url, strlen(url));
 
-                        list_content(user, list_id, actor_md5, 1);
+                        list_members(user, list_id, actor_md5, 1);
                         snac_log(user, xs_fmt("Added %s to list %s", url, lname));
 
                         if (!following_check(user, url)) {
@@ -913,6 +1004,76 @@ void import_csv(snac *user)
     else
         snac_log(user, xs_fmt("Cannot open file %s", fn));
 }
+
+
+static int top_ten_sort(const void *v1, const void *v2)
+{
+    const xs_list *l1 = *(const xs_list **)v1;
+    const xs_list *l2 = *(const xs_list **)v2;
+
+    const char *c1 = xs_list_get(l1, 3);
+    const char *c2 = xs_list_get(l2, 3);
+
+    return xs_cmp(c2, c1);
+}
+
+
+xs_list *user_top_ten(snac *user, int count)
+/* returns the top ten more popular posts by a user */
+{
+    xs *idx  = xs_fmt("%s/private.idx", user->basedir);
+    xs *list = index_list(idx, XS_ALL);
+    xs *u_list = xs_list_new();
+    xs_set u;
+
+    xs_set_init(&u);
+
+    const char *md5;
+
+    xs_list_foreach(list, md5) {
+        xs *obj = NULL;
+
+        if (!valid_status(object_get_by_md5(md5, &obj)))
+            continue;
+
+        const char *id = xs_dict_get_def(obj, "id", "-");
+
+        if (!is_msg_mine(user, id))
+            continue;
+
+        if (xs_set_add(&u, id) != 1)
+            continue;
+
+        /* get metrics */
+        int ls = object_likes_len(id);
+        int as = object_announces_len(id);
+
+        /* build the entry and convert to list */
+        xs *s = xs_fmt("%s\t%d\t%d\t%010d", id, ls, as, ls + as);
+        xs *l = xs_split(s, "\t");
+
+        u_list = xs_list_append(u_list, l);
+    }
+
+    /* sort by the sum of likes and boosts */
+    xs *s_list = xs_list_sort(u_list, top_ten_sort);
+
+    xs_list *r = xs_list_new();
+    const xs_list *i;
+
+    xs_list_foreach(s_list, i) {
+        r = xs_list_append(r, i);
+
+        if (--count <= 0)
+            break;
+    }
+
+    xs_set_free(&u);
+
+    return r;
+}
+
+
 
 static const struct {
     const char *proto;

@@ -1,4 +1,4 @@
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #ifndef _XS_CURL_H
 
@@ -54,10 +54,10 @@ struct _payload_data {
     int offset;
 };
 
-static int _data_callback(void *buffer, size_t size,
+static size_t _data_callback(void *buffer, size_t size,
                           size_t nitems, struct _payload_data *pd)
 {
-    int sz = size * nitems;
+    size_t sz = size * nitems;
 
     /* open space */
     pd->size += sz;
@@ -71,14 +71,14 @@ static int _data_callback(void *buffer, size_t size,
 }
 
 
-static int _post_callback(char *buffer, size_t size,
+static size_t _post_callback(char *buffer, size_t size,
                           size_t nitems, struct _payload_data *pd)
 {
     /* size of data left */
-    int sz = pd->size - pd->offset;
+    size_t sz = pd->size - pd->offset;
 
     /* if it's still bigger than the provided space, trim */
-    if (sz > (int) (size * nitems))
+    if (sz > (size_t) (size * nitems))
         sz = size * nitems;
 
     memcpy(buffer, pd->data + pd->offset, sz);
@@ -125,11 +125,11 @@ xs_dict *xs_http_request(const char *method, const char *url,
 
     /* store response headers here */
     curl_easy_setopt(curl, CURLOPT_HEADERDATA,     &response);
-    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, _header_callback);
+    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, (curl_read_callback) _header_callback);
 
     struct _payload_data ipd = { NULL, 0, 0 };
     curl_easy_setopt(curl, CURLOPT_WRITEDATA,      &ipd);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,  _data_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, (curl_read_callback) _data_callback);
 
     if (strcmp(method, "POST") == 0 || strcmp(method, "PUT") == 0) {
         CURLoption curl_method = method[1] == 'O' ? CURLOPT_POST : CURLOPT_UPLOAD;
@@ -147,7 +147,7 @@ xs_dict *xs_http_request(const char *method, const char *url,
             pd.offset = 0;
 
             curl_easy_setopt(curl, CURLOPT_READDATA,     &pd);
-            curl_easy_setopt(curl, CURLOPT_READFUNCTION, _post_callback);
+            curl_easy_setopt(curl, CURLOPT_READFUNCTION, (curl_read_callback) _post_callback);
         }
     }
 
@@ -232,7 +232,7 @@ int xs_smtp_request(const char *url, const char *user, const char *pass,
     curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, rcpt);
 
     curl_easy_setopt(curl, CURLOPT_READDATA, &pd);
-    curl_easy_setopt(curl, CURLOPT_READFUNCTION, _post_callback);
+    curl_easy_setopt(curl, CURLOPT_READFUNCTION, (curl_read_callback) _post_callback);
     curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 
     res = curl_easy_perform(curl);

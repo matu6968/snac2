@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2025 grunfink et al. / MIT license */
+/* copyright (c) 2025 - 2026 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_html.h"
@@ -9,6 +9,8 @@
 #include "xs_curl.h"
 #include "xs_openssl.h"
 #include "xs_json.h"
+#include "xs_http.h"
+#include "xs_unicode.h"
 
 #include "snac.h"
 
@@ -58,10 +60,13 @@ xs_str *rss_from_timeline(snac *user, const xs_list *timeline,
         const char *content = xs_dict_get(msg, "content");
         const char *published = xs_dict_get(msg, "published");
 
-        if (user && !xs_startswith(id, user->actor))
+        if (user && !is_msg_mine(user, id))
             continue;
 
         if (!id || !content || !published)
+            continue;
+
+        if (!is_msg_public(msg))
             continue;
 
         /* create a title with the first line of the content */
@@ -70,7 +75,14 @@ xs_str *rss_from_timeline(snac *user, const xs_list *timeline,
         title = xs_regex_replace_i(title, "&[^;]+;", " ");
         int i;
 
-        for (i = 0; title[i] && title[i] != '\n' && i < 50; i++);
+        for (i = 0; title[i] && title[i] != '\n' && i < 50; ) {
+            const char *p = &title[i];
+            unsigned int cp = xs_utf8_dec(&p);
+            int n = p - title;
+            if (cp == 0xfffd || n > 50)
+                break;
+            i = n;
+        }
 
         if (title[i] != '\0') {
             title[i] = '\0';

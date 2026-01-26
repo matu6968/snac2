@@ -1,4 +1,4 @@
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 /*
     This is an intentionally-dead-simple FastCGI implementation;
@@ -13,7 +13,7 @@
 #define _XS_FCGI_H
 
  xs_dict *xs_fcgi_request(FILE *f, xs_str **payload, int *p_size, int *id);
- void xs_fcgi_response(FILE *f, int status, xs_dict *headers, xs_str *body, int b_size, int id);
+ void xs_fcgi_response(FILE *f, int status, const xs_dict *headers, const xs_str *body, int b_size, int id);
 
 
 #ifdef XS_IMPLEMENTATION
@@ -290,7 +290,7 @@ end:
 }
 
 
-void xs_fcgi_response(FILE *f, int status, xs_dict *headers, xs_str *body, int b_size, int fcgi_id)
+void xs_fcgi_response(FILE *f, int status, const xs_dict *headers, const xs_str *body, int b_size, int fcgi_id)
 /* writes an FCGI response */
 {
     struct fcgi_record_header hdr = {0};

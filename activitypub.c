@@ -1,9 +1,10 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_json.h"
 #include "xs_curl.h"
+#include "xs_url.h"
 #include "xs_mime.h"
 #include "xs_openssl.h"
 #include "xs_regex.h"
@@ -12,30 +13,32 @@
 #include "xs_match.h"
 #include "xs_unicode.h"
 #include "xs_webmention.h"
+#include "xs_http.h"
 
 #include "snac.h"
 
+#include <stddef.h>
 #include <sys/wait.h>
 
-const char *public_address = "https:/" "/www.w3.org/ns/activitystreams#Public";
+const char * const public_address = "https:/" "/www.w3.org/ns/activitystreams#Public";
 
 /* susie.png */
 
-const char *susie =
+const char * const susie =
     "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQAAAAC"
     "CEkxzAAAAUUlEQVQoz43R0QkAMQwCUDdw/y3dwE"
     "vsvzlL4X1IoQkAisKmwfAFT3RgJHbQezpSRoXEq"
     "eqCL9BJBf7h3QbOCCxV5EVWMEMwG7K1/WODtlvx"
     "AYTtEsDU9F34AAAAAElFTkSuQmCC";
 
-const char *susie_cool =
+const char * const susie_cool =
     "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQAAAAC"
     "CEkxzAAAAV0lEQVQoz43RwQ3AMAwCQDZg/y3ZgN"
     "qo3+JaedwDOUQBQFHYaTB8wTM6sGl2cMPu+DFzn"
     "+ZcgN7wF7ZVihXkfSlWIVzIA6dbQzaygllpNuTX"
     "ZmmFNlvxADX1+o0cUPMbAAAAAElFTkSuQmCC";
 
-const char *susie_muertos =
+const char * const susie_muertos =
     "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAAQAAAAC"
     "CEkxzAAAAV0lEQVQoz4XQsQ0AMQxCUW/A/lv+DT"
     "ic6zGRolekIMyMELNp8PiCEw6Q4w4NoAt53IH5m"
@@ -117,6 +120,75 @@ int activitypub_request(snac *user, const char *url, xs_dict **data)
 }
 
 
+static xs_dict *actor_get_collections(snac *user, xs_dict *actor, int throttle)
+/* fetches follower/following/statuses counts from an actor's collections and adds them to the actor object */
+{
+    /* only fetch if counts are not already present in the actor object */
+    const xs_number *existing_followers = xs_dict_get(actor, "followers_count");
+    const xs_number *existing_following = xs_dict_get(actor, "following_count");
+    const xs_number *existing_statuses = xs_dict_get(actor, "statuses_count");
+
+    /* skip if we already have all counts */
+    if (xs_type(existing_followers) == XSTYPE_NUMBER &&
+        xs_type(existing_following) == XSTYPE_NUMBER &&
+        xs_type(existing_statuses) == XSTYPE_NUMBER) {
+        return actor;
+    }
+
+    /* CRITICAL: duplicate URLs BEFORE any xs_dict_set calls, as xs_dict_set can reallocate the dict */
+    xs *followers_url = xs_dup(xs_dict_get(actor, "followers"));
+    xs *following_url = xs_dup(xs_dict_get(actor, "following"));
+    xs *outbox_url = xs_dup(xs_dict_get(actor, "outbox"));
+
+    /* only fetch followers count if not already present */
+    if (xs_type(existing_followers) != XSTYPE_NUMBER && !xs_is_null(followers_url)) {
+        xs *followers_coll = NULL;
+        if (valid_status(activitypub_request(user, followers_url, &followers_coll))) {
+            const xs_number *total = xs_dict_get(followers_coll, "totalItems");
+            if (xs_type(total) == XSTYPE_NUMBER) {
+                xs *total_copy = xs_dup(total);
+                actor = xs_dict_set(actor, "followers_count", total_copy);
+            }
+        }
+        /* throttle to prevent resource exhaustion on low-power devices */
+        if (throttle)
+            usleep(100000); /* 100ms delay between requests */
+    }
+
+    /* only fetch following count if not already present */
+    if (xs_type(existing_following) != XSTYPE_NUMBER && !xs_is_null(following_url)) {
+        xs *following_coll = NULL;
+        if (valid_status(activitypub_request(user, following_url, &following_coll))) {
+            const xs_number *total = xs_dict_get(following_coll, "totalItems");
+            if (xs_type(total) == XSTYPE_NUMBER) {
+                xs *total_copy = xs_dup(total);
+                actor = xs_dict_set(actor, "following_count", total_copy);
+            }
+        }
+        /* throttle to prevent resource exhaustion on low-power devices */
+        if (throttle)
+            usleep(100000); /* 100ms delay between requests */
+    }
+
+    /* only fetch statuses count if not already present */
+    if (xs_type(existing_statuses) != XSTYPE_NUMBER && !xs_is_null(outbox_url)) {
+        xs *outbox_coll = NULL;
+        if (valid_status(activitypub_request(user, outbox_url, &outbox_coll))) {
+            const xs_number *total = xs_dict_get(outbox_coll, "totalItems");
+            if (xs_type(total) == XSTYPE_NUMBER) {
+                xs *total_copy = xs_dup(total);
+                actor = xs_dict_set(actor, "statuses_count", total_copy);
+            }
+        }
+        /* throttle to prevent resource exhaustion on low-power devices */
+        if (throttle)
+            usleep(100000); /* 100ms delay between requests */
+    }
+
+    return actor;
+}
+
+
 int actor_request(snac *user, const char *actor, xs_dict **data)
 /* request an actor */
 {
@@ -134,6 +206,9 @@ int actor_request(snac *user, const char *actor, xs_dict **data)
         status = activitypub_request(user, actor, &payload);
 
         if (valid_status(status)) {
+            /* fetch collection counts when initially fetching an actor (no throttle) */
+            payload = actor_get_collections(user, payload, 0);
+
             /* renew data */
             status = actor_add(actor, payload);
 
@@ -569,14 +644,23 @@ xs_list *recipient_list(snac *snac, const xs_dict *msg, int expand_public)
         }
 
         while (xs_list_iter(&l, &v)) {
-            if (expand_public && strcmp(v, public_address) == 0) {
-                /* iterate the followers and add them */
-                xs *fwers = follower_list(snac);
-                const char *actor;
+            if (expand_public) {
+                if (strcmp(v, public_address) == 0 ||
+                    /* check if it's a followers collection URL */
+                    (xs_type(v) == XSTYPE_STRING &&
+                        strcmp(v, xs_fmt("%s/followers", snac->actor)) == 0) ||
+                    (xs_type(v) == XSTYPE_LIST &&
+                        xs_list_in(v, xs_fmt("%s/followers", snac->actor)) != -1)) {
+                    /* iterate the followers and add them */
+                    xs *fwers = follower_list(snac);
+                    const char *actor;
 
-                char *p = fwers;
-                while (xs_list_iter(&p, &actor))
-                    xs_set_add(&rcpts, actor);
+                    char *p = fwers;
+                    while (xs_list_iter(&p, &actor))
+                        xs_set_add(&rcpts, actor);
+                }
+                else
+                    xs_set_add(&rcpts, v);
             }
             else
                 xs_set_add(&rcpts, v);
@@ -697,7 +781,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
             object_get(object, &obj);
 
         /* if it's about one of our posts, accept it */
-        if (xs_startswith(object, snac->actor))
+        if (is_msg_mine(snac, object))
             return 2;
 
         /* blocked by hashtag? */
@@ -936,6 +1020,196 @@ xs_str *process_tags(snac *snac, const char *content, xs_list **tag)
 }
 
 
+void collect_replies(snac *user, const char *id)
+/* collects all replies for a post */
+{
+    xs *obj = NULL;
+
+    if (!valid_status(object_get(id, &obj))) {
+        snac_debug(user, 1, xs_fmt("collect_replies: object '%s' is not here", id));
+        return;
+    }
+
+    const xs_dict *replies_first = xs_dict_get_path(obj, "replies.first");
+    if (!xs_is_dict(replies_first)) {
+        snac_debug(user, 1, xs_fmt("collect_replies: object '%s' does not have replies.first", id));
+        return;
+    }
+
+    const xs_list *level0_replies = xs_dict_get(replies_first, "items");
+    const xs_list *level1_replies = NULL;
+
+    const char *next = xs_dict_get(replies_first, "next");
+    xs *reply_obj = NULL;
+
+    if (xs_is_string(next) && !valid_status(activitypub_request(user, next, &reply_obj))) {
+        snac_debug(user, 1, xs_fmt("collect_replies: error getting next replies object '%s'", next));
+        return;
+    }
+
+    if (xs_is_dict(reply_obj))
+        level1_replies = xs_dict_get(reply_obj, "items");
+
+    xs *items = xs_list_new();
+
+    if (xs_is_list(level0_replies))
+        items = xs_list_cat(items, level0_replies);
+
+    if (xs_is_list(level1_replies))
+        items = xs_list_cat(items, level1_replies);
+
+    const xs_val *v;
+
+    xs_list_foreach(items, v) {
+        xs *reply = NULL;
+
+        if (xs_is_string(v)) {
+            /* request the object */
+            if (!valid_status(object_get(v, &reply))) {
+                if (!valid_status(activitypub_request(user, v, &reply))) {
+                    snac_debug(user, 1, xs_fmt("collect_replies: error requesting object '%s'", v));
+                    continue;
+                }
+            }
+        }
+        else
+        if (xs_is_dict(v)) {
+            /* actually the post object */
+            reply = xs_dup(v);
+        }
+
+        if (!xs_is_dict(reply))
+            continue;
+
+        const char *id      = xs_dict_get(reply, "id");
+        const char *type    = xs_dict_get(reply, "type");
+        const char *attr_to = get_atto(reply);
+
+        if (!xs_is_string(id) || !xs_is_string(type) || !xs_is_string(attr_to))
+            continue;
+
+        if (!xs_match(type, POSTLIKE_OBJECT_TYPE))
+            continue;
+
+        if (timeline_here(user, id)) {
+            snac_debug(user, 1, xs_fmt("collect_replies: item already in timeline %s", id));
+            continue;
+        }
+
+        enqueue_actor_refresh(user, attr_to, 0);
+
+        timeline_add(user, id, reply);
+
+        snac_log(user, xs_fmt("new '%s' (collect_replies) %s %s", type, attr_to, id));
+    }
+}
+
+
+void collect_outbox(snac *user, const char *actor_id)
+/* gets an actor's outbox and inserts a bunch of posts in a user's timeline */
+{
+    int status;
+    xs *actor = NULL;
+
+    if (!valid_status(status = actor_request(user, actor_id, &actor))) {
+        snac_debug(user, 1, xs_fmt("collect_outbox: cannot get actor object '%s' %d", actor_id, status));
+        return;
+    }
+
+    xs *outbox = NULL;
+    const char *outbox_url = xs_dict_get(actor, "outbox");
+
+    if (!xs_is_string(outbox_url))
+        return;
+
+    if (!valid_status(status = activitypub_request(user, outbox_url, &outbox))) {
+        snac_debug(user, 1, xs_fmt("collect_outbox: cannot get actor outbox '%s' %d", outbox_url, status));
+        return;
+    }
+
+    const xs_list *ordered_items = xs_dict_get(outbox, "orderedItems");
+
+    if (!xs_is_list(ordered_items)) {
+        /* the list is not here; does it have a 'first'? */
+        const char *first = xs_dict_get(outbox, "first");
+
+        if (xs_is_string(first)) {
+            /* download this instead */
+            xs *first2 = xs_dup(first);
+            xs_free(outbox);
+
+            if (!valid_status(status = activitypub_request(user, first2, &outbox))) {
+                snac_debug(user, 1, xs_fmt("collect_outbox: cannot get first page of outbox '%s' %d", first2, status));
+                return;
+            }
+
+            /* last chance */
+            ordered_items = xs_dict_get(outbox, "orderedItems");
+        }
+    }
+
+    if (!xs_is_list(ordered_items)) {
+        snac_debug(user, 1, xs_fmt("collect_outbox: cannot get list of posts for actor '%s' outbox", actor_id));
+        return;
+    }
+
+    /* well, ok, then */
+    int max = 4;
+    const xs_val *v;
+
+    xs_list_foreach(ordered_items, v) {
+        if (max == 0)
+            break;
+
+        xs *post = NULL;
+
+        if (xs_is_string(v)) {
+            /* it's probably the post url */
+            if (!valid_status(activitypub_request(user, v, &post)))
+                continue;
+        }
+        else
+        if (xs_is_dict(v))
+            post = xs_dup(v);
+
+        if (post == NULL)
+            continue;
+
+        const char *type = xs_dict_get(post, "type");
+
+        if (!xs_is_string(type) || strcmp(type, "Create")) {
+            /* not a post */
+            continue;
+        }
+        if (is_msg_for_me(user, post) == 0) {
+            /* not for us */
+            continue;
+        }
+
+        const xs_dict *object = xs_dict_get(post, "object");
+
+        if (!xs_is_dict(object))
+            continue;
+
+        type = xs_dict_get(object, "type");
+        const char *id = xs_dict_get(object, "id");
+        const char *attr_to = get_atto(object);
+
+        if (!xs_is_string(type) || !xs_is_string(id) || !xs_is_string(attr_to))
+            continue;
+
+        if (!timeline_here(user, id)) {
+            timeline_add(user, id, object);
+            snac_log(user, xs_fmt("new '%s' (collect_outbox) %s %s", type, attr_to, id));
+        }
+        else
+            snac_debug(user, 1, xs_fmt("collect_outbox: post '%s' already here", id));
+
+        max--;
+    }
+}
+
+
 void notify(snac *snac, const char *type, const char *utype, const char *actor, const xs_dict *msg)
 /* notifies the user of relevant events */
 {
@@ -970,7 +1244,7 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
 
     if (xs_match(type, "Like|Announce|EmojiReact")) {
         /* if it's not an admiration about something by us, done */
-        if (xs_is_null(objid) || !xs_startswith(objid, snac->actor))
+        if (xs_is_null(objid) || !is_msg_mine(snac, objid))
             return;
 
         /* if it's an announce by our own relay, done */
@@ -995,7 +1269,7 @@ void notify(snac *snac, const char *type, const char *utype, const char *actor, 
             return;
 
         /* if it's not ours and we didn't vote, discard */
-        if (!xs_startswith(poll_id, snac->actor) && !was_question_voted(snac, poll_id))
+        if (!is_msg_mine(snac, poll_id) && !was_question_voted(snac, poll_id))
             return;
     }
 
@@ -1179,6 +1453,45 @@ xs_dict *msg_collection(snac *snac, const char *id, int items)
 }
 
 
+xs_dict *msg_replies(snac *user, const char *id, int fill)
+/* creates a CollectionPage with replies of id */
+{
+    xs *r_id = xs_replace(id, "/p/", "/r/");
+    xs *r_idp = xs_fmt("%s?page=true", r_id);
+    xs *r_idh = xs_fmt("%s", r_id);
+
+    xs_dict *msg = msg_base(user, "CollectionPage", r_idp, NULL, NULL, NULL);
+
+    msg = xs_dict_set(msg, "partOf", r_idh);
+
+    xs *items = xs_list_new();
+    if (fill) {
+        xs *children = object_children(id);
+        const char *md5;
+
+        xs_list_foreach(children, md5) {
+            xs *obj = NULL;
+
+            if (valid_status(object_get_by_md5(md5, &obj)) && is_msg_public(obj)) {
+                const char *c_id = xs_dict_get(obj, "id");
+
+                if (xs_is_string(c_id))
+                    items = xs_list_append(items, c_id);
+            }
+        }
+    }
+    else {
+        msg = xs_dict_del(msg, "@context");
+        msg = xs_dict_del(msg, "id");
+        msg = xs_dict_set(msg, "next", r_idp);
+    }
+
+    msg = xs_dict_set(msg, "items", items);
+
+    return msg;
+}
+
+
 xs_dict *msg_accept(snac *snac, const xs_val *object, const char *to)
 /* creates an Accept message (as a response to a Follow) */
 {
@@ -1219,11 +1532,24 @@ xs_dict *msg_update(snac *snac, const xs_dict *object)
 
 
 xs_dict *msg_admiration(snac *snac, const char *object, const char *type)
-/* creates a Like or Announce message */
+/* creates a Like, Announce or EmojiReact message */
 {
     xs *a_msg    = NULL;
     xs_dict *msg = NULL;
     xs *wrk      = NULL;
+    char t       = 0;
+
+    switch (*type) {
+        case 'L':
+            t = 'l';
+            break;
+        case 'A':
+            t = 'a';
+            break;
+        case 'E':
+            t = 'e';
+            break;
+    }
 
     /* call the object */
     timeline_request(snac, &object, &wrk, 0);
@@ -1231,7 +1557,7 @@ xs_dict *msg_admiration(snac *snac, const char *object, const char *type)
     if (valid_status(object_get(object, &a_msg))) {
         xs *rcpts = xs_list_new();
         xs *o_md5 = xs_md5_hex(object, strlen(object));
-        xs *id    = xs_fmt("%s/%s/%s", snac->actor, *type == 'L' ? "l" : "a", o_md5);
+        xs *id    = xs_fmt("%s/%c/%s", snac->actor, t, o_md5);
 
         msg = msg_base(snac, type, id, snac->actor, "@now", object);
 
@@ -1273,6 +1599,138 @@ xs_dict *msg_repulsion(snac *user, const char *id, const char *type)
     object_unadmire(id, user->actor, *type == 'L' ? 1 : 0);
 
     return msg;
+}
+
+xs_dict *msg_emoji_init(snac *snac, const char *mid, const char *eid_o)
+/* creates an emoji reaction from a local user */
+{
+    xs_dict *n_msg = msg_admiration(snac, mid, "EmojiReact");
+
+    xs *eid = xs_strip_chars_i(xs_dup(eid_o), ":");
+    xs *content = NULL;
+    xs *tag = xs_list_new();
+    xs *dict = xs_dict_new();
+    xs *icon = xs_dict_new();
+    xs *accounts = xs_list_new();
+    xs *emjs = emojis_rm_categories();
+
+    /* may be a default emoji */
+    xs *eidd = xs_dup(eid);
+    const char *eidda = eid;
+
+    if (xs_is_emoji(xs_utf8_dec(&eidda)))
+        content = xs_dup(eid);
+
+    else if (*eid == '%') {
+        content = xs_url_dec_emoji(xs_dup(eid));
+        if (content == NULL) {
+            return NULL;
+        }
+    }
+    else {
+        content = xs_fmt(":%s:", eid);
+        const char *emo = xs_dict_get(emjs, content);
+
+        if (emo == NULL)
+            return NULL;
+
+        if (xs_match(emo, "https://*|http://*")) { /* emoji is an URL to an image */
+            icon = xs_dict_set(icon, "type", "Image");
+            icon = xs_dict_set(icon, "url", emo);
+            dict = xs_dict_set(dict, "icon", icon);
+
+            dict = xs_dict_set(dict, "id", emo);
+            dict = xs_dict_set(dict, "name", content);
+            dict = xs_dict_set(dict, "type", "Emoji");
+            tag = xs_list_append(tag, dict);
+        }
+        else
+        if (xs_startswith(emo, "&#")) {
+            /* snac default emoji as an HTML entity: decode */
+            content = xs_free(content);
+
+            xs *s1 = xs_strip_chars_i(xs_dup(emo), "&#");
+            unsigned int cpoint = 0;
+            sscanf(s1, "%u;", &cpoint);
+
+            if (cpoint)
+                content = xs_utf8_cat(xs_str_new(NULL), cpoint);
+            else
+                content = xs_dup(emo);
+        }
+        else {
+            /* use as it is and hope for the best */
+            xs_free(content);
+            content = xs_dup(emo);
+        }
+    }
+
+    accounts = xs_list_append(accounts, snac->actor);
+
+    n_msg = xs_dict_set(n_msg, "content", content);
+    n_msg = xs_dict_set(n_msg, "accounts", accounts);
+    n_msg = xs_dict_set(n_msg, "attributedTo", xs_list_get(xs_dict_get(n_msg, "to"), 1));
+    n_msg = xs_dict_set(n_msg, "accountId", snac->uid);
+    n_msg = xs_dict_set(n_msg, "tag", tag);
+
+    int ret = timeline_admire(snac, xs_dict_get(n_msg, "object"), snac->actor, 1, n_msg);
+    if (ret == 200 || ret == 201) {
+        enqueue_message(snac, n_msg);
+        return n_msg;
+    }
+
+    return NULL;
+}
+
+xs_dict *msg_emoji_unreact(snac *user, const char *mid, const char *eid)
+/* creates an Undo + emoji reaction message */
+{
+    xs *a_msg    = NULL;
+    xs_dict *msg = NULL;
+
+    if (valid_status(object_get(mid, &a_msg))) {
+        /* create a clone of the original admiration message */
+        xs *object = msg_admiration(user, mid, "EmojiReact");
+
+        /* delete the published date */
+        object = xs_dict_del(object, "published");
+
+        /* create an undo message for this object */
+        msg = msg_undo(user, object);
+
+        /* copy the 'to' field */
+        msg = xs_dict_set(msg, "to", xs_dict_get(object, "to"));
+    }
+
+    xs *emotes = object_get_emoji_reacts(mid);
+    const char *v;
+    int c = 0;
+
+    /* may be a default emoji */
+    if (strlen(eid) == 12 && *eid == '%') {
+        eid = xs_url_dec(eid);
+        if (eid == NULL) {
+            return NULL;
+        }
+    }
+
+    /* lets get all emotes for this msg, and compare it to our content */
+    while (xs_list_next(emotes, &v, &c)) {
+        xs_dict *e = NULL;
+        if (valid_status(object_get_by_md5(v, &e))) {
+            const char *content = xs_dict_get(e, "content");
+            const char *id = xs_dict_get(e, "id");
+            const char *actor = xs_dict_get(e, "actor");
+            /* maybe formated as :{emoteName}: too */
+            if (xs_str_in(eid, content) != -1)
+                if (strcmp(user->actor, actor) == 0) {
+                    object_rm_emoji_react(mid, id);
+                    return msg;
+                }
+        }
+    }
+
+    return NULL;
 }
 
 
@@ -1518,7 +1976,35 @@ xs_dict *msg_delete(snac *snac, const char *id)
     /* now create the Delete */
     msg = msg_base(snac, "Delete", "@object", snac->actor, "@now", tomb);
 
-    msg = xs_dict_append(msg, "to", public_address);
+    xs *to = xs_list_new();
+    xs *involved = object_likes(id);
+    xs *boosts = object_announces(id);
+    xs *children = object_children(id);
+    const char *md5;
+
+    involved = xs_list_cat(involved, boosts);
+    involved = xs_list_cat(involved, children);
+
+    /* add everybody */
+    to = xs_list_append(to, public_address);
+
+    /* add actors that liked, boosted or replied to this */
+    xs_list_foreach(involved, md5) {
+        xs *actor = NULL;
+
+        if (valid_status(object_get_by_md5(md5, &actor))) {
+            const char *id = xs_dict_get(actor, "id");
+            const char *atto = get_atto(actor);
+
+            if (xs_is_string(atto))
+                to = xs_list_append(to, atto);
+            else
+            if (xs_is_string(id))
+                to = xs_list_append(to, id);
+        }
+    }
+
+    msg = xs_dict_append(msg, "to", to);
 
     return msg;
 }
@@ -1587,8 +2073,7 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     xs_list *p;
     const xs_val *v;
 
-    /* FIXME: implement scope 3 */
-    int priv = scope == 1;
+    const int priv = (scope == SCOPE_MENTIONED || scope == SCOPE_FOLLOWERS);
 
     if (rcpts == NULL)
         to = xs_list_new();
@@ -1648,9 +2133,13 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
             if ((v = xs_dict_get(p_msg, "conversation")))
                 msg = xs_dict_append(msg, "conversation", v);
 
-            /* if this message is public, ours will also be */
-            if (!priv && is_msg_public(p_msg) && xs_list_in(to, public_address) == -1)
+            /* if this message is public or unlisted, ours will also be */
+            const int orig_scope = get_msg_visibility(p_msg);
+            if (!priv && orig_scope == SCOPE_PUBLIC && xs_list_in(to, public_address) == -1)
                 to = xs_list_append(to, public_address);
+            else
+            if (!priv && orig_scope == SCOPE_UNLISTED && xs_list_in(cc, public_address) == -1)
+                cc = xs_list_append(cc, public_address);
         }
 
         irt = xs_dup(in_reply_to);
@@ -1694,28 +2183,50 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
     if (ctxt == NULL)
         ctxt = xs_fmt("%s#ctxt", id);
 
-    /* add all mentions to the cc */
+    /* add all mentions to the appropriate field */
     p = tag;
     while (xs_list_iter(&p, &v)) {
         if (xs_type(v) == XSTYPE_DICT) {
             const char *t;
 
             if (!xs_is_null(t = xs_dict_get(v, "type")) && strcmp(t, "Mention") == 0) {
-                if (!xs_is_null(t = xs_dict_get(v, "href")))
-                    cc = xs_list_append(cc, t);
+                if (!xs_is_null(t = xs_dict_get(v, "href"))) {
+                    if (scope == SCOPE_MENTIONED) {
+                        /* for DMs, mentions go to 'to' */
+                        to = xs_list_append(to, t);
+                    } else {
+                        /* for other visibility levels, mentions go to 'cc' */
+                        cc = xs_list_append(cc, t);
+                    }
+                }
             }
         }
     }
 
-    if (scope == 2) {
-        /* Mastodon's "quiet public": add public address to cc */
+    if (scope == SCOPE_UNLISTED) {
+        /* Mastodon's "quiet public": remove from to, add public address to cc */
+        int idx;
+        if ((idx = xs_list_in(to, public_address)) != -1)
+            to = xs_list_del(to, idx);
         if (xs_list_in(cc, public_address) == -1)
             cc = xs_list_append(cc, public_address);
     }
     else
-    /* no recipients? must be for everybody */
-    if (!priv && xs_list_len(to) == 0)
-        to = xs_list_append(to, public_address);
+    if (scope == SCOPE_FOLLOWERS) {
+        /* followers-only: add followers collection to to */
+        xs *followers_url = xs_fmt("%s/followers", snac->actor);
+        if (xs_list_in(to, followers_url) == -1)
+            to = xs_list_append(to, followers_url);
+    }
+    else
+    if (scope == SCOPE_PUBLIC) {
+        /* public: ensure public address is in to and not in cc */
+        int idx;
+        if ((idx = xs_list_in(cc, public_address)) != -1)
+            cc = xs_list_del(cc, idx);
+        if (xs_list_in(to, public_address) == -1)
+            to = xs_list_append(to, public_address);
+    }
 
     /* delete all cc recipients that also are in the to */
     p = to;
@@ -1753,6 +2264,20 @@ xs_dict *msg_note(snac *snac, const xs_str *content, const xs_val *rcpts,
             cmap = xs_dict_set(cmap, lang, xs_dict_get(msg, "content"));
             msg = xs_dict_set(msg, "contentMap", cmap);
         }
+    }
+
+    if (!priv) {
+        /* create the replies object */
+        xs *replies = xs_dict_new();
+        xs *r_id = xs_replace(id, "/p/", "/r/");
+        xs *h_id = xs_fmt("%s", r_id);
+        xs *rp = msg_replies(snac, id, 0);
+
+        replies = xs_dict_set(replies, "id", h_id);
+        replies = xs_dict_set(replies, "type", "Collection");
+        replies = xs_dict_set(replies, "first", rp);
+
+        msg = xs_dict_set(msg, "replies", replies);
     }
 
     return msg;
@@ -1797,8 +2322,16 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
 /* creates a Question message */
 {
     xs_dict *msg = msg_note(user, content, NULL, NULL, attach, 0, NULL, NULL);
-    int max      = 8;
+    const xs_number *max_options = xs_dict_get(srv_config, "max_poll_options");
+    const xs_number *max_length = xs_dict_get(srv_config, "max_poll_option_length");
     xs_set seen;
+
+    size_t max_line = 60;
+    int max = 8;
+    if (xs_type(max_options) == XSTYPE_NUMBER)
+        max = xs_number_get(max_options);
+    if (xs_type(max_length) == XSTYPE_NUMBER)
+        max_line = xs_number_get(max_length);
 
     msg = xs_dict_set(msg, "type", "Question");
 
@@ -1817,8 +2350,8 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
             xs *v2 = xs_dup(v);
             xs *d  = xs_dict_new();
 
-            if (strlen(v2) > 60) {
-                v2[60] = '\0';
+            if (strlen(v2) > max_line) {
+                v2[max_line] = '\0';
                 v2 = xs_str_cat(v2, "...");
             }
 
@@ -1846,6 +2379,42 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
     return msg;
 }
 
+int get_msg_visibility(const xs_dict *msg)
+/* determine visibility from message based on CC, TO and /followers mark */
+{
+    const xs_val *to = xs_dict_get(msg, "to");
+    const xs_val *cc = xs_dict_get(msg, "cc");
+
+    /* check if it's unlisted (public in cc but not in to) */
+    int pub_in_to = 0;
+    int pub_in_cc = 0;
+
+    if ((xs_type(to) == XSTYPE_STRING && strcmp(to, public_address) == 0) ||
+        (xs_type(to) == XSTYPE_LIST && xs_list_in(to, public_address) != -1))
+        pub_in_to = 1;
+
+    if ((xs_type(cc) == XSTYPE_STRING && strcmp(cc, public_address) == 0) ||
+        (xs_type(cc) == XSTYPE_LIST && xs_list_in(cc, public_address) != -1))
+        pub_in_cc = 1;
+
+    if (!pub_in_to && pub_in_cc) {
+        return SCOPE_UNLISTED;
+    }
+    if (pub_in_to && !pub_in_cc) {
+        return SCOPE_PUBLIC;
+    }
+
+    xs *followers_url = xs_fmt("%s/followers", xs_dict_get(msg, "attributedTo"));
+
+    if ((xs_type(to) == XSTYPE_STRING && strcmp(to, followers_url) == 0) ||
+        (xs_type(to) == XSTYPE_LIST && xs_list_in(to, followers_url) != -1))
+        return SCOPE_FOLLOWERS;
+    else
+        return SCOPE_MENTIONED;
+    /* should be unreachable, someone violated the protocol.                    */
+    /* better treat it as followers-only to make sure we don't leak information.*/
+    return SCOPE_FOLLOWERS;
+}
 
 int update_question(snac *user, const char *id)
 /* updates the poll counts */
@@ -1994,6 +2563,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         return -1;
     }
 
+    /* this instance is alive */
+    instance_failure(actor, 2);
+
     /* question votes may not have a type */
     if (xs_is_null(type))
         type = "Note";
@@ -2012,6 +2584,11 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             fclose(f);
         }
 
+        return -1;
+    }
+
+    if (strcmp(type, "EmojiReact") == 0 && xs_is_true(xs_dict_get(srv_config, "disable_emojireact"))) {
+        srv_log(xs_fmt("Dropping EmojiReact from %s due to admin configuration", actor));
         return -1;
     }
 
@@ -2188,6 +2765,16 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     else
     if (strcmp(type, "Undo") == 0) { /** **/
         const char *id = xs_dict_get(object, "object");
+        const char *content = xs_dict_get(object, "content");
+        /* misskey sends emojis as like + tag */
+        xs *cd = xs_dup(content);
+        const char *sna = cd;
+        const xs_dict *tag = xs_dict_get(object, "tag");
+        unsigned int utf = xs_utf8_dec((const char **)&sna);
+
+        int isEmoji = 0;
+        if (xs_is_emoji(utf) || (tag && xs_list_len(tag) > 0))
+            isEmoji = 1;
 
         if (xs_type(object) != XSTYPE_DICT) {
             snac_debug(snac, 1, xs_fmt("undo: overriding utype %s | %s | %s",
@@ -2216,8 +2803,19 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             else
                 snac_log(snac, xs_fmt("error deleting follower %s", actor));
         }
+        /* *key emojis are like w/ Emoji tag */
         else
-        if (strcmp(utype, "Like") == 0 || strcmp(utype, "EmojiReact") == 0) { /** **/
+        if ((isEmoji || strcmp(utype, "EmojiReact") == 0) &&
+                (content && strcmp(content, "♥") != 0)) {
+            const xs_val *mid = xs_dict_get(object, "id");
+            int status = object_rm_emoji_react((char *)id, mid);
+            /* ensure *key notifications type */
+            utype = "EmojiReact";
+
+            snac_log(snac, xs_fmt("Undo 'EmojiReact' for %s %d", id, status));
+        }
+        else
+        if (strcmp(utype, "Like") == 0) { /** **/
             int status = object_unadmire(id, actor, 1);
 
             snac_log(snac, xs_fmt("Undo '%s' for %s %d", utype, id, status));
@@ -2268,6 +2866,20 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                     snac_log(snac, xs_fmt("SUSPICIOUS: actor != atto (%s != %s)", actor, atto));
 
                 timeline_request(snac, &in_reply_to, &wrk, 0);
+
+                const char *quoted_id = xs_or(xs_dict_get(object, "quoteUri"), xs_dict_get(object, "quoteUrl"));
+
+                if (xs_is_string(quoted_id) && xs_match(quoted_id, "https://*|http://*")) { /** **/
+                    xs *quoted_post = NULL;
+                    int status;
+
+                    if (valid_status(status = activitypub_request(snac, quoted_id, &quoted_post))) {
+                        /* got quoted post */
+                        object_add(quoted_id, quoted_post);
+                    }
+
+                    snac_debug(snac, 1, xs_fmt("retrieving quoted post %s %d", quoted_id, status));
+                }
 
                 if (timeline_add(snac, id, object)) {
                     snac_log(snac, xs_fmt("new '%s' %s %s", utype, actor, id));
@@ -2321,6 +2933,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             if (following_check(snac, actor)) {
                 following_add(snac, actor, msg);
                 snac_log(snac, xs_fmt("confirmed follow from %s", actor));
+
+                /* request a bit of this fellow's outbox */
+                enqueue_collect_outbox(snac, actor);
             }
             else
                 snac_log(snac, xs_fmt("spurious follow accept from %s", actor));
@@ -2337,13 +2952,22 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     }
     else
     if (strcmp(type, "Like") == 0 || strcmp(type, "EmojiReact") == 0) { /** **/
+        /* misskey sends emojis as Like + tag.
+         * It is easier to handle them both at the same time. */
+        const char *sna = xs_dict_get(msg, "content");
+        const xs_dict *tag = xs_dict_get(msg, "tag");
+        unsigned int utf = xs_utf8_dec((const char **)&sna);
+
+        if (xs_is_emoji(utf) || (tag && xs_list_len(tag) > 0))
+            type = "EmojiReact";
+
         if (xs_type(object) == XSTYPE_DICT)
             object = xs_dict_get(object, "id");
 
         if (xs_is_null(object))
             snac_log(snac, xs_fmt("malformed message: no 'id' field"));
         else
-        if (timeline_admire(snac, object, actor, 1) == HTTP_STATUS_CREATED)
+        if (timeline_admire(snac, object, actor, 1, msg) == HTTP_STATUS_CREATED)
             snac_log(snac, xs_fmt("new '%s' %s %s", type, actor, object));
         else
             snac_log(snac, xs_fmt("repeated '%s' from %s to %s", type, actor, object));
@@ -2358,10 +2982,10 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
         if (xs_is_null(object))
             snac_log(snac, xs_fmt("malformed message: no 'id' field"));
         else
-        if (is_muted(snac, actor) && !xs_startswith(object, snac->actor))
+        if (is_muted(snac, actor) && !is_msg_mine(snac, object))
             snac_log(snac, xs_fmt("dropped 'Announce' from muted actor %s", actor));
         else
-        if (is_limited(snac, actor) && !xs_startswith(object, snac->actor))
+        if (is_limited(snac, actor) && !is_msg_mine(snac, object))
             snac_log(snac, xs_fmt("dropped 'Announce' from limited actor %s", actor));
         else {
             xs *a_msg = NULL;
@@ -2372,6 +2996,9 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             if (valid_status(object_get(object, &a_msg))) {
                 const char *who = get_atto(a_msg);
 
+                /* got the admired object: instance is [back] online */
+                instance_failure(object, 2);
+
                 if (who && !is_muted(snac, who)) {
                     /* bring the actor */
                     xs *who_o = NULL;
@@ -2381,7 +3008,7 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                         xs *this_relay = xs_fmt("%s/relay", srv_baseurl);
 
                         if (strcmp(actor, this_relay) != 0) {
-                            if (valid_status(timeline_admire(snac, object, actor, 0)))
+                            if (valid_status(timeline_admire(snac, object, actor, 0, a_msg)))
                                 snac_log(snac, xs_fmt("new 'Announce' %s %s", actor, object));
                             else
                                 snac_log(snac, xs_fmt("repeated 'Announce' from %s to %s",
@@ -2422,10 +3049,14 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
                 snac_log(snac, xs_fmt("malformed message: no 'id' field"));
             else
             if (object_here(id)) {
-                object_add_ow(id, object);
-                timeline_touch(snac);
+                if (xs_startswith(id, srv_baseurl) && !xs_startswith(id, actor))
+                    snac_log(snac, xs_fmt("ignored incorrect 'Update' %s %s", actor, id));
+                else {
+                    object_add_ow(id, object);
+                    timeline_touch(snac);
 
-                snac_log(snac, xs_fmt("updated '%s' %s", utype, id));
+                    snac_log(snac, xs_fmt("updated '%s' %s", utype, id));
+                }
             }
             else
                 snac_log(snac, xs_fmt("dropped update for unknown '%s' %s", utype, id));
@@ -2462,8 +3093,12 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
             snac_log(snac, xs_fmt("malformed message: no 'id' field"));
         else
         if (object_here(object)) {
-            timeline_del(snac, object);
-            snac_debug(snac, 1, xs_fmt("new 'Delete' %s %s", actor, object));
+            if (xs_startswith(object, srv_baseurl) && !is_msg_mine(snac, object))
+                snac_log(snac, xs_fmt("ignored incorrect 'Delete' %s %s", actor, object));
+            else {
+                timeline_del(snac, object);
+                snac_debug(snac, 1, xs_fmt("new 'Delete' %s %s", actor, object));
+            }
         }
         else
             snac_debug(snac, 1, xs_fmt("ignored 'Delete' for unknown object %s", object));
@@ -2752,15 +3387,32 @@ void process_user_queue_item(snac *user, xs_dict *q_item)
         const char *actor = xs_dict_get(q_item, "actor");
         double mtime = object_mtime(actor);
 
+        if (actor_failure(actor, 0) == -1) {
+            /* actor is broken beyond repair */
+            snac_debug(user, 1, xs_fmt("actor_refresh skipped broken actor %s", actor));
+        }
+        else
         /* only refresh if it was refreshed more than an hour ago */
         if (mtime + 3600.0 < (double) time(NULL)) {
             xs *actor_o = NULL;
             int status;
 
-            if (valid_status((status = activitypub_request(user, actor, &actor_o))))
+            if (valid_status((status = activitypub_request(user, actor, &actor_o)))) {
+                /* refresh collection counts with throttling to prevent resource exhaustion */
+                actor_o = actor_get_collections(user, actor_o, 1);
+
                 actor_add(actor, actor_o);
-            else
-                object_touch(actor);
+            }
+            else {
+                if (status == HTTP_STATUS_GONE || status == HTTP_STATUS_NOT_FOUND) {
+                    actor_failure(actor, 1);
+                    snac_log(user, xs_fmt("actor_refresh marking actor %s as broken %d", actor, status));
+                }
+                else {
+                    actor_failure(actor, 2);
+                    object_touch(actor);
+                }
+            }
 
             snac_log(user, xs_fmt("actor_refresh %s %d", actor, status));
         }
@@ -2799,6 +3451,18 @@ void process_user_queue_item(snac *user, xs_dict *q_item)
         }
     }
     else
+    if (strcmp(type, "collect_replies") == 0) {
+        const char *post = xs_dict_get(q_item, "message");
+
+        collect_replies(user, post);
+    }
+    else
+    if (strcmp(type, "collect_outbox") == 0) {
+        const char *actor_id = xs_dict_get(q_item, "message");
+
+        collect_outbox(user, actor_id);
+    }
+    else
         snac_log(user, xs_fmt("unexpected user q_item type '%s'", type));
 }
 
@@ -2830,7 +3494,7 @@ int process_user_queue(snac *snac)
 
 xs_str *str_status(int status)
 {
-    return xs_fmt("%d %s", status, status < 0 ? xs_curl_strerr(status) : http_status_text(status));
+    return xs_fmt("%d %s", status, status < 0 ? xs_curl_strerr(status) : xs_http_status_text(status));
 }
 
 
@@ -2862,6 +3526,11 @@ void process_queue_item(xs_dict *q_item)
             return;
         }
 
+        if (instance_failure(inbox, 0)) {
+            srv_debug(1, xs_fmt("output message error: too many failures for instance %s", inbox));
+            return;
+        }
+
         /* deliver (if previous error status was a timeout, try now longer) */
         if (p_status == 599)
             timeout = xs_number_get(xs_dict_get_def(srv_config, "queue_timeout_2", "8"));
@@ -2872,6 +3541,9 @@ void process_queue_item(xs_dict *q_item)
             timeout = 6;
 
         status = send_to_inbox_raw(keyid, seckey, inbox, msg, &payload, &p_size, timeout);
+
+        /* register or clear a value for this instance */
+        instance_failure(inbox, valid_status(status) ? 2 : 1);
 
         if (payload) {
             if (p_size > 64) {
@@ -3087,6 +3759,12 @@ void process_queue_item(xs_dict *q_item)
         rss_poll_hashtags();
     }
     else
+    if (strcmp(type, "fsck") == 0) {
+        srv_log(xs_fmt("started deferred data integrity check"));
+        data_fsck();
+        srv_log(xs_fmt("finished deferred data integrity check"));
+    }
+    else
         srv_log(xs_fmt("unexpected q_item type '%s'", type));
 }
 
@@ -3189,11 +3867,14 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
     uid = xs_list_get(l, 1);
     if (!user_open(&snac, uid)) {
         /* invalid user */
-        srv_debug(1, xs_fmt("activitypub_get_handler bad user %s", uid));
-        return HTTP_STATUS_NOT_FOUND;
+        status = grave(uid, 0) ? HTTP_STATUS_GONE : HTTP_STATUS_NOT_FOUND;
+        srv_debug(1, xs_fmt("activitypub_get_handler bad user %s %d", uid, status));
+        return status;
     }
 
     p_path = xs_list_get(l, 2);
+
+    const xs_dict *q_vars = xs_dict_get(req, "q_vars");
 
     *ctype  = "application/activity+json";
 
@@ -3225,9 +3906,11 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
                 const char *type = xs_dict_get(i, "type");
                 const char *id   = xs_dict_get(i, "id");
 
-                if (type && id && strcmp(type, "Note") == 0 && xs_startswith(id, snac.actor)) {
-                    xs *c_msg = msg_create(&snac, i);
-                    list = xs_list_append(list, c_msg);
+                if (type && id && strcmp(type, "Note") == 0 && is_msg_mine(&snac, id)) {
+                    if (is_msg_public(i)) {
+                        xs *c_msg = msg_create(&snac, i);
+                        list = xs_list_append(list, c_msg);
+                    }
                 }
             }
         }
@@ -3267,6 +3950,34 @@ int activitypub_get_handler(const xs_dict *req, const char *q_path,
         /* don't return non-public objects */
         if (valid_status(status) && !is_msg_public(msg))
             status = HTTP_STATUS_NOT_FOUND;
+    }
+    else
+    if (xs_startswith(p_path, "r/")) {
+        /* replies to a post */
+        xs *s = xs_dup(p_path);
+        s[0] = 'p';
+
+        xs *id = xs_fmt("%s/%s", snac.actor, s);
+
+        xs *obj = NULL;
+        status = object_get(id, &obj);
+
+        /* don't return non-public objects */
+        if (!valid_status(status))
+            status = HTTP_STATUS_NOT_FOUND;
+        else
+        if (!is_msg_public(obj))
+            status = HTTP_STATUS_NOT_FOUND;
+        else
+        if (xs_dict_get(q_vars, "page"))
+            msg = msg_replies(&snac, id, 1);
+        else {
+            const xs_dict *replies = xs_dict_get(obj, "replies");
+            if (xs_is_dict(replies)) {
+                msg = xs_dup(replies);
+                msg = xs_dict_set(msg, "@context", "https:/""/www.w3.org/ns/activitystreams");
+            }
+        }
     }
     else
         status = HTTP_STATUS_NOT_FOUND;
@@ -3351,8 +4062,9 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
     const char *uid = xs_list_get(l, 1);
     if (!user_open(&snac, uid)) {
         /* invalid user */
-        srv_debug(1, xs_fmt("activitypub_post_handler bad user %s", uid));
-        return HTTP_STATUS_NOT_FOUND;
+        status = grave(uid, 0) ? HTTP_STATUS_GONE : HTTP_STATUS_NOT_FOUND;
+        srv_debug(1, xs_fmt("activitypub_post_handler bad user %s %d", uid, status));
+        return status;
     }
 
     /* if it has a digest, check it now, because

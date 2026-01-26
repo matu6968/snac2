@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_io.h"
@@ -7,64 +7,97 @@
 #include "xs_time.h"
 #include "xs_openssl.h"
 #include "xs_match.h"
+#include "xs_random.h"
+#include "xs_http.h"
 
 #include "snac.h"
 
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-int usage(void)
+int usage(const char *cmd)
 {
     printf("snac " VERSION " - A simple, minimalistic ActivityPub instance\n");
-    printf("Copyright (c) 2022 - 2025 grunfink et al. / MIT license\n");
+    printf("Copyright (c) 2022 - 2026 grunfink et al. / MIT license\n");
     printf("\n");
-    printf("Commands:\n");
-    printf("\n");
-    printf("init [{basedir}]                     Initializes the data storage\n");
-    printf("upgrade {basedir}                    Upgrade to a new version\n");
-    printf("adduser {basedir} [{uid}]            Adds a new user\n");
-    printf("deluser {basedir} {uid}              Deletes a user\n");
-    printf("httpd {basedir}                      Starts the HTTPD daemon\n");
-    printf("purge {basedir}                      Purges old data\n");
-    printf("state {basedir}                      Prints server state\n");
-    printf("webfinger {basedir} {account}        Queries about an account (@user@host or actor url)\n");
-    printf("queue {basedir} {uid}                Processes a user queue\n");
-    printf("follow {basedir} {uid} {actor}       Follows an actor\n");
-    printf("unfollow {basedir} {uid} {actor}     Unfollows an actor\n");
-    printf("request {basedir} {uid} {url}        Requests an object\n");
-    printf("insert {basedir} {uid} {url}         Requests an object and inserts it into the timeline\n");
-    printf("actor {basedir} [{uid}] {url}        Requests an actor\n");
-    printf("note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n");
-    printf("note_unlisted {basedir} {uid} {text} [files...] Sends an unlisted note with optional attachments\n");
-    printf("note_mention {basedir} {uid} {text} [files...] Sends a note only to mentioned accounts\n");
-    printf("boost|announce {basedir} {uid} {url} Boosts (announces) a post\n");
-    printf("unboost {basedir} {uid} {url}        Unboosts a post\n");
-    printf("resetpwd {basedir} {uid}             Resets the password of a user\n");
-    printf("ping {basedir} {uid} {actor}         Pings an actor\n");
-    printf("webfinger_s {basedir} {uid} {account} Queries about an account (@user@host or actor url)\n");
-    printf("pin {basedir} {uid} {msg_url}        Pins a message\n");
-    printf("unpin {basedir} {uid} {msg_url}      Unpins a message\n");
-    printf("bookmark {basedir} {uid} {msg_url}   Bookmarks a message\n");
-    printf("unbookmark {basedir} {uid} {msg_url} Unbookmarks a message\n");
-    printf("block {basedir} {instance_url}       Blocks a full instance\n");
-    printf("unblock {basedir} {instance_url}     Unblocks a full instance\n");
-    printf("limit {basedir} {uid} {actor}        Limits an actor (drops their announces)\n");
-    printf("unlimit {basedir} {uid} {actor}      Unlimits an actor\n");
-    printf("unmute {basedir} {uid} {actor}       Unmutes a previously muted actor\n");
-    printf("verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n");
-    printf("search {basedir} {uid} {regex}       Searches posts by content\n");
-    printf("export_csv {basedir} {uid}           Exports data as CSV files\n");
-    printf("alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n");
-    printf("migrate {basedir} {uid}              Migrates to the account defined as the alias\n");
-    printf("import_csv {basedir} {uid}           Imports data from CSV files\n");
-    printf("import_list {basedir} {uid} {file}   Imports a Mastodon CSV list file\n");
-    printf("import_block_list {basedir} {uid} {file} Imports a Mastodon CSV block list file\n");
-    printf("lists {basedir} {uid}                Returns the names of the lists created by the user\n");
-    printf("list_members {basedir} {uid} {name}  Returns the list of accounts inside a list\n");
-    printf("create_list {basedir} {uid} {name}   Creates a new list\n");
-    printf("delete_list {basedir} {uid} {name}   Deletes an existing list\n");
-    printf("list_add {basedir} {uid} {name} {acct} Adds an account (@user@host or actor url) to a list\n");
-    printf("list_del {basedir} {uid} {name} {actor} Deletes an actor URL from a list\n");
+
+    if (cmd == NULL) {
+        printf("Commands:\n");
+        printf("\n");
+    }
+
+    const char *cmds =
+        "init [{basedir}]                     Initializes the data storage\n"
+        "upgrade {basedir}                    Upgrade to a new version\n"
+        "adduser {basedir} [{uid}]            Adds a new user\n"
+        "deluser {basedir} {uid}              Deletes a user\n"
+        "update {basedir} {uid}               Sends a user's updated profile\n"
+        "httpd {basedir}                      Starts the HTTPD daemon\n"
+        "purge {basedir}                      Purges old data\n"
+        "state {basedir}                      Prints server state\n"
+        "webfinger {basedir} {account}        Queries about an account (@user@host or actor url)\n"
+        "queue {basedir} {uid}                Processes a user queue\n"
+        "follow {basedir} {uid} {actor}       Follows an actor\n"
+        "unfollow {basedir} {uid} {actor}     Unfollows an actor\n"
+        "request {basedir} {uid} {url}        Requests an object\n"
+        "insert {basedir} {uid} {url}         Requests an object and inserts it into the timeline\n"
+        "collect_replies {basedir} {uid} {url} Collects all replies from a post\n"
+        "actor {basedir} [{uid}] {url}        Requests an actor\n"
+        "note {basedir} {uid} {text} [files...] Sends a note with optional attachments\n"
+        "note_unlisted {basedir} {uid} {text} [files...] Sends an unlisted note with optional attachments\n"
+        "note_mention {basedir} {uid} {text} [files...] Sends a note only to mentioned accounts\n"
+        "note_followers {basedir} {uid} {text} [files...] Sends a note only to followers\n"
+        "boost|announce {basedir} {uid} {url} Boosts (announces) a post\n"
+        "unboost {basedir} {uid} {url}        Unboosts a post\n"
+        "resetpwd {basedir} {uid}             Resets the password of a user\n"
+        "ping {basedir} {uid} {actor}         Pings an actor\n"
+        "webfinger_s {basedir} {uid} {account} Queries about an account (@user@host or actor url)\n"
+        "pin {basedir} {uid} {msg_url}        Pins a message\n"
+        "unpin {basedir} {uid} {msg_url}      Unpins a message\n"
+        "bookmark {basedir} {uid} {msg_url}   Bookmarks a message\n"
+        "unbookmark {basedir} {uid} {msg_url} Unbookmarks a message\n"
+        "block {basedir} {instance_url}       Blocks a full instance\n"
+        "unblock {basedir} {instance_url}     Unblocks a full instance\n"
+        "limit {basedir} {uid} {actor}        Limits an actor (drops their announces)\n"
+        "unlimit {basedir} {uid} {actor}      Unlimits an actor\n"
+        "muted {basedir} {uid}                Lists the muted actors\n"
+        "unmute {basedir} {uid} {actor}       Unmutes a previously muted actor\n"
+        "verify_links {basedir} {uid}         Verifies a user's links (in the metadata)\n"
+        "search {basedir} {uid} {regex}       Searches posts by content\n"
+        "export_csv {basedir} {uid}           Exports followers, lists, MUTEd and bookmarks to CSV\n"
+        "export_posts {basedir} {uid}         Exports all posts to outbox.json\n"
+        "alias {basedir} {uid} {account}      Sets account (@user@host or actor url) as an alias\n"
+        "migrate {basedir} {uid}              Migrates to the account defined as the alias\n"
+        "import_csv {basedir} {uid}           Imports data from CSV files\n"
+        "import_list {basedir} {uid} {file}   Imports a Mastodon CSV list file\n"
+        "import_block_list {basedir} {uid} {file} Imports a Mastodon CSV block list file\n"
+        "lists {basedir} {uid}                Returns the names of the lists created by the user\n"
+        "list_members {basedir} {uid} {name}  Returns the list of accounts inside a list\n"
+        "list_create {basedir} {uid} {name}   Creates a new list\n"
+        "list_remove {basedir} {uid} {name}   Removes an existing list\n"
+        "list_add {basedir} {uid} {name} {acct} Adds an account (@user@host or actor url) to a list\n"
+        "list_del {basedir} {uid} {name} {actor} Deletes an actor URL from a list\n"
+        "top_ten {basedir} {uid} [{N}]        Prints the most popular posts\n"
+        "refresh {basedir} {uid}              Refreshes all actors\n";
+
+    if (cmd == NULL)
+        printf("%s", cmds);
+    else {
+        /* only show help for the entered command */
+        xs *l = xs_split(cmds, "\n");
+        const char *v;
+        int cnt = 0;
+
+        xs_list_foreach(l, v) {
+            if (xs_str_in(v, cmd) != -1) {
+                printf("%s\n", v);
+                cnt++;
+            }
+        }
+
+        if (cnt == 0)
+            printf("%s", cmds);
+    }
 
     return 1;
 }
@@ -94,7 +127,7 @@ int main(int argc, char *argv[])
     umask(0007);
 
     if ((cmd = GET_ARGV()) == NULL)
-        return usage();
+        return usage(cmd);
 
     if (strcmp(cmd, "init") == 0) { /** **/
         /* initialize the data storage */
@@ -106,7 +139,7 @@ int main(int argc, char *argv[])
 
     if ((basedir = getenv("SNAC_BASEDIR")) == NULL) {
         if ((basedir = GET_ARGV()) == NULL)
-            return usage();
+            return usage(cmd);
     }
 
     if (strcmp(cmd, "upgrade") == 0) { /** **/
@@ -172,7 +205,7 @@ int main(int argc, char *argv[])
     }
 
     if ((user = GET_ARGV()) == NULL)
-        return usage();
+        return usage(cmd);
 
     if (strcmp(cmd, "block") == 0) { /** **/
         int ret = instance_block(user);
@@ -284,6 +317,11 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "export_posts") == 0) { /** **/
+        export_posts(&snac);
+        return 0;
+    }
+
     if (strcmp(cmd, "import_csv") == 0) { /** **/
         import_csv(&snac);
         return 0;
@@ -304,14 +342,56 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "muted") == 0) { /** **/
+        xs *l = muted_list(&snac);
+        const char *v;
+
+        xs_list_foreach(l, v)
+            printf("%s\n", v);
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "top_ten") == 0) { /** **/
+        int count = 10;
+        const char *n = GET_ARGV();
+        if (xs_is_string(n))
+            count = atoi(n);
+
+        xs *l = user_top_ten(&snac, count);
+        const xs_list *i;
+
+        xs_list_foreach(l, i) {
+            printf("%s %ld★ %ld↺\n", xs_list_get(i, 0),
+                xs_number_get_l(xs_list_get(i, 1)),
+                xs_number_get_l(xs_list_get(i, 2)));
+        }
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "refresh") == 0) { /** **/
+        xs *fwers = follower_list(&snac);
+        xs *fwing = following_list(&snac);
+        const char *id;
+
+        xs_list_foreach(fwers, id)
+            enqueue_actor_refresh(&snac, id, 0);
+
+        xs_list_foreach(fwing, id)
+            enqueue_actor_refresh(&snac, id, 0);
+
+        return 0;
+    }
+
     if ((url = GET_ARGV()) == NULL)
-        return usage();
+        return usage(cmd);
 
     if (strcmp(cmd, "list_members") == 0) { /** **/
         xs *lid = list_maint(&snac, url, 4);
 
         if (lid != NULL) {
-            xs *lcont = list_content(&snac, lid, NULL, 0);
+            xs *lcont = list_members(&snac, lid, NULL, 0);
             const char *md5;
 
             xs_list_foreach(lcont, md5) {
@@ -328,7 +408,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (strcmp(cmd, "create_list") == 0) { /** **/
+    if (strcmp(cmd, "list_create") == 0) { /** **/
         xs *lid = list_maint(&snac, url, 4);
 
         if (lid == NULL) {
@@ -341,7 +421,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (strcmp(cmd, "delete_list") == 0) { /** **/
+    if (strcmp(cmd, "list_remove") == 0) { /** **/
         xs *lid = list_maint(&snac, url, 4);
 
         if (lid != NULL) {
@@ -367,7 +447,7 @@ int main(int argc, char *argv[])
                 if (valid_status(webfinger_request(account, &actor, &uid))) {
                     xs *md5 = xs_md5_hex(actor, strlen(actor));
 
-                    list_content(&snac, lid, md5, 1);
+                    list_members(&snac, lid, md5, 1);
                     printf("Actor %s (%s) added to list '%s' (%s)\n", actor, uid, url, lid);
                 }
                 else
@@ -390,7 +470,7 @@ int main(int argc, char *argv[])
             if (lid != NULL) {
                 xs *md5 = xs_md5_hex(account, strlen(account));
 
-                list_content(&snac, lid, md5, 2);
+                list_members(&snac, lid, md5, 2);
                 printf("Actor %s deleted from list '%s' (%s)\n", account, url, lid);
             }
             else
@@ -452,6 +532,7 @@ int main(int argc, char *argv[])
 
         if (msg != NULL) {
             enqueue_message(&snac, msg);
+            timeline_admire(&snac, xs_dict_get(msg, "object"), snac.actor, 0, "");
 
             if (dbglevel) {
                 xs_json_dump(msg, 4, stdout);
@@ -688,6 +769,17 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (strcmp(cmd, "collect_replies") == 0) { /** **/
+        enqueue_collect_replies(&snac, url);
+
+        return 0;
+    }
+
+    if (strcmp(cmd, "collect_outbox") == 0) { /** **/
+        enqueue_collect_outbox(&snac, url);
+        return 0;
+    }
+
     if (strcmp(cmd, "insert") == 0) { /** **/
         int status;
         xs *data = NULL;
@@ -744,17 +836,50 @@ int main(int argc, char *argv[])
 
     if (strcmp(cmd, "note") == 0 ||             /** **/
         strcmp(cmd, "note_unlisted") == 0 ||    /** **/
-        strcmp(cmd, "note_mention") == 0) {     /** **/
+        strcmp(cmd, "note_mention") == 0 ||     /** **/
+        strcmp(cmd, "note_followers") == 0) {   /** **/
         xs *content = NULL;
         xs *msg = NULL;
         xs *c_msg = NULL;
         xs *attl = xs_list_new();
-        char *fn = NULL;
+        const char *fn = NULL;
+        const char *in_reply_to = NULL;
+        const char **arg_irt = NULL;
+        int arg_date = 0;
+        xs *post_date = NULL;
 
         /* iterate possible attachments */
         while ((fn = GET_ARGV())) {
             FILE *f;
 
+            if (arg_irt) {
+                *arg_irt = fn;
+                arg_irt = NULL;
+            }
+            else
+            if (arg_date) {
+                /* convert to ISO */
+                time_t t = xs_parse_localtime(fn, "%Y%m%d%H%M%S");
+
+                if (t == 0) {
+                    fprintf(stderr, "Invalid scheduled date format (must be YYYYmmddHHMMSS)\n");
+                    return 1;
+                }
+
+                post_date = xs_str_iso_date(t);
+                arg_date = 0;
+            }
+            else
+            if (strcmp(fn, "-r") == 0) {
+                /* next argument is an inReplyTo */
+                arg_irt = &in_reply_to;
+            }
+            else
+            if (strcmp(fn, "-d") == 0) {
+                /* next argument is the schedule date */
+                arg_date = 1;
+            }
+            else
             if ((f = fopen(fn, "rb")) != NULL) {
                 /* get the file size and content */
                 fseek(f, 0, SEEK_END);
@@ -764,8 +889,10 @@ int main(int argc, char *argv[])
                 fclose(f);
 
                 char *ext = strrchr(fn, '.');
-                xs *hash  = xs_md5_hex(fn, strlen(fn));
-                xs *id    = xs_fmt("%s%s", hash, ext);
+                char rnd[32];
+                xs_rnd_buf(rnd, sizeof(rnd));
+                xs *hash  = xs_md5_hex(rnd, sizeof(rnd));
+                xs *id    = xs_fmt("post-%s%s", hash, ext ? ext : "");
                 xs *url   = xs_fmt("%s/s/%s", snac.actor, id);
 
                 /* store */
@@ -815,29 +942,38 @@ int main(int argc, char *argv[])
             content = xs_dup(url);
 
         if (!content || !*content) {
-            printf("Nothing to send\n");
+            fprintf(stderr, "Nothing to send\n");
             return 1;
         }
 
-        int scope = 0;
+        int scope = SCOPE_PUBLIC;
         if (strcmp(cmd, "note_mention") == 0)
-            scope = 1;
+            scope = SCOPE_MENTIONED;
         else
         if (strcmp(cmd, "note_unlisted") == 0)
-            scope = 2;
+            scope = SCOPE_UNLISTED;
+        else
+        if (strcmp(cmd, "note_followers") == 0)
+            scope = SCOPE_FOLLOWERS;
 
-        msg = msg_note(&snac, content, NULL, NULL, attl, scope, getenv("LANG"), NULL);
+        msg = msg_note(&snac, content, NULL, in_reply_to, attl, scope, getenv("LANG"), post_date);
 
-        c_msg = msg_create(&snac, msg);
+        const char *id = xs_dict_get(msg, "id");
 
-        if (dbglevel) {
-            xs_json_dump(c_msg, 4, stdout);
+        if (post_date)
+            schedule_add(&snac, id, msg);
+        else {
+            c_msg = msg_create(&snac, msg);
+
+            if (dbglevel) {
+                xs_json_dump(c_msg, 4, stdout);
+            }
+
+            enqueue_message(&snac, c_msg);
+            enqueue_webmention(msg);
+
+            timeline_add(&snac, id, msg);
         }
-
-        enqueue_message(&snac, c_msg);
-        enqueue_webmention(msg);
-
-        timeline_add(&snac, xs_dict_get(msg, "id"), msg);
 
         return 0;
     }

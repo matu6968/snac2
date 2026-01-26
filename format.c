@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_regex.h"
@@ -13,7 +13,7 @@
 #include "snac.h"
 
 /* emoticons, people laughing and such */
-const char *smileys[] = {
+const char * const smileys[] = {
     ":-)",        "&#128578;",
     ":-D",        "&#128512;",
     "X-D",        "&#128518;",
@@ -49,7 +49,7 @@ xs_dict *emojis(void)
     if (mtime(fn) == 0) {
         /* file does not exist; create it with the defaults */
         xs *d = xs_dict_new();
-        const char **emo = smileys;
+        const char * const *emo = smileys;
 
         while (*emo) {
             d = xs_dict_append(d, emo[0], emo[1]);
@@ -79,6 +79,24 @@ xs_dict *emojis(void)
     return d;
 }
 
+
+xs_dict *emojis_rm_categories() {
+    xs *emjs = emojis();
+    char *res = xs_dict_new();
+    const char *k, *v;
+    xs_dict_foreach(emjs, k, v) {
+        if (xs_type(v) == XSTYPE_DICT) {
+            const char *v2;
+            xs_dict_foreach(v, k, v2)
+                res = xs_dict_append(res, k, v2);
+        }
+        else
+            res = xs_dict_append(res, k, v);
+    }
+    return res;
+}
+
+
 /* Non-whitespace without trailing comma, period or closing paren */
 #define NOSPACE "([^[:space:],.)]+|[,.)]+[^[:space:],.)])+"
 
@@ -96,8 +114,8 @@ static xs_str *format_line(const char *line, xs_list **attach)
             "~~[^~]+~~"                         "|"
             "\\*\\*?\\*?[^\\*]+\\*?\\*?\\*"     "|"
             "__[^_]+__"                         "|" //anzu
-            "!\\[[^]]+\\]\\([^\\)]+\\)"         "|"
-            "\\[[^]]+\\]\\([^\\)]+\\)"          "|"
+            "!\\[[^]]+\\]\\([^\\)]+\\)\\)?"     "|"
+            "\\[[^]]+\\]\\([^\\)]+\\)\\)?"      "|"
             "[a-z]+:/" "/" NOSPACE              "|"
             "(mailto|xmpp):[^@[:space:]]+@" NOSPACE
         ")");
@@ -149,14 +167,15 @@ static xs_str *format_line(const char *line, xs_list **attach)
             else
             if (*v == '[') {
                 /* markdown-like links [label](url) */
-                xs *w = xs_strip_chars_i(
-                    xs_replace_i(xs_replace(v, "#", "&#35;"), "@", "&#64;"),
-                "![)");
+                xs *w = xs_replace_i(xs_replace(v, "#", "&#35;"), "@", "&#64;");
                 xs *l = xs_split_n(w, "](", 1);
 
                 if (xs_list_len(l) == 2) {
-                    const char *name = xs_list_get(l, 0);
-                    const char *url  = xs_list_get(l, 1);
+                    xs *name = xs_dup(xs_list_get(l, 0));
+                    xs *url  = xs_dup(xs_list_get(l, 1));
+
+                    name = xs_crop_i(name, 1, 0);
+                    url  = xs_crop_i(url, 0, -1);
 
                     xs *link = xs_fmt("<a href=\"%s\">%s</a>", url, name);
 
@@ -168,15 +187,17 @@ static xs_str *format_line(const char *line, xs_list **attach)
             else
             if (*v == '!') {
                 /* markdown-like images ![alt text](url to image) */
-                xs *w = xs_strip_chars_i(
-                    xs_replace_i(xs_replace(v, "#", "&#35;"), "@", "&#64;"),
-                "![)");
+                xs *w = xs_replace_i(xs_replace(v, "#", "&#35;"), "@", "&#64;");
                 xs *l = xs_split_n(w, "](", 1);
 
                 if (xs_list_len(l) == 2) {
-                    const char *alt_text = xs_list_get(l, 0);
-                    const char *img_url  = xs_list_get(l, 1);
-                    const char *mime     = xs_mime_by_ext(img_url);
+                    xs *alt_text = xs_dup(xs_list_get(l, 0));
+                    xs *img_url  = xs_dup(xs_list_get(l, 1));
+
+                    alt_text = xs_crop_i(alt_text, 2, 0);
+                    img_url  = xs_crop_i(img_url, 0, -1);
+
+                    const char *mime = xs_mime_by_ext(img_url);
 
                     if (attach != NULL && xs_startswith(mime, "image/")) {
                         const xs_dict *ad;
@@ -275,6 +296,7 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
     xs_str *s  = xs_str_new(NULL);
     int in_pre = 0;
     int in_blq = 0;
+    int in_ul = 0;
     xs *list;
     char *p;
     const char *v;
@@ -358,9 +380,28 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
             continue;
         }
 
+        if (xs_startswith(ss, "* ") || xs_startswith(ss, "- ")) {
+            /* unsorted list */
+            ss = xs_strip_i(xs_crop_i(ss, 1, 0));
+
+            if (!in_ul) {
+                s = xs_str_cat(s, "<ul>");
+                in_ul = 1;
+            }
+
+            s = xs_str_cat(s, "<li>", ss);
+
+            continue;
+        }
+
         if (in_blq) {
             s = xs_str_cat(s, "</blockquote>");
             in_blq = 0;
+        }
+
+        if (in_ul) {
+            s = xs_str_cat(s, "</ul>");
+            in_ul = 0;
         }
 
         s = xs_str_cat(s, ss);
@@ -376,12 +417,13 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
     s = xs_replace_i(s, "<br><br><blockquote>", "<br><blockquote>");
     s = xs_replace_i(s, "</blockquote><br>", "</blockquote>");
     s = xs_replace_i(s, "</pre><br>", "</pre>");
+    s = xs_replace_i(s, "</ul><br>", "</ul>");
     s = xs_replace_i(s, "</h2><br>", "</h2>"); //anzu ???
     s = xs_replace_i(s, "</h3><br>", "</h3>"); //anzu ???
 
     {
         /* traditional emoticons */
-        xs *d = emojis();
+        xs *d = emojis_rm_categories();
         int c = 0;
         const char *k, *v;
 
@@ -419,7 +461,7 @@ xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag
 }
 
 
-const char *valid_tags[] = {
+const char * const valid_tags[] = {
     "a", "p", "br", "br/", "blockquote", "ul", "ol", "li", "cite", "small",
     "span", "i", "b", "u", "s", "pre", "code", "em", "strong", "hr", "img", "del", "bdi",
     "h2","h3", //anzu
@@ -434,6 +476,9 @@ xs_str *sanitize(const char *content)
     int n = 0;
     char *p;
     const char *v;
+
+    if (!content)
+        return NULL;
 
     sl = xs_regex_split(content, "</?[^>]+>");
 

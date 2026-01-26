@@ -1,5 +1,5 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #include "xs.h"
 #include "xs_io.h"
@@ -7,6 +7,7 @@
 #include "xs_curl.h"
 #include "xs_time.h"
 #include "xs_json.h"
+#include "xs_http.h"
 
 #include "snac.h"
 

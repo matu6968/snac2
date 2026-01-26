@@ -1,11 +1,12 @@
 /* snac - A simple, minimalistic ActivityPub instance */
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
-#define VERSION "2.78"
+#define VERSION "2.90-dev"
 
 #define USER_AGENT "snac/" VERSION
 
 #define WHAT_IS_SNAC_URL "https:/" "/comam.es/what-is-snac"
+#define SNAC_DOC_URL "https:/" "/comam.es/snac-doc"
 
 #define DIR_PERM 00770
 #define DIR_PERM_ADD 02770
@@ -43,7 +44,7 @@ extern int dbglevel;
 
 int mkdirx(const char *pathname);
 
-int valid_status(int status);
+#define valid_status(status) xs_http_valid_status(status)
 xs_str *tid(int offset);
 double ftime(void);
 
@@ -77,6 +78,13 @@ typedef struct {
 
 extern srv_state *p_state;
 
+enum {
+    SCOPE_PUBLIC = 0,
+    SCOPE_MENTIONED = 1,
+    SCOPE_UNLISTED = 2,
+    SCOPE_FOLLOWERS = 3,
+};
+
 void snac_log(snac *user, xs_str *str);
 #define snac_debug(user, level, str) do { if (dbglevel >= (level)) \
     { snac_log((user), (str)); } } while (0)
@@ -96,6 +104,9 @@ int validate_uid(const char *uid);
 
 xs_str *hash_password(const char *uid, const char *passwd, const char *nonce);
 int check_password(const char *uid, const char *passwd, const char *hash);
+
+int strip_media(const char *fn);
+int check_strip_tool(void);
 
 void srv_archive(const char *direction, const char *url, xs_dict *req,
                  const char *payload, int p_size,
@@ -138,12 +149,15 @@ void object_touch(const char *id);
 int object_admire(const char *id, const char *actor, int like);
 int object_unadmire(const char *id, const char *actor, int like);
 
+int object_emoji_react(const char *mid, const char *eid);
+int object_rm_emoji_react(const char *mid, const char *eid);
 int object_likes_len(const char *id);
 int object_announces_len(const char *id);
 
 xs_list *object_children(const char *id);
 xs_list *object_likes(const char *id);
 xs_list *object_announces(const char *id);
+xs_list *object_get_emoji_reacts(const char *id);
 int object_parent(const char *md5, char parent[MD5_HEX_SIZE]);
 
 int object_user_cache_add(snac *snac, const char *id, const char *cachedir);
@@ -172,7 +186,8 @@ xs_str *user_index_fn(snac *user, const char *idx_name);
 xs_list *timeline_simple_list(snac *user, const char *idx_name, int skip, int show, int *more);
 xs_list *timeline_list(snac *snac, const char *idx_name, int skip, int show, int *more);
 int timeline_add(snac *snac, const char *id, const xs_dict *o_msg);
-int timeline_admire(snac *snac, const char *id, const char *admirer, int like);
+int timeline_admire(snac *snac, const char *id, const char *admirer, int like, const xs_dict *msg);
+int timeline_emoji_react(const char *atto, const char *id, const xs_dict *o_msg);
 
 xs_list *timeline_top_level(snac *snac, const xs_list *list);
 void timeline_add_mark(snac *user);
@@ -192,6 +207,8 @@ void mute(snac *snac, const char *actor);
 void unmute(snac *snac, const char *actor);
 int is_muted(snac *snac, const char *actor);
 xs_list *muted_list(snac *user);
+
+xs_str *emoji_reacted(snac *user, const char *id);
 
 int is_bookmarked(snac *user, const char *id);
 int bookmark(snac *user, const char *id);
@@ -223,6 +240,7 @@ int limited(snac *user, const char *id, int cmd);
 
 void hide(snac *snac, const char *id);
 int is_hidden(snac *snac, const char *id);
+int unhide(snac *user, const char *id);
 
 void tag_index(const char *id, const xs_dict *obj);
 xs_str *tag_fn(const char *tag);
@@ -231,7 +249,7 @@ xs_list *tag_search(const char *tag, int skip, int show);
 xs_val *list_maint(snac *user, const char *list, int op);
 xs_str *list_timeline_fn(snac *user, const char *list);
 xs_list *list_timeline(snac *user, const char *list, int skip, int show);
-xs_val *list_content(snac *user, const char *list_id, const char *actor_md5, int op);
+xs_val *list_members(snac *user, const char *list_id, const char *actor_md5, int op);
 void list_distribute(snac *user, const char *who, const xs_dict *post);
 
 int actor_add(const char *actor, const xs_dict *msg);
@@ -276,6 +294,11 @@ int content_match(const char *file, const xs_dict *msg);
 xs_list *content_search(snac *user, const char *regex,
             int priv, int skip, int show, int max_secs, int *timeout);
 
+int actor_failure(const char *actor, int op);
+int instance_failure(const char *url, int op);
+
+int grave(const char *objid, int op);
+
 void enqueue_input(snac *snac, const xs_dict *msg, const xs_dict *req, int retries);
 void enqueue_shared_input(const xs_dict *msg, const xs_dict *req, int retries);
 void enqueue_output_raw(const char *keyid, const char *seckey,
@@ -295,6 +318,9 @@ void enqueue_verify_links(snac *user);
 void enqueue_actor_refresh(snac *user, const char *actor, int forward_secs);
 void enqueue_webmention(const xs_dict *msg);
 void enqueue_notify_webhook(snac *user, const xs_dict *noti, int retries);
+void enqueue_collect_replies(snac *user, const char *post);
+void enqueue_collect_outbox(snac *user, const char *actor_id);
+void enqueue_fsck(void);
 
 int was_question_voted(snac *user, const char *id);
 
@@ -325,12 +351,15 @@ void httpd(void);
 int webfinger_request_signed(snac *snac, const char *qs, xs_str **actor, xs_str **user);
 int webfinger_request(const char *qs, xs_str **actor, xs_str **user);
 int webfinger_request_fake(const char *qs, xs_str **actor, xs_str **user);
-int webfinger_get_handler(xs_dict *req, const char *q_path,
+int webfinger_get_handler(const xs_dict *req, const char *q_path,
                           xs_val **body, int *b_size, char **ctype);
 
 const char *default_avatar_base64(void);
 
 xs_str *process_tags(snac *snac, const char *content, xs_list **tag);
+
+void collect_replies(snac *user, const char *id);
+void collect_outbox(snac *user, const char *actor_id);
 
 const char *get_atto(const xs_dict *msg);
 const char *get_in_reply_to(const xs_dict *msg);
@@ -338,6 +367,8 @@ xs_list *get_attachments(const xs_dict *msg);
 
 xs_dict *msg_admiration(snac *snac, const char *object, const char *type);
 xs_dict *msg_repulsion(snac *user, const char *id, const char *type);
+xs_dict *msg_emoji_init(snac *user, const char *mid, const char *eid);
+xs_dict *msg_emoji_unreact(snac *user, const char *id, const char *type);
 xs_dict *msg_create(snac *snac, const xs_dict *object);
 xs_dict *msg_follow(snac *snac, const char *actor);
 
@@ -355,6 +386,8 @@ xs_dict *msg_move(snac *user, const char *new_account);
 xs_dict *msg_accept(snac *snac, const xs_val *object, const char *to);
 xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
                       const xs_list *opts, int multiple, int end_secs);
+xs_dict *msg_replies(snac *user, const char *id, int fill);
+int get_msg_visibility(const xs_dict *msg);
 
 int activitypub_request(snac *snac, const char *url, xs_dict **data);
 int actor_request(snac *user, const char *actor, xs_dict **data);
@@ -366,6 +399,7 @@ int send_to_inbox(snac *snac, const xs_str *inbox, const xs_dict *msg,
 xs_str *get_actor_inbox(const char *actor, int shared);
 int send_to_actor(snac *snac, const char *actor, const xs_dict *msg,
                   xs_val **payload, int *p_size, int timeout);
+int is_msg_mine(snac *user, const char *id);
 int is_msg_public(const xs_dict *msg);
 int is_msg_from_private_user(const xs_dict *msg);
 int is_msg_for_me(snac *snac, const xs_dict *msg);
@@ -381,6 +415,7 @@ int activitypub_post_handler(const xs_dict *req, const char *q_path,
                              char **body, int *b_size, char **ctype);
 
 xs_dict *emojis(void);
+xs_dict *emojis_rm_categories(void);
 xs_str *format_text_with_emoji(snac *user, const char *text, int ems, const char *proxy);
 xs_str *not_really_markdown(const char *content, xs_list **attach, xs_list **tag);
 xs_str *sanitize(const char *content);
@@ -388,7 +423,7 @@ xs_str *encode_html(const char *str);
 
 xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
                       int skip, int show, int show_more,
-                      const char *title, const char *page, int utl, const char *error);
+                      const char *title, const char *page, int utl, const char *error, int terse);
 
 int html_get_handler(const xs_dict *req, const char *q_path,
                      char **body, int *b_size, char **ctype,
@@ -434,6 +469,8 @@ void mastoapi_purge(void);
 void verify_links(snac *user);
 
 void export_csv(snac *user);
+void export_posts(snac *user);
+
 int migrate_account(snac *user);
 
 void import_blocked_accounts_csv(snac *user, const char *fn);
@@ -441,14 +478,6 @@ void import_following_accounts_csv(snac *user, const char *fn);
 void import_list_csv(snac *user, const char *fn);
 void import_csv(snac *user);
 int parse_port(const char *url, const char **errstr);
-
-typedef enum {
-#define HTTP_STATUS(code, name, text) HTTP_STATUS_ ## name = code,
-#include "http_codes.h"
-#undef HTTP_STATUS
-} http_status;
-
-const char *http_status_text(int status);
 
 typedef struct {
     double timestamp;
@@ -467,3 +496,7 @@ xs_str *rss_from_timeline(snac *user, const xs_list *timeline,
                         const char *title, const char *link, const char *desc);
 void rss_to_timeline(snac *user, const char *url);
 void rss_poll_hashtags(void);
+
+void data_fsck(void);
+
+xs_list *user_top_ten(snac *user, int count);

@@ -1,4 +1,4 @@
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #ifndef _XS_URL_H
 
@@ -6,6 +6,7 @@
 
 xs_str *xs_url_dec(const char *str);
 xs_str *xs_url_enc(const char *str);
+xs_str *xs_url_dec_emoji(const char *str);
 xs_dict *xs_url_vars(const char *str);
 xs_dict *xs_multipart_form_data(const char *payload, int p_size, const char *header);
 
@@ -71,6 +72,38 @@ xs_str *xs_url_dec(const char *str)
             s = xs_append_m(s, " ", 1);
         else
             s = xs_append_m(s, str, 1);
+
+        str++;
+    }
+
+    return s;
+}
+
+
+xs_str *xs_url_dec_emoji(const char *str)
+/* decodes an URL, returns NULL if not every char is an encoded hex */
+{
+    xs_str *s = xs_str_new(NULL);
+
+    while (*str) {
+        if (!xs_is_string(str))
+            break;
+
+        if (*str == '%') {
+            unsigned int i;
+
+            if (sscanf(str + 1, "%02x", &i) == 1) {
+                unsigned char uc = i;
+
+                if (!xs_is_string((char *)&uc))
+                    break;
+
+                s = xs_append_m(s, (char *)&uc, 1);
+                str += 2;
+            }
+        }
+        else
+            return NULL;
 
         str++;
     }

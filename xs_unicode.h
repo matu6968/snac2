@@ -1,4 +1,4 @@
-/* copyright (c) 2022 - 2025 grunfink et al. / MIT license */
+/* copyright (c) 2022 - 2026 grunfink et al. / MIT license */
 
 #ifndef _XS_UNICODE_H
 
@@ -22,6 +22,7 @@
  int xs_unicode_nfc(unsigned int base, unsigned int diac, unsigned int *cpoint);
  int xs_unicode_is_alpha(unsigned int cpoint);
  int xs_unicode_is_right_to_left(unsigned int cpoint);
+ int xs_is_emoji(unsigned int cpoint);
 
 #ifdef _XS_H
  xs_str *xs_utf8_insert(xs_str *str, unsigned int cpoint, int *offset);
@@ -79,6 +80,10 @@ unsigned int xs_utf8_dec(const char **str)
 /* decodes an utf-8 char inside str and updates the pointer */
 {
     const char *p = *str;
+
+    if (!xs_is_string(p))
+        return 0;
+
     unsigned int cpoint = 0;
     unsigned char c = *p++;
     int cb = 0;
@@ -129,6 +134,12 @@ static unsigned int xs_unicode_width_table[] = {
     0x1f200,    0x1ffff,    2,      /* emojis */
     0x20000,    0x2fffd,    2       /* more CJK */
 };
+
+/* magic number from https://en.wikipedia.org/wiki/Emoji#Unicode_blocks */
+int xs_is_emoji(unsigned int cpoint) {
+/* returns wether the input is an utf8 emoji */
+    return cpoint > 0x00A9 && cpoint < 0x1ffff;
+}
 
 int xs_unicode_width(unsigned int cpoint)
 /* returns the width in columns of a Unicode codepoint (somewhat simplified) */
@@ -221,7 +232,7 @@ unsigned int *_xs_unicode_upper_search(unsigned int cpoint)
 /* searches for an uppercase codepoint in the case fold table */
 {
     int b = 0;
-    int t = xs_countof(xs_unicode_case_fold_table) / 2 + 1;
+    int t = xs_countof(xs_unicode_case_fold_table) / 2 - 1;
 
     while (t >= b) {
         int n = (b + t) / 2;

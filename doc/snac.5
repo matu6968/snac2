@@ -18,7 +18,7 @@ server and user data. For the operation manual, see
 For the administration manual, see
 .Xr snac 8 .
 .Ss Message Formatting
-Message notes respect the entered new line breaks rigurously.
+Message notes respect the entered new line breaks rigorously.
 A special subset of Markdown is allowed, including:
 .Bl -tag -width tenletters
 .It bold
@@ -26,14 +26,14 @@ A special subset of Markdown is allowed, including:
 .It italic
 *text between a pair of asterisks*
 .It strikethrough text
-~~text between a pair of tildes~~
+~~text between two pairs of tildes~~
 .It underlined text
 __text between two pairs of underscores__
 .It code
 Text `between backticks` is formatted as code.
 .Bd -literal
 ```
-/* text between lines with only three backticks is preformatted */
+/* text between lines starting with three backticks is preformatted */
 int main(int argc, char *argv[])
 {
     return 0;
@@ -51,10 +51,12 @@ image (.jpg, .gif, .png, etc), are converted to ActivityPub image
 attachments. Also, from version 2.57, markdown-style image links
 in the form of ![alt text](image url) are also supported.
 .It line separators
-Horizonal rules can be inserted by typing three minus symbols
+Horizontal rules can be inserted by typing three minus symbols
 alone in a line.
 .It quoted text
-Lines starting with >.
+Lines starting with > (blockquotes).
+.It bullet points
+Lines starting with an asterisk or hyphen, plus a space (unsorted lists).
 .It headers
 One, two or three # at the beginning of a line plus a space plus
 some text are converted to HTML headers.
@@ -141,6 +143,8 @@ in the "last_announcement" field of the
 .Pa user.json
 file. When the file is modified, the announcement will then reappear. It can
 contain only text and will be ignored if it has more than 2048 bytes.
+.It Pa server.pid
+This file stores the server PID in a single text line.
 .El
 .Pp
 Each user directory is a subdirectory of 
@@ -220,8 +224,6 @@ after executing the 'export_csv' command-line operation.
 .It Pa import/
 Mastodon-compatible CSV files must be copied into this directory to use
 any of the importing functions.
-.It Pa server.pid
-This file stores the server PID in a single text line.
 .El
 .Sh SEE ALSO
 .Xr snac 1 ,

@@ -169,6 +169,9 @@ fill up with old crap and finally burst in flames, you can disable
 purging by setting this to 0.
 .It Ic local_purge_days
 Same as before, but for the user-generated entries in the local timeline.
+.It Ic propagate_local_purge
+If this value is set to true, a Delete activity is generated for every
+purged local post and sent everywhere.
 .It Ic cssurls
 This is a list of URLs to CSS files that will be inserted, in this order,
 in the HTML before the user CSS. Use these files to configure the global
@@ -207,6 +210,8 @@ fields are set (see below), they are also shown.
 The email address of the instance administrator (optional).
 .It Ic admin_account
 The user name of the instance administrator (optional).
+.It Ic title
+The name of the instance (optional).
 .It Ic short_description
 A textual short description about the instance (optional).
 .It Ic short_description_raw
@@ -264,6 +269,10 @@ The maximum number of entries (posts) to be returned in user RSS feeds and outbo
 (default: 20).
 .It Ic max_attachments
 The maximum number of attachments per post (default: 4).
+.It Ic max_poll_options
+The maximum number of poll options in a poll (default: 8).
+.It Ic max_poll_option_length
+The maximum length of a single poll option (default: 60).
 .It Ic enable_svg
 Since version 2.73, SVG image attachments are hidden by default; you can enable
 them by setting this value to true.
@@ -283,6 +292,28 @@ value of 1 to avoid hammering servers.
 .It Ic disable_notify_webhook
 Since version 2.78, users can set a webhook URL to receive notifications. Set this
 to true if you don't want your users to have this privilege.
+.It Ic favicon_url
+The URL to a favicon. If it's not set, the default one is used instead.
+.It Ic max_failing_days
+The maximum number of days an instance is considered down after continuous failed
+outgoing messages (default: 15). Anyway, whenever any incoming activity from a
+failed instance is detected, this counter is reset for it.
+.It Ic vkey
+Public vapid key. Used for notification on some client.
+.It Ic disable_emojireact
+If set to true, all EmojiReact support (for input and output) is disabled.
+.It Ic strip_exif
+If set to true, EXIF and other metadata will be stripped from uploaded images (jpg, png, webp, heic, avif, tiff, gif, bmp) and videos (mp4, m4v, mov, webm, mkv, avi). This requires the
+.Nm mogrify
+(from ImageMagick) and
+.Nm ffmpeg
+tools to be installed. If
+.Nm snac
+cannot find or execute these tools at startup, it will refuse to run.
+.It Ic mogrify_path
+Overrides the default "mogrify" command name or path. Use this if the tool is not in the system PATH or has a different name.
+.It Ic ffmpeg_path
+Overrides the default "ffmpeg" command name or path. Use this if the tool is not in the system PATH or has a different name.
 .El
 .Pp
 You must restart the server to make effective these changes.
@@ -318,7 +349,7 @@ for the smiley or the Emoji itself as text).
 Emoji values can also be URLs to image files; in this case, they will not be
 substituted in the post content, but added to the 'tag' array as an ActivityPub
 standard 'Emoji' object (it's recommendable that the Emoji key be enclosed in
-colons for maximum compatilibity with other ActivityPub implementations, like
+colons for maximum compatibility with other ActivityPub implementations, like
 e.g. :happydoggo:). These images can be served from an external source or from the
 .Pa static
 directory of the instance admin.
@@ -394,7 +425,7 @@ objects, on input and output.
 .It Vt EmojiReact
 For
 .Vt Note
-objects, on input.
+objects, on input and output.
 .It Vt Announce
 For
 .Vt Note
