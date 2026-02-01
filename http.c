@@ -46,7 +46,7 @@ xs_dict *http_signed_request_raw(const char *keyid, const char *seckey,
     else
         target = "";
 
-    /* digest */
+    /* digest (also for GET; needed for some "authorized fetch" servers) */
     {
         xs *s;
 
@@ -89,13 +89,23 @@ xs_dict *http_signed_request_raw(const char *keyid, const char *seckey,
     else
         hdrs = xs_dict_append(hdrs, "accept",       "application/activity+json");
 
+    hdrs = xs_dict_append(hdrs, "digest",       digest);
+
     xs *user_agent = xs_fmt("%s; +%s/", USER_AGENT, srv_baseurl);
 
     hdrs = xs_dict_append(hdrs, "date",         date);
     hdrs = xs_dict_append(hdrs, "signature",    signature);
-    hdrs = xs_dict_append(hdrs, "digest",       digest);
     hdrs = xs_dict_append(hdrs, "host",         host);
     hdrs = xs_dict_append(hdrs, "user-agent",   user_agent);
+
+    /* Some servers expect Authorization: Signature ... instead of Signature: ... */
+#ifndef SNAC_ESP32
+    /* On ESP32, skip Authorization header as Cloudflare Tunnel may strip it */
+    {
+        xs *authz = xs_fmt("Signature %s", signature);
+        hdrs = xs_dict_append(hdrs, "authorization", authz);
+    }
+#endif
 
     response = xs_http_request(method, url, hdrs,
                            body, b_size, status, payload, p_size, timeout);

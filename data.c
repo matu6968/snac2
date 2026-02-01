@@ -20,10 +20,29 @@
 
 #include <time.h>
 #include <sys/stat.h>
+#ifndef SNAC_ESP32
 #include <sys/file.h>
+#else
+#ifndef LOCK_SH
+#define LOCK_SH 1
+#endif
+#ifndef LOCK_EX
+#define LOCK_EX 2
+#endif
+#endif
 #include <sys/time.h>
 #include <fcntl.h>
 #include <pthread.h>
+
+#ifdef SNAC_ESP32
+static inline int _snac_esp32_flock_stub(int fd, int op)
+{
+    (void)fd;
+    (void)op;
+    return 0;
+}
+#define flock(fd, op) _snac_esp32_flock_stub((fd), (op))
+#endif
 
 double disk_layout = 2.7;
 
@@ -195,6 +214,10 @@ void srv_free(void)
     xs_free(srv_basedir);
     xs_free(srv_config);
     xs_free(srv_baseurl);
+
+    srv_basedir = NULL;
+    srv_config  = NULL;
+    srv_baseurl = NULL;
 
     pthread_mutex_destroy(&data_mutex);
 }
@@ -419,7 +442,11 @@ double mtime_nl(const char *fn, int *n_link)
     int n = 0;
 
     if (fn && stat(fn, &st) != -1) {
+        #ifndef SNAC_ESP32
         r = (double) st.st_mtim.tv_sec;
+        #else
+        r = (double) st.st_mtime;
+        #endif
         n = st.st_nlink;
     }
 
@@ -441,7 +468,11 @@ double f_ctime(const char *fn)
     if (fn && stat(fn, &st) != -1) {
         /* return the lowest of ctime and mtime;
            there are operations that change the ctime, like link() */
+        #ifndef SNAC_ESP32
         r = (double) MIN(st.st_ctim.tv_sec, st.st_mtim.tv_sec);
+        #else
+        r = (double) st.st_mtime;
+        #endif
     }
 
     return r;
@@ -3709,6 +3740,11 @@ void enqueue_output(snac *snac, const xs_dict *msg,
                     const xs_str *inbox, int retries, int p_status)
 /* enqueues an output message to an inbox */
 {
+    if (xs_is_string(inbox) && xs_startswith(inbox, srv_baseurl)) {
+        snac_debug(snac, 1, xs_str_new("refusing enqueue to local instance"));
+        return;
+    }
+
     if (is_msg_mine(snac, inbox)) {
         snac_debug(snac, 1, xs_str_new("refusing enqueue to myself"));
         return;

@@ -118,7 +118,7 @@ xs_str *xs_url_enc(const char *str)
     xs_str *s = xs_str_new(NULL);
 
     while (*str) {
-        if (isalnum(*str) || strchr("-._~", *str)) {
+        if (isalnum((unsigned char)*str) || strchr("-._~", *str)) {
             s = xs_append_m(s, str, 1);
         }
         else {

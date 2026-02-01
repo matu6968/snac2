@@ -1,0 +1,18 @@
+menu "Snac2 ESP32"
+
+config SNAC_WIFI_ENABLE
+    bool "Enable Wi-Fi station"
+    default y
+
+config SNAC_WIFI_SSID
+    string "Wi-Fi SSID"
+    depends on SNAC_WIFI_ENABLE
+    default ""
+
+config SNAC_WIFI_PASSWORD
+    string "Wi-Fi password"
+    depends on SNAC_WIFI_ENABLE
+    default ""
+
+endmenu
+

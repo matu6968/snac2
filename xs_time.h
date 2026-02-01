@@ -54,6 +54,17 @@ xs_str *xs_str_time_diff(time_t time_diff)
 
 char *strptime(const char *s, const char *format, struct tm *tm);
 
+static time_t _xs_timegm(struct tm *tm)
+/* replacement for timegm() on systems that don't provide it */
+{
+    struct tm tm_copy = *tm;
+    time_t t = mktime(&tm_copy);
+    struct tm gtm;
+    gmtime_r(&t, &gtm);
+    time_t t2 = mktime(&gtm);
+    return t + (t - t2);
+}
+
 time_t xs_parse_time(const char *str, const char *fmt, int local)
 {
     time_t t = 0;
@@ -68,7 +79,7 @@ time_t xs_parse_time(const char *str, const char *fmt, int local)
     if (local)
         tm.tm_isdst = -1;
 
-    t = local ? mktime(&tm) : timegm(&tm);
+    t = local ? mktime(&tm) : _xs_timegm(&tm);
 
 #endif /* WITHOUT_STRPTIME */
 
@@ -99,7 +110,7 @@ time_t xs_parse_iso_date(const char *iso_date, int local)
         if (local)
             tm.tm_isdst = -1;
 
-        t = local ? mktime(&tm) : timegm(&tm);
+        t = local ? mktime(&tm) : _xs_timegm(&tm);
     }
 
 #endif /* WITHOUT_STRPTIME */

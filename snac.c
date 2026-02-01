@@ -90,7 +90,7 @@ int validate_uid(const char *uid)
         return 0;
 
     while (*uid) {
-        if (!(isalnum(*uid) || *uid == '_'))
+        if (!(isalnum((unsigned char)*uid) || *uid == '_'))
             return 0;
 
         uid++;
@@ -180,6 +180,13 @@ int strip_media(const char *fn)
 /* strips EXIF data from a file */
 {
     int ret = 0;
+
+#ifdef SNAC_ESP32
+    /* On ESP32 we don't have mogrify/ffmpeg. Media processing is expected to
+       be offloaded to a host PC. For now, keep uploads working by no-op'ing. */
+    (void)fn;
+    return 0;
+#endif
 
     const xs_val *v = xs_dict_get(srv_config, "strip_exif");
 

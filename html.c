@@ -4610,8 +4610,15 @@ int html_get_handler(const xs_dict *req, const char *q_path,
         if (xs_type(xs_dict_get(snac.config, "private")) == XSTYPE_TRUE) {
             /** empty public timeline for private users **/
             *body = html_timeline(&snac, NULL, 1, 0, 0, 0, NULL, "", 1, error, terse);
-            *b_size = strlen(*body);
-            status  = HTTP_STATUS_OK;
+            if (*body != NULL) {
+                *b_size = strlen(*body);
+                status  = HTTP_STATUS_OK;
+            }
+            else {
+                *body   = xs_str_new("ERROR: cannot render timeline\n");
+                *b_size = strlen(*body);
+                status  = HTTP_STATUS_INTERNAL_SERVER_ERROR;
+            }
         }
         else
         if (cache && history_mtime(&snac, h) > timeline_mtime(&snac)) {
@@ -4634,8 +4641,16 @@ int html_get_handler(const xs_dict *req, const char *q_path,
 
             *body = html_timeline(&snac, pins, 1, skip, show, more, NULL, "", 1, error, terse);
 
-            *b_size = strlen(*body);
-            status  = HTTP_STATUS_OK;
+            if (*body != NULL) {
+                *b_size = strlen(*body);
+                status  = HTTP_STATUS_OK;
+            }
+            else {
+                *body   = xs_str_new("ERROR: cannot render timeline\n");
+                *b_size = strlen(*body);
+                status  = HTTP_STATUS_INTERNAL_SERVER_ERROR;
+                save    = 0;
+            }
 
             if (save)
                 history_add(&snac, h, *body, *b_size, etag);

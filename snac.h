@@ -29,6 +29,31 @@
 
 #define MD5_ALREADY_SEEN_MARK "00000000000000000000000000000000"
 
+#ifdef SNAC_ESP32
+#if !CONFIG_ESP_WIFI_ENABLED
+#error "This firmware requires WiFi support (not supported by some ESP32 chips)"
+#endif
+// Running Snac2 on a ESP32 requires PSRAM (as without PSRAM it eats already 400 KB!)
+// which means excluding most -C series chips
+#ifndef CONFIG_SPIRAM
+#error "This firmware requires PSRAM to be enabled in the build configuration"
+#endif
+// so only these chips will ever be supported
+#if CONFIG_IDF_TARGET_ESP32
+#define PLATFORM_NAME "ESP32"
+#elif CONFIG_IDF_TARGET_ESP32S2
+#define PLATFORM_NAME "ESP32-S2"
+#elif CONFIG_IDF_TARGET_ESP32S3
+#define PLATFORM_NAME "ESP32-S3"
+#elif CONFIG_IDF_TARGET_ESP32C5
+#define PLATFORM_NAME "ESP32-C5"
+#elif CONFIG_IDF_TARGET_ESP32C61
+#define PLATFORM_NAME "ESP32-C61"
+#else
+#define PLATFORM_NAME "Unknown ESP"
+#endif
+#endif
+
 extern double disk_layout;
 extern xs_str *srv_basedir;
 extern xs_dict *srv_config;
@@ -436,6 +461,9 @@ int html_post_handler(const xs_dict *req, const char *q_path,
 
 int write_default_css(void);
 int snac_init(const char *_basedir);
+#ifdef SNAC_ESP32
+int snac_init_esp32(const char *basedir, const char *server_json);
+#endif
 int adduser(const char *uid);
 int resetpwd(snac *snac);
 int deluser(snac *user);

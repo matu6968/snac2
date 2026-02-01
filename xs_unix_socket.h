@@ -10,6 +10,29 @@
 
 #ifdef XS_IMPLEMENTATION
 
+#ifdef SNAC_ESP32
+
+#include <errno.h>
+
+int xs_unix_socket_server(const char *path, const char *grp)
+/* opens a unix-type server socket (unsupported on ESP32) */
+{
+    (void)path;
+    (void)grp;
+    errno = ENOTSUP;
+    return -1;
+}
+
+int xs_unix_socket_connect(const char *path)
+/* connects to a unix-type socket (unsupported on ESP32) */
+{
+    (void)path;
+    errno = ENOTSUP;
+    return -1;
+}
+
+#else /* SNAC_ESP32 */
+
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <grp.h>
@@ -71,6 +94,8 @@ int xs_unix_socket_connect(const char *path)
 
     return d;
 }
+
+#endif /* SNAC_ESP32 */
 
 
 #endif /* XS_IMPLEMENTATION */

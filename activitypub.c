@@ -82,6 +82,23 @@ int activitypub_request(snac *user, const char *url, xs_dict **data)
             NULL, NULL, 0, &status, &payload, &p_size, 0);
     }
 
+    /* If signed fetch gets 401/403 (authorized fetch), don't bother retrying unsigned. */
+#ifdef SNAC_ESP32
+    if ((status == 401 || status == 403) && response != NULL) {
+        xs *pl = payload ? xs_dup(payload) : xs_str_new("");
+        if (xs_size(pl) > 96) pl[96] = '\0';
+        pl = xs_replace_i(pl, "\r", "");
+        pl = xs_replace_i(pl, "\n", "");
+        srv_log(xs_fmt("[esp32] activitypub_request auth %s %d ctype=%s www-auth=%s esp_err=%s payload=%s",
+            url,
+            status,
+            xs_dict_get_def(response, "content-type", ""),
+            xs_dict_get_def(response, "www-authenticate", ""),
+            xs_dict_get_def(response, "_esp_err", ""),
+            pl));
+    }
+#endif
+
     if (status == 0 || (status >= 500 && status <= 599)) {
         /* I found an instance running Misskey that returned
            500 on signed messages but returned the object
@@ -549,6 +566,18 @@ int send_to_inbox_raw(const char *keyid, const char *seckey,
     int status;
     xs_dict *response;
     xs *j_msg = xs_json_dumps((xs_dict *)msg, 4);
+
+#ifdef SNAC_ESP32
+    /* On ESP32, detect if we're sending to ourselves and handle locally to avoid timeout */
+    if (inbox && xs_startswith(inbox, srv_baseurl)) {
+        /* This is a local inbox - enqueue directly instead of HTTP roundtrip */
+        enqueue_input(NULL, msg, NULL, 0);
+        status = HTTP_STATUS_ACCEPTED;
+        if (p_size) *p_size = 0;
+        if (payload) *payload = NULL;
+        return status;
+    }
+#endif
 
     response = http_signed_request_raw(keyid, seckey, "POST", inbox,
         NULL, j_msg, strlen(j_msg), &status, payload, p_size, timeout);
@@ -2657,11 +2686,25 @@ int process_input_message(snac *snac, const xs_dict *msg, const xs_dict *req)
     /* check the signature */
     xs *sig_err = NULL;
 
-    if (!check_signature(req, &sig_err)) {
-        srv_log(xs_fmt("bad signature %s (%s)", actor, sig_err));
+    if (req == NULL) {
+        /* internal enqueue (no HTTP request context / no signature) */
+    }
+    else {
+#ifdef SNAC_ESP32
+        /* On ESP32, skip signature check if message is from ourselves to avoid timeout deadlock */
+        int is_local = 0;
+        if (actor && xs_startswith(actor, srv_baseurl))
+            is_local = 1;
+        
+        if (!is_local && !check_signature(req, &sig_err)) {
+#else
+        if (!check_signature(req, &sig_err)) {
+#endif
+            srv_log(xs_fmt("bad signature %s (%s)", actor, sig_err));
 
-        srv_archive_error("check_signature", sig_err, req, msg);
-        return -1;
+            srv_archive_error("check_signature", sig_err, req, msg);
+            return -1;
+        }
     }
 
     /* if no user is set, no further checks can be done; propagate */
@@ -3213,6 +3256,10 @@ int send_email(const xs_dict *mailinfo)
     const char *url = xs_dict_get(srv_config, "smtp_url");
 
     if (!xs_is_string(url) || *url == '\0') {
+#ifdef SNAC_ESP32
+        /* no sendmail(8) fallback on ESP32 */
+        return -1;
+#else
         /* revert back to old sendmail pipe behaviour */
         const char *msg = xs_dict_get(mailinfo, "body");
         FILE *f;
@@ -3239,6 +3286,7 @@ int send_email(const xs_dict *mailinfo)
         fclose(f);
         if (waitpid(pid, &status, 0) == -1) return -1;
         return status;
+#endif
     }
 
     const char
@@ -3277,7 +3325,7 @@ void process_user_queue_item(snac *user, xs_dict *q_item)
         /* add this shared inbox first */
         xs *this_shared_inbox = xs_fmt("%s/shared-inbox", srv_baseurl);
         xs_set_add(&inboxes, this_shared_inbox);
-        enqueue_output(user, msg, this_shared_inbox, 0, 0);
+        enqueue_shared_input(msg, NULL, 0);
 
         /* iterate the recipients */
         xs_list_foreach(rcpts, actor) {

@@ -35,7 +35,7 @@ xs_list *xs_regex_split_n(const char *str, const char *rx, int count)
     regmatch_t rm;
     int offset = 0;
     xs_list *list = xs_list_new();
-    const char *p;
+    const char *p = str;
 
     if (regcomp(&re, rx, REG_EXTENDED))
         return list;

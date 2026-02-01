@@ -23,9 +23,16 @@
 #include <fcntl.h>
 #include <stdint.h>
 
+#ifndef SNAC_ESP32
 #include <sys/resource.h> // for getrlimit()
 
 #include <sys/mman.h>
+#endif
+
+#ifdef SNAC_ESP32
+#include "sdkconfig.h"
+#include "esp_heap_caps.h"
+#endif
 
 #ifdef USE_POLL_FOR_SLEEP
 #include <poll.h>
@@ -121,8 +128,10 @@ static xs_str *greeting_html(void)
         s = xs_readall(f);
         fclose(f);
 
+        const char *host = xs_dict_get_def(srv_config, "host", "");
+
         /* replace %host% */
-        s = xs_replace_i(s, "%host%", xs_dict_get(srv_config, "host"));
+        s = xs_replace_i(s, "%host%", host);
 
         const char *adm_email = xs_dict_get(srv_config, "admin_email");
         if (xs_is_null(adm_email) || *adm_email == '\0')
@@ -133,7 +142,6 @@ static xs_str *greeting_html(void)
 
         /* does it have a %userlist% mark? */
         if (xs_str_in(s, "%userlist%") != -1) {
-            const char *host = xs_dict_get(srv_config, "host");
             xs *list = user_list();
             xs_list *p = list;
             const xs_str *uid;
@@ -167,6 +175,29 @@ static xs_str *greeting_html(void)
             xs *s1 = xs_html_render(ul);
             s = xs_replace_i(s, "%userlist%", s1);
         }
+
+#ifdef SNAC_ESP32
+        size_t free_8 = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+        size_t min_8 = heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT);
+        size_t largest_8 = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+        size_t free_psram = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+        size_t min_psram = heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM);
+        size_t largest_psram = heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM);
+
+        xs *memstats = xs_fmt(
+            "<hr>"
+            "<p><b>Memory</b>: heap8 free=%lu B (min=%lu B, largest=%lu B), "
+            "psram free=%lu B (min=%lu B, largest=%lu B)</p>",
+            (unsigned long)free_8, (unsigned long)min_8, (unsigned long)largest_8,
+            (unsigned long)free_psram, (unsigned long)min_psram, (unsigned long)largest_psram);
+
+        if (xs_str_in(s, "</body>") != -1) {
+            xs *ins = xs_fmt("%s</body>", memstats);
+            s = xs_replace_i(s, "</body>", ins);
+        }
+        else
+            s = xs_str_cat(s, memstats);
+#endif
     }
 
     return s;
@@ -544,6 +575,14 @@ void httpd_connection(FILE *f)
         if (status == 0)
             status = activitypub_post_handler(req, q_path,
                         payload, p_size, &body, &b_size, &ctype);
+        if (status == 0 && strcmp(q_path, "/shared-inbox") == 0) {
+            srv_log(xs_fmt("=== Incoming to shared-inbox ==="));
+            const char *k, *v;
+            int c = 0;
+            while (xs_dict_next(req, &k, &v, &c)) {
+                srv_log(xs_fmt("  %s: %s", k, v));
+            }
+        }
 
         if (status == 0)
             status = html_post_handler(req, q_path,
@@ -901,7 +940,7 @@ void term_handler(int s)
 srv_state *srv_state_op(xs_str **fname, int op)
 /* opens or deletes the shared memory object */
 {
-    int fd;
+    int fd = -1;
     srv_state *ss = NULL;
 
     if (*fname == NULL)
@@ -966,7 +1005,11 @@ srv_state *srv_state_op(xs_str **fname, int op)
             srv_log(xs_fmt("error: struct size mismatch (%d != %d)",
                 ss->s_size, sizeof(*ss)));
 
+#ifndef WITHOUT_SHM
             munmap(ss, sizeof(*ss));
+#else
+            free(ss);
+#endif
 
             ss = NULL;
         }
@@ -1004,6 +1047,16 @@ void httpd(void)
     xs *pidfile = xs_fmt("%s/server.pid", srv_basedir);
     int pidfd;
 
+#ifdef SNAC_ESP32
+    /* httpd() is not re-entrant: global job queue/semaphore are shared.
+       Prevent starting it twice (e.g. auto-start + CLI "start"). */
+    if (p_state != NULL && p_state->srv_running) {
+        srv_log(xs_dup("httpd already running"));
+        return;
+    }
+#endif
+
+#ifndef SNAC_ESP32
     {
         /* do some pidfile locking acrobatics */
         if ((pidfd = open(pidfile, O_RDWR | O_CREAT, 0660)) == -1) {
@@ -1022,6 +1075,9 @@ void httpd(void)
         xs *s = xs_fmt("%d\n", (int)getpid());
         write(pidfd, s, strlen(s));
     }
+#else
+    (void)pidfd;
+#endif
 
     address = xs_dict_get(srv_config, "address");
 
@@ -1050,21 +1106,26 @@ void httpd(void)
 
     p_state->srv_running = 1;
 
+#ifndef SNAC_ESP32
     signal(SIGPIPE, SIG_IGN);
     signal(SIGTERM, term_handler);
     signal(SIGINT,  term_handler);
+#endif
 
     srv_log(xs_fmt("httpd%s start %s %s", p_state->use_fcgi ? " (FastCGI)" : "",
                     full_address, USER_AGENT));
 
+#ifndef SNAC_ESP32
     /* show the number of usable file descriptors */
     struct rlimit r;
     getrlimit(RLIMIT_NOFILE, &r);
     srv_debug(1, xs_fmt("available (rlimit) fds: %d (cur) / %d (max)",
                         (int) r.rlim_cur, (int) r.rlim_max));
+#endif
 
     /* initialize the job control engine */
     pthread_mutex_init(&job_mutex, NULL);
+#ifndef SNAC_ESP32
     sem_name = xs_fmt("/job_%d", getpid());
     job_sem = sem_open(sem_name, O_CREAT, 0644, 0);
 
@@ -1073,6 +1134,10 @@ void httpd(void)
         if (sem_init(&anon_job_sem, 0, 0) != -1)
             job_sem = &anon_job_sem;
     }
+#else
+    if (sem_init(&anon_job_sem, 0, 0) != -1)
+        job_sem = &anon_job_sem;
+#endif
 
     if (job_sem == NULL) {
         srv_log(xs_fmt("fatal error: cannot create semaphore -- cannot continue"));
@@ -1085,28 +1150,58 @@ void httpd(void)
 
     p_state->n_threads = xs_number_get(xs_dict_get(srv_config, "num_threads"));
 
+#ifndef SNAC_ESP32
 #ifdef _SC_NPROCESSORS_ONLN
     if (p_state->n_threads == 0) {
         /* get number of CPUs on the machine */
         p_state->n_threads = sysconf(_SC_NPROCESSORS_ONLN);
     }
 #endif
+#else
+    if (p_state->n_threads == 0)
+        p_state->n_threads = 2;
+#endif
 
+    #ifndef SNAC_ESP32
     if (p_state->n_threads < 4)
         p_state->n_threads = 4;
+    #else
+    if (p_state->n_threads < 2)
+        p_state->n_threads = 2;
+    #endif
 
     if (p_state->n_threads > MAX_THREADS)
         p_state->n_threads = MAX_THREADS;
 
     srv_debug(0, xs_fmt("using %d threads", p_state->n_threads));
 
+#ifdef SNAC_ESP32
+    /* ESP-IDF pthread default stack is small; these threads run heavy code
+       (HTTP parsing, JSON, filesystem) and can corrupt memory on overflow. */
+    pthread_attr_t th_attr;
+    pthread_attr_init(&th_attr);
+    pthread_attr_setstacksize(&th_attr, 16384);
+#endif
+
     /* thread #0 is the background thread */
+#ifdef SNAC_ESP32
+    pthread_create(&threads[0], &th_attr, background_thread, NULL);
+#else
     pthread_create(&threads[0], NULL, background_thread, NULL);
+#endif
 
     /* the rest of threads are for job processing */
     char *ptr = (char *) 0x1;
     for (n = 1; n < p_state->n_threads; n++)
+#ifdef SNAC_ESP32
+        pthread_create(&threads[n], &th_attr, job_thread, ptr++);
+#else
         pthread_create(&threads[n], NULL, job_thread, ptr++);
+#endif
+
+#ifdef SNAC_ESP32
+    pthread_attr_destroy(&th_attr);
+#endif
 
     if (setjmp(on_break) == 0) {
         for (;;) {
@@ -1132,8 +1227,12 @@ void httpd(void)
     for (n = 0; n < p_state->n_threads; n++)
         pthread_join(threads[n], NULL);
 
+#ifndef SNAC_ESP32
     sem_close(job_sem);
     sem_unlink(sem_name);
+#else
+    sem_destroy(&anon_job_sem);
+#endif
 
     srv_state_op(&shm_name, 2);
 
@@ -1143,5 +1242,7 @@ void httpd(void)
                 p_state->use_fcgi ? " (FastCGI)" : "",
                 full_address, uptime));
 
+#ifndef SNAC_ESP32
     unlink(pidfile);
+#endif
 }

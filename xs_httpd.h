@@ -20,7 +20,11 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
     const char *v;
     char *saveptr;
 
+#ifdef SNAC_ESP32
+    xs_socket_timeout(fileno(f), 10.0, 0.0);  /* ESP32 needs longer timeout */
+#else
     xs_socket_timeout(fileno(f), 2.0, 0.0);
+#endif
 
     /* read the first line and split it */
     l1 = xs_strip_i(xs_readline(f));
@@ -80,7 +84,11 @@ xs_dict *xs_httpd_request(FILE *f, xs_str **payload, int *p_size)
         req = xs_dict_append(req, xs_tolower_i(l), cnt);
     }
 
+#ifdef SNAC_ESP32
+    xs_socket_timeout(fileno(f), 15.0, 0.0);  /* ESP32 needs longer timeout for payload */
+#else
     xs_socket_timeout(fileno(f), 5.0, 0.0);
+#endif
 
     if ((v = xs_dict_get(req, "content-length")) != NULL) {
         /* if it has a payload, load it */

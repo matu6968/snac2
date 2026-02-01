@@ -561,6 +561,12 @@ xs_str *xs_replace_in(xs_str *str, const char *sfrom, const char *sto, int times
 {
     XS_ASSERT_TYPE(str, XSTYPE_STRING);
 
+    if (sfrom == NULL)
+        return str;
+
+    if (sto == NULL)
+        sto = "";
+
     int sfsz = strlen(sfrom);
     int stsz = strlen(sto);
     int diff = stsz - sfsz;

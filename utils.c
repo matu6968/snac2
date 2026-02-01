@@ -102,6 +102,10 @@ const char *snac_blurb =
     "<p>This server runs the "
     "<a href=\"" WHAT_IS_SNAC_URL "\">snac</a> software and there is no "
     "automatic sign-up process.</p>\n"
+#ifdef SNAC_ESP32
+    "<p>The following server is being hosted on an <a href=\"https://en.wikipedia.org/wiki/ESP32\">ESP32</a> based microcontroller.</p>\n"
+    "<p>Specifically the build target is the following chip: " PLATFORM_NAME "</p>\n"
+#endif
 ;
 
 static const char * const greeting_html =
@@ -119,7 +123,6 @@ static const char * const greeting_html =
     "\n"
     "<p>This site is powered by <abbr title=\"Social Networks Are Crap\">snac</abbr>.</p>\n"
     "</body></html>\n";
-
 
 int write_default_css(void)
 {
@@ -270,6 +273,123 @@ int snac_init(const char *basedir)
     return 0;
 }
 
+#ifdef SNAC_ESP32
+int snac_init_esp32(const char *basedir, const char *server_json)
+/* non-interactive init for ESP32 (no stdin) */
+{
+    FILE *f;
+    struct stat st;
+
+    if (basedir == NULL) {
+        errno = EINVAL;
+        return -errno;
+    }
+
+    srv_basedir = xs_str_new(basedir);
+
+    if (srv_basedir == NULL || *srv_basedir == '\0') {
+        errno = EINVAL;
+        return -errno;
+    }
+
+    if (xs_endswith(srv_basedir, "/"))
+        srv_basedir = xs_crop_i(srv_basedir, 0, -1);
+
+    if (stat(srv_basedir, &st) == 0) {
+        if (!S_ISDIR(st.st_mode)) {
+            printf("ERROR: '%s' exists and is not a directory.\n", srv_basedir);
+            errno = ENOTDIR;
+            return -errno;
+        }
+    }
+
+    srv_config = NULL;
+
+    if (server_json != NULL) {
+        if ((f = fopen(server_json, "r")) != NULL) {
+            xs *s = xs_readall(f);
+            fclose(f);
+
+            srv_config = xs_json_loads(s);
+        }
+    }
+
+    if (srv_config == NULL)
+        srv_config = xs_json_loads(default_srv_config);
+
+    /* On ESP32 we usually want to listen on the LAN, not only loopback. */
+    const char *addr = xs_dict_get(srv_config, "address");
+    if (addr != NULL && strcmp(addr, "127.0.0.1") == 0) {
+        srv_config = xs_dict_set(srv_config, "address", "0.0.0.0");
+    }
+
+    xs *layout = xs_number_new(disk_layout);
+    srv_config = xs_dict_set(srv_config, "layout", layout);
+
+    if (stat(srv_basedir, &st) != 0) {
+        if (mkdirx(srv_basedir) == -1) {
+            printf("ERROR: cannot create directory '%s'\n", srv_basedir);
+            return -errno;
+        }
+    }
+
+    xs *udir = xs_fmt("%s/user", srv_basedir);
+    mkdirx(udir);
+
+    xs *odir = xs_fmt("%s/object", srv_basedir);
+    mkdirx(odir);
+
+    xs *qdir = xs_fmt("%s/queue", srv_basedir);
+    mkdirx(qdir);
+
+    xs *ibdir = xs_fmt("%s/inbox", srv_basedir);
+    mkdirx(ibdir);
+
+    xs *langdir = xs_fmt("%s/lang", srv_basedir);
+    mkdirx(langdir);
+
+    xs *gfn = xs_fmt("%s/greeting.html", srv_basedir);
+    if ((f = fopen(gfn, "w")) == NULL) {
+        printf("ERROR: cannot create '%s'\n", gfn);
+        return -errno;
+    }
+
+    xs *gh = xs_replace(greeting_html, "%blurb%", snac_blurb);
+    fwrite(gh, strlen(gh), 1, f);
+    fclose(f);
+
+    if (write_default_css()) {
+        printf("ERROR: cannot create style.css\n");
+        errno = EIO;
+        return -errno;
+    }
+
+    xs *cfn = xs_fmt("%s/server.json", srv_basedir);
+    if ((f = fopen(cfn, "w")) == NULL) {
+        printf("ERROR: cannot create '%s'\n", cfn);
+        return -errno;
+    }
+
+    xs_json_dump(srv_config, 4, f);
+    fclose(f);
+
+    if (server_json != NULL) {
+        if ((f = fopen(server_json, "r")) == NULL) {
+            if ((f = fopen(server_json, "w")) != NULL) {
+                xs_json_dump(srv_config, 4, f);
+                fclose(f);
+            }
+        } else
+            fclose(f);
+    }
+
+    printf("Done.\n\n");
+    printf("Wanted web UI language files (.po) must be copied manually to %s\n", langdir);
+
+    return 0;
+}
+#endif /* SNAC_ESP32 */
+
 
 void new_password(const char *uid, xs_str **clear_pwd, xs_str **hashed_pwd)
 /* creates a random password */
@@ -319,11 +439,19 @@ int adduser(const char *uid)
     config = xs_dict_append(config, "published", date);
     config = xs_dict_append(config, "passwd",    pwd_f);
 
+    xs *users_dir = xs_fmt("%s/user", srv_basedir);
+    mkdirx(users_dir);
+
     xs *basedir = xs_fmt("%s/user/%s", srv_basedir, uid);
 
     if (mkdirx(basedir) == -1) {
+        if (errno == EEXIST) {
+            /* allow recovering from a partial user creation */
+        }
+        else {
         printf("ERROR: cannot create directory '%s'\n", basedir);
-        return 0;
+        return 1;
+        }
     }
 
     const char *dirs[] = {
@@ -369,7 +497,8 @@ int adduser(const char *uid)
 
     printf("\nUser password is %s\n", pwd);
 
-    printf("\nGo to %s/%s and continue configuring your user there.\n", srv_baseurl, uid);
+    printf("\nGo to %s/%s and continue configuring your user there.\n",
+           srv_baseurl ? srv_baseurl : "", uid);
 
     return 0;
 }

@@ -1,3 +1,68 @@
+# snac fork for ESP32 series
+
+This is a fork of the original snac project to port it to the ESP32 series of chips.
+
+## Requirements
+
+- ESP32 series chip with atleast 2 MB+ PSRAM and WiFi support
+- SD card with atleast 2 GB of free space
+- WiFi credentials
+
+## Building and installation for ESP32 series
+
+You need to have the ESP-IDF installed and configured.
+
+```sh
+# if you haven't already, download the ESP-IDF toolchain
+git clone https://github.com/espressif/esp-idf.git --branch release/v5.5 --recurse-submodules esp-idf
+# install ESP-IDF dependencies
+cd esp-idf
+./install.sh
+# source the ESP-IDF environment
+source ./export.sh
+# build the project
+cd ../snac2/esp32
+idf.py set-target esp32s3 # or esp32s2, esp32c5, esp32c61, esp32 for your chip
+idf.py menuconfig
+# here you can enter the WiFi credentials under 'Snac2 ESP32' -> 'Enable Wi-Fi station' and 'Wi-Fi SSID' and 'Wi-Fi password'
+idf.py build
+```
+### SD card
+
+By default the SD card will be connected to the ESP32 on GPIO pins 10, 11, 12 and 13. You can change this in `esp32/main/app_main.c`:
+```c
+// SD card GPIOs
+// change these if you have a different SD card pinout
+#define SD_CS_PIN 10
+#define SD_MOSI_PIN 11
+#define SD_MISO_PIN 13
+#define SD_SCLK_PIN 12
+``` 
+
+Prepare a FAT32 formatted SD card with two partitions:
+- CONFIG (16 MB)
+- DATA (rest of the space)
+
+You can leave the partitions empty as the ESP32 app will format them upon typing `init` in the REPL.
+
+### REPL
+
+By default the REPL will be available on the USB CDC port and any output of commands will be printed to the USB JTAG port.
+
+The commands are mostly the same as the original snac, but with some additional commands for the ESP32 series.
+
+- `help` will show the available commands.
+- `sync_config` will copy the configuration files from the CONFIG partition to the DATA partition.
+- `reboot` will restart the ESP32.
+
+
+## Limitations
+
+- Shared memory is not supported on the ESP32 series, so the build is configured with `WITHOUT_SHM`
+- Due to limited amounts of RAM on the ESP32 series (and the slow bandwidth to the SD card), keep the number of users and media to a minimum.
+
+Below is the original README.md file for snac.
+
 # snac
 
 A simple, minimalistic ActivityPub instance

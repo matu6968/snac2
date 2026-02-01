@@ -92,7 +92,7 @@ xs_dict *xs_fcgi_request(FILE *f, xs_str **payload, int *p_size, int *fcgi_id)
     *fcgi_id = -1;
 
     for (;;) {
-        int sz, psz;
+        int sz = 0, psz;
 
         /* read the packet header */
         if (fread(&hdr, sizeof(hdr), 1, f) != 1)
