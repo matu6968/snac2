@@ -4391,12 +4391,6 @@ void srv_archive(const char *direction, const char *url, xs_dict *req,
                  const char *body, int b_size)
 /* archives a connection */
 {
-#ifdef SNAC_ESP32
-    /* Disable archiving on ESP32 to save storage and avoid leaks */
-    (void)direction; (void)url; (void)req; (void)payload; (void)p_size;
-    (void)status; (void)headers; (void)body; (void)b_size;
-    return;
-#else
     /* obsessive archiving */
     xs *date = tid(0);
     xs *dir  = xs_fmt("%s/archive/%s_%s", srv_basedir, date, direction);
@@ -4486,7 +4480,6 @@ void srv_archive(const char *direction, const char *url, xs_dict *req,
             }
         }
     }
-#endif /* SNAC_ESP32 */
 }
 
 
@@ -4494,11 +4487,6 @@ void srv_archive_error(const char *prefix, const xs_str *err,
                        const xs_dict *req, const xs_val *data)
 /* archives an error */
 {
-#ifdef SNAC_ESP32
-    /* Disable error archiving on ESP32 to save storage */
-    (void)prefix; (void)err; (void)req; (void)data;
-    return;
-#else
     xs *ntid = tid(0);
     xs *fn   = xs_fmt("%s/error/%s_%s", srv_basedir, ntid, prefix);
     FILE *f;
@@ -4528,18 +4516,12 @@ void srv_archive_error(const char *prefix, const xs_str *err,
 
         fclose(f);
     }
-#endif /* SNAC_ESP32 */
 }
 
 
 void srv_archive_qitem(const char *prefix, xs_dict *q_item)
 /* archives a q_item in the error folder */
 {
-#ifdef SNAC_ESP32
-    /* Disable qitem archiving on ESP32 to save storage */
-    (void)prefix; (void)q_item;
-    return;
-#else
     xs *ntid = tid(0);
     xs *fn   = xs_fmt("%s/error/%s_qitem_%s", srv_basedir, ntid, prefix);
     FILE *f;
@@ -4548,7 +4530,6 @@ void srv_archive_qitem(const char *prefix, xs_dict *q_item)
         xs_json_dump(q_item, 4, f);
         fclose(f);
     }
-#endif /* SNAC_ESP32 */
 }
 
 
