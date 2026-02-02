@@ -1,3 +1,8 @@
 **/*.o
 tests/smtp
 snac
+esp32/build/
+esp32/managed_components/
+esp32/.cache/
+esp32/sdkconfig.old
+esp32/sdkconfig

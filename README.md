@@ -63,6 +63,8 @@ The commands are mostly the same as the original snac, but with some additional 
 
 Below is the original README.md file for snac.
 
+------------------------------------------------
+
 # snac
 
 A simple, minimalistic ActivityPub instance

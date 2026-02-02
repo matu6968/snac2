@@ -11,3 +11,18 @@ CONFIG_FATFS_LFN_HEAP=y
 CONFIG_SPIRAM=y
 CONFIG_SPIRAM_MODE_OCT=y
 CONFIG_SPIRAM_SPEED_80M=y
+
+# Disable task watchdog to prevent httpd from being killed
+CONFIG_ESP_TASK_WDT_INIT=n
+
+# Increase file descriptor limit significantly (default is 10)
+CONFIG_LWIP_MAX_SOCKETS=32
+
+# Increase VFS file descriptor limit
+CONFIG_VFS_MAX_COUNT=32
+
+# Increase TCP keepalive to prevent connections from timing out
+CONFIG_LWIP_TCP_KEEPALIVE_DEFAULT=y
+CONFIG_LWIP_TCP_KEEPIDLE_DEFAULT=7200
+CONFIG_LWIP_TCP_KEEPINTVL_DEFAULT=75
+CONFIG_LWIP_TCP_KEEPCNT_DEFAULT=9

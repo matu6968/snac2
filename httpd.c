@@ -32,6 +32,8 @@
 #ifdef SNAC_ESP32
 #include "sdkconfig.h"
 #include "esp_heap_caps.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #endif
 
 #ifdef USE_POLL_FOR_SLEEP
@@ -493,7 +495,7 @@ void httpd_connection(FILE *f)
     xs *req;
     const char *method;
     int status   = 0;
-    xs_str *body = NULL;
+    xs *body     = NULL;
     int b_size   = 0;
     char *ctype  = NULL;
     xs *headers  = xs_dict_new();
@@ -708,8 +710,6 @@ void httpd_connection(FILE *f)
             srv_archive_error("bad_json", "bad JSON", req, body);
         }
     }
-
-    xs_free(body);
 }
 
 
@@ -835,6 +835,9 @@ static void *background_thread(void *arg)
 /* background thread (queue management and other things) */
 {
     time_t t, purge_time, rss_time;
+#ifdef SNAC_ESP32
+    time_t last_health_check = 0;
+#endif
 
     (void)arg;
 
@@ -875,6 +878,22 @@ static void *background_thread(void *arg)
 
         t = time(NULL);
 
+#ifdef SNAC_ESP32
+        /* Periodic health check every 1 minute on ESP32 
+         * Ultra-minimal version using only fprintf to avoid ESP-IDF string function leaks */
+        if (t - last_health_check > 60) {
+            last_health_check = t;
+            size_t free_heap = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+            size_t free_psram = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+            
+            fprintf(stderr, "[health] uptime=%lld heap=%lu psram=%lu jobs=%d\n",
+                (long long)(t - p_state->srv_start_time),
+                (unsigned long)free_heap,
+                (unsigned long)free_psram,
+                p_state->job_fifo_size);
+        }
+#endif
+
         /* time to purge? */
         if (t > purge_time) {
             /* next purge time is tomorrow */
@@ -906,7 +925,10 @@ static void *background_thread(void *arg)
 
             p_state->th_state[0] = THST_WAIT;
 
-#ifdef USE_POLL_FOR_SLEEP
+#ifdef SNAC_ESP32
+            /* ESP32: Use FreeRTOS native vTaskDelay to avoid pthread_cond_timedwait memory leak */
+            vTaskDelay(pdMS_TO_TICKS(3000));
+#elif defined(USE_POLL_FOR_SLEEP)
             poll(NULL, 0, 3 * 1000);
 #else
             struct timespec ts;
@@ -1204,16 +1226,47 @@ void httpd(void)
 #endif
 
     if (setjmp(on_break) == 0) {
+#ifdef SNAC_ESP32
+        int accept_errors = 0;
+        time_t last_accept_check = time(NULL);
+#endif
         for (;;) {
             int cs = xs_socket_accept(rs);
 
             if (cs != -1) {
                 FILE *f = fdopen(cs, "r+");
+                if (f == NULL) {
+#ifdef SNAC_ESP32
+                    srv_log(xs_fmt("fdopen failed: errno=%d (%s)", errno, strerror(errno)));
+                    close(cs);
+                    continue;
+#endif
+                }
                 xs *job = xs_data_new(&f, sizeof(FILE *));
                 job_post(job, 1);
+#ifdef SNAC_ESP32
+                accept_errors = 0;  /* Reset error counter on successful accept */
+#endif
             }
-            else
+            else {
+#ifdef SNAC_ESP32
+                accept_errors++;
+                time_t now = time(NULL);
+                srv_log(xs_fmt("xs_socket_accept failed: errno=%d (%s) errors=%d uptime=%ld", 
+                    errno, strerror(errno), accept_errors, now - p_state->srv_start_time));
+                
+                /* If we get persistent errors, log health info before exiting */
+                size_t free_heap = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+                size_t free_psram = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+                srv_log(xs_fmt("Final health: heap=%u psram=%u jobs=%d", 
+                    (unsigned)free_heap, (unsigned)free_psram, p_state->job_fifo_size));
+                
+                /* Exit immediately on file descriptor exhaustion */
                 break;
+#else
+                break;
+#endif
+            }
         }
     }
 

@@ -110,11 +110,13 @@ void srv_log(xs_str *str)
     }
 
     xs *tm = xs_str_localtime(0, "%H:%M:%S");
+    
     fprintf(stderr, "%s %s\n", tm, str);
 
     /* if the ~/log/ folder exists, also write to a file there */
     xs *dt = xs_str_localtime(0, "%Y-%m-%d");
     xs *lf = xs_fmt("%s/log/%s.log", srv_basedir, dt);
+    
     FILE *f;
     if ((f = fopen(lf, "a")) != NULL) {
         fprintf(f, "%s %s\n", tm, str);
