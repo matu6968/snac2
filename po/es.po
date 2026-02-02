@@ -885,3 +885,51 @@ msgstr "Guardar"
 #: html.c:4167
 msgid "Notifications filter..."
 msgstr "Filtro de notificaciones..."
+
+#: data.c:44
+msgid "Jan"
+msgstr "ene"
+
+#: data.c:45
+msgid "Feb"
+msgstr "feb"
+
+#: data.c:46
+msgid "Mar"
+msgstr "mar"
+
+#: data.c:47
+msgid "Apr"
+msgstr "abr"
+
+#: data.c:48
+msgid "May"
+msgstr "may"
+
+#: data.c:49
+msgid "Jun"
+msgstr "jun"
+
+#: data.c:50
+msgid "Jul"
+msgstr "jul"
+
+#: data.c:51
+msgid "Aug"
+msgstr "ago"
+
+#: data.c:52
+msgid "Sep"
+msgstr "sep"
+
+#: data.c:53
+msgid "Oct"
+msgstr "oct"
+
+#: data.c:54
+msgid "Nov"
+msgstr "nov"
+
+#: data.c:55
+msgid "Dec"
+msgstr "dic"

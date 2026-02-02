@@ -225,7 +225,20 @@ xs_str *html_date_label(snac *user, const char *date)
             return xs_str_utctime(t, "%Y-%m-%d %H:%M");
         }
 
-        return xs_str_utctime(t, "%b%d %H:%M");
+        xs_str *date = xs_str_utctime(t, "%b%d %H:%M");
+
+        struct tm tm;
+        localtime_r(&t, &tm);
+
+        if (tm.tm_mon >= 0 && tm.tm_mon <= 11) {
+            /* copy the 3letter translated month name */
+            const char *m = L(months[tm.tm_mon]);
+
+            if (xs_is_string(m) && strlen(m) >= 3)
+                memcpy(date, m, 3);
+        }
+
+        return date;
     }
 
     return xs_crop_i(xs_dup(date), 0, 10);

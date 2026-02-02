@@ -60,6 +60,20 @@ int srv_open(const char *basedir, int auto_upgrade)
     FILE *f;
     xs_str *error = NULL;
 
+    /* MUST be three letters */
+    months[0] = LL("Jan");
+    months[1] = LL("Feb");
+    months[2] = LL("Mar");
+    months[3] = LL("Apr");
+    months[4] = LL("May");
+    months[5] = LL("Jun");
+    months[6] = LL("Jul");
+    months[7] = LL("Aug");
+    months[8] = LL("Sep");
+    months[9] = LL("Oct");
+    months[10] = LL("Nov");
+    months[11] = LL("Dec");
+
     pthread_mutex_init(&data_mutex, NULL);
 
     srv_basedir = xs_str_new(basedir);

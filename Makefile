@@ -40,10 +40,10 @@ uninstall:
 
 update-po:
 	mkdir -p po
-	[ -f "po/en.po" ] || xgettext -o po/en.po --language=C --keyword=L --from-code=utf-8 *.c
+	[ -f "po/en.po" ] || xgettext -o po/en.po --language=C --keyword=L --keyword=LL --from-code=utf-8 *.c
 	for a in po/*.po ; do \
 		sed -i -e '/^#:/d' $$a ; \
-		xgettext --omit-header -j -o $$a --language=C --keyword=L --from-code=utf-8 *.c ; \
+		xgettext --omit-header -j -o $$a --language=C --keyword=L --keyword=LL --from-code=utf-8 *.c ; \
 	done
 
 activitypub.o: activitypub.c xs.h xs_json.h xs_curl.h xs_url.h xs_mime.h \

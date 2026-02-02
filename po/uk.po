@@ -893,3 +893,51 @@ msgstr ""
 #: html.c:4167
 msgid "Notifications filter..."
 msgstr ""
+
+#: data.c:44
+msgid "Jan"
+msgstr ""
+
+#: data.c:45
+msgid "Feb"
+msgstr ""
+
+#: data.c:46
+msgid "Mar"
+msgstr ""
+
+#: data.c:47
+msgid "Apr"
+msgstr ""
+
+#: data.c:48
+msgid "May"
+msgstr ""
+
+#: data.c:49
+msgid "Jun"
+msgstr ""
+
+#: data.c:50
+msgid "Jul"
+msgstr ""
+
+#: data.c:51
+msgid "Aug"
+msgstr ""
+
+#: data.c:52
+msgid "Sep"
+msgstr ""
+
+#: data.c:53
+msgid "Oct"
+msgstr ""
+
+#: data.c:54
+msgid "Nov"
+msgstr ""
+
+#: data.c:55
+msgid "Dec"
+msgstr ""

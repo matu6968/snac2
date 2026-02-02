@@ -60,10 +60,12 @@ extern xs_dict *srv_config;
 extern xs_str *srv_baseurl;
 extern xs_str *srv_proxy_token_seed;
 extern xs_dict *srv_langs;
+extern const char *months[12];
 
 extern int dbglevel;
 
 #define L(s) lang_str((s), user)
+#define LL(s) (s)
 
 #define POSTLIKE_OBJECT_TYPE "Note|Question|Page|Article|Video|Audio|Event"
 
