@@ -276,7 +276,46 @@ static void snac_task(void *arg)
         return;
     }
 
-    httpd();
+    /* Watchdog loop: automatically restart httpd if it exits */
+    int restart_count = 0;
+    const int max_restarts = 10;  /* Prevent infinite restart loop */
+    const int restart_delay_sec = 5;  /* Wait before restart */
+
+    while (restart_count < max_restarts) {
+        if (restart_count > 0) {
+            ESP_LOGW(TAG, "httpd exited unexpectedly (restart #%d/%d)", 
+                     restart_count, max_restarts);
+            ESP_LOGI(TAG, "Waiting %d seconds before restart...", restart_delay_sec);
+            vTaskDelay(pdMS_TO_TICKS(restart_delay_sec * 1000));
+            
+            /* Log heap status before restart */
+            size_t free_heap = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+            size_t free_psram = heap_caps_get_free_size(MALLOC_CAP_SPIRAM);
+            ESP_LOGI(TAG, "Pre-restart health: heap=%u psram=%u", 
+                     (unsigned)free_heap, (unsigned)free_psram);
+        }
+
+        ESP_LOGI(TAG, "Starting httpd server (attempt %d)...", restart_count + 1);
+        httpd();
+        
+        restart_count++;
+        
+        /* If we exit immediately (within 10 seconds), it's probably a fatal error */
+        if (restart_count == 1) {
+            /* First exit - continue to restart */
+            continue;
+        }
+    }
+
+    if (restart_count >= max_restarts) {
+        ESP_LOGE(TAG, "httpd failed to stay running after %d restarts - giving up", max_restarts);
+        ESP_LOGE(TAG, "System may need manual intervention or reboot");
+        /* Don't delete the task - let it stay around for debugging */
+        while (1) {
+            vTaskDelay(pdMS_TO_TICKS(60000));  /* Sleep forever */
+        }
+    }
+
     vTaskDelete(NULL);
 }
 

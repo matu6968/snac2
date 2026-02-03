@@ -859,7 +859,7 @@ int is_msg_for_me(snac *snac, const xs_dict *c_msg)
 
     /* any blocked hashtag? reject */
     if (blocked_hashtag_check(snac, msg)) {
-        snac_debug(snac, 1, xs_fmt("blocked by hashtag %s", xs_dict_get(msg, "id")));
+        snac_debug(snac, 1, xs_fmt("blocked by hashtag %s", SAFE_STR(xs_dict_get(msg, "id"))));
         return 0;
     }
 
@@ -1633,6 +1633,11 @@ xs_dict *msg_repulsion(snac *user, const char *id, const char *type)
 xs_dict *msg_emoji_init(snac *snac, const char *mid, const char *eid_o)
 /* creates an emoji reaction from a local user */
 {
+    /* check if eid_o is valid */
+    if (eid_o == NULL || *eid_o == '\0') {
+        return NULL;
+    }
+
     xs_dict *n_msg = msg_admiration(snac, mid, "EmojiReact");
 
     xs *eid = xs_strip_chars_i(xs_dup(eid_o), ":");
@@ -1717,6 +1722,11 @@ xs_dict *msg_emoji_unreact(snac *user, const char *mid, const char *eid)
     xs *a_msg    = NULL;
     xs_dict *msg = NULL;
 
+    /* check if eid is valid */
+    if (eid == NULL || *eid == '\0') {
+        return NULL;
+    }
+
     if (valid_status(object_get(mid, &a_msg))) {
         /* create a clone of the original admiration message */
         xs *object = msg_admiration(user, mid, "EmojiReact");
@@ -1737,10 +1747,11 @@ xs_dict *msg_emoji_unreact(snac *user, const char *mid, const char *eid)
 
     /* may be a default emoji */
     if (strlen(eid) == 12 && *eid == '%') {
-        eid = xs_url_dec(eid);
-        if (eid == NULL) {
+        xs *decoded_eid = xs_url_dec(eid);
+        if (decoded_eid == NULL) {
             return NULL;
         }
+        eid = decoded_eid;
     }
 
     /* lets get all emotes for this msg, and compare it to our content */
@@ -2411,6 +2422,15 @@ xs_dict *msg_question(snac *user, const char *content, xs_list *attach,
 int get_msg_visibility(const xs_dict *msg)
 /* determine visibility from message based on CC, TO and /followers mark */
 {
+    /* Check if this is a Person object or other non-post type */
+    const char *type = xs_dict_get(msg, "type");
+    if (type != NULL && (strcmp(type, "Person") == 0 || 
+                         strcmp(type, "Service") == 0 ||
+                         strcmp(type, "Application") == 0)) {
+        /* Person/Service/Application objects are always public */
+        return SCOPE_PUBLIC;
+    }
+
     const xs_val *to = xs_dict_get(msg, "to");
     const xs_val *cc = xs_dict_get(msg, "cc");
 
@@ -2433,7 +2453,14 @@ int get_msg_visibility(const xs_dict *msg)
         return SCOPE_PUBLIC;
     }
 
-    xs *followers_url = xs_fmt("%s/followers", xs_dict_get(msg, "attributedTo"));
+    const char *attributed_to = xs_dict_get(msg, "attributedTo");
+    
+    /* if there's no attributedTo field, treat as mentioned (most restrictive) */
+    if (attributed_to == NULL) {
+        return SCOPE_MENTIONED;
+    }
+
+    xs *followers_url = xs_fmt("%s/followers", attributed_to);
 
     if ((xs_type(to) == XSTYPE_STRING && strcmp(to, followers_url) == 0) ||
         (xs_type(to) == XSTYPE_LIST && xs_list_in(to, followers_url) != -1))
@@ -3764,7 +3791,7 @@ void process_queue_item(xs_dict *q_item)
                         xs *fn = xs_fmt("%s/queue/%s.json", user.basedir, ntid);
 
                         snac_debug(&user, 1,
-                            xs_fmt("enqueue_input (from shared inbox) %s [%d]", xs_dict_get(msg, "id"), rsn));
+                            xs_fmt("enqueue_input (from shared inbox) %s [%d]", SAFE_STR(xs_dict_get(msg, "id")), rsn));
 
                         if (link(tmpfn, fn) < 0)
                             srv_log(xs_fmt("link(%s, %s) error", tmpfn, fn));
@@ -3779,7 +3806,7 @@ void process_queue_item(xs_dict *q_item)
             unlink(tmpfn);
 
             if (cnt == 0) {
-                srv_debug(1, xs_fmt("no valid recipients for %s", xs_dict_get(msg, "id")));
+                srv_debug(1, xs_fmt("no valid recipients for %s", SAFE_STR(xs_dict_get(msg, "id"))));
             }
         }
     }

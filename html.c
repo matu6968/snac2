@@ -26,6 +26,10 @@ int login(snac *user, const xs_dict *headers)
     int logged_in = 0;
     const char *auth = xs_dict_get(headers, "authorization");
 
+    /* check if user config is valid */
+    if (user->config == NULL)
+        return 0;
+
     if (auth && xs_startswith(auth, "Basic ")) {
         int sz;
         xs *s1 = xs_crop_i(xs_dup(auth), 6, 0);

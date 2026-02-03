@@ -69,6 +69,9 @@ extern int dbglevel;
 
 #define POSTLIKE_OBJECT_TYPE "Note|Question|Page|Article|Video|Audio|Event"
 
+/* Safe string macro for format functions - returns "(null)" if string is NULL */
+#define SAFE_STR(s) ((s) != NULL ? (s) : "(null)")
+
 int mkdirx(const char *pathname);
 
 #define valid_status(status) xs_http_valid_status(status)

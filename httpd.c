@@ -1261,7 +1261,14 @@ void httpd(void)
                 srv_log(xs_fmt("Final health: heap=%u psram=%u jobs=%d", 
                     (unsigned)free_heap, (unsigned)free_psram, p_state->job_fifo_size));
                 
-                /* Exit immediately on file descriptor exhaustion */
+                /* Special handling for "Too many open files" error */
+                if (errno == EMFILE || errno == ENFILE) {
+                    srv_log(xs_dup("FILE DESCRIPTOR LEAK DETECTED!"));
+                    srv_log(xs_fmt("This usually means files are not being closed properly."));
+                    srv_log(xs_dup("Server will exit and watchdog will restart it."));
+                }
+                
+                /* Exit to allow watchdog to restart */
                 break;
 #else
                 break;
