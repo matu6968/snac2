@@ -1199,10 +1199,12 @@ void httpd(void)
 
 #ifdef SNAC_ESP32
     /* ESP-IDF pthread default stack is small; these threads run heavy code
-       (HTTP parsing, JSON, filesystem) and can corrupt memory on overflow. */
+       (HTTP parsing, JSON, filesystem, ActivityPub processing) and can corrupt 
+       memory on overflow. Increased to 48KB after stack overflow during 
+       ActivityPub boost/like operations with deep JSON parsing. */
     pthread_attr_t th_attr;
     pthread_attr_init(&th_attr);
-    pthread_attr_setstacksize(&th_attr, 16384);
+    pthread_attr_setstacksize(&th_attr, 49152);  /* 48KB - was 16KB */
 #endif
 
     /* thread #0 is the background thread */
