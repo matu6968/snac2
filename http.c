@@ -192,14 +192,22 @@ int check_signature(const xs_dict *req, xs_str **err)
     if ((p = strchr(keyId, '#')) != NULL)
         *p = '\0';
 
-    /* also strip cgi variables */
-    if ((p = strchr(keyId, '?')) != NULL)
-        *p = '\0';
-
     xs *actor = NULL;
     int status;
 
-    if (!valid_status((status = actor_request(NULL, keyId, &actor)))) {
+    /* does it have ? variables? */
+    if ((p = strchr(keyId, '?')) != NULL) {
+        /* try first with them */
+        if (!valid_status((status = actor_request(NULL, keyId, &actor)))) {
+            *p = '\0';
+            /* retry stripping them */
+            status = actor_request(NULL, keyId, &actor);
+        }
+    }
+    else
+        status = actor_request(NULL, keyId, &actor);
+
+    if (!valid_status(status)) {
         *err = xs_fmt("actor request error %s %d", keyId, status);
         return 0;
     }

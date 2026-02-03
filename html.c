@@ -238,8 +238,8 @@ xs_str *html_date_label(snac *user, const char *date)
             /* copy the 3letter translated month name */
             const char *m = L(months[tm.tm_mon]);
 
-            if (xs_is_string(m) && strlen(m) >= 3)
-                memcpy(date, m, 3);
+            if (xs_is_string(m))
+                date = xs_replace_i(date, months[tm.tm_mon], m);
         }
 
         return date;

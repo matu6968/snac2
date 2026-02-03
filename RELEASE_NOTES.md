@@ -1,5 +1,17 @@
 # Release Notes
 
+## UNRELEASED
+
+Notifications can be filtered by category (contributed by byte).
+
+Show dates adjusted to every account's time zone (contributed by dandelions).
+
+Configurable limit for poll items (contributed by dandelions).
+
+Fixed incorrect scope when editing a post (contributed by dandelions).
+
+Updated Czech, German, Brazilian Portuguese translations (contributed by pmjv, zen, daltux).
+
 ## 2.89
 
 Fixed crash in pronouns processing (contributed by byte).
