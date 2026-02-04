@@ -1304,6 +1304,12 @@ void httpd(void)
                 p_state->use_fcgi ? " (FastCGI)" : "",
                 full_address, uptime));
 
+    /* close the server socket to free the port */
+    if (rs != -1) {
+        close(rs);
+        srv_debug(1, xs_fmt("closed server socket %d", rs));
+    }
+
 #ifndef SNAC_ESP32
     unlink(pidfile);
 #endif

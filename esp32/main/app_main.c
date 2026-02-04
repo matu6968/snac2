@@ -234,8 +234,14 @@ static void wait_for_ip_and_time(esp_netif_t *netif, int wait_ip_ms, int wait_ti
     }
 
     if (!time_is_sane()) {
+        /* Configure SNTP for continuous sync to prevent clock drift */
         esp_sntp_setoperatingmode(ESP_SNTP_OPMODE_POLL);
         esp_sntp_setservername(0, "pool.ntp.org");
+        esp_sntp_setservername(1, "time.google.com");  /* Backup server */
+        
+        /* Sync every hour (3600 seconds) to maintain accuracy */
+        esp_sntp_set_sync_interval(3600000);  /* milliseconds */
+        
         esp_sntp_init();
 
         int waited = 0;
@@ -244,13 +250,29 @@ static void wait_for_ip_and_time(esp_netif_t *netif, int wait_ip_ms, int wait_ti
             waited += 200;
         }
 
-        if (!time_is_sane())
-            ESP_LOGW(TAG, "time not synced (NTP); HTTP signatures may be rejected");
+        if (!time_is_sane()) {
+            ESP_LOGW(TAG, "time not synced (NTP); TLS certificates may fail verification");
+            ESP_LOGW(TAG, "This will cause federation issues with some servers");
+        }
         else {
             time_t now = 0;
             time(&now);
-            ESP_LOGI(TAG, "time synced: %ld", (long)now);
+            struct tm tm = {0};
+            localtime_r(&now, &tm);
+            ESP_LOGI(TAG, "time synced: %04d-%02d-%02d %02d:%02d:%02d UTC (epoch: %ld)", 
+                     tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+                     tm.tm_hour, tm.tm_min, tm.tm_sec, (long)now);
+            ESP_LOGI(TAG, "SNTP configured for automatic hourly sync");
         }
+    }
+    else {
+        /* Time is already sane, but ensure SNTP is running for continuous sync */
+        esp_sntp_setoperatingmode(ESP_SNTP_OPMODE_POLL);
+        esp_sntp_setservername(0, "pool.ntp.org");
+        esp_sntp_setservername(1, "time.google.com");
+        esp_sntp_set_sync_interval(3600000);
+        esp_sntp_init();
+        ESP_LOGI(TAG, "SNTP already running - time is synchronized");
     }
 }
 
