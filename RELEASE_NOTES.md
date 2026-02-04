@@ -4,13 +4,13 @@
 
 Notifications can be filtered by category (contributed by byte).
 
-Show dates adjusted to every account's time zone (contributed by dandelions).
+Dates are shown adjusted to the account's time zone (contributed by dandelions).
 
 Configurable limit for poll items (contributed by dandelions).
 
 Fixed incorrect scope when editing a post (contributed by dandelions).
 
-Updated Czech, German, Brazilian Portuguese translations (contributed by pmjv, zen, daltux).
+Updated Czech, German, Brazilian Portuguese, Spanish translations (contributed by pmjv, zen, daltux).
 
 ## 2.89
 
