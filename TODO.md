@@ -2,6 +2,8 @@
 
 ## Open
 
+Fix the mismatch in the following accounts number from the actor / public page and the people page. Reason: following_list_len() just returns then number of _a.json files in the folder (for performance reasons), while the people page gives the *confirmed* followings.
+
 It seems that Microsoft is planning to laminate Basic HTTP Auth, so make a plan, see https://codeberg.org/grunfink/snac2/issues/350
 
 Investigate the problem with boosts inside the same instance (see https://codeberg.org/grunfink/snac2/issues/214).
