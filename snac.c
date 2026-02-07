@@ -35,7 +35,9 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 xs_str *srv_basedir = NULL;
 xs_dict *srv_config = NULL;
@@ -179,6 +181,46 @@ int check_password(const char *uid, const char *passwd, const char *hash)
 }
 
 
+char* findprog(const char *prog)
+/* find a prog in PATH and return the first match */
+{
+    char *path_env, *path, *dir, filename[PATH_MAX];
+    int len;
+    struct stat sbuf;
+
+    path_env = getenv("PATH");
+    if (!prog || !path_env)
+        return NULL;
+
+    path_env = strdup(path_env);
+    if (!path_env)
+        return NULL;
+    path = path_env;
+
+    while ((dir = strsep(&path, ":")) != NULL) {
+        /* empty entries as ./ instead of / */
+        if (*dir == '\0')
+            dir = ".";
+
+        /* strip trailing / */
+        len = strlen(dir);
+        while (len > 0 && dir[len-1] == '/')
+            dir[--len] = '\0';
+
+        len = snprintf(filename, sizeof(filename), "%s/%s", dir, prog);
+        if (len > 0 && len < (int) sizeof(filename) &&
+            (stat(filename, &sbuf) == 0) && S_ISREG(sbuf.st_mode) &&
+            access(filename, X_OK) == 0) {
+            free(path_env);
+            return strdup(filename);
+        }
+    }
+
+    free(path_env);
+    return NULL;
+}
+
+
 int strip_media(const char *fn)
 /* strips EXIF data from a file */
 {
@@ -216,23 +258,24 @@ int strip_media(const char *fn)
             xs_endswith(l_fn, ".gif")  || xs_endswith(l_fn, ".bmp")) {
 
             const char *mp = xs_dict_get(srv_config, "mogrify_path");
-            if (mp == NULL)
-                mp = "mogrify";
 
-            xs *cmd = xs_fmt("cd \"%s\" && %s -auto-orient -strip \"%s\" 2>/dev/null", srv_basedir, mp, r_fn);
-
-            ret = system(cmd);
-
-            if (ret != 0) {
-                int code = 0;
-                if (WIFEXITED(ret))
-                    code = WEXITSTATUS(ret);
-                
-                if (code == 127)
-                    srv_log(xs_fmt("strip_media: error stripping %s. '%s' not found (exit 127). Set 'mogrify_path' in server.json.", r_fn, mp));
-                else
-                    srv_log(xs_fmt("strip_media: error stripping %s %d", r_fn, ret));
+            pid_t pid = fork();
+            if (pid == -1) {
+                srv_log(xs_fmt("strip_media: cannot fork()"));
+                return -1;
+            } else if (pid == 0) {
+                chdir(srv_basedir);
+                execl(mp, "-auto-orient", "-strip", r_fn, (char*) NULL);
+                _exit(1);
             }
+
+            if (waitpid(pid, &ret, 0) == -1) {
+                srv_log(xs_fmt("strip_media: cannot waitpid()"));
+                return -1;
+            }
+
+            if (ret != 0)
+                srv_log(xs_fmt("strip_media: error stripping %s %d", r_fn, ret));
             else
                 srv_debug(1, xs_fmt("strip_media: stripped %s", r_fn));
         }
@@ -243,35 +286,33 @@ int strip_media(const char *fn)
             xs_endswith(l_fn, ".mkv") || xs_endswith(l_fn, ".avi")) {
 
             const char *fp = xs_dict_get(srv_config, "ffmpeg_path");
-            if (fp == NULL)
-                fp = "ffmpeg";
 
             /* ffmpeg cannot modify in-place, so we need a temp file */
             /* we must preserve valid extension for ffmpeg to guess the format */
             const char *ext = strrchr(r_fn, '.');
             if (ext == NULL) ext = "";
             xs *tmp_fn = xs_fmt("%s.tmp%s", r_fn, ext);
-            
-            /* -map_metadata -1 strips all global metadata */
-            /* -c copy copies input streams without re-encoding */
-            /* we don't silence stderr so we can debug issues */
-            /* we explicitly cd to srv_basedir to ensure relative paths work */
-            xs *cmd = xs_fmt("cd \"%s\" && %s -y -i \"%s\" -map_metadata -1 -c copy \"%s\"", srv_basedir, fp, r_fn, tmp_fn);
 
-            ret = system(cmd);
+            pid_t pid = fork();
+            if (pid == -1) {
+                srv_log(xs_fmt("strip_media: cannot fork()"));
+                return -1;
+            } else if (pid == 0) {
+                chdir(srv_basedir);
+                /* -map_metadata -1 strips all global metadata */
+                /* -c copy copies input streams without re-encoding */
+                execl(fp, "-y", "-i", r_fn, "-map_metadata", "-1", "-c", "copy", tmp_fn, (char*) NULL);
+                _exit(1);
+            }
+
+            if (waitpid(pid, &ret, 0) == -1) {
+                srv_log(xs_fmt("strip_media: cannot waitpid()"));
+                return -1;
+            }
 
             if (ret != 0) {
-                int code = 0;
-                if (WIFEXITED(ret))
-                    code = WEXITSTATUS(ret);
-                
-                if (code == 127)
-                    srv_log(xs_fmt("strip_media: error stripping %s. '%s' not found (exit 127). Set 'ffmpeg_path' in server.json.", r_fn, fp));
-                else {
-                    srv_log(xs_fmt("strip_media: error stripping %s %d", r_fn, ret));
-                    srv_log(xs_fmt("strip_media: command was: %s", cmd));
-                }
-                
+                srv_log(xs_fmt("strip_media: error stripping %s %d", r_fn, ret));
+
                 /* try to cleanup, just in case */
                 /* unlink needs full path too if we are not in basedir */
                 xs *full_tmp_fn = xs_fmt("%s/%s", srv_basedir, tmp_fn);
@@ -295,38 +336,37 @@ int strip_media(const char *fn)
 
 
 int check_strip_tool(void)
+/* check if strip_exif tools do exist and fix their absolute path */
 {
     const xs_val *v = xs_dict_get(srv_config, "strip_exif");
+    /* skip if unless strip_exif; return non-error */
+    if (xs_type(v) != XSTYPE_TRUE)
+        return 1;
+
     int ret = 1;
+    const char *progs[] = { "ffmpeg", "mogrify" };
 
-    if (xs_type(v) == XSTYPE_TRUE) {
-        /* check mogrify */
-        {
-            const char *mp = xs_dict_get(srv_config, "mogrify_path");
-            if (mp == NULL)
-                mp = "mogrify";
+    for (int i = 0; i < (int)(sizeof(progs) / sizeof(progs[0])); i++) {
+        xs_str *key = xs_fmt("%s_path", progs[i]);
 
-            xs *cmd = xs_fmt("%s -version 2>/dev/null >/dev/null", mp);
-            
-            if (system(cmd) != 0) {
-                srv_log(xs_fmt("check_strip_tool: '%s' not working", mp));
-                ret = 0;
-            }
+        const char *val = xs_dict_get(srv_config, key);
+        if (val == NULL) {
+            val = findprog(progs[i]);
+            if (val != NULL)
+                srv_debug(1, xs_fmt("check_strip_tool: found %s in PATH at %s", progs[i], val));
         }
 
-        /* check ffmpeg */
-        if (ret) {
-            const char *fp = xs_dict_get(srv_config, "ffmpeg_path");
-            if (fp == NULL)
-                fp = "ffmpeg";
-
-            xs *cmd = xs_fmt("%s -version 2>/dev/null >/dev/null", fp);
-            
-            if (system(cmd) != 0) {
-                srv_log(xs_fmt("check_strip_tool: '%s' not working", fp));
-                ret = 0;
-            }
+        if (val == NULL) {
+            srv_log(xs_fmt("check_strip_tool: %s not found in PATH", progs[i]));
+            ret = 0;
+        } else if (access(val, X_OK) != 0) {
+            srv_log(xs_fmt("check_strip_tool: %s '%s' is not executable", progs[i], val));
+            ret = 0;
+        } else {
+            srv_config = xs_dict_set(srv_config, key, val);
         }
+
+        xs_free(key);
     }
 
     return ret;

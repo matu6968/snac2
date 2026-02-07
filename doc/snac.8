@@ -310,6 +310,17 @@ If set to true, EXIF and other metadata will be stripped from uploaded images (j
 tools to be installed. If
 .Nm snac
 cannot find or execute these tools at startup, it will refuse to run.
+.Pp
+When enabled, registered users might pass arbitrary files to
+.Nm mogrify
+or
+.Nm ffmpeg .
+These commands are being executed outside the sandbox and have a huge
+attack surface. Exploits would be run as the
+.Nm
+system user. Reconsider enabling this on
+.Nm
+instances with unknown or untrusted users.
 .It Ic mogrify_path
 Overrides the default "mogrify" command name or path. Use this if the tool is not in the system PATH or has a different name.
 .It Ic ffmpeg_path

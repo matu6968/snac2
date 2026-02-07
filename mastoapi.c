@@ -3258,12 +3258,16 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
     if (strcmp(cmd, "/v1/statuses") == 0) { /** **/
         if (logged_in) {
             /* post a new Note */
-            const char *content    = xs_dict_get(args, "status");
-            const char *mid        = xs_dict_get(args, "in_reply_to_id");
-            const char *visibility = xs_dict_get(args, "visibility");
-            const char *summary    = xs_dict_get(args, "spoiler_text");
-            const char *media_ids  = xs_dict_get(args, "media_ids");
-            const char *language   = xs_dict_get(args, "language");
+            const char *content          = xs_dict_get(args, "status");
+            const char *mid              = xs_dict_get(args, "in_reply_to_id");
+            const char *visibility       = xs_dict_get(args, "visibility");
+            const char *summary          = xs_dict_get(args, "spoiler_text");
+            const char *poll_opts        = xs_dict_get(args, "poll[options][]");
+            const char *poll_end_secs    = xs_dict_get(args, "poll[expires_in]");
+            const char *poll_multiple    = xs_dict_get(args, "poll[multiple]");
+            // const char *poll_hide_totals = xs_dict_get(args, "poll[hide_totals]");
+            const char *media_ids        = xs_dict_get(args, "media_ids");
+            const char *language         = xs_dict_get(args, "language");
 
             if (xs_is_null(media_ids))
                 media_ids = xs_dict_get(args, "media_ids[]");
@@ -3286,8 +3290,8 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                     irt = xs_dup(xs_dict_get(r_msg, "id"));
             }
 
-            /* does it have attachments? */
-            if (!xs_is_null(media_ids)) {
+            /* does it have attachments (and no poll)? */
+            if (!xs_is_null(media_ids) && xs_is_null(poll_end_secs) && xs_is_null(poll_opts)) {
                 xs *mi = NULL;
 
                 if (xs_type(media_ids) == XSTYPE_LIST)
@@ -3313,6 +3317,8 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             }
 
             /* prepare the message */
+            xs *msg = NULL;
+
             int scope = SCOPE_MENTIONED;
             if (strcmp(visibility, "unlisted") == 0)
                 scope = SCOPE_UNLISTED;
@@ -3323,7 +3329,29 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             if (strcmp(visibility, "private") == 0)
                 scope = SCOPE_FOLLOWERS;
 
-            xs *msg = msg_note(&snac, content, NULL, irt, attach_list, scope, language, NULL);
+            /* does it have a poll? */
+            if (!xs_is_null(poll_opts) && !xs_is_null(poll_end_secs)) {
+                xs *po = NULL;
+                int end_secs = atoi(poll_end_secs);
+                int multiple = 0;
+
+                if (xs_type(poll_opts) == XSTYPE_LIST)
+                    po = xs_dup(poll_opts);
+                else {
+                    po = xs_list_new();
+                    po = xs_list_append(po, poll_opts);
+                }
+
+                if (!xs_is_null(poll_multiple) && strcmp(poll_multiple, "true") == 0)
+                    multiple = 1;
+
+                msg = msg_question(&snac, content, attach_list,
+                                   poll_opts, multiple, end_secs);
+
+                enqueue_close_question(&snac, xs_dict_get(msg, "id"), end_secs);
+            }
+            else
+                msg = msg_note(&snac, content, NULL, irt, attach_list, scope, language, NULL);
 
             if (!xs_is_null(summary) && *summary) {
                 msg = xs_dict_set(msg, "sensitive", xs_stock(XSTYPE_TRUE));
@@ -3685,44 +3713,65 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
                 /* skip the 'fake' part of the id */
                 mid = MID_TO_MD5(mid);
 
-                if (valid_status(timeline_get_by_md5(&snac, mid, &msg))) {
+                /* try timeline first, then global object store for remote posts */
+                int found = valid_status(timeline_get_by_md5(&snac, mid, &msg));
+                if (!found)
+                    found = valid_status(object_get_by_md5(mid, &msg));
+
+                if (found) {
                     const char *id   = xs_dict_get(msg, "id");
                     const char *atto = get_atto(msg);
+                    int closed = 0;
+                    const char *f_closed = NULL;
 
-                    const xs_list *opts = xs_dict_get(msg, "oneOf");
-                    if (opts == NULL)
-                        opts = xs_dict_get(msg, "anyOf");
+                    if ((f_closed = xs_dict_get(msg, "closed")) != NULL) {
+                        /* it has a closed date... but is it in the past? */
+                        time_t t0 = time(NULL);
+                        time_t t1 = xs_parse_iso_date(f_closed, 0);
 
-                    if (op == NULL) {
+                        if (t1 < t0)
+                            closed = 1;
                     }
-                    else
-                    if (strcmp(op, "votes") == 0) {
-                        const xs_list *choices = xs_dict_get(args, "choices[]");
 
-                        if (xs_is_null(choices))
-                            choices = xs_dict_get(args, "choices");
+                    if (closed || was_question_voted(&snac, id))
+                        status = HTTP_STATUS_UNPROCESSABLE_CONTENT;
+                    else {
+                        const xs_list *opts = xs_dict_get(msg, "oneOf");
+                        if (opts == NULL)
+                            opts = xs_dict_get(msg, "anyOf");
 
-                        if (xs_type(choices) == XSTYPE_LIST) {
-                            const xs_str *v;
+                        if (op == NULL) {
+                        }
+                        else {
+                            if (strcmp(op, "votes") == 0) {
+                                const xs_list *choices = xs_dict_get(args, "choices[]");
 
-                            int c = 0;
-                            while (xs_list_next(choices, &v, &c)) {
-                                int io           = atoi(v);
-                                const xs_dict *o = xs_list_get(opts, io);
+                                if (xs_is_null(choices))
+                                    choices = xs_dict_get(args, "choices");
 
-                                if (o) {
-                                    const char *name = xs_dict_get(o, "name");
+                                if (xs_type(choices) == XSTYPE_LIST) {
+                                    const xs_str *v;
 
-                                    xs *msg = msg_note(&snac, "", atto, (char *)id, NULL, 1, NULL, NULL);
-                                    msg = xs_dict_append(msg, "name", name);
+                                    int c = 0;
+                                    while (xs_list_next(choices, &v, &c)) {
+                                        int io           = atoi(v);
+                                        const xs_dict *o = xs_list_get(opts, io);
 
-                                    xs *c_msg = msg_create(&snac, msg);
-                                    enqueue_message(&snac, c_msg);
-                                    timeline_add(&snac, xs_dict_get(msg, "id"), msg);
+                                        if (o) {
+                                            const char *name = xs_dict_get(o, "name");
+
+                                            xs *msg = msg_note(&snac, "", atto, (char *)id, NULL, 1, NULL, NULL);
+                                            msg = xs_dict_append(msg, "name", name);
+
+                                            xs *c_msg = msg_create(&snac, msg);
+                                            enqueue_message(&snac, c_msg);
+                                            timeline_add(&snac, xs_dict_get(msg, "id"), msg);
+                                        }
+                                    }
+
+                                    out = mastoapi_poll(&snac, msg);
                                 }
                             }
-
-                            out = mastoapi_poll(&snac, msg);
                         }
                     }
                 }

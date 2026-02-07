@@ -13,6 +13,8 @@ void sbox_enter(const char *basedir)
         return;
     }
 
+    const xs_val *strip_exif = xs_dict_get(srv_config, "strip_exif");
+
     int smail;
     const char *url = xs_dict_get(srv_config, "smtp_url");
 
@@ -33,6 +35,11 @@ void sbox_enter(const char *basedir)
     if (*address == '/')
         unveil(address, "rwc");
 
+    if (strip_exif) {
+        unveil(xs_dict_get(srv_config, "ffmpeg_path"), "x");
+        unveil(xs_dict_get(srv_config, "mogrify_path"), "x");
+    }
+
     if (smail)
         unveil("/usr/sbin/sendmail",   "x");
 
@@ -45,7 +52,7 @@ void sbox_enter(const char *basedir)
     if (*address == '/')
         p = xs_str_cat(p, " unix");
 
-    if (smail)
+    if (smail || strip_exif)
         p = xs_str_cat(p, " exec");
 
     pledge(p, NULL);

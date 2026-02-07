@@ -119,19 +119,12 @@ int srv_open(const char *basedir, int auto_upgrade)
 
                 if (auto_upgrade)
                     ret = snac_upgrade(&error);
-                else {
-                    if (xs_number_get(xs_dict_get(srv_config, "layout")) < disk_layout)
-                        error = xs_fmt("ERROR: disk layout changed - execute 'snac upgrade' first");
-                    else {
-                        if (!check_strip_tool()) {
-                            const char *mp = xs_dict_get(srv_config, "mogrify_path");
-                            if (mp == NULL) mp = "mogrify";
-                            error = xs_fmt("ERROR: strip_exif enabled but '%s' not found or not working (set 'mogrify_path' in server.json)", mp);
-                        }
-                        else
-                            ret = 1;
-                    }
-                }
+                else if (xs_number_get(xs_dict_get(srv_config, "layout")) < disk_layout)
+                    error = xs_fmt("ERROR: disk layout changed - execute 'snac upgrade' first");
+                else if (!check_strip_tool())
+                    error = xs_fmt("ERROR: strip_exif enabled but commands not found or working");
+                else
+                    ret = 1;
             }
 
         }

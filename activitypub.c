@@ -1961,6 +1961,9 @@ xs_dict *msg_actor(snac *snac)
     if (xs_type(location) == XSTYPE_DICT)
         msg = xs_dict_set(msg, "location", location);
 
+    xs *webfinger = xs_fmt("%s@%s", snac->uid, xs_dict_get(srv_config, "host"));
+    msg = xs_dict_set(msg, "webfinger", webfinger);
+
     /* cache it */
     snac_debug(snac, 1, xs_fmt("Caching actor %s", snac->actor));
     object_add_ow(snac->actor, msg);

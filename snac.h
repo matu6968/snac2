@@ -135,6 +135,7 @@ int validate_uid(const char *uid);
 xs_str *hash_password(const char *uid, const char *passwd, const char *nonce);
 int check_password(const char *uid, const char *passwd, const char *hash);
 
+char* findprog(const char *prog);
 int strip_media(const char *fn);
 int check_strip_tool(void);
 
