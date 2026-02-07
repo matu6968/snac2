@@ -2035,6 +2035,11 @@ xs_html *html_entry_controls(snac *user, const char *actor,
     const char *id    = xs_dict_get(msg, "id");
     const char *group = xs_dict_get(msg, "audience");
 
+    /* Safety check: md5 must not be NULL */
+    if (md5 == NULL) {
+        return NULL;
+    }
+
     xs *likes   = object_likes(id);
     xs *boosts  = object_announces(id);
 
@@ -2282,7 +2287,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         collapse_threads = 1;
 
     /* hidden? do nothing more for this conversation */
-    if (user && is_hidden(user, id)) {
+    if (user && md5 != NULL && is_hidden(user, id)) {
         xs *s1 = xs_fmt("%s_entry", md5);
 
         /* return just an dummy anchor, to keep position after hitting 'Hide' */
@@ -2331,7 +2336,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
         return NULL;
 
     /* ignore muted morons immediately */
-    if (user && is_muted(user, actor)) {
+    if (user && md5 != NULL && is_muted(user, actor)) {
         xs *s1 = xs_fmt("%s_entry", md5);
 
         /* return just an dummy anchor, to keep position after hitting 'MUTE' */
@@ -2358,7 +2363,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
     /** html_entry top tag **/
     xs_html *entry_top = xs_html_tag("div", NULL);
 
-    {
+    if (md5 != NULL) {
         xs *s1 = xs_fmt("%s_entry", md5);
         xs_html_add(entry_top,
             xs_html_tag("a",
@@ -2696,7 +2701,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
                     }
                     if (ret) {
                         xs *s1;
-                        if (user) {
+                        if (user && md5 != NULL) {
                             xs *action = xs_fmt("%s/admin/action", user->actor);
                             xs *form_id = xs_fmt("%s_reply_form", md5);
 
@@ -3245,7 +3250,7 @@ xs_html *html_entry(snac *user, xs_dict *msg, int read_only,
 
     /** controls **/
 
-    if (!read_only && user) {
+    if (!read_only && user && md5 != NULL) {
         xs_html_add(entry,
             html_entry_controls(user, actor, msg, md5));
     }

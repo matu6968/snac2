@@ -331,8 +331,11 @@ static void snac_task(void *arg)
 
     if (restart_count >= max_restarts) {
         ESP_LOGE(TAG, "httpd failed to stay running after %d restarts - giving up", max_restarts);
-        ESP_LOGE(TAG, "System may need manual intervention or reboot");
-        /* Don't delete the task - let it stay around for debugging */
+#ifdef HTTPD_AUTOMATIC_RESTART
+        ESP_LOGE(TAG, "Rebooting to prevent unexpected downtime...");
+        esp_restart();
+#endif
+        /* Don't delete the task - let it stay around for debugging if the user chose to not automatically restart */
         while (1) {
             vTaskDelay(pdMS_TO_TICKS(60000));  /* Sleep forever */
         }

@@ -59,7 +59,8 @@ The commands are mostly the same as the original snac, but with some additional 
 ## Limitations
 
 - Shared memory is not supported on the ESP32 series, so the build is configured with `WITHOUT_SHM`
-- Due to limited amounts of RAM on the ESP32 series (and the slow bandwidth to the SD card), keep the number of users and media to a minimum.
+- Due to limited amounts of RAM on the ESP32 series (and the slow bandwidth to the SD card), keep the number of users and media to a minimum otherwaise you will see often crashes due to the ESP32 being overwelmed from federating users.
+- Due to the ESP32 series not having a powerful CPU to encode images/videos neither a dedicated video encoder (except the ESP32-P4 where it has a H.264 one), media processing is a no-op meaning recieved media gets directly uploaded to the data directory without stripping metadata.
 
 Below is the original README.md file for snac.
 
