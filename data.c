@@ -1548,6 +1548,8 @@ int timeline_get_by_md5(snac *snac, const char *md5, xs_dict **msg)
         if (*msg != NULL)
             status = HTTP_STATUS_OK;
     }
+    else
+        *msg = NULL;
 
     return status;
 }

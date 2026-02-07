@@ -3582,10 +3582,25 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
     xs_html_add(body, posts);
 
     int mark_shown = 0;
+#ifdef SNAC_ESP32
+    int posts_loaded = 0;
+    const int max_posts = 8;  /* Limit posts on ESP32 to prevent heap exhaustion */
+#endif
 
     while (xs_list_iter(&p, &v)) {
         xs *msg = NULL;
         int status;
+
+#ifdef SNAC_ESP32
+        /* ESP32 memory limit: stop loading posts to prevent crash */
+        if (posts_loaded >= max_posts) {
+            xs_html_add(posts,
+                xs_html_tag("div",
+                    xs_html_attr("class", "snac-history"),
+                    xs_html_text(L("(More posts available - limited for memory)"))));
+            break;
+        }
+#endif
 
         /* "already seen" mark? */
         if (strcmp(v, MD5_ALREADY_SEEN_MARK) == 0) {
@@ -3612,7 +3627,7 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
         else
             status = object_get_by_md5(v, &msg);
 
-        if (!valid_status(status))
+        if (!valid_status(status) || msg == NULL)
             continue;
 
         /* if it's an instance page, discard messages from private users */
@@ -3645,9 +3660,13 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 
         xs_html *entry = html_entry(user, msg, read_only, 0, v, (user && !hide_children) ? 0 : 1);
 
-        if (entry != NULL)
+        if (entry != NULL) {
             xs_html_add(posts,
                 entry);
+#ifdef SNAC_ESP32
+            posts_loaded++;
+#endif
+        }
     }
 
     if (list && user && read_only) {

@@ -105,6 +105,7 @@ const char *snac_blurb =
 #ifdef SNAC_ESP32
     "<p>The following server is being hosted on an <a href=\"https://en.wikipedia.org/wiki/ESP32\">ESP32</a> based microcontroller.</p>\n"
     "<p>Specifically the build target is the following chip: " PLATFORM_NAME "</p>\n"
+    "<p>In order to be able to run snac on a ESP32, a fork of the original software was used, specifically <a href=\"https://github.com/matu6968/snac2\">this one.</a></p>\n"
 #endif
 ;
 
