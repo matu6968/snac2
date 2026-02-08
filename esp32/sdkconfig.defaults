@@ -19,7 +19,7 @@ CONFIG_ESP_TASK_WDT_INIT=n
 CONFIG_LWIP_MAX_SOCKETS=32
 
 # Increase VFS file descriptor limit
-CONFIG_VFS_MAX_COUNT=32
+CONFIG_VFS_MAX_COUNT=20
 
 # Increase TCP keepalive to prevent connections from timing out
 CONFIG_LWIP_TCP_KEEPALIVE_DEFAULT=y
