@@ -838,100 +838,100 @@ msgstr "Mehr (x 10)..."
 
 #: html.c:858
 msgid "End in 3 days"
-msgstr ""
+msgstr "Endet in 3 Tagen"
 
 #: html.c:861
 msgid "End in 1 year"
-msgstr ""
+msgstr "Endet in 1 Jahr"
 
 #: html.c:4160
 msgid "Likes"
-msgstr ""
+msgstr "Gefällt mir"
 
 #: html.c:4161
 msgid "Emoji reacts"
-msgstr ""
+msgstr "Emoji-Reaktionen"
 
 #: html.c:4162
 msgid "Mentions"
-msgstr ""
+msgstr "Erwähnungen"
 
 #: html.c:4163
 msgid "Announces"
-msgstr ""
+msgstr "Ankündigungen"
 
 #: html.c:4164
 msgid "Follows"
-msgstr ""
+msgstr "Folgt"
 
 #: html.c:4165
 msgid "Unfollows"
-msgstr ""
+msgstr "Entfolgt"
 
 #: html.c:4166
 msgid "Follow requests"
-msgstr ""
+msgstr "Folge Anfrage"
 
 #: html.c:4167
 msgid "Blocks"
-msgstr ""
+msgstr "Geblockt"
 
 #: html.c:4168
 msgid "Polls"
-msgstr ""
+msgstr "Umfragen"
 
 #: html.c:4172
 msgid "Save"
-msgstr ""
+msgstr "Speichern"
 
 #: html.c:4180
 msgid "Notifications filter..."
-msgstr ""
+msgstr "Benachrichtigungsfilter"
 
 #: data.c:45
 msgid "Jan"
-msgstr ""
+msgstr "Jan"
 
 #: data.c:46
 msgid "Feb"
-msgstr ""
+msgstr "Feb"
 
 #: data.c:47
 msgid "Mar"
-msgstr ""
+msgstr "Mär"
 
 #: data.c:48
 msgid "Apr"
-msgstr ""
+msgstr "Apr"
 
 #: data.c:49
 msgid "May"
-msgstr ""
+msgstr "Mai"
 
 #: data.c:50
 msgid "Jun"
-msgstr ""
+msgstr "Jun"
 
 #: data.c:51
 msgid "Jul"
-msgstr ""
+msgstr "Jul"
 
 #: data.c:52
 msgid "Aug"
-msgstr ""
+msgstr "Aug"
 
 #: data.c:53
 msgid "Sep"
-msgstr ""
+msgstr "Sep"
 
 #: data.c:54
 msgid "Oct"
-msgstr ""
+msgstr "Okt"
 
 #: data.c:55
 msgid "Nov"
-msgstr ""
+msgstr "Nov"
 
 #: data.c:56
 msgid "Dec"
-msgstr ""
+msgstr "Dez"
