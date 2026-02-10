@@ -3239,6 +3239,7 @@ int mastoapi_post_handler(const xs_dict *req, const char *q_path,
             app = xs_dict_append(app, "client_secret", csec);
             app = xs_dict_append(app, "vapid_key",     vkey);
             app = xs_dict_append(app, "id",            id);
+            app = xs_dict_append(app, "client_secret_expires_at", xs_stock(0));
 
             *body  = xs_json_dumps(app, 4);
             *ctype = "application/json";

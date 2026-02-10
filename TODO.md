@@ -12,7 +12,7 @@ Important: deleting a follower should do more that just delete the object, see h
 
 ## Wishlist
 
-Add account reporting.
+Add account flagging / reporting https://docs.joinmastodon.org/spec/activitypub/#Flag
 
 Add a list option to hide member posts from the main timeline, see https://codeberg.org/grunfink/snac2/issues/383
 

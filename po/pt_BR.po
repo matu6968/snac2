@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: snac\n"
-"PO-Revision-Date: 2026-01-30 22:24-0300\n"
+"PO-Revision-Date: 2026-02-04 14:26-0300\n"
 "Last-Translator: Daltux <@daltux@snac.daltux.net>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
@@ -382,11 +382,11 @@ msgstr "Começar a acompanhar este grupo ou canal"
 
 #: html.c:2130 html.c:3927 html.c:5594
 msgid "MUTE"
-msgstr "MUDO"
+msgstr "Silêncio!"
 
 #: html.c:2131
 msgid "Block any activity from this user forever"
-msgstr "Bloquear toda atividade deste perfil para sempre"
+msgstr "Ignorar toda atividade deste perfil para sempre"
 
 #: html.c:2136 html.c:3909 html.c:5680
 msgid "Delete"
@@ -865,11 +865,11 @@ msgstr "Impulsionamentos"
 
 #: html.c:4164
 msgid "Follows"
-msgstr "Seguiu"
+msgstr "Seguimentos"
 
 #: html.c:4165
 msgid "Unfollows"
-msgstr "Deixou de seguir"
+msgstr "Seguimentos desfeitos"
 
 #: html.c:4166
 msgid "Follow requests"
@@ -893,48 +893,48 @@ msgstr "Filtro de notificações..."
 
 #: data.c:45
 msgid "Jan"
-msgstr ""
+msgstr "Jan"
 
 #: data.c:46
 msgid "Feb"
-msgstr ""
+msgstr "Fev"
 
 #: data.c:47
 msgid "Mar"
-msgstr ""
+msgstr "Mar"
 
 #: data.c:48
 msgid "Apr"
-msgstr ""
+msgstr "Abr"
 
 #: data.c:49
 msgid "May"
-msgstr ""
+msgstr "Mai"
 
 #: data.c:50
 msgid "Jun"
-msgstr ""
+msgstr "Jun"
 
 #: data.c:51
 msgid "Jul"
-msgstr ""
+msgstr "Jul"
 
 #: data.c:52
 msgid "Aug"
-msgstr ""
+msgstr "Ago"
 
 #: data.c:53
 msgid "Sep"
-msgstr ""
+msgstr "Set"
 
 #: data.c:54
 msgid "Oct"
-msgstr ""
+msgstr "Out"
 
 #: data.c:55
 msgid "Nov"
-msgstr ""
+msgstr "Nov"
 
 #: data.c:56
 msgid "Dec"
-msgstr ""
+msgstr "Dez"

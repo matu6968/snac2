@@ -286,12 +286,8 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
     }
 
     if (user && !in_people) {
-        /* if this actor is a follower or being followed, create an
-           anchored link to the people page instead of the actor url */
-        if (fwer || fwing) {
-            xs *md5 = xs_md5_hex(actor_id, strlen(actor_id));
-            href = xs_fmt("%s/people/%s", user->actor, md5);
-        }
+        xs *md5 = xs_md5_hex(actor_id, strlen(actor_id));
+        href = xs_fmt("%s/people/%s", user->actor, md5);
     }
 
     if (href == NULL)
