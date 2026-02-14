@@ -6,11 +6,15 @@ Notifications can be filtered by category (contributed by byte).
 
 Dates are shown adjusted to the account's time zone (contributed by dandelions).
 
+Minor tweak to improve signature key retrieving for some Wordpress configurations.
+
+Fixed web UI incorrect links to actor public pages for some configurations.
+
+Fixed mismatch in the accounts being followed number in the public and people pages.
+
 Configurable limit for poll items (contributed by dandelions).
 
 Fixed incorrect scope when editing a post (contributed by dandelions).
-
-Minor tweak to improve signature key retrieving for some Wordpress configurations.
 
 Change the strip_exif logic to work with the already existing OpenBSD sandbox (contributed by oxzi).
 

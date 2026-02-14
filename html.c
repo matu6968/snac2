@@ -278,6 +278,14 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
         avatar = xs_fmt("data:image/png;base64, %s", default_avatar_base64());
 
     const char *actor_id = xs_dict_get(actor, "id");
+    const char *html_url = xs_dict_get_def(actor, "url", actor_id);
+
+    if (xs_is_list(html_url))
+        html_url = xs_list_get(html_url, 0);
+
+    if (!xs_is_string(html_url))
+        html_url = actor_id;
+
     xs *href = NULL;
 
     if (user) {
@@ -291,7 +299,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
     }
 
     if (href == NULL)
-        href = xs_dup(actor_id);
+        href = xs_dup(html_url);
 
     xs_html *name_link = xs_html_tag("a",
             xs_html_attr("href",    href),
@@ -457,7 +465,7 @@ xs_html *html_actor_icon(snac *user, xs_dict *actor, const char *date,
         xs_html_add(actor_icon,
             xs_html_sctag("br", NULL),
             xs_html_tag("a",
-                xs_html_attr("href",  xs_dict_get(actor, "id")),
+                xs_html_attr("href",  html_url),
                 xs_html_attr("class", "p-author-tag h-card snac-author-tag"),
                 xs_html_text(user)));
     }
@@ -3739,12 +3747,12 @@ xs_str *html_timeline(snac *user, const xs_list *list, int read_only,
 }
 
 
-xs_html *html_people_list(snac *user, xs_list *list, const char *header, const char *t, const char *proxy, int do_count)
+xs_html *html_people_list(snac *user, xs_list *list, const char *header, const char *t, const char *proxy, int count)
 {
     xs_html *snac_posts;
     xs *header_cnt;
-    if (do_count)
-        header_cnt = xs_fmt("%s - %d\n", header, xs_list_len(list));
+    if (count > -1)
+        header_cnt = xs_fmt("%s - %d\n", header, count);
     else
         header_cnt = xs_fmt("%s\n", header);
 
@@ -3992,12 +4000,12 @@ xs_str *html_people(snac *user)
 
     if (xs_list_len(pending) || xs_is_true(xs_dict_get(user->config, "approve_followers"))) {
         xs_html_add(lists,
-            html_people_list(user, pending, L("Pending follow confirmations"), "p", proxy, 1));
+            html_people_list(user, pending, L("Pending follow confirmations"), "p", proxy, xs_list_len(pending)));
     }
 
     xs_html_add(lists,
-        html_people_list(user, wing, L("People you follow"), "i", proxy, 1),
-        html_people_list(user, wers, L("People that follow you"), "e", proxy, 1));
+        html_people_list(user, wing, L("People you follow"), "i", proxy, following_list_len(user)),
+        html_people_list(user, wers, L("People that follow you"), "e", proxy, xs_list_len(wers)));
 
     xs_html *html = xs_html_tag("html",
         html_user_head(user, NULL, NULL),
@@ -4028,7 +4036,7 @@ xs_str *html_people_one(snac *user, const char *actor, const xs_list *list,
     xs *foll = xs_list_append(xs_list_new(), actor);
 
     xs_html_add(lists,
-        html_people_list(user, foll, L("Contact's posts"), "p", proxy, 0));
+        html_people_list(user, foll, L("Contact's posts"), "p", proxy, -1));
 
     xs_html_add(body, lists);
 
@@ -4278,6 +4286,14 @@ xs_str *html_notifications(snac *user, int skip, int show)
             enqueue_actor_refresh(user, actor_id, 0);
         }
 
+        const char *html_url = xs_dict_get_def(actor, "url", actor_id);
+
+        if (xs_is_list(html_url))
+            html_url = xs_list_get(html_url, 0);
+
+        if (!xs_is_string(html_url))
+            html_url = actor_id;
+
         xs *label_sanitized = sanitize(type);
         const char *label = label_sanitized;
 
@@ -4321,7 +4337,7 @@ xs_str *html_notifications(snac *user, int skip, int show)
                     xs_html_raw(label),
                     xs_html_text(" by "),
                     xs_html_tag("a",
-                        xs_html_attr("href", actor_id),
+                        xs_html_attr("href", html_url),
                         xs_html_raw(a_name))), /* a_name is already sanitized */
                 xs_html_text(" "),
                 xs_html_tag("time",
