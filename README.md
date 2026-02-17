@@ -1,5 +1,12 @@
 # snac fork for ESP32 series
 
+**Project no longer actively maintained.**
+
+Ever since [snac 2.90](https://codeberg.org/grunfink/snac2/commit/787d0180bff0655045c3cf42bf8868609c11a6f5) got released the ESP32 port will no longer be updated anymore as this was more of a fun little experiment then a real stable Fediverse server.
+The reasons for the sudden stop of maintenance were the fact that under load of servers federating, the ESP32 kept crashing and struggling as i followed more users throughout the Fediverse eventually leading to moving to a more powerful server. 
+
+Whether the project might get picked up again by another developer might be a guess but for now goodbye for the ESP32 port, below is the original readme of the project:
+
 This is a fork of the original snac project to port it to the ESP32 series of chips.
 
 ## Requirements
