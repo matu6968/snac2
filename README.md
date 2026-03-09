@@ -5,7 +5,7 @@
 Ever since [snac 2.90](https://codeberg.org/grunfink/snac2/commit/787d0180bff0655045c3cf42bf8868609c11a6f5) got released the ESP32 port will no longer be updated anymore as this was more of a fun little experiment then a real stable Fediverse server.
 The reasons for the sudden stop of maintenance were the the following:
 
-- under load of lots of servers federating, the ESP32 kept crashing and slowing down (i liked the Fediverse and i kept following more users throughout the Fediverse) forcing moving the server to a [2018 midranger running postmarketOS](https://wiki.postmarketos.org/wiki/Xiaomi_Mi_A2_Lite_(xiaomi-daisy)
+- under load of lots of servers federating, the ESP32 kept crashing and slowing down (i liked the Fediverse and i kept following more users throughout the Fediverse) forcing moving the server to a [2018 midranger running postmarketOS](https://wiki.postmarketos.org/wiki/Xiaomi_Mi_A2_Lite_(xiaomi-daisy))
 - recently the project started [denying AI contributions starting from snac 2.91](https://codeberg.org/grunfink/snac2/issues/574#issuecomment-11370766/) esentially leaving the project permament forked state, being unable to upstream the changes if i ever wanted to do so
 - as a likelyhood for the 1st and 2nd reasons, the ESP32 port was written with AI (sorry anti AI lists like [this](https://noai.starlightnet.work/list.html) or [this one](https://codeberg.org/brib/slopfree-software-index) but you aren't going to be included in them) which could likely explain the weird issues that i could have fixed with tweaking ESP-IDF build configuration settings and i am questioning whether to continue using it for more projects or not 
 
